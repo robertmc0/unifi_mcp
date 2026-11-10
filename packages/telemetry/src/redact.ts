@@ -6,7 +6,7 @@
  *
  * 1. **Field names.** A field is replaced by `[REDACTED]` when its name contains a
  *    sensitive word (password, secret, token, API key, authorization, cookie, session,
- *    TOTP/OTP, PIN, credential, passphrase, private key, ...). Names are split into words
+ *    TOTP/OTP, PIN, credential, passphrase, PSK/pre-shared key, private key, ...). Names are split into words
  *    (camelCase, snake_case, kebab-case), so `pin` matches `doorPin` but not `spinning`.
  *    This is deliberately conservative: name non-secret identifiers without these words.
  * 2. **String contents.** Bearer/Basic credentials, credentials in URLs, secret-looking
@@ -48,10 +48,13 @@ const SENSITIVE_WORDS = new Set([
   'otp',
   'pass',
   'passcode',
+  'passkey',
   'passphrase',
   'passwd',
   'password',
   'pin',
+  'preshared',
+  'psk',
   'pwd',
   'secret',
   'secrets',
@@ -66,12 +69,20 @@ const SENSITIVE_WORDS = new Set([
 const SENSITIVE_PAIRS = new Set([
   'access key',
   'api key',
+  'encryption key',
   'master key',
+  'network key',
   'private key',
   'recovery code',
   'recovery codes',
   'secret key',
+  'session key',
   'set cookie',
+  'shared key',
+  'signing key',
+  'wep key',
+  'wifi key',
+  'wpa key',
 ]);
 
 /** Splits a field name into lowercase words: `xApiKey`, `x_api_key`, `X-API-KEY` → x, api, key. */
@@ -88,7 +99,11 @@ export function isSensitiveFieldName(name: string): boolean {
   const parts = words(name);
   if (parts.some((part) => SENSITIVE_WORDS.has(part))) return true;
   // Also catch run-together names such as "apikey" or "privatekey".
-  if (parts.some((part) => ['apikey', 'privatekey', 'masterkey', 'accesskey'].includes(part))) {
+  if (
+    parts.some((part) =>
+      ['apikey', 'privatekey', 'masterkey', 'accesskey', 'sharedkey', 'wpapsk'].includes(part),
+    )
+  ) {
     return true;
   }
   for (let i = 0; i + 1 < parts.length; i++) {

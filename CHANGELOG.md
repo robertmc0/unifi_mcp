@@ -28,9 +28,15 @@ All notable changes to this project are documented here. The format follows
   dispatcher with policy checks at enqueue and dispatch, audit before act, durable write
   executions with compare-and-set transitions, `outcome_unknown` without retry,
   idempotency keys, restart recovery, rate limits, bounded fair queues and resource locks.
+- Approvals (`packages/approvals`, ADR 0011): human approval of high-risk operations by an
+  administrator or the local CLI only, bound to client, target, argument digest and policy
+  version, with encrypted stored arguments, time windows, single-use resumption through
+  the dispatcher and a complete audit trail.
+- Redaction now also covers PSK, pre-shared key, passkey and further `<qualifier> key`
+  field names.
 - Operator manual: `docs/configuration.md` (hard lock, data directory, logging, master
-  key), `docs/security.md` (permission model, write safety), `docs/backup-restore.md` and
-  `docs/monitoring.md`.
+  key), `docs/security.md` (permission model, write safety), `docs/approval-workflow.md`,
+  `docs/backup-restore.md` and `docs/monitoring.md`.
 
 ### Added — Phase 0: research and contract baseline
 

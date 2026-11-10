@@ -35,10 +35,10 @@ messages.
 
 Every log record and audit entry passes through redaction:
 
-- Any field whose name contains a word such as password, passphrase, secret, token,
-  auth/authorization, cookie, session, credential, signature, OTP/TOTP/MFA or PIN, or the
-  pairs API key, private key, master key, access key and recovery code, is replaced by
-  `[REDACTED]`.
+- Any field whose name contains a word such as password, passphrase, PSK/pre-shared key,
+  secret, token, auth/authorization, cookie, session, credential, signature, OTP/TOTP/MFA
+  or PIN, or a pair such as API key, private key, master key, shared key, encryption key
+  or recovery code, is replaced by `[REDACTED]`.
 - Inside any text: `Bearer …` and `Basic …` credentials, `user:password@` in URLs,
   secret-looking query parameters, RTSP(S) stream URLs and PEM private keys.
 - Stored credentials are never in plaintext in memory structures that get logged: they are

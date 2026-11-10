@@ -82,9 +82,10 @@ returned to any client. There is no grant for them.
 
 Each operation's risk (low, medium, high) is reviewed in code. Policy can raise the risk of
 selected operations but never lower it. High-risk operations need an independent human
-approval through the admin UI or CLI before they run (approval workflow: Phase 1 step 5).
+approval through the admin UI or CLI before they run.
 Some high-consequence operations are disabled by default and must be enabled explicitly in
-the global policy before they can be granted at all.
+the global policy before they can be granted at all. See
+[approval-workflow.md](approval-workflow.md).
 
 ## Write safety
 

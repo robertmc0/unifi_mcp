@@ -31,8 +31,9 @@ import {
   type DenyReason,
   type DeploymentOverrides,
   type PolicyStore,
+  type Risk,
 } from '@unifi-local-mcp/policy';
-import { isStorageError } from '@unifi-local-mcp/storage';
+import { isStorageError, type SqliteDatabase } from '@unifi-local-mcp/storage';
 import {
   AuditUnavailableError,
   redactString,
@@ -133,12 +134,43 @@ export interface ProposalContext {
   target: Target;
   argumentsSha256: string;
   policyVersion: number;
+  effectiveRisk: Risk;
   correlationId: string;
 }
 
-/** High-risk operations are handed here (step 5). The gate never executes anything. */
+/** A human-approved request that may now be resumed by its original client. */
+export interface ResumableApproval {
+  ok: true;
+  approvalId: string;
+  operationId: string;
+  target: Target;
+  arguments: unknown;
+  argumentsSha256: string;
+  policyVersion: number;
+}
+
+export interface ApprovalRefusal {
+  ok: false;
+  code: string;
+  message: string;
+}
+
+/**
+ * The human approval workflow (spec §6.5; implemented by @unifi-local-mcp/approvals). The
+ * gate never executes anything: it stores proposals and answers whether one may resume.
+ * Execution always goes through the dispatcher's write path.
+ */
 export interface ApprovalGate {
+  /** True when the gate stores its state through `db` (needed for atomic consumption). */
+  writesTo(db: SqliteDatabase): boolean;
   propose(context: ProposalContext): ExecutionEnvelope;
+  /** Validates an approval for `principal` without consuming it. */
+  checkResumable(principal: Principal, approvalId: string): ResumableApproval | ApprovalRefusal;
+  /**
+   * Marks an approved request as used by `executionId`. Called inside the transaction that
+   * creates the execution record; returns false if it is no longer approved.
+   */
+  consume(approvalId: string, executionId: string): boolean;
 }
 
 export interface DispatcherLimits {
@@ -219,6 +251,9 @@ interface Context {
 }
 
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+class ApprovalAlreadyUsed extends Error {}
 /** The request envelope itself is validated at runtime: the dispatcher is the boundary. */
 const RequestSchema = z.strictObject({
   operationId: z.string().max(128),
@@ -249,6 +284,10 @@ const MESSAGES: Record<string, string> = {
   audit_unavailable: 'The audit trail cannot be written, so the operation was refused.',
   policy_unavailable: 'The security policy is unavailable, so every operation is refused.',
   internal_error: 'The request failed inside the service.',
+  approval_not_found: 'No approval with this id exists for this client.',
+  approval_invalidated:
+    'The approval no longer matches the current request or security policy; propose again.',
+  approval_already_used: 'This approval has already been used.',
   audit_after_write:
     'The outcome below is recorded in the execution record, but its audit entry could not ' +
     'be written.',
@@ -278,6 +317,11 @@ export class Dispatcher {
   constructor(deps: DispatcherDependencies) {
     if (!deps.audit.writesTo(deps.executions.database)) {
       throw new TypeError('Dispatcher needs the AuditLog and ExecutionStore on one connection.');
+    }
+    if (deps.approvals !== undefined && !deps.approvals.writesTo(deps.executions.database)) {
+      throw new TypeError(
+        'Dispatcher needs the ApprovalGate and ExecutionStore on one connection.',
+      );
     }
     this.#deps = deps;
     this.#limits = deps.limits ?? DEFAULT_DISPATCHER_LIMITS;
@@ -310,6 +354,82 @@ export class Dispatcher {
       });
       return { ...base, status: 'error', error: this.#error('internal_error') };
     }
+  }
+
+  /**
+   * Executes a human-approved request for its original client (spec §6.5). Everything is
+   * checked again: the approval (state, expiry, client, policy version, argument digest),
+   * then the full policy including the hard lock, then the normal write path. The approval
+   * is consumed in the transaction that creates the execution, so it runs at most once.
+   */
+  async resume(principal: Principal, approvalId: string): Promise<ExecutionEnvelope> {
+    const correlationId = randomUUID();
+    const base = { operationId: '', consoleId: null, siteId: null, correlationId };
+    try {
+      return await this.#resume(principal, approvalId, base);
+    } catch (error) {
+      if (error instanceof AuditUnavailableError) {
+        return { ...base, status: 'error', error: this.#error('audit_unavailable') };
+      }
+      this.#deps.logger.error('dispatcher failure during resume', {
+        correlationId,
+        clientId: principal.clientId,
+        err: error,
+      });
+      return { ...base, status: 'error', error: this.#error('internal_error') };
+    }
+  }
+
+  async #resume(
+    principal: Principal,
+    approvalId: string,
+    base: Context['base'],
+  ): Promise<ExecutionEnvelope> {
+    const startedMs = performance.now();
+    const refuse = (code: string, text = message(code)): ExecutionEnvelope => {
+      this.#deps.audit.record({
+        eventType: 'approval',
+        action: 'approval.resume',
+        outcome: 'denied',
+        actor: { type: 'mcp_client', id: principal.clientId },
+        correlationId: base.correlationId,
+        errorCode: code,
+        durationMs: performance.now() - startedMs,
+        details: UUID_PATTERN.test(approvalId) ? { approvalId } : {},
+      });
+      return { ...base, status: 'denied', error: { code, message: text } };
+    };
+    const gate = this.#deps.approvals;
+    if (gate === undefined) return refuse('approval_unavailable');
+    if (!UUID_PATTERN.test(approvalId)) return refuse('approval_not_found');
+    const claim = gate.checkResumable(principal, approvalId);
+    if (!claim.ok) return refuse(claim.code, claim.message);
+
+    const descriptor = this.#deps.registry.get(claim.operationId);
+    if (descriptor?.effect !== 'write') return refuse('approval_invalidated');
+    const parsed = descriptor.inputSchema.safeParse(claim.arguments);
+    if (!parsed.success) return refuse('approval_invalidated');
+    const context: Context = {
+      principal,
+      descriptor,
+      args: parsed.data,
+      target: claim.target,
+      correlationId: base.correlationId,
+      startedMs,
+      startBy: Date.now() + this.#limits.defaultMaxWaitMs,
+      base: {
+        operationId: claim.operationId,
+        consoleId: claim.target.consoleId,
+        siteId: claim.target.siteId ?? null,
+        correlationId: base.correlationId,
+      },
+    };
+    // The stored arguments must still be exactly the approved ones.
+    if (this.#digest(context) !== claim.argumentsSha256) return refuse('approval_invalidated');
+    const decision = this.#authorize(context);
+    if (!decision.allowed) return this.#denied(context, decision);
+    if (decision.policyVersion !== claim.policyVersion) return refuse('approval_invalidated');
+    return this.#runWrite(context, decision, undefined, claim.approvalId);
   }
 
   /** Status of one of this client's own executions; other clients' ids are not found. */
@@ -459,6 +579,7 @@ export class Dispatcher {
         target,
         argumentsSha256: this.#digest(context),
         policyVersion: decision.policyVersion,
+        effectiveRisk: decision.effectiveRisk,
         correlationId: base.correlationId,
       });
     }
@@ -588,6 +709,7 @@ export class Dispatcher {
     context: Context,
     decision: Extract<Decision, { allowed: true }>,
     idempotencyKey: string | undefined,
+    approvalId?: string,
   ): Promise<ExecutionEnvelope> {
     const { executions } = this.#deps;
     const argumentsSha256 = this.#digest(context);
@@ -619,11 +741,21 @@ export class Dispatcher {
             argumentsSha256,
             effectiveRisk: decision.effectiveRisk,
             policyVersion: decision.policyVersion,
+            ...(approvalId === undefined ? {} : { approvalId }),
           },
         });
+        // Single use: the approval is consumed atomically with the execution record.
+        if (
+          approvalId !== undefined &&
+          this.#deps.approvals?.consume(approvalId, record.id) !== true
+        ) {
+          throw new ApprovalAlreadyUsed();
+        }
         return record;
       });
     } catch (error) {
+      if (error instanceof ApprovalAlreadyUsed)
+        return this.#failure(context, 'approval_already_used');
       // A concurrent request with the same idempotency key won the insert.
       if (idempotencyKey !== undefined && isStorageError(error, 'STORAGE_CONSTRAINT')) {
         const existing = executions.findByIdempotencyKey(

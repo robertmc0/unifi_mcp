@@ -343,7 +343,14 @@ describe('writes', () => {
       correlationId: 'c',
       approvalId: 'approval-1',
     }));
-    const h = await setup({ approvals: { propose } });
+    const h = await setup({
+      approvals: {
+        propose,
+        writesTo: () => true,
+        checkResumable: () => ({ ok: false, code: 'approval_not_found', message: 'no' }),
+        consume: () => false,
+      },
+    });
     const envelope = await h.dispatcher.execute(CLIENT, {
       operationId: 'network.gateway.reboot',
       consoleId: CONSOLE,

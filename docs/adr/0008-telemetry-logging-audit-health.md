@@ -37,11 +37,15 @@ unauthenticated callers. This ADR records how `packages/telemetry` meets these.
 ### Redaction (backstop for every log record and audit entry)
 
 1. **Field names**: split into words (camelCase, snake_case, kebab-case). Sensitive words:
-   password, passphrase, pass, passwd, pwd, passcode, secret(s), token(s), auth,
-   authorization, bearer, cookie(s), session, credential(s), signature, jwt, otp, totp,
-   mfa, pin; sensitive pairs: api key, private key, master key, access key, secret key,
-   recovery code(s), set cookie. Matching values become `[REDACTED]` (null stays null).
-   Deliberately conservative: non-secret identifiers must avoid these words.
+   password, passphrase, pass, passwd, pwd, passcode, passkey, psk, preshared, secret(s),
+   token(s), auth, authorization, bearer, cookie(s), session, credential(s), signature, jwt,
+   otp, totp, mfa, pin; sensitive pairs: api key, private key, master key, access key, secret
+   key, shared key, encryption key, signing key, session key, network key, Wi-Fi key, WPA
+   key, WEP key, recovery code(s), set cookie. Matching values become `[REDACTED]` (null
+   stays null). Deliberately conservative: non-secret identifiers must avoid these words.
+   The list in `packages/telemetry/src/redact.ts` is authoritative; `psk`, `preshared`,
+   `passkey` and the extra key pairs were added on 2026-11-10 after the approval tests
+   found `presharedKey` unredacted (ADR 0011).
 2. **String contents**: PEM private keys; RTSP(S) URLs (the path is the Protect stream
    secret); `user:password@` in URLs; `Bearer …`; base64-looking `Basic …`; secret-looking
    query parameters (`token`, `api_key`, `password`, `secret`, `signature`, `key`, `code`,

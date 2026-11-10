@@ -137,6 +137,43 @@ CREATE INDEX operation_executions_open ON operation_executions (status)
   WHERE status IN ('queued', 'executing');
 `,
   },
+  {
+    // Human approval of high-risk operations (spec §6.5; ADR 0011). Proposed arguments are
+    // kept only as an encrypted secret record, deleted when the approval closes.
+    // Queries live in @unifi-local-mcp/approvals.
+    version: 5,
+    name: 'approval_requests',
+    sql: `
+CREATE TABLE approval_requests (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  client_id TEXT NOT NULL CHECK (length(client_id) BETWEEN 1 AND 128),
+  operation_id TEXT NOT NULL CHECK (length(operation_id) BETWEEN 1 AND 128),
+  console_id TEXT NOT NULL CHECK (length(console_id) BETWEEN 1 AND 128),
+  site_id TEXT CHECK (site_id IS NULL OR length(site_id) BETWEEN 1 AND 128),
+  arguments_sha256 TEXT NOT NULL CHECK (length(arguments_sha256) = 64),
+  arguments_secret_id TEXT REFERENCES secret_records (id),
+  summary TEXT NOT NULL CHECK (json_valid(summary) AND length(summary) <= 16384),
+  risk TEXT NOT NULL CHECK (risk IN ('low', 'medium', 'high')),
+  policy_version INTEGER NOT NULL CHECK (policy_version >= 1),
+  status TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'rejected', 'expired',
+    'invalidated', 'consumed')),
+  correlation_id TEXT NOT NULL CHECK (length(correlation_id) BETWEEN 1 AND 128),
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  decided_at TEXT,
+  decided_by TEXT CHECK (decided_by IS NULL OR length(decided_by) BETWEEN 1 AND 160),
+  decision_note TEXT CHECK (decision_note IS NULL OR length(decision_note) <= 500),
+  execute_by TEXT,
+  closed_at TEXT,
+  execution_id TEXT REFERENCES operation_executions (id),
+  CHECK ((status IN ('pending', 'approved')) = (arguments_secret_id IS NOT NULL))
+) STRICT;
+
+CREATE INDEX approval_requests_open ON approval_requests (status)
+  WHERE status IN ('pending', 'approved');
+CREATE INDEX approval_requests_client ON approval_requests (client_id, created_at);
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `

@@ -1,6 +1,6 @@
 # unifi-local-mcp documentation
 
-> **Project status: Phase 1 in progress (storage, telemetry, policy and dispatcher done). Nothing is runnable yet.**
+> **Project status: Phase 1 in progress (storage, telemetry, policy, dispatcher and approvals done). Nothing is runnable yet.**
 > See [phase-checklist.md](phase-checklist.md) for what is implemented and what is next.
 
 ## Design and decisions
@@ -25,7 +25,8 @@
 | [monitoring.md](monitoring.md) (logs, audit trail, health; metrics in Phase 5)               | 1 (started) / 5 |
 | [security.md](security.md) (permission model, write safety so far)                           | 1 (started)     |
 | quickstart.md, installation.md                                                               | 1               |
-| approval-workflow.md, administration.md                                                      | 1               |
+| [approval-workflow.md](approval-workflow.md)                                                 | 1 (started)     |
+| administration.md                                                                            | 1               |
 | client-claude-code.md, client-codex.md, client-generic-mcp.md                                | 1               |
 | networking.md (single and dual interface), troubleshooting.md                                | 1 / 5           |
 | applications-network.md                                                                      | 2               |

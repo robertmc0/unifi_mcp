@@ -9,6 +9,7 @@ export {
   DEFAULT_DISPATCHER_LIMITS,
   Dispatcher,
   type ApprovalGate,
+  type ApprovalRefusal,
   type DispatcherDependencies,
   type DispatcherLimits,
   type EnvelopeError,
@@ -21,6 +22,7 @@ export {
   type OperationExecutor,
   type Principal,
   type ProposalContext,
+  type ResumableApproval,
   type SecurityContextProvider,
   type UpstreamError,
 } from './dispatcher.ts';

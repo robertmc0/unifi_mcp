@@ -89,8 +89,19 @@ explicitly, never dropped silently.
    `OperationExecutor`, capability probes and the inventory loader from `api-specs/`
    (step 6); MCP tools on top of the dispatcher and limits configuration (step 7);
    read-back reconciliation of `outcome_unknown` writes (Phase 2 adapters).
-5. **approvals**: prepare → pending → approved → resumed/executed state machine with
-   atomic compare-and-set transitions, TTLs and argument digests.
+5. ✅ **approvals** (2026-11-10): prepare → pending → approved → resumed/executed state machine with
+   atomic compare-and-set transitions, TTLs and argument digests. → `packages/approvals`,
+   `Dispatcher.resume`, storage migration 5 (`approval_requests`),
+   [ADR 0011](adr/0011-human-approval-workflow.md), [approval-workflow.md](approval-workflow.md).
+   Also done: approvers only `admin` (recent sign-in, optional MFA) or `cli`; proposals bound
+   to client, target, digest and policy version; arguments encrypted at rest and deleted on
+   close; consumption atomic with the execution record; lazy and swept expiry; full audit.
+   Fixed on the way: `presharedKey`-style field names were not redacted (ADR 0008).
+   Tests: `tests/unit/approvals/`, `tests/security/approval-gates.test.ts`.
+   Still open, carried into later steps: MCP resume/status tools (step 7); CLI
+   `approvals list|show|approve|reject` (step 9); admin UI page with recent-auth and MFA
+   (step 10); periodic `expireStale()` in the service (step 7); console-state diff and
+   preconditions (Phase 2).
 6. **unifi-api**: HTTPS client with TLS verify, CA and pinning, egress allowlist, DNS
    re-validation, redirects refused, timeouts and size caps. Synthetic mock console server
    for tests.
@@ -114,13 +125,17 @@ explicitly, never dropped silently.
 - [ ] Two differently scoped tokens see different tool lists; revocation blocks calls and subscriptions
 - [ ] No configured console: safe start, no write tools
 - [ ] Hard lock denies registered writes via `unifi_execute`, queued work and previously approved actions
-      (dispatcher verified for direct and queued writes; approved actions in step 5, the MCP
-      tool in step 7)
+      (dispatcher verified for direct, queued and previously approved writes; the MCP tool in
+      step 7)
 - [ ] Generic execution cannot reach an unregistered path, alternate URL or arbitrary verb
       (dispatcher and registry verified by `tests/security/dispatcher-gates.test.ts`; still to
       verify through the MCP `unifi_execute` tool and the HTTP executor in steps 6–7)
 - [ ] High-risk action requires independent CLI/UI approval and cannot be approved via MCP
+      (approval service and dispatcher verified by `tests/security/approval-gates.test.ts`;
+      the MCP tool list is verified in step 7, CLI/UI approval paths in steps 9–10)
 - [ ] Reused, expired, parameter-changed, wrong-client and policy-changed approvals all fail
+      (all five verified in `tests/security/approval-gates.test.ts` at the dispatcher; to be
+      repeated through the MCP resume tool in step 7)
 - [ ] Wrong or missing master key and failed migration fail closed; migrations and backups tested
       (storage layer verified by `tests/security/storage-master-key.test.ts` and
       `tests/unit/storage/`; still to verify at service startup once step 7 exists)

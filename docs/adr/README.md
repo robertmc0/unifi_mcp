@@ -16,6 +16,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0008](0008-telemetry-logging-audit-health.md)        | Telemetry: structured logs, redaction, audit trail and health checks    | Accepted                                 |
 | [0009](0009-policy-evaluation-model.md)               | Policy evaluation model, policy schemas and the policy version          | Accepted                                 |
 | [0010](0010-operation-registry-and-dispatcher.md)     | Operation registry and the central dispatcher                           | Accepted                                 |
+| [0011](0011-human-approval-workflow.md)               | Human approval workflow for high-risk operations                        | Accepted                                 |
 
 ## Template
 

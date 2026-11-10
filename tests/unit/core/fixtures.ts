@@ -26,6 +26,7 @@ import {
   type ClientPolicy,
   type ConsolePolicy,
 } from '@unifi-local-mcp/policy';
+import { ApprovalService, type ApprovalTtl } from '@unifi-local-mcp/approvals';
 import { databasePathFor, openStorage, type Storage } from '@unifi-local-mcp/storage';
 import { AuditLog, AuditUnavailableError, type AuditEvent } from '@unifi-local-mcp/telemetry';
 import * as z from 'zod';
@@ -43,6 +44,7 @@ const DOCUMENTED = new Set([
   'network 1.0 GET /v1/info',
   'network 1.0 POST /v1/sites/{siteId}/devices/{deviceId}/actions',
   'network 1.0 POST /v1/sites/{siteId}/gateway/reboot',
+  'network 1.0 PUT /v1/sites/{siteId}/firewall/rules/{ruleId}',
 ]);
 
 export const inventory: ContractInventory = (moduleId, revision, method, path) =>
@@ -131,6 +133,31 @@ export const rebootGateway = defineOperation({
 });
 
 /** A latch: `promise` settles once `resolve()` is called. */
+export const RULE = '33333333-3333-4333-8333-333333333333';
+
+/** A high-risk write with arguments, one of them a credential, for approval tests. */
+export const updateFirewallRule = defineOperation({
+  ...common,
+  operationId: 'network.firewall.update_rule',
+  category: 'firewall',
+  effect: 'write',
+  permission: 'network.firewall.write',
+  risk: 'high',
+  approvalRequired: true,
+  siteScoped: true,
+  description: 'Change a firewall rule.',
+  httpMethod: 'PUT',
+  pathTemplate: '/v1/sites/{siteId}/firewall/rules/{ruleId}',
+  retryClass: 'idempotent',
+  inputSchema: z.strictObject({
+    ruleId: z.uuid(),
+    action: z.enum(['allow', 'block']),
+    presharedKey: z.string().min(8).optional(),
+  }),
+  outputSchema: z.object({ updated: z.boolean() }),
+  resourceLockKey: (args) => `firewall-rule:${args.ruleId}`,
+});
+
 export function deferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve: () => void = () => undefined;
   const promise = new Promise<void>((r) => {
@@ -184,6 +211,7 @@ export interface Harness {
   consoles: Map<string, ConsolePolicy>;
   dispatcher: Dispatcher;
   deployment: { forceReadOnly: boolean };
+  approvalService: ApprovalService | undefined;
   auditActions(): string[];
 }
 
@@ -192,6 +220,10 @@ export interface HarnessOptions {
   runtimeMode?: 'read_only' | 'read_write';
   limits?: Partial<DispatcherLimits>;
   approvals?: ApprovalGate;
+  /** Build a real ApprovalService on the harness database. */
+  approvalService?: { ttl?: Partial<ApprovalTtl> };
+  /** Controllable clock shared by the dispatcher and the approval service. */
+  clock?: { now: Date };
   dir: string;
 }
 
@@ -217,7 +249,13 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
   const executions = new ExecutionStore(storage.db);
   const executor = new MockExecutor();
   const registry = new OperationRegistry(inventory);
-  const descriptors: OperationDescriptor[] = [listDevices, getInfo, restartDevice, rebootGateway];
+  const descriptors: OperationDescriptor[] = [
+    listDevices,
+    getInfo,
+    restartDevice,
+    rebootGateway,
+    updateFirewallRule,
+  ];
   for (const descriptor of descriptors) registry.register(descriptor);
   registry.seal();
   const clients = new Map<string, ClientPolicy>([
@@ -240,6 +278,22 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
     ],
   ]);
   const deployment = { forceReadOnly: options.forceReadOnly ?? false };
+  const clock = options.clock;
+  const now = clock === undefined ? () => new Date() : () => clock.now;
+  const approvalService =
+    options.approvalService === undefined
+      ? undefined
+      : new ApprovalService({
+          db: storage.db,
+          audit,
+          secrets: storage.secrets,
+          policyStore,
+          now,
+          ...(options.approvalService.ttl === undefined
+            ? {}
+            : { ttl: options.approvalService.ttl }),
+        });
+  const approvals = options.approvals ?? approvalService;
   const dispatcher = new Dispatcher({
     registry,
     executor,
@@ -255,7 +309,8 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
     logger: log.logger,
     limits: { ...TEST_LIMITS, ...options.limits },
     random: () => 0.5,
-    ...(options.approvals === undefined ? {} : { approvals: options.approvals }),
+    now,
+    ...(approvals === undefined ? {} : { approvals }),
   });
   return {
     storage,
@@ -269,6 +324,7 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
     consoles,
     dispatcher,
     deployment,
+    approvalService,
     auditActions: () =>
       audit
         .list({ eventType: 'mcp.operation', limit: 500 })

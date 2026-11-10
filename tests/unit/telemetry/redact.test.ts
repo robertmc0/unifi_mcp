@@ -44,6 +44,15 @@ describe('isSensitiveFieldName', () => {
     'signature',
     'recoveryCodes',
     'jwt',
+    'presharedKey',
+    'pre_shared_key',
+    'psk',
+    'wpaPsk',
+    'x_passphrase',
+    'sharedKey',
+    'encryptionKey',
+    'wifiKey',
+    'passkey',
   ])('treats %s as sensitive', (name) => {
     expect(isSensitiveFieldName(name)).toBe(true);
   });
@@ -64,6 +73,9 @@ describe('isSensitiveFieldName', () => {
     'authenticated',
     'tokenizer',
     'description',
+    'keyboard',
+    'monkey',
+    'sharedSites',
   ])('leaves %s alone', (name) => {
     expect(isSensitiveFieldName(name)).toBe(false);
   });

@@ -79,6 +79,11 @@ export class SecretStore {
     this.#now = now;
   }
 
+  /** True when this store writes through `db` (for callers that need one transaction). */
+  writesTo(db: SqliteDatabase): boolean {
+    return this.#db === db;
+  }
+
   /** Stores a new secret and returns its record id. */
   create(kind: string, value: string): string {
     assertKind(kind);
