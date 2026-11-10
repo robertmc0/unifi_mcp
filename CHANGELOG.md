@@ -84,10 +84,11 @@ All notable changes to this project are documented here. The format follows
   `unifi-mcp` CLI and `unifi-mcp-bridge` on the `PATH`.
 - `deploy/compose.single.yml`: read-only, no capabilities, `no-new-privileges`, hard lock
   on, MCP port on host loopback only, admin interface off with its port unpublished.
+- A documentation link checker: every relative link and heading anchor must resolve.
 - Basic CI (`.github/workflows/check.yml`): format, lint, typecheck, tests, contract
   reconciliation, and an image build with a read-only smoke run; actions pinned by
   commit SHA.
-- Operator manual: `docs/installation.md`, `docs/administration.md`; `docs/configuration.md` (hard lock, MCP listener, audit retention,
+- Operator manual: `docs/quickstart.md`, `docs/installation.md`, `docs/administration.md`; `docs/configuration.md` (hard lock, MCP listener, audit retention,
   egress allowlist, data directory, logging, master key), `docs/networking.md`,
   `docs/client-generic-mcp.md`, `docs/security.md` (permission model, write safety, console
   connections), `docs/approval-workflow.md`,

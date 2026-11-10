@@ -197,8 +197,15 @@ explicitly, never dropped silently.
     Still open: `linux/arm64` build and storage tests (needs binfmt/QEMU on the build
     host: the owner's decision); dual-network and TLS Compose examples (Phase 5);
     registry publishing, SBOM and signing (Phase 5).
-12. **Docs**: quickstart, installation, configuration, security, approval workflow,
-    administration, client guides.
+12. **Docs** (in progress): quickstart, installation, configuration, security, approval
+    workflow, administration, client guides.
+    Done (2026-11-10): [quickstart.md](quickstart.md), [installation.md](installation.md),
+    [configuration.md](configuration.md), [security.md](security.md),
+    [approval-workflow.md](approval-workflow.md), [administration.md](administration.md),
+    [client-generic-mcp.md](client-generic-mcp.md); a link checker
+    (`tests/contract/doc-links.test.ts`) for every relative link and heading anchor.
+    Open: `client-claude-code.md` and `client-codex.md`, which must be verified against the
+    current releases of those clients before they are published; `troubleshooting.md`.
 
 ### Gate (spec §16)
 
