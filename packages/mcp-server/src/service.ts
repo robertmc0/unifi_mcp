@@ -23,7 +23,13 @@ import {
 } from '@unifi-local-mcp/core';
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import { PolicyStore } from '@unifi-local-mcp/policy';
-import { loadMasterKey, openStorage, type MasterKey, type Storage } from '@unifi-local-mcp/storage';
+import {
+  acquireInstanceLock,
+  loadMasterKey,
+  openStorage,
+  type MasterKey,
+  type Storage,
+} from '@unifi-local-mcp/storage';
 import {
   auditCheck,
   AuditLog,
@@ -48,6 +54,8 @@ import { buildMcpServer } from './tools.ts';
 
 export const SERVICE_VERSION = '0.0.0';
 const APPROVAL_SWEEP_MS = 30_000;
+/** How often open MCP responses are re-checked against their token (out-of-process revocation). */
+const STREAM_RECHECK_MS = 5_000;
 const AUDIT_PRUNE_MS = 24 * 60 * 60_000;
 const DRAIN_TIMEOUT_MS = 10_000;
 
@@ -66,6 +74,8 @@ export interface ServiceOptions {
   executor?: OperationExecutor;
   logSink?: LogSink;
   now?: () => Date;
+  /** Tests only: re-check interval for open MCP responses (default 5 s). */
+  streamRecheckMs?: number;
 }
 
 export interface RunningService {
@@ -99,7 +109,15 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
     for (const warning of loaded.warnings) logger.warn(warning);
     masterKey = loaded.key;
   }
-  const storage = await openStorage({ databasePath: config.databasePath, masterKey, now });
+  // One service per data directory; also keeps key rotation and restore from running beside it.
+  const instanceLock = acquireInstanceLock(config.dataDir, 'start the service');
+  let storage: Storage;
+  try {
+    storage = await openStorage({ databasePath: config.databasePath, masterKey, now });
+  } catch (error) {
+    instanceLock.release();
+    throw error;
+  }
   try {
     if (storage.preMigrationBackup !== undefined) {
       logger.info('pre-migration backup written', {
@@ -240,6 +258,20 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       );
     }
 
+    // Revocations made by another process (the CLI) are stored in the database but do not
+    // reach the in-process listener above: re-check open responses periodically.
+    const recheck = setInterval(() => {
+      for (const clientId of http.revalidateOpenResponses()) {
+        const inactive = !clients.isClientActive(clientId);
+        const cancelled = inactive ? dispatcher.cancelClient(clientId) : 0;
+        logger.info('closed MCP responses whose token is no longer valid', {
+          clientId,
+          cancelledQueued: cancelled,
+        });
+      }
+    }, options.streamRecheckMs ?? STREAM_RECHECK_MS);
+    recheck.unref();
+
     const sweep = setInterval(() => {
       try {
         approvals.expireStale();
@@ -297,6 +329,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       stop: async () => {
         if (stopped) return;
         stopped = true;
+        clearInterval(recheck);
         clearInterval(sweep);
         clearInterval(pruneTimer);
         const closed = new Promise<void>((resolve) => {
@@ -323,11 +356,13 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
           // The database may be unavailable during an emergency shutdown.
         }
         storage.close();
+        instanceLock.release();
         logger.info('service stopped');
       },
     };
   } catch (error) {
     storage.close();
+    instanceLock.release();
     throw error;
   }
 }

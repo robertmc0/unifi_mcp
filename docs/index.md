@@ -1,8 +1,8 @@
 # unifi-local-mcp documentation
 
-> **Project status: Phase 1 in progress. The service starts and serves MCP over HTTP and stdio; no UniFi
-> operations are registered until the Network adapter (Phase 2).**
-> See [phase-checklist.md](phase-checklist.md) for what is implemented and what is next.
+> **Project status: Phase 1 in progress. The service starts and serves MCP over HTTP and stdio,
+> and is administered with the host-only `unifi-mcp` CLI; no UniFi operations are registered
+> until the Network adapter (Phase 2).**
 > See [phase-checklist.md](phase-checklist.md) for what is implemented and what is next.
 
 ## Design and decisions
@@ -28,7 +28,7 @@
 | [security.md](security.md) (permissions, write safety, client tokens, console connections)               | 1 (started)     |
 | quickstart.md, installation.md                                                                           | 1               |
 | [approval-workflow.md](approval-workflow.md)                                                             | 1 (started)     |
-| administration.md                                                                                        | 1               |
+| [administration.md](administration.md) (the `unifi-mcp` CLI, bootstrap file, maintenance)                | 1 (started)     |
 | [client-generic-mcp.md](client-generic-mcp.md) (HTTP and stdio connection, tools, results)               | 1 (started)     |
 | client-claude-code.md, client-codex.md                                                                   | 1               |
 | [networking.md](networking.md) (MCP listener, egress)                                                    | 1 (started) / 5 |

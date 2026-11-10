@@ -5,6 +5,7 @@
  * (CA, pinning, explicit insecure override), the bounded HTTPS transport and the
  * OperationExecutor that the dispatcher uses to reach consoles (ADR 0012).
  */
+export { checkConsoleConnection, type ConsoleCheck } from './check.ts';
 export {
   ConsoleError,
   ConsoleRegistry,

@@ -30,6 +30,8 @@ export type StorageErrorCode =
   | 'BACKUP_FAILED'
   | 'RESTORE_REJECTED'
   | 'DATABASE_IN_USE'
+  // One service per data directory
+  | 'DATA_DIRECTORY_IN_USE'
   // Translated SQLite runtime conditions
   | 'STORAGE_BUSY'
   | 'STORAGE_FULL'

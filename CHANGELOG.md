@@ -51,7 +51,25 @@ All notable changes to this project are documented here. The format follows
   messages unchanged to the service over authenticated Streamable HTTP for 2025-era and
   2026-era clients; holds one client token and nothing else; stdout carries protocol
   frames only; refuses remote plaintext and redirects; clear exit codes.
-- Operator manual: `docs/configuration.md` (hard lock, MCP listener, audit retention,
+- Host administration CLI (`packages/cli`, ADR 0015): `unifi-mcp` with `admin`, `client`,
+  `console`, `policy`, `approvals`, `config`, `crypto`, `db`, `audit`, `doctor` and
+  `api coverage` commands; `--json` output and stable exit codes; secrets only from
+  files or hidden prompts; interactive-only approval with a typed confirmation;
+  terminal-safe output that escapes control, escape-sequence and bidirectional
+  characters; `--dry-run` for permission changes; a declarative YAML bootstrap file
+  (`config import|apply`, one transaction, idempotent, never deletes, credentials only by
+  file reference) with `deploy/example-bootstrap.yaml`; `console check` that shows the
+  certificate pin without sending a request.
+- Administrator accounts (`packages/admin-api`, storage migration 8): Argon2id password
+  hashes from `node:crypto`, first-administrator bootstrap and password recovery from the
+  CLI only, constant-time verification.
+- One service per data directory: an exclusive lock that the operating system releases
+  when the holder exits; master key rotation and restore are refused while the service
+  runs. The rotation and its audit entry now commit together.
+- Open MCP responses are re-checked every 5 seconds, so revocations, rotations and
+  disabled clients from the CLI (another process) also close streams in the running
+  service.
+- Operator manual: `docs/administration.md`; `docs/configuration.md` (hard lock, MCP listener, audit retention,
   egress allowlist, data directory, logging, master key), `docs/networking.md`,
   `docs/client-generic-mcp.md`, `docs/security.md` (permission model, write safety, console
   connections), `docs/approval-workflow.md`,

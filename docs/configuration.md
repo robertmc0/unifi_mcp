@@ -2,9 +2,8 @@
 
 > **Status: Phase 1 in progress.** This page covers the settings implemented so far: the
 > hard lock, the MCP listener, audit retention, the egress allowlist, the data directory,
-> logging and the master encryption key. Listener, policy, bootstrap YAML and
-> runtime-mode settings are added here as they are implemented. Commands shown as
-> `unifi-mcp …` belong to the CLI, which is not built yet (Phase 1 step 9).
+> logging and the master encryption key. The bootstrap YAML file, policy and runtime mode
+> are managed with the CLI ([administration.md](administration.md)).
 
 Configuration precedence (spec §8.1): immutable deployment overrides first, then settings
 stored in the database, then YAML/environment bootstrap values. The settings on this page
@@ -59,11 +58,12 @@ listed. See [security.md](security.md#connections-to-consoles).
 
 Contents:
 
-| Path                              | What it is                                                                   |
-| --------------------------------- | ---------------------------------------------------------------------------- |
-| `unifi-mcp.db` (+ `-wal`, `-shm`) | The SQLite database (WAL mode). Mode 0600.                                   |
-| `backups/`                        | Automatic pre-migration backups (see [backup-restore.md](backup-restore.md)) |
-| `unifi-mcp.db.pre-restore-*`      | The database a restore replaced, kept for you to inspect or delete           |
+| Path                              | What it is                                                                                                                              |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `unifi-mcp.db` (+ `-wal`, `-shm`) | The SQLite database (WAL mode). Mode 0600.                                                                                              |
+| `backups/`                        | Pre-migration, pre-rotation and manual backups (see [backup-restore.md](backup-restore.md))                                             |
+| `unifi-mcp.db.pre-restore-*`      | The database a restore replaced, kept for you to inspect or delete                                                                      |
+| `instance.lock`                   | Held by the running service so that only one uses this directory. Mode 0600. Never delete it while the service runs; it is never stale. |
 
 Requirements:
 
@@ -71,8 +71,10 @@ Requirements:
   on NFS, SMB or other network filesystems; the service refuses to start if WAL cannot be
   enabled.
 - **One service instance per data directory.** Never mount the same writable data
-  directory into two running services (spec §3.1). The CLI may open it while the service
-  runs.
+  directory into two running services (spec §3.1). The service enforces this: a second
+  service on the same directory exits with `DATA_DIRECTORY_IN_USE`. The CLI may open the
+  directory while the service runs, except for master key rotation and restore (see
+  [administration.md](administration.md)).
 - The service creates the directory with mode 0700 and the database with mode 0600 if
   they do not exist. Keep the volume readable only by the service user.
 
@@ -107,8 +109,8 @@ mkdir -p secrets
 chmod 0400 secrets/unifi_mcp_master_key
 ```
 
-`unifi-mcp crypto generate-key` (CLI, not yet available) will do the same, writing the
-file with mode 0400 and refusing to overwrite an existing file. Mount the file read-only into the container, for example as a
+`unifi-mcp crypto generate-key --out <file>` does the same, writing the file with mode
+0400 and refusing to overwrite an existing file. Mount the file read-only into the container, for example as a
 Docker secret at `/run/secrets/unifi_mcp_master_key`, and set
 `UNIFI_MCP_MASTER_KEY_FILE` to that path (see `.env.example`). The service warns if the
 file is readable by group or other users.

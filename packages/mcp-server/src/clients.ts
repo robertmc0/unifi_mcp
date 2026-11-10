@@ -127,7 +127,7 @@ export class ClientStore {
         'The client id must be 1–64 lowercase letters, digits, ".", "_" or "-".',
       );
     }
-    const policy = this.#validatePolicy(clientId, input.policy ?? {});
+    const policy = this.validatePolicy(clientId, input.policy ?? {});
     return this.#db.transaction(() => {
       if (this.#db.get('SELECT 1 AS x FROM clients WHERE id = ?', [clientId]) !== undefined) {
         throw new ClientError('client_exists', `A client "${clientId}" already exists.`);
@@ -189,7 +189,7 @@ export class ClientStore {
   /** Replaces the client's policy (status, expiry, consoles, grants, sensitive grants). */
   setPolicy(clientId: string, input: unknown, actor: PolicyActor): ClientView {
     assertActor(actor);
-    const policy = this.#validatePolicy(clientId, input);
+    const policy = this.validatePolicy(clientId, input);
     const view = this.#db.transaction(() => {
       this.#require(clientId);
       this.#writePolicy(clientId, policy);
@@ -246,11 +246,7 @@ export class ClientStore {
     const expiresAt = columnOptionalText(row, 'expires_at');
     if (expiresAt !== null && Date.parse(expiresAt) <= now.getTime()) return undefined;
     const clientId = columnText(row, 'client_id');
-    const policy = this.policy(clientId);
-    if (policy?.status !== 'active') return undefined;
-    if (policy.expiresAt !== undefined && Date.parse(policy.expiresAt) <= now.getTime()) {
-      return undefined;
-    }
+    if (!this.isClientActive(clientId)) return undefined;
     this.#touch(clientId, tokenId, columnOptionalText(row, 'last_used_at'), now);
     return { clientId, tokenId };
   }
@@ -261,7 +257,14 @@ export class ClientStore {
     if (row === undefined || columnOptionalText(row, 'revoked_at') !== null) return false;
     const expiresAt = columnOptionalText(row, 'expires_at');
     if (expiresAt !== null && Date.parse(expiresAt) <= this.#now().getTime()) return false;
-    return this.policy(columnText(row, 'client_id'))?.status === 'active';
+    return this.isClientActive(columnText(row, 'client_id'));
+  }
+
+  /** True while the client is active and not expired (its status and expiry in the policy). */
+  isClientActive(clientId: string): boolean {
+    const policy = this.policy(clientId);
+    if (policy?.status !== 'active') return false;
+    return policy.expiresAt === undefined || Date.parse(policy.expiresAt) > this.#now().getTime();
   }
 
   /** The validated client policy, or undefined (deny) if missing or invalid. */
@@ -308,7 +311,8 @@ export class ClientStore {
     ).changes;
   }
 
-  #validatePolicy(clientId: string, input: unknown): ClientPolicy {
+  /** Validates a client policy exactly as `create`/`setPolicy` do, without storing it. */
+  validatePolicy(clientId: string, input: unknown): ClientPolicy {
     const candidate =
       typeof input === 'object' && input !== null ? { ...input, clientId } : { clientId };
     const parsed = ClientPolicySchema.safeParse(candidate);

@@ -7,5 +7,20 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@unifi-local-mcp/admin-api": "0.0.0",
+    "@unifi-local-mcp/approvals": "0.0.0",
+    "@unifi-local-mcp/core": "0.0.0",
+    "@unifi-local-mcp/mcp-server": "0.0.0",
+    "@unifi-local-mcp/policy": "0.0.0",
+    "@unifi-local-mcp/storage": "0.0.0",
+    "@unifi-local-mcp/telemetry": "0.0.0",
+    "@unifi-local-mcp/unifi-api": "0.0.0",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "bin": {
+    "unifi-mcp": "./src/main.ts"
   }
 }

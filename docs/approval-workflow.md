@@ -1,9 +1,8 @@
 # Approval workflow
 
 > **Status: Phase 1 in progress.** The workflow is implemented and tested in
-> `packages/approvals` and the dispatcher (ADR 0011). The MCP tools that expose it
-> (step 7), the CLI commands (step 9) and the admin UI page (step 10) are not built yet;
-> names below marked "not yet available" may still change.
+> `packages/approvals` and the dispatcher (ADR 0011), with the MCP tools (ADR 0013) and
+> the CLI commands (ADR 0015). The admin UI page is Phase 1 step 10.
 
 High-risk operations, such as changing firewall rules, rebooting a gateway or unlocking a
 door, never run just because an AI client asks. A human approves each one.
@@ -14,10 +13,11 @@ door, never run just because an AI client asks. A human approves each one.
    arguments). Because it is high risk, it is not executed. The client receives
    `approval_required`, an **approval id**, the expiry time and a summary.
 2. **A human decides.** An administrator reviews the request in the admin UI, or a host
-   administrator uses the CLI (`unifi-mcp approvals list|show|approve|reject`, not yet
-   available), and approves or rejects it.
-3. **The same AI client resumes.** It calls resume with the approval id (MCP tool, not yet
-   available). Only the client that made the request can do this.
+   administrator uses the CLI (`unifi-mcp approvals list|show|approve|reject`, see
+   [administration.md](administration.md#approvals-approvals)), and approves or rejects
+   it.
+3. **The same AI client resumes.** It calls `unifi_resume_approved` with the approval id.
+   Only the client that made the request can do this.
 4. **Everything is checked again.** The approval's expiry, the client, the security
    policy, the hard lock and every permission are checked again before the action runs. It
    then runs exactly once, through the same path as every other write.
@@ -43,6 +43,15 @@ soon as the request is approved and used, rejected, expired or invalidated.
 
 Administrators must have signed in within the last 5 minutes to approve. A deployment can
 also require a verified second factor (MFA arrives with the admin UI).
+
+### Approving with the CLI
+
+`unifi-mcp approvals approve <id>` works only at an interactive terminal: it shows the
+request and asks you to type the first 8 characters of its id. It cannot be scripted or
+piped, and there is no `--yes`. Request text comes from the AI client, so control
+characters, terminal escape sequences and bidirectional-text characters in it are shown
+as `\uXXXX` and cannot rewrite or reorder the screen. The decision is recorded as
+`cli:<operating-system user>`. `approvals reject` can be scripted.
 
 ## When an approval stops working
 

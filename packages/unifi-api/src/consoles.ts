@@ -216,9 +216,38 @@ export class ConsoleRegistry {
     });
   }
 
-  /** Replaces the console policy (state, sites, rules and module states). */
-  setPolicy(consoleId: string, input: unknown, actor: PolicyActor): ConsoleView {
+  /** Changes the host and/or description. A host change affects where credentials go. */
+  updateDetails(
+    consoleId: string,
+    changes: { host?: string; description?: string | null },
+    actor: PolicyActor,
+  ): ConsoleView {
     assertActor(actor);
+    const host = changes.host === undefined ? undefined : validateHost(changes.host);
+    return this.#db.transaction(() => {
+      const current = this.#require(consoleId);
+      const description =
+        changes.description === undefined
+          ? current.description
+          : (changes.description?.trim().slice(0, 500) ?? null);
+      this.#db.run('UPDATE consoles SET host = ?, description = ?, updated_at = ? WHERE id = ?', [
+        host ?? current.host,
+        description,
+        this.#now().toISOString(),
+        consoleId,
+      ]);
+      this.#record(actor, 'console.update', consoleId, {
+        hostChanged: host !== undefined && host !== current.host,
+      });
+      if (host !== undefined && host !== current.host)
+        bumpPolicyVersion(this.#db, actor, this.#now);
+      return this.#require(consoleId);
+    });
+  }
+
+  /** Replaces the console policy (state, sites, rules and module states). */
+  /** Validates a console policy exactly as `setPolicy` does, without storing it. */
+  validatePolicy(consoleId: string, input: unknown): ConsolePolicy {
     const candidate =
       typeof input === 'object' && input !== null ? { ...input, consoleId } : { consoleId };
     const parsed = ConsolePolicySchema.safeParse(candidate);
@@ -226,18 +255,22 @@ export class ConsoleRegistry {
       throw invalid(`The console policy is invalid:\n${describeValidationError(parsed.error)}`);
     const unknownModules = Object.keys(parsed.data.modules).filter((id) => !isModuleId(id));
     if (unknownModules.length > 0) throw invalid(`Unknown modules: ${unknownModules.join(', ')}.`);
+    return parsed.data;
+  }
+
+  setPolicy(consoleId: string, input: unknown, actor: PolicyActor): ConsoleView {
+    assertActor(actor);
+    const policy = this.validatePolicy(consoleId, input);
     return this.#db.transaction(() => {
       this.#require(consoleId);
       this.#db.run('UPDATE consoles SET policy = ?, updated_at = ? WHERE id = ?', [
-        JSON.stringify(parsed.data),
+        JSON.stringify(policy),
         this.#now().toISOString(),
         consoleId,
       ]);
       this.#record(actor, 'console.policy_update', consoleId, {
-        state: parsed.data.state,
-        modules: Object.fromEntries(
-          Object.entries(parsed.data.modules).map(([id, m]) => [id, m.state]),
-        ),
+        state: policy.state,
+        modules: Object.fromEntries(Object.entries(policy.modules).map(([id, m]) => [id, m.state])),
       });
       bumpPolicyVersion(this.#db, actor, this.#now);
       return this.#require(consoleId);

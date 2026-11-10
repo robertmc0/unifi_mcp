@@ -1,9 +1,9 @@
 # Backup, restore and key rotation
 
-> **Status: Phase 1 in progress.** The storage behaviour described here is implemented and
-> tested (`packages/storage`, ADR 0007). The operator commands (`unifi-mcp db …`,
-> `unifi-mcp crypto …`) arrive with the CLI in Phase 1 step 9 and are marked as not yet
-> available.
+> **Status: Phase 1 in progress.** The storage behaviour and the operator commands
+> (`unifi-mcp db …`, `unifi-mcp crypto …`) described here are implemented and tested
+> (`packages/storage`, ADR 0007; `packages/cli`, ADR 0015). Docker commands for the
+> offline steps follow with the container packaging (Phase 1 step 11).
 
 ## What needs backing up
 
@@ -27,7 +27,12 @@ even while the service is running, and it includes changes not yet checkpointed 
 WAL. Each backup is integrity-checked before it is kept, and a backup never overwrites an
 existing file.
 
-- **Manual backup:** `unifi-mcp db backup` (CLI, not yet available).
+- **Manual backup:** `unifi-mcp db backup [--out <file>]`, safe while the service runs.
+  The default file is `$UNIFI_MCP_DATA_DIR/backups/manual-<UTC timestamp>.db`. The command
+  prints the backup's SHA-256, size, schema version and key identifier, and records the
+  backup in the audit trail.
+- **Automatic pre-rotation backup:** `crypto rotate-key` first writes
+  `backups/pre-rotation-<UTC timestamp>.db`, which needs the **old** key.
 - **Automatic pre-migration backup:** when a new release needs to upgrade the database
   schema, the service first writes
   `$UNIFI_MCP_DATA_DIR/backups/pre-migration-v<from>-to-v<to>-<UTC timestamp>.db`. If that
@@ -38,8 +43,12 @@ existing file.
 
 A backup can be verified without changing it or the live database, using the same checks
 as a restore (below). Verification reports the schema version, the key identifier and the
-number of encrypted records. The CLI exposes this with the `unifi-mcp db` commands (not
-yet available).
+number of encrypted records:
+
+- `unifi-mcp db check --backup <file>` verifies a backup file.
+- `unifi-mcp db check` checks the live database read-only, also while the service runs: a
+  full integrity check, the master key, decryption of every credential, and the audit
+  chain. It exits 1 if anything is wrong.
 
 ## Restore
 
@@ -48,7 +57,7 @@ Restore replaces the live database with a backup. It is an offline operation.
 1. Stop the service.
 2. Make sure the configured master key is the key that was active when the backup was
    taken.
-3. Run `unifi-mcp db restore` with the backup file (CLI, not yet available).
+3. Run `unifi-mcp db restore <file>`. Type `restore` to confirm, or pass `--yes`.
 4. Start the service. If the backup is from an older release, the service upgrades it,
    taking a pre-migration backup first.
 
@@ -60,9 +69,10 @@ Before anything is replaced, the restore validates a private copy of the backup:
 - its active key identifier equals the configured key's identifier;
 - every encrypted record decrypts and authenticates with that key.
 
-If any check fails, the restore stops with `RESTORE_REJECTED` and nothing changes. If the
-service (or another process) still has the database open, the restore stops with
-`DATABASE_IN_USE` and nothing changes.
+If any check fails, the restore stops with `RESTORE_REJECTED` and nothing changes. While
+the service runs, the restore is refused with `DATA_DIRECTORY_IN_USE`. If another process
+still has the database open, it stops with `DATABASE_IN_USE`. In both cases nothing
+changes. The restore is recorded in the restored database's audit trail.
 
 The database that was replaced is kept as `unifi-mcp.db.pre-restore-<UTC timestamp>` in
 the data directory. Delete it once you have confirmed the restore.
@@ -72,18 +82,20 @@ the data directory. Delete it once you have confirmed the restore.
 Rotate the key if it may have been exposed, or on your own schedule. Rotation is an
 offline operation.
 
-1. Stop the service and take a backup. Note that this backup needs the **current** key.
-2. Create a new key file (see [configuration.md](configuration.md#creating-a-key)).
-3. Run `unifi-mcp crypto rotate-key` with the current and new key files (CLI, not yet
-   available).
+1. Stop the service.
+2. Create a new key file: `unifi-mcp crypto generate-key --out <new key file>`.
+3. With the current key still configured, run
+   `unifi-mcp crypto rotate-key --new-key-file <new key file>` and type `rotate` to
+   confirm. It first writes a verified backup (`backups/pre-rotation-…`), which needs the
+   **current** key.
 4. Point `UNIFI_MCP_MASTER_KEY_FILE` at the new key and start the service.
 5. Archive the old key for as long as you keep backups that need it.
 
 Rotation re-encrypts every record in one transaction and verifies each one (and the
 record count) before committing. If anything fails, nothing changes and the current key
-stays valid. A key that was used before cannot be reactivated. If a service process is
-still running during rotation, it can no longer write credentials with the old key and
-must be restarted with the new key.
+stays valid. A key that was used before cannot be reactivated. The rotation and its audit
+entry are committed together. While the service runs, rotation is refused with
+`DATA_DIRECTORY_IN_USE`.
 
 ## Disaster recovery
 
@@ -98,8 +110,9 @@ must be restarted with the new key.
 
 ## Error codes
 
-| Code               | Meaning                                                                                                                                   |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `BACKUP_FAILED`    | The backup could not be written or did not pass its integrity check (the source database may be damaged). No partial file is left behind. |
-| `RESTORE_REJECTED` | The backup failed validation; the message names the check. Nothing was changed.                                                           |
-| `DATABASE_IN_USE`  | Another process has the database open. Stop the service and retry.                                                                        |
+| Code                    | Meaning                                                                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `BACKUP_FAILED`         | The backup could not be written or did not pass its integrity check (the source database may be damaged). No partial file is left behind. |
+| `RESTORE_REJECTED`      | The backup failed validation; the message names the check. Nothing was changed.                                                           |
+| `DATABASE_IN_USE`       | Another process has the database open. Stop the service and retry.                                                                        |
+| `DATA_DIRECTORY_IN_USE` | The service (or another maintenance command) is using the data directory. Stop the service and retry.                                     |

@@ -14,6 +14,7 @@ export {
   type RestoreResult,
 } from './backup.ts';
 export { isStorageError, StorageError, type StorageErrorCode } from './errors.ts';
+export { acquireInstanceLock, INSTANCE_LOCK_FILENAME, type InstanceLock } from './instance-lock.ts';
 export { readActiveKeyId, rotateMasterKey, type RotationResult } from './keys.ts';
 export {
   loadMasterKey,
@@ -40,6 +41,8 @@ export {
   columnOptionalText,
   columnText,
   SqliteDatabase,
+  tryLockFile,
+  type FileLock,
   type IntegrityReport,
   type OpenDatabaseOptions,
   type Row,

@@ -1,8 +1,9 @@
 # Logs, audit trail and health checks
 
 > **Status: Phase 1 in progress.** Logging, the audit trail and the health checks are
-> implemented (ADR 0008) and served by the MCP listener (ADR 0013). The CLI commands for
-> the audit trail come with the CLI (step 9). Prometheus metrics are Phase 5.
+> implemented (ADR 0008) and served by the MCP listener (ADR 0013). The CLI reads and
+> verifies the audit trail (`unifi-mcp audit list|verify`, ADR 0015). Prometheus metrics
+> are Phase 5.
 
 ## Runtime logs
 
@@ -51,9 +52,9 @@ words.
 
 The audit trail is stored in the database (`audit_entries`) and records every MCP read
 and write, every permission denial, admin logins and security changes, approval
-decisions, and important system events. Audit pruning and audit recovery are recorded
-already; startup, backup, key rotation and restore events are recorded once the service
-and CLI that perform them exist (Phase 1 steps 7 and 9).
+decisions, CLI changes (as `cli:<operating-system user>`), and system events such as
+service start and stop, backups, master key rotation, restores, audit pruning and audit
+recovery.
 
 Each entry has: sequence number, id, UTC time, event type, action, outcome (`success`,
 `denied`, `failure`, `pending`, `outcome_unknown`), actor (MCP client, admin, CLI or
@@ -68,7 +69,7 @@ identifiers, never complete sensitive responses, images or credentials.
 - **Immutable.** Entries cannot be updated. They are removed only by retention pruning,
   which is itself recorded as an `audit.prune` entry.
 - **Tamper evident.** Each entry includes the hash of the previous one. Chain verification
-  (CLI, not yet available) reports the first entry that was edited or whose predecessor
+  (`unifi-mcp audit verify`, also part of `db check` and `doctor`) reports the first entry that was edited or whose predecessor
   was removed. The host administrator is trusted and could rewrite the database; the chain
   makes such changes visible, it cannot prevent them.
 - **Retention.** Entries older than `UNIFI_MCP_AUDIT_RETENTION_DAYS` (default 90) are
@@ -89,5 +90,5 @@ identifiers, never complete sensitive responses, images or credentials.
   is not ready.
 - The endpoints are unauthenticated and therefore return only the overall status. Check
   names and details (which can include console identifiers) are shown only to
-  administrators (admin UI and `unifi-mcp doctor`, not yet available).
+  administrators (`unifi-mcp doctor`, and the admin UI in Phase 1 step 10).
 - Responses are `Cache-Control: no-store` and accept only `GET` and `HEAD`.

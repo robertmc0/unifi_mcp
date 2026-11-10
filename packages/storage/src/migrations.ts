@@ -235,6 +235,24 @@ CREATE TABLE client_tokens (
 CREATE INDEX client_tokens_client ON client_tokens (client_id);
 `,
   },
+  {
+    // Administrator accounts for the admin UI (spec §7.2; ADR 0015). Passwords are stored
+    // only as Argon2id hashes. Queries live in @unifi-local-mcp/admin-api.
+    version: 8,
+    name: 'admins',
+    sql: `
+CREATE TABLE admins (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  username TEXT NOT NULL UNIQUE CHECK (length(username) BETWEEN 1 AND 64),
+  password_hash TEXT NOT NULL CHECK (password_hash GLOB '$argon2id$*'),
+  status TEXT NOT NULL CHECK (status IN ('active', 'disabled')),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  password_changed_at TEXT NOT NULL,
+  last_login_at TEXT
+) STRICT;
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `

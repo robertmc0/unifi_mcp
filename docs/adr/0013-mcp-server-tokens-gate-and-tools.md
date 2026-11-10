@@ -128,7 +128,10 @@ drain (10 s cap), close connections, `service.stop` audit entry, close the datab
 - The failed-authentication throttle is per process and per remote address; behind a proxy
   all clients share the proxy's address, so the throttle then protects the service, not
   individual clients.
-- Clients and consoles are managed through the stores until the CLI (step 9) exists.
+- Clients and consoles are managed with the CLI (ADR 0015). The in-process revocation
+  listener does not see revocations made by the CLI in another process, so the service
+  also re-checks the token of every open response every 5 seconds (ADR 0015). New
+  requests are refused at once in both cases.
 
 ## Re-evaluation triggers
 

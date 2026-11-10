@@ -51,6 +51,7 @@ export async function startTestService(options: {
   dir: string;
   forceReadOnly?: boolean;
   withConsole?: boolean;
+  streamRecheckMs?: number;
 }): Promise<TestService> {
   const pki = testPki();
   const logs: string[] = [];
@@ -67,6 +68,7 @@ export async function startTestService(options: {
     operations: OPERATIONS,
     inventory,
     logSink: { write: (line: string) => logs.push(line) },
+    ...(options.streamRecheckMs === undefined ? {} : { streamRecheckMs: options.streamRecheckMs }),
   });
   const mock = await MockConsole.start({ key: pki.serverKey, cert: pki.serverCert });
   running.push({

@@ -7,5 +7,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@unifi-local-mcp/policy": "0.0.0",
+    "@unifi-local-mcp/storage": "0.0.0",
+    "@unifi-local-mcp/telemetry": "0.0.0"
   }
 }

@@ -70,7 +70,8 @@ export class McpHttpService {
   readonly #validateOrigin: (req: IncomingMessage, res: ServerResponse) => boolean;
   readonly #failures = new RateLimiter();
   readonly #blockedUntil = new Map<string, number>();
-  readonly #open = new Map<string, Set<ServerResponse>>();
+  /** Open MCP responses per client, with the token each was authenticated with. */
+  readonly #open = new Map<string, Map<ServerResponse, string>>();
 
   constructor(options: McpHttpOptions) {
     this.#options = options;
@@ -97,9 +98,38 @@ export class McpHttpService {
   closeClientResponses(clientId: string): number {
     const open = this.#open.get(clientId);
     if (open === undefined) return 0;
-    for (const res of open) res.destroy();
+    for (const res of open.keys()) res.destroy();
     this.#open.delete(clientId);
     return open.size;
+  }
+
+  /**
+   * Closes every open response whose token is no longer valid: revoked, expired, or its
+   * client revoked, disabled or expired. This also catches changes made by another process,
+   * such as the CLI, which in-process revocation listeners never see. If the check itself
+   * fails, the response is closed (fail closed). Returns the ids of affected clients.
+   */
+  revalidateOpenResponses(): string[] {
+    const affected: string[] = [];
+    for (const [clientId, open] of this.#open) {
+      let closed = false;
+      for (const [res, tokenId] of open) {
+        let active = false;
+        try {
+          active = this.#options.clients.isTokenActive(tokenId);
+        } catch (error) {
+          this.#options.logger.error('could not re-check an open MCP response', { err: error });
+        }
+        if (!active) {
+          res.destroy();
+          open.delete(res);
+          closed = true;
+        }
+      }
+      if (open.size === 0) this.#open.delete(clientId);
+      if (closed) affected.push(clientId);
+    }
+    return affected;
   }
 
   async #handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -147,10 +177,10 @@ export class McpHttpService {
 
     let open = this.#open.get(identity.clientId);
     if (open === undefined) {
-      open = new Set();
+      open = new Map();
       this.#open.set(identity.clientId, open);
     }
-    open.add(res);
+    open.set(res, identity.tokenId);
     res.on('close', () => {
       const set = this.#open.get(identity.clientId);
       set?.delete(res);

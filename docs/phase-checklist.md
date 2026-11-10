@@ -53,8 +53,9 @@ explicitly, never dropped silently.
    verified key rotation, backup verification, validated offline restore, automatic
    pre-migration backups. Tests: `tests/unit/storage/`, `tests/security/storage-master-key.test.ts`.
    Still open, carried into later steps: `linux/arm64` run of the storage tests (step 11);
-   CLI `crypto generate-key|rotate-key` and `db backup|restore|check` (step 9); retention
-   of automatic backups; single-instance guard per data directory (step 7).
+   ~~CLI `crypto generate-key|rotate-key` and `db backup|restore|check`~~ (done in step 9);
+   retention of automatic backups; ~~single-instance guard per data directory~~ (done in
+   step 9).
 2. ✅ **telemetry** (2026-11-10): JSON logger with redaction, audit writer (fails safe on storage
    exhaustion), liveness/readiness. → `packages/telemetry`, storage migration 2
    (`audit_entries`), [ADR 0008](adr/0008-telemetry-logging-audit-health.md),
@@ -64,7 +65,8 @@ explicitly, never dropped silently.
    Still open, carried into later steps: mounting `/livez` and `/readyz` and a Docker
    `HEALTHCHECK` (steps 7 and 11); token string pattern in redaction once the token format
    exists (step 7); audit-before-act wiring in the dispatcher (step 4); retention setting
-   and scheduled pruning, CLI audit and chain-verification commands (step 9).
+   and scheduled pruning (done in step 7), CLI audit and chain-verification commands
+   (done in step 9).
 3. ✅ **policy** (2026-11-10): evaluation order §6.1, deployment hard lock, runtime mode, scope
    intersection, default deny for writes and sensitive reads. → `packages/policy`, storage
    migration 3 (`security_policy`), [ADR 0009](adr/0009-policy-evaluation-model.md),
@@ -76,7 +78,7 @@ explicitly, never dropped silently.
    Still open, carried into later steps: running `evaluate()` at enqueue, dispatch and
    resume (step 4); binding approvals to the policy version (step 5); storing console and
    client policies with `bumpPolicyVersion` (steps 6 and 7); `policy show|validate|set-runtime-mode`
-   and YAML import (step 9).
+   and YAML import (done in step 9).
 4. ✅ **core** (2026-11-10): `OperationDescriptor` registry, central dispatcher (checks at enqueue _and_
    dispatch), bounded queues, rate limits, resource locks, durable operation IDs.
    → `packages/core`, storage migration 4 (`operation_executions`),
@@ -99,7 +101,7 @@ explicitly, never dropped silently.
    Fixed on the way: `presharedKey`-style field names were not redacted (ADR 0008).
    Tests: `tests/unit/approvals/`, `tests/security/approval-gates.test.ts`.
    Still open, carried into later steps: MCP resume/status tools (step 7); CLI
-   `approvals list|show|approve|reject` (step 9); admin UI page with recent-auth and MFA
+   `approvals list|show|approve|reject` (done in step 9); admin UI page with recent-auth and MFA
    (step 10); periodic `expireStale()` in the service (step 7); console-state diff and
    preconditions (Phase 2).
 6. ✅ **unifi-api** (2026-11-10): HTTPS client with TLS verify, CA and pinning, egress allowlist, DNS
@@ -114,7 +116,7 @@ explicitly, never dropped silently.
    bypass the verified socket. Tests: `tests/unit/unifi-api/`,
    `tests/contract/module-endpoints.test.ts`, `tests/security/unifi-transport-gates.test.ts`.
    Still open, carried into later steps: wiring `ConsoleRegistry` and the client store into
-   the `SecurityContextProvider` (step 7); CLI `console add|list|check|disable` (step 9);
+   the `SecurityContextProvider` (step 7); CLI `console add|list|check|disable` (done in step 9);
    module capability probes and application-level response checks (Phase 2–4).
 7. ✅ **mcp-server** (2026-11-10): bearer gate and Host/Origin allowlist in front of `createMcpHandler`;
    per-client tool factory; `unifi_list_consoles`, `unifi_list_sites` (stub until Phase 2),
@@ -128,7 +130,7 @@ explicitly, never dropped silently.
    retention timers. `unifi_list_sites` is registered once an adapter provides site listing
    (Phase 2). Tests: `tests/unit/mcp-server/`, `tests/integration-mock/`.
    Still open, carried into later steps: stdio bridge (step 8); CLI for clients and consoles
-   (step 9); Claude Code and Codex client guides verified against their releases (step 12).
+   (done in step 9); Claude Code and Codex client guides verified against their releases (step 12).
 8. ✅ **stdio-bridge** (2026-11-10): spike and decide the transport-relay design (ADR 0003, Proposed).
    → `packages/stdio-bridge`, [ADR 0014](adr/0014-stdio-bridge-transport-relay.md) (relay
    accepted), [client-generic-mcp.md](client-generic-mcp.md#connecting-over-stdio). Also done:
@@ -137,8 +139,26 @@ explicitly, never dropped silently.
    codes; console redirection. Tests: `tests/unit/stdio-bridge/`,
    `tests/integration-mock/stdio-bridge.test.ts`, `tests/security/stdio-bridge-isolation.test.ts`.
    Still open, carried into later steps: packaging the bridge for client machines (step 11).
-9. **cli**: `admin bootstrap/reset-*`, `client`, `console`, `policy`, `approvals`,
-   `config`, `crypto`, `db`, `doctor`, `api coverage`.
+9. ✅ **cli** (2026-11-10): `admin bootstrap/reset-password`, `client`, `console`, `policy`,
+   `approvals`, `config`, `crypto`, `db`, `audit`, `doctor`, `api coverage`.
+   → `packages/cli`, `packages/admin-api` (accounts and Argon2id), storage migration 8
+   (`admins`), [ADR 0015](adr/0015-host-administration-cli.md),
+   [administration.md](administration.md), `deploy/example-bootstrap.yaml`. Also done:
+   interactive-only approval with typed confirmation; secrets only from files or hidden
+   prompts; terminal-safe output (control, C1 and bidi characters escaped, found while
+   reviewing the approval screen); `--dry-run` through the stores' own validators;
+   idempotent, never-deleting bootstrap apply in one transaction; `console check` with
+   certificate pin and no request; single-instance data-directory lock (open since step 1),
+   enforced for the service, key rotation and restore; open responses re-checked every 5 s
+   so CLI revocations reach running streams (a gap found here: the in-process listener of
+   step 7 never sees another process); key rotation and its audit entry in one
+   transaction; `config validate` checks embedded policies. Tests: `tests/unit/cli/`,
+   `tests/unit/admin-api/`, `tests/unit/storage/instance-lock.test.ts`,
+   `tests/security/cli-invariants.test.ts`, `tests/integration-mock/cli-beside-service.test.ts`,
+   `tests/integration-mock/instance-lock.test.ts`; 29 mutation checks.
+   Still open, carried into later steps: `admin reset-mfa` with MFA (step 10); Docker
+   commands for offline maintenance and the `unifi-mcp` command in the image (step 11);
+   retention of automatic backups.
 10. **admin-api / admin-ui**: separate listener (loopback default), sessions, CSRF,
     approvals page.
 11. **Packaging**: Dockerfile (multi-stage, non-root, read-only rootfs), `deploy/compose.single.yml`,
@@ -152,7 +172,8 @@ explicitly, never dropped silently.
       (`tests/integration-mock/mcp-http.test.ts`, `tests/integration-mock/stdio-bridge.test.ts`)
 - [x] Two differently scoped tokens see different tool lists; revocation blocks calls and subscriptions
       (`tests/integration-mock/mcp-http.test.ts`: different tools; next call refused; open
-      responses, including listen streams, closed)
+      responses, including listen streams, closed; also for revocations made with the CLI
+      in another process: `tests/integration-mock/cli-beside-service.test.ts`)
 - [x] No configured console: safe start, no write tools (`tests/integration-mock/mcp-http.test.ts`)
 - [x] Hard lock denies registered writes via `unifi_execute`, queued work and previously approved actions
       (`tests/integration-mock/mcp-http.test.ts`, `tests/security/dispatcher-gates.test.ts`,
@@ -160,9 +181,13 @@ explicitly, never dropped silently.
 - [x] Generic execution cannot reach an unregistered path, alternate URL or arbitrary verb
       (`tests/security/dispatcher-gates.test.ts`, `tests/security/unifi-transport-gates.test.ts`;
       `unifi_execute` has a strict schema and calls the same dispatcher)
-- [ ] High-risk action requires independent CLI/UI approval and cannot be approved via MCP
-      (not via MCP: verified, `tests/integration-mock/mcp-http.test.ts` and
-      `tests/security/approval-gates.test.ts`; the CLI/UI approval commands in steps 9–10)
+- [x] High-risk action requires independent CLI/UI approval and cannot be approved via MCP
+      (not via MCP: `tests/integration-mock/mcp-http.test.ts`,
+      `tests/security/approval-gates.test.ts`; CLI approval end to end, MCP request →
+      interactive `approvals approve` in another process → single MCP resume:
+      `tests/integration-mock/cli-beside-service.test.ts`,
+      `tests/security/cli-invariants.test.ts`; the admin UI approval page is step 10 and
+      gets its own tests there)
 - [x] Reused, expired, parameter-changed, wrong-client and policy-changed approvals all fail
       (`tests/security/approval-gates.test.ts`; reuse also through the MCP resume tool)
 - [x] Wrong or missing master key and failed migration fail closed; migrations and backups tested

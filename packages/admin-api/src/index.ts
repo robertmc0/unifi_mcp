@@ -1,10 +1,21 @@
 /**
  * @unifi-local-mcp/admin-api
  *
- * Separate administration HTTP API with independent authentication, sessions, CSRF and MFA.
- *
- * Phase 0 skeleton only. Implementation is scheduled for Phase 1
- * (see docs/phase-checklist.md). Do not add UniFi endpoints here that are
- * not recorded in api-specs/ and docs/api-coverage/.
+ * Administrator identities (ADR 0015). The separate admin listener, sessions, CSRF and the
+ * approvals page follow in Phase 1 step 10.
  */
-export {};
+export {
+  AdminError,
+  AdminStore,
+  type AdminErrorCode,
+  type AdminStoreOptions,
+  type AdminView,
+} from './admins.ts';
+export {
+  ARGON2_PARAMETERS,
+  hashPassword,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  passwordProblem,
+  verifyPassword,
+} from './passwords.ts';

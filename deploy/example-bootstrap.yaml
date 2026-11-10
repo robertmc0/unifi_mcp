@@ -1,0 +1,48 @@
+# Example bootstrap file for `unifi-mcp config import --file …` (shows the plan) and
+# `unifi-mcp config apply --file …` (applies it in one transaction). See
+# docs/administration.md#bootstrap-file.
+#
+# Synthetic values only: 192.0.2.0/24 is a documentation address range (RFC 5737), and the
+# pin below is a placeholder. Applying never deletes anything that is not in this file.
+version: 1
+
+# Global policy (optional). Keep read_only until you have tested your client policies; the
+# deployment hard lock UNIFI_MCP_FORCE_READ_ONLY still overrides it.
+policy:
+  runtimeMode: read_only
+  deny:
+    - 'access.*.write'
+
+consoles:
+  - alias: home
+    host: 192.0.2.1
+    description: Home gateway
+    tls:
+      # verify (system CAs, or caFile: path/to/ca.pem), pinned, or insecure (not recommended).
+      # Get the pin with `unifi-mcp console check home`.
+      mode: pinned
+      pins:
+        - 'sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+    policy:
+      state: enabled
+      enabledSites: '*'
+      modules:
+        network:
+          state: read_only
+    modules:
+      network:
+        # A file holding the UniFi Network API key, for example a Docker secret. Relative
+        # paths are relative to this file. Keys can never be written inline.
+        credentialFile: /run/secrets/unifi_home_network_api_key
+
+clients:
+  - id: claude-code-laptop
+    description: Claude Code on the laptop
+    policy:
+      # Console aliases from above (or console ids), each with the sites it may target.
+      consoles:
+        home:
+          sites: '*'
+      # Nothing is granted by default, reads included.
+      allow:
+        - 'network.*.read'

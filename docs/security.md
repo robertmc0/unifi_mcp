@@ -3,9 +3,9 @@
 > **Status: Phase 1 in progress.** This page currently covers the permission model
 > (`packages/policy`, ADR 0009), write safety (`packages/core`, ADR 0010), client tokens
 > (`packages/mcp-server`, ADR 0013) and connections to consoles (`packages/unifi-api`,
-> ADR 0012). Client tokens, the approval workflow, TLS
-> and network isolation are added as they are implemented. Commands shown as
-> `unifi-mcp …` belong to the CLI (Phase 1 step 9) and are not available yet.
+> ADR 0012). The approval workflow is in [approval-workflow.md](approval-workflow.md) and
+> host administration in [administration.md](administration.md) (ADR 0015). TLS and
+> network isolation are added as they are implemented.
 
 ## Principles
 
@@ -40,13 +40,13 @@ Every request is checked in this order. The first failure denies it.
 
 Writes are off at five independent levels, and all five must be changed on purpose:
 
-| Level      | Default                                            | Changed by                                              |
-| ---------- | -------------------------------------------------- | ------------------------------------------------------- |
-| Deployment | Hard lock **on** (also when the variable is unset) | `UNIFI_MCP_FORCE_READ_ONLY=false` and a restart         |
-| Service    | Runtime mode read-only                             | `unifi-mcp policy set-runtime-mode` (not yet available) |
-| Console    | Enabled (reads and writes)                         | Console policy                                          |
-| Module     | Read-only once enabled on a console                | Console policy, per module                              |
-| Client     | No grants at all                                   | Client scopes                                           |
+| Level      | Default                                            | Changed by                                      |
+| ---------- | -------------------------------------------------- | ----------------------------------------------- |
+| Deployment | Hard lock **on** (also when the variable is unset) | `UNIFI_MCP_FORCE_READ_ONLY=false` and a restart |
+| Service    | Runtime mode read-only                             | `unifi-mcp policy set-runtime-mode`             |
+| Console    | Enabled (reads and writes)                         | Console policy                                  |
+| Module     | Read-only once enabled on a console                | Console policy, per module                      |
+| Client     | No grants at all                                   | Client scopes                                   |
 
 The hard lock cannot be changed from the database, the admin UI or an MCP client. While it
 is on, no write runs through any path, including actions that were already approved.
@@ -129,11 +129,27 @@ Each MCP client has its own identity and bearer token (ADR 0013).
   when it is created or rotated. The service stores only a hash of it.
 - Every request is checked against the token store, so revoking a token or a client stops
   it at once. Revocation also cancels the client's queued work and closes its open
-  connections.
+  connections: at once inside the service, and within 5 seconds when it was made with the
+  CLI from another process.
 - Repeated failed sign-ins from one address are throttled.
 - The token is never logged, stored in the audit trail or passed to tool code. Logs and
   audit entries show the client id and the token id.
 - Only an administrator or the CLI can create, rotate or revoke tokens.
+
+## Host administration
+
+The `unifi-mcp` CLI ([administration.md](administration.md)) is host-level authority:
+whoever can run it can change any policy and approve any request. It has no network
+listener and nothing in MCP reaches it. Never give it, `docker exec` access to the
+container, or the Docker socket to an AI agent.
+
+- Secrets are never command-line arguments: passwords are typed at a hidden prompt, API
+  keys come from files or a hidden prompt.
+- Approving is interactive only (no `--yes`, no pipes), with a typed confirmation.
+- Output escapes control, terminal-escape and bidirectional-text characters, so text from
+  UniFi or an AI client cannot rewrite what the operator sees.
+- Only one service can use a data directory, and master key rotation and restore are
+  refused while it runs.
 
 ## Connections to consoles
 

@@ -87,6 +87,41 @@ function createPrivateFileIfMissing(path: string): void {
   }
 }
 
+/** An exclusive lock on a file, held until `release()` or until the process exits. */
+export interface FileLock {
+  readonly path: string;
+  release(): void;
+}
+
+/**
+ * Takes an exclusive SQLite lock on `path` (created with mode 0600 if missing) without
+ * waiting. The operating system drops the lock when the process ends, even after a crash
+ * or `kill -9`, so a stale lock cannot remain. Returns `undefined` when another connection,
+ * in this or another process, holds it. Needs a local filesystem, like SQLite itself.
+ */
+export function tryLockFile(path: string): FileLock | undefined {
+  createPrivateFileIfMissing(path);
+  const raw = new Database(path, { timeout: 0 });
+  try {
+    raw.exec('PRAGMA locking_mode=EXCLUSIVE');
+    raw.exec('BEGIN EXCLUSIVE');
+  } catch (error) {
+    raw.close();
+    const translated = translateSqliteError(error);
+    if (translated instanceof StorageError && translated.code === 'STORAGE_BUSY') return undefined;
+    throw translated;
+  }
+  let held = true;
+  return {
+    path,
+    release: () => {
+      if (!held) return;
+      held = false;
+      raw.close();
+    },
+  };
+}
+
 export class SqliteDatabase {
   readonly path: string;
   readonly readOnly: boolean;
