@@ -301,18 +301,23 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
    evidence from the registered adapters (`packages/mcp-server/src/adapters.ts`);
    `api:reconcile` check 7 and `tests/contract/api-coverage-matrix.test.ts` fail on drift;
    `unifi-mcp api coverage` counts implemented operations (ADR 0018 §6).
-7. **Live read-only test** (opt-in, never in CI) and a manual write runbook.
+7. ✅ **Live read-only test and write runbook** (2026-11-10): `npm run test:live`
+   (opt-in, never in CI), dry-run against the synthetic console; reviewed reports feed
+   `liveReadValidation`; [runbook-network-writes.md](runbook-network-writes.md)
+   (ADR 0018 §7). **Open: a run against a real console (the owner's).**
 8. **Docs**: `applications-network.md`, ADR 0018, client and security updates.
 
 ### Gate (spec §16)
 
 - [x] Every Network v11.0.97 operation in the coverage report with status and test evidence
       ([network/11.0.97.md](api-coverage/network/11.0.97.md): 73 of 73 implemented, evidence per operation)
-- [ ] Version probe; incompatible versions get a clear unsupported error with no guessed fallback
-- [ ] All documented reads mock-tested with sanitised output; writes tested for authz, approval and duplicates
+- [x] Version probe; incompatible versions get a clear unsupported error with no guessed fallback
+      (`tests/integration-mock/network-version-probe.test.ts`)
+- [x] All documented reads mock-tested with sanitised output; writes tested for authz, approval and duplicates
+      (`tests/integration-mock/network-reads.test.ts`, `tests/integration-mock/network-writes.test.ts`)
 - [ ] Optional live read-only test (console, site, device, client, network); no state-changing request
 - [ ] Field shapes, pagination, filtering and errors compared against official docs
-- [ ] Manual human-approved write runbook (not CI)
+- [x] Manual human-approved write runbook (not CI) ([runbook-network-writes.md](runbook-network-writes.md))
 - [ ] Resolve flagged unknowns: key scope across apps, read-only keys, filtering/pagination
 
 ## Phase 3 — UniFi Protect

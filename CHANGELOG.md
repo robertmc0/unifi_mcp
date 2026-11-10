@@ -12,6 +12,8 @@ All notable changes to this project are documented here. The format follows
   request schemas, response schemas that strip undocumented fields, discriminated unions
   with JSON Schema semantics, and no vendor prose. Generated Network 11.0.97 schemas in
   `packages/unifi-network/src/generated/`; `api:reconcile` fails when they are stale.
+- Opt-in live read-only test (`npm run test:live`, never in CI) and a manual write runbook
+  (ADR 0018 §7).
 - Coverage matrix from the registered adapters (ADR 0018 §6): status, reviewed metadata
   and test evidence per operation; reconciliation and an offline test fail on drift;
   `unifi-mcp api coverage` counts implemented operations.

@@ -195,6 +195,20 @@ client's resume; medium needs only explicit grants.
   `tests/contract/api-coverage-matrix.test.ts` regenerate the matrix and compare.
   `unifi-mcp api coverage` counts the registered operations.
 
+### 7. Live read-only test and write runbook (step 7)
+
+- `tests/integration-live-readonly/network.test.ts` (`npm run test:live`, opt-in through
+  `UNIFI_LIVE_*`, excluded from `npm run check` and CI) runs every read against a real
+  console. Only the reads are registered, a guard refuses non-GET requests, the hard lock
+  is on and the client can only read. It also records paging, a filter, and whether the
+  Network key authorises one documented Protect read (ADR 0005). Its report holds
+  operation ids, outcomes and the version only. A committed, reviewed report
+  (`docs/api-coverage/live/<module>-<revision>.json`) sets `liveReadValidation` for the
+  reads that passed.
+- Whether a local API key can be made read-only cannot be learned without a write, so it
+  stays unverified.
+- Writes on a real console: the manual, human-approved `docs/runbook-network-writes.md`.
+
 ## Evidence
 
 - `tests/unit/scripts/openapi-zod.test.ts` (synthetic documents only, 25 tests):
@@ -262,6 +276,12 @@ client's resume; medium needs only explicit grants.
 - Step 6: the regenerated matrix reports 73 of 73 Network operations implemented (27 high,
   5 medium, 41 low; 2 off by default) with evidence; `api:reconcile` flagged the stale
   matrix before regeneration; a changed risk makes the matrix test fail (mutation check).
+- Step 7: the live test was dry-run against the synthetic console
+  (`tests/fixtures/serve-network-console.ts`): 43 reads ok, 1 skipped (nothing to read),
+  45 requests, all GET. `tests/contract/live-tests.test.ts` keeps it opt-in, out of CI,
+  reads-only and hard-locked; `tests/contract/api-coverage-matrix.test.ts` checks that only
+  reads that passed in a live record are marked validated. No real console has been tested
+  yet.
 
 ## Consequences
 

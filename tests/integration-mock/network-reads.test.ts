@@ -157,7 +157,8 @@ describe('every documented Network read', () => {
         const returned = JSON.stringify(envelope);
         expect(returned, label).not.toContain('SENTINEL');
         expect(returned, label).not.toContain(NETWORK_KEY);
-        expect(returned, label).toContain('v:'); // documented values do come through
+        // Documented values do come through (sample strings or sample ids).
+        expect(returned, label).toMatch(/v:|00000000-0000-4000-8000-/);
         if ((descriptor.queryParameters ?? []).includes('limit')) {
           expect(Array.isArray(envelope.data), label).toBe(true);
           expect(envelope.pagination, label).toMatchObject({

@@ -19,6 +19,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:live": "vitest run --config vitest.live.config.ts",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test",
     "unifi-mcp": "node packages/cli/src/main.ts",
     "api:fetch-specs": "node scripts/fetch-api-specs.ts",

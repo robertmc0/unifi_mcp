@@ -10,7 +10,7 @@
  * deterministic (no timestamps): `npm run api:reconcile` regenerates it and fails when the
  * committed files differ.
  */
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { OperationDescriptor } from '@unifi-local-mcp/core';
 import { ADAPTERS } from '@unifi-local-mcp/mcp-server';
@@ -43,6 +43,52 @@ const EVIDENCE: Record<string, { all: string[]; read: string[]; write: string[] 
     write: ['tests/integration-mock/network-writes.test.ts'],
   },
 };
+
+/**
+ * A reviewed result of the opt-in live read-only test (`UNIFI_LIVE_REPORT`), committed as
+ * docs/api-coverage/live/<application>-<revision>.json. It holds operation ids, outcomes
+ * and the console version, never names, addresses, ids or data.
+ */
+interface LiveRecord {
+  module: string;
+  revision: string;
+  date: string;
+  applicationVersion: string;
+  results: { operationId: string; outcome: string }[];
+}
+
+function isLiveRecord(value: unknown): value is LiveRecord {
+  const r = value as Partial<LiveRecord> | null;
+  return (
+    typeof r?.module === 'string' &&
+    typeof r.revision === 'string' &&
+    typeof r.date === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(r.date) &&
+    typeof r.applicationVersion === 'string' &&
+    /^[0-9][0-9A-Za-z.+-]{0,63}$/.test(r.applicationVersion) &&
+    Array.isArray(r.results) &&
+    r.results.every((x) => typeof x.operationId === 'string' && typeof x.outcome === 'string')
+  );
+}
+
+async function readLiveRecord(
+  liveDir: string,
+  application: string,
+  revision: string,
+): Promise<LiveRecord | undefined> {
+  const path = join(liveDir, `${application}-${revision}.json`);
+  let text: string;
+  try {
+    text = await readFile(path, 'utf8');
+  } catch {
+    return undefined;
+  }
+  const record: unknown = JSON.parse(text);
+  if (!isLiveRecord(record) || record.module !== application || record.revision !== revision) {
+    throw new Error(`${path} is not a live read-only record for ${application} ${revision}.`);
+  }
+  return record;
+}
 
 interface CoverageOperation {
   key: string;
@@ -83,7 +129,7 @@ function escapeCell(text: string): string {
   return text.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 }
 
-function markdown(p: Provenance, ops: CoverageOperation[]): string {
+function markdown(p: Provenance, ops: CoverageOperation[], live?: LiveRecord): string {
   const contract = p.artifacts.find((a) => a.role === 'contract');
   const count = (pred: (o: CoverageOperation) => boolean): number => ops.filter(pred).length;
   const implemented = count((o) => o.status === 'implemented');
@@ -112,7 +158,7 @@ function markdown(p: Provenance, ops: CoverageOperation[]): string {
     lines.push(
       `| Reviewed risk | ${risk('high')} high (human approval), ${risk('medium')} medium, ${risk('low')} low |`,
       `| Off by default | ${reviewed.filter((o) => o.defaultDisabled === true).length} |`,
-      `| Live read-only validation | ${count((o) => o.liveReadValidation)} (opt-in, never in CI) |`,
+      `| Live read-only validation | ${count((o) => o.liveReadValidation)}${live === undefined ? ' (opt-in, never in CI; not yet recorded)' : ` (${live.date}, Network ${live.applicationVersion}; opt-in, never in CI)`} |`,
       '',
       '## Evidence',
       '',
@@ -183,7 +229,10 @@ function markdown(p: Provenance, ops: CoverageOperation[]): string {
 }
 
 /** Every coverage file, by path relative to the repository root, with its content. */
-export async function buildCoverageFiles(): Promise<Map<string, string>> {
+export async function buildCoverageFiles(
+  options: { liveDir?: string } = {},
+): Promise<Map<string, string>> {
+  const liveDir = options.liveDir ?? join(COVERAGE_DIR, 'live');
   const files = new Map<string, string>();
   const modules = [];
   const registered = new Map<string, OperationDescriptor>();
@@ -197,6 +246,10 @@ export async function buildCoverageFiles(): Promise<Map<string, string>> {
     const p = rev.provenance;
     const inventory = await readJson<Inventory>(join(rev.dir, 'operations.json'));
     const evidence = EVIDENCE[p.application];
+    const live = await readLiveRecord(liveDir, p.application, p.revision);
+    const liveOk = new Set(
+      (live?.results ?? []).filter((r) => r.outcome === 'ok').map((r) => r.operationId),
+    );
     for (const file of evidence === undefined
       ? []
       : [...evidence.all, ...evidence.read, ...evidence.write]) {
@@ -229,7 +282,7 @@ export async function buildCoverageFiles(): Promise<Map<string, string>> {
         sensitivity: d === undefined ? null : [...d.sensitivityTags].sort(),
         schemaValidation: d !== undefined,
         mockTests: d !== undefined && evidence !== undefined,
-        liveReadValidation: false,
+        liveReadValidation: d !== undefined && d.effect === 'read' && liveOk.has(d.operationId),
         evidence:
           d === undefined || evidence === undefined
             ? []
@@ -237,7 +290,7 @@ export async function buildCoverageFiles(): Promise<Map<string, string>> {
         provisional: classifyProvisionally(p.application, op),
       };
     });
-    files.set(`docs/api-coverage/${p.application}/${p.revision}.md`, markdown(p, ops));
+    files.set(`docs/api-coverage/${p.application}/${p.revision}.md`, markdown(p, ops, live));
     modules.push({
       application: p.application,
       revision: p.revision,

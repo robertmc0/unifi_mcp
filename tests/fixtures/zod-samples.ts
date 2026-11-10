@@ -89,7 +89,10 @@ export function sample(schema: z.ZodType, options: SampleOptions = {}, path = '$
       return result;
     }
     case 'string': {
-      if (d.format === 'guid' || d.format === 'uuid') return uuid();
+      // Identifiers look like the console's (UUIDs), so they can be used as targets.
+      if (d.format === 'guid' || d.format === 'uuid' || /(^|\.)(id|\w+Id)$/.test(path)) {
+        return uuid();
+      }
       if (d.format === 'datetime') return '2026-11-10T12:00:00Z';
       if (d.format === 'date') return '2026-11-10';
       const max = bound(d, 'max') ?? 64;

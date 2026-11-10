@@ -2,7 +2,8 @@
 
 > **Status: Phase 2 in progress.** All 73 documented operations of the Network Integration
 > API 11.0.97 (41 reads, 32 writes) are implemented and tested against a synthetic console.
-> Testing against real consoles is optional and opt-in (see the phase checklist).
+> Testing against a real console is optional and opt-in
+> ([below](#testing-against-a-real-console)).
 
 The service uses the **official local** UniFi Network Integration API on each console,
 `https://<console>/proxy/network/integration/v1/…`, with the API key you stored for the
@@ -130,6 +131,52 @@ Operations that are off by default must be listed in the global policy's
 None of these writes has a concurrency precondition in the contract (no version or ETag).
 An approved write applies the approved arguments to whatever the console holds at that
 moment, so review the current state before approving.
+
+## Testing against a real console
+
+### Read-only checks
+
+`npm run test:live` runs every read against your console from a source checkout. It is
+never part of `npm run check` or CI.
+
+- Only the reads are registered in that process.
+- A guard refuses anything that is not a GET.
+- The hard lock is on, and the client can only read.
+- It runs one documented Protect read with the same key, to learn whether a Network key
+  also works for Protect (an open question, [ADR 0005](adr/0005-official-local-unifi-api-contracts.md)).
+
+```sh
+unifi-mcp console check <alias>          # shows the certificate pin
+UNIFI_LIVE_HOST=<console address> \
+UNIFI_LIVE_NETWORK_KEY_FILE=<file with the API key> \
+UNIFI_LIVE_TLS_PIN=sha256/… \
+UNIFI_LIVE_REPORT=docs/api-coverage/live/network-11.0.97.json \
+npm run test:live
+```
+
+Instead of `UNIFI_LIVE_TLS_PIN` you can give `UNIFI_LIVE_CA_FILE` (a PEM file). Set
+`UNIFI_LIVE_PORT` if the console does not use 443.
+
+The test fails on any read that does not match the contract. Reads with nothing to read
+(for example, no vouchers) are reported as skipped.
+
+The report records only these facts:
+
+- the outcome of each operation;
+- the console's Network version;
+- whether paging and a filter worked;
+- whether the key also worked for Protect.
+
+It holds no names, addresses, ids or data. Read it, then commit it as
+`docs/api-coverage/live/network-11.0.97.json` and run `npm run api:coverage-report`. The
+coverage matrix then marks the reads that passed as live-validated.
+
+The test was dry-run against the synthetic console (`tests/fixtures/serve-network-console.ts`).
+
+### Writes
+
+Validating writes on a real console is a manual runbook, approved step by step by you:
+[runbook-network-writes.md](runbook-network-writes.md).
 
 ## Limitations
 
