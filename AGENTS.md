@@ -15,7 +15,8 @@ These rules apply to Codex, Claude Code and human contributors alike.
 
 ## Resuming work (new machine or new session)
 
-1. Prerequisites: Node.js 26.13.0+ on the 26.x LTS line (`.node-version`), npm 11, Git.
+1. Prerequisites: Node.js 26.13.0+ on the 26.x LTS line (`.node-version`), npm 11, Git,
+   and the `openssl` CLI (the test suite generates synthetic TLS certificates at run time).
    Docker with buildx is needed from Phase 1 (container build and smoke tests).
 2. `npm ci`
 3. `npm run api:fetch-specs`: the vendor API cache (`api-specs/**/vendor/`) is not in

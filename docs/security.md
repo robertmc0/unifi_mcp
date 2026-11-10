@@ -1,7 +1,8 @@
 # Security model
 
 > **Status: Phase 1 in progress.** This page currently covers the permission model
-> (`packages/policy`, ADR 0009) and write safety (`packages/core`, ADR 0010). Client tokens, the approval workflow, TLS
+> (`packages/policy`, ADR 0009), write safety (`packages/core`, ADR 0010) and connections
+> to consoles (`packages/unifi-api`, ADR 0012). Client tokens, the approval workflow, TLS
 > and network isolation are added as they are implemented. Commands shown as
 > `unifi-mcp …` belong to the CLI (Phase 1 step 9) and are not available yet.
 
@@ -118,6 +119,48 @@ Every operation, whatever tool started it, runs through one dispatcher (ADR 0010
   path are in the official vendor contract recorded in `api-specs/`. Unknown arguments are
   rejected, and argument values can never change the request path, host, method or
   headers.
+
+## Connections to consoles
+
+The service talks only to consoles an administrator has configured, and only through the
+documented local API of each module (ADR 0012).
+
+- **Only allowed networks.** Before every connection the console's address is resolved and
+  checked against the egress allowlist (private networks, carrier-grade NAT and IPv6
+  unique-local by default; see `UNIFI_MCP_EGRESS_ALLOW_CIDRS` in
+  [configuration.md](configuration.md)). If a host name resolves to any address outside
+  the allowlist, nothing is sent. The connection goes to the checked address, so a DNS
+  change in between cannot redirect it. Cloud metadata, multicast and unspecified
+  addresses are always refused.
+- **Verified TLS.** By default the console certificate must be valid for the configured
+  host and issued by a trusted CA, or by a CA you configure for that console. For consoles
+  with self-signed certificates, configure a **pin** instead (see below). Turning
+  verification off is possible only per console, is recorded in the audit trail and is
+  logged as a warning. The certificate is checked before anything, including the API key,
+  is sent.
+- **Fixed requests.** Method, path, query parameters and body come from the reviewed
+  operation; argument values are encoded and cannot change the host, path or headers.
+  Redirects are never followed. Responses are size-limited.
+- **Credentials are write-only.** API keys and tokens are stored encrypted and are never
+  shown again by the service, in its logs or in the audit trail.
+- **Version checks.** An operation runs only if the console's application version is known
+  and within the range the operation was reviewed for.
+
+### Computing a pin
+
+A pin is the base64 SHA-256 of the certificate's public key (`sha256/…`). Read it from the
+console (replace the host and port):
+
+```sh
+openssl s_client -connect 192.0.2.10:443 -servername 192.0.2.10 </dev/null 2>/dev/null \
+  | openssl x509 -pubkey -noout \
+  | openssl pkey -pubin -outform der \
+  | openssl dgst -sha256 -binary | base64
+```
+
+Compare the value with the console itself (for example on its local display or a trusted
+network) before trusting it. A pin stops working when the console generates a new key, so
+configure the new pin before the old certificate is replaced.
 
 ## Policy changes
 

@@ -34,8 +34,15 @@ All notable changes to this project are documented here. The format follows
   the dispatcher and a complete audit trail.
 - Redaction now also covers PSK, pre-shared key, passkey and further `<qualifier> key`
   field names.
-- Operator manual: `docs/configuration.md` (hard lock, data directory, logging, master
-  key), `docs/security.md` (permission model, write safety), `docs/approval-workflow.md`,
+- UniFi transport (`packages/unifi-api`, ADR 0012): console registry with encrypted,
+  write-only credentials; egress allowlist with DNS re-validation; TLS verification with
+  custom CA, SPKI pinning or an explicit audited insecure override, checked before any
+  request byte is sent; fixed requests from reviewed descriptors; redirects refused;
+  response size caps; error mapping that never passes upstream text through; capability
+  from observed application versions.
+- Operator manual: `docs/configuration.md` (hard lock, egress allowlist, data directory,
+  logging, master key), `docs/security.md` (permission model, write safety, console
+  connections), `docs/approval-workflow.md`,
   `docs/backup-restore.md` and `docs/monitoring.md`.
 
 ### Added — Phase 0: research and contract baseline

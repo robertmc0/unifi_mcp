@@ -5,7 +5,8 @@ MCP clients such as Claude Code and Codex controlled access to the **official lo
 APIs** of UniFi applications (Network, Protect, Access). AI clients connect to this
 server, never to UniFi. UniFi credentials never leave the server.
 
-> **Status: Phase 1 (secure platform core) is in progress; storage, telemetry, policy, the dispatcher and approvals are done.
+> **Status: Phase 1 (secure platform core) is in progress; storage, telemetry, policy, the dispatcher, approvals and the UniFi
+> transport are done.
 > There is no runnable server yet.** See [docs/phase-checklist.md](docs/phase-checklist.md).
 
 ## Design principles
@@ -22,14 +23,14 @@ server, never to UniFi. UniFi credentials never leave the server.
 
 ## Repository map
 
-| Path                                                   | Contents                                                                                                     |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| [`unifi-mcp-design-spec.md`](unifi-mcp-design-spec.md) | The design specification (source of truth)                                                                   |
-| [`docs/`](docs/index.md)                               | Manual, ADRs, threat model, API coverage                                                                     |
-| [`api-specs/`](api-specs/README.md)                    | Vendor contract provenance and operation inventories                                                         |
-| `packages/`                                            | Workspace packages (`storage`, `telemetry`, `policy`, `core`, `approvals` implemented; others are skeletons) |
-| `scripts/`                                             | API contract tooling (fetch, reconcile, coverage report)                                                     |
-| `tests/`                                               | Contract, unit and security tests (later integration and compatibility)                                      |
+| Path                                                   | Contents                                                                                                                  |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| [`unifi-mcp-design-spec.md`](unifi-mcp-design-spec.md) | The design specification (source of truth)                                                                                |
+| [`docs/`](docs/index.md)                               | Manual, ADRs, threat model, API coverage                                                                                  |
+| [`api-specs/`](api-specs/README.md)                    | Vendor contract provenance and operation inventories                                                                      |
+| `packages/`                                            | Workspace packages (`storage`, `telemetry`, `policy`, `core`, `approvals`, `unifi-api` implemented; others are skeletons) |
+| `scripts/`                                             | API contract tooling (fetch, reconcile, coverage report)                                                                  |
+| `tests/`                                               | Contract, unit and security tests (later integration and compatibility)                                                   |
 
 ## Development
 

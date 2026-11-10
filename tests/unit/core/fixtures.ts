@@ -71,6 +71,7 @@ export const listDevices = defineOperation({
   description: 'List devices of a site.',
   httpMethod: 'GET',
   pathTemplate: '/v1/sites/{siteId}/devices',
+  queryParameters: ['limit'],
   retryClass: 'safe-read',
   inputSchema: z.strictObject({ limit: z.number().int().min(1).max(200).optional() }),
   outputSchema: z.object({
@@ -148,6 +149,7 @@ export const updateFirewallRule = defineOperation({
   description: 'Change a firewall rule.',
   httpMethod: 'PUT',
   pathTemplate: '/v1/sites/{siteId}/firewall/rules/{ruleId}',
+  requestBody: 'json',
   retryClass: 'idempotent',
   inputSchema: z.strictObject({
     ruleId: z.uuid(),

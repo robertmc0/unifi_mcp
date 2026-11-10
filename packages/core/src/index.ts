@@ -57,3 +57,4 @@ export {
   type SchedulerErrorCode,
   type SchedulerLimits,
 } from './scheduler.ts';
+export { parseRange, parseVersion, satisfies, type VersionRange } from './versions.ts';

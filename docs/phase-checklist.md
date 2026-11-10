@@ -102,9 +102,20 @@ explicitly, never dropped silently.
    `approvals list|show|approve|reject` (step 9); admin UI page with recent-auth and MFA
    (step 10); periodic `expireStale()` in the service (step 7); console-state diff and
    preconditions (Phase 2).
-6. **unifi-api**: HTTPS client with TLS verify, CA and pinning, egress allowlist, DNS
+6. ✅ **unifi-api** (2026-11-10): HTTPS client with TLS verify, CA and pinning, egress allowlist, DNS
    re-validation, redirects refused, timeouts and size caps. Synthetic mock console server
-   for tests.
+   for tests. → `packages/unifi-api`, storage migration 6 (`consoles`, `console_modules`),
+   [ADR 0012](adr/0012-unifi-transport-egress-and-console-registry.md),
+   [security.md](security.md#connections-to-consoles). Also done: console registry with
+   write-only encrypted credentials, audited changes and policy-version bumps; module
+   endpoints checked against provenance; runtime contract inventory from `operations.json`;
+   capability from observed versions and `apiVersionRange`; declared argument placement
+   (path, query, body) enforced at registration. Fixed on the way: `agent: false` would
+   bypass the verified socket. Tests: `tests/unit/unifi-api/`,
+   `tests/contract/module-endpoints.test.ts`, `tests/security/unifi-transport-gates.test.ts`.
+   Still open, carried into later steps: wiring `ConsoleRegistry` and the client store into
+   the `SecurityContextProvider` (step 7); CLI `console add|list|check|disable` (step 9);
+   module capability probes and application-level response checks (Phase 2–4).
 7. **mcp-server**: bearer gate and Host/Origin allowlist in front of `createMcpHandler`;
    per-client tool factory; `unifi_list_consoles`, `unifi_list_sites` (stub until Phase 2),
    `unifi_list_modules`, `unifi_list_operations`, `unifi_describe_operation`,
@@ -128,8 +139,8 @@ explicitly, never dropped silently.
       (dispatcher verified for direct, queued and previously approved writes; the MCP tool in
       step 7)
 - [ ] Generic execution cannot reach an unregistered path, alternate URL or arbitrary verb
-      (dispatcher and registry verified by `tests/security/dispatcher-gates.test.ts`; still to
-      verify through the MCP `unifi_execute` tool and the HTTP executor in steps 6–7)
+      (dispatcher, registry and HTTPS executor verified by `tests/security/dispatcher-gates.test.ts`
+      and `tests/security/unifi-transport-gates.test.ts`; the MCP `unifi_execute` tool in step 7)
 - [ ] High-risk action requires independent CLI/UI approval and cannot be approved via MCP
       (approval service and dispatcher verified by `tests/security/approval-gates.test.ts`;
       the MCP tool list is verified in step 7, CLI/UI approval paths in steps 9–10)

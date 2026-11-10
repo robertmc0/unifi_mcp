@@ -9,6 +9,7 @@
  */
 import { assertOperationSecurity, type OperationSecurity } from '@unifi-local-mcp/policy';
 import * as z from 'zod';
+import { parseRange } from './versions.ts';
 
 export const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 export type HttpMethod = (typeof HTTP_METHODS)[number];
@@ -36,6 +37,12 @@ export interface OperationDescriptor<
   httpMethod: HttpMethod;
   /** Fixed path from the official documentation, with `{name}` placeholders. */
   pathTemplate: string;
+  /** Input fields sent as query parameters. */
+  queryParameters?: readonly string[];
+  /** `json`: input fields not used in the path or query form the JSON request body. */
+  requestBody?: 'json';
+  /** Response size cap in bytes. Default 4 MiB, maximum 32 MiB. */
+  maxResponseBytes?: number;
   /** Must be a strict object schema: unknown arguments are rejected, never passed on. */
   inputSchema: Input;
   outputSchema: Output;
@@ -122,6 +129,20 @@ export function validateDescriptor(
   if (descriptor.namedTool !== undefined && !TOOL_NAME.test(descriptor.namedTool)) {
     problems.push('invalid namedTool');
   }
+  if (parseRange(descriptor.apiVersionRange) === undefined) {
+    problems.push('apiVersionRange must be comparators such as ">=10.1 <12"');
+  }
+  if (descriptor.requestBody === 'json' && descriptor.httpMethod === 'GET') {
+    problems.push('a GET operation has no request body');
+  }
+  if (
+    descriptor.maxResponseBytes !== undefined &&
+    (!Number.isInteger(descriptor.maxResponseBytes) ||
+      descriptor.maxResponseBytes < 1 ||
+      descriptor.maxResponseBytes > 32 * 1024 * 1024)
+  ) {
+    problems.push('maxResponseBytes must be an integer from 1 to 33554432');
+  }
 
   const template = descriptor.pathTemplate;
   if (
@@ -149,6 +170,18 @@ export function validateDescriptor(
     }
     if (keys.has('siteId') || keys.has('consoleId')) {
       problems.push('consoleId and siteId are targets, not arguments');
+    }
+    // Every argument has exactly one, declared place in the request.
+    const query = new Set(descriptor.queryParameters ?? []);
+    for (const name of query) {
+      if (!keys.has(name)) problems.push(`query parameter ${name} is not an input field`);
+      if (placeholders.includes(name))
+        problems.push(`${name} is both a path and a query parameter`);
+    }
+    for (const key of keys) {
+      if (!placeholders.includes(key) && !query.has(key) && descriptor.requestBody !== 'json') {
+        problems.push(`argument ${key} has no place in the request (path, query or body)`);
+      }
     }
   }
   if (

@@ -1,7 +1,7 @@
 # Configuration
 
 > **Status: Phase 1 in progress.** This page covers the settings implemented so far: the
-> hard lock, the data directory, logging and the master encryption key. Listener, policy, bootstrap YAML and
+> hard lock, the egress allowlist, the data directory, logging and the master encryption key. Listener, policy, bootstrap YAML and
 > runtime-mode settings are added here as they are implemented. Commands shown as
 > `unifi-mcp …` belong to the CLI, which is not built yet (Phase 1 step 9).
 
@@ -19,6 +19,17 @@ This is an immutable deployment override: it is read at startup and cannot be ch
 the database, the admin UI or an MCP client. Leaving it unset keeps the lock on; set it to
 `false` deliberately to allow writes. See [security.md](security.md) for the other four
 levels that must also allow a write.
+
+## Egress allowlist
+
+| Variable                       | Default                                                          | Meaning                                                                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_EGRESS_ALLOW_CIDRS` | `10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,fc00::/7` | Comma-separated networks the service may connect to. When set, it replaces the default. A malformed entry stops the service at startup. |
+
+Narrow it to the networks your consoles are actually on, for example
+`192.168.1.0/24,10.8.0.0/24`. Loopback and link-local addresses are not allowed by default.
+Cloud metadata (`169.254.169.254`), multicast and unspecified addresses are refused even if
+listed. See [security.md](security.md#connections-to-consoles).
 
 ## Data directory
 

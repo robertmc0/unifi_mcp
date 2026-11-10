@@ -174,6 +174,39 @@ CREATE INDEX approval_requests_open ON approval_requests (status)
 CREATE INDEX approval_requests_client ON approval_requests (client_id, created_at);
 `,
   },
+  {
+    // Console registry (spec §4.2; ADR 0012). The console policy (state, sites, rules,
+    // module states) is the validated JSON in "policy"; credentials are secret records.
+    // Queries live in @unifi-local-mcp/unifi-api.
+    version: 6,
+    name: 'consoles',
+    sql: `
+CREATE TABLE consoles (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  alias TEXT NOT NULL UNIQUE CHECK (length(alias) BETWEEN 1 AND 63),
+  description TEXT CHECK (description IS NULL OR length(description) <= 500),
+  host TEXT NOT NULL CHECK (length(host) BETWEEN 1 AND 253),
+  tls_mode TEXT NOT NULL CHECK (tls_mode IN ('verify', 'pinned', 'insecure')),
+  tls_ca_pem TEXT CHECK (tls_ca_pem IS NULL OR length(tls_ca_pem) <= 65536),
+  tls_pins TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(tls_pins)),
+  policy TEXT NOT NULL CHECK (json_valid(policy) AND length(policy) <= 262144),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  CHECK (tls_mode = 'verify' OR tls_ca_pem IS NULL),
+  CHECK ((tls_mode = 'pinned') = (tls_pins <> '[]'))
+) STRICT;
+
+CREATE TABLE console_modules (
+  console_id TEXT NOT NULL REFERENCES consoles (id) ON DELETE CASCADE,
+  module_id TEXT NOT NULL CHECK (module_id IN ('network', 'protect', 'access')),
+  port INTEGER CHECK (port IS NULL OR port BETWEEN 1 AND 65535),
+  credential_secret_id TEXT REFERENCES secret_records (id),
+  observed_version TEXT CHECK (observed_version IS NULL OR length(observed_version) <= 64),
+  observed_at TEXT,
+  PRIMARY KEY (console_id, module_id)
+) STRICT;
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `
