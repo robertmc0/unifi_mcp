@@ -55,8 +55,16 @@ explicitly, never dropped silently.
    Still open, carried into later steps: `linux/arm64` run of the storage tests (step 11);
    CLI `crypto generate-key|rotate-key` and `db backup|restore|check` (step 9); retention
    of automatic backups; single-instance guard per data directory (step 7).
-2. **telemetry**: JSON logger with redaction, audit writer (fails safe on storage
-   exhaustion), liveness/readiness.
+2. ✅ **telemetry** (2026-11-10): JSON logger with redaction, audit writer (fails safe on storage
+   exhaustion), liveness/readiness. → `packages/telemetry`, storage migration 2
+   (`audit_entries`), [ADR 0008](adr/0008-telemetry-logging-audit-health.md),
+   [monitoring.md](monitoring.md). Also done: hash-chained, update-proof audit entries with
+   audited pruning and chain verification; readiness recovery probe; disk space check.
+   Tests: `tests/unit/telemetry/`, `tests/security/telemetry-redaction.test.ts`.
+   Still open, carried into later steps: mounting `/livez` and `/readyz` and a Docker
+   `HEALTHCHECK` (steps 7 and 11); token string pattern in redaction once the token format
+   exists (step 7); audit-before-act wiring in the dispatcher (step 4); retention setting
+   and scheduled pruning, CLI audit and chain-verification commands (step 9).
 3. **policy**: evaluation order §6.1, deployment hard lock, runtime mode, scope
    intersection, default deny for writes and sensitive reads.
 4. **core**: `OperationDescriptor` registry, central dispatcher (checks at enqueue _and_

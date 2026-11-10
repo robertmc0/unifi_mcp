@@ -56,6 +56,41 @@ CREATE TABLE secret_records (
 CREATE INDEX secret_records_key_id ON secret_records (key_id);
 `,
   },
+  {
+    // Audit trail (spec §12, ADR 0008). Queries live in @unifi-local-mcp/telemetry.
+    version: 2,
+    name: 'audit_entries',
+    sql: `
+CREATE TABLE audit_entries (
+  seq INTEGER PRIMARY KEY AUTOINCREMENT,
+  id TEXT NOT NULL UNIQUE CHECK (length(id) = 36),
+  occurred_at TEXT NOT NULL,
+  event_type TEXT NOT NULL CHECK (length(event_type) BETWEEN 1 AND 64),
+  action TEXT NOT NULL CHECK (length(action) BETWEEN 1 AND 128),
+  outcome TEXT NOT NULL
+    CHECK (outcome IN ('success', 'denied', 'failure', 'pending', 'outcome_unknown')),
+  actor_type TEXT NOT NULL CHECK (actor_type IN ('mcp_client', 'admin', 'cli', 'system')),
+  actor_id TEXT CHECK (actor_id IS NULL OR length(actor_id) BETWEEN 1 AND 128),
+  correlation_id TEXT CHECK (correlation_id IS NULL OR length(correlation_id) BETWEEN 1 AND 128),
+  console_id TEXT CHECK (console_id IS NULL OR length(console_id) BETWEEN 1 AND 128),
+  application TEXT CHECK (application IS NULL OR length(application) BETWEEN 1 AND 64),
+  operation_id TEXT CHECK (operation_id IS NULL OR length(operation_id) BETWEEN 1 AND 128),
+  error_code TEXT CHECK (error_code IS NULL OR length(error_code) BETWEEN 1 AND 128),
+  duration_ms INTEGER CHECK (duration_ms IS NULL OR duration_ms >= 0),
+  details TEXT NOT NULL CHECK (json_valid(details) AND length(details) <= 16384),
+  prev_hash TEXT NOT NULL CHECK (length(prev_hash) = 64),
+  entry_hash TEXT NOT NULL UNIQUE CHECK (length(entry_hash) = 64)
+) STRICT;
+
+CREATE INDEX audit_entries_occurred_at ON audit_entries (occurred_at);
+CREATE INDEX audit_entries_actor ON audit_entries (actor_type, actor_id, seq);
+
+CREATE TRIGGER audit_entries_immutable BEFORE UPDATE ON audit_entries
+BEGIN
+  SELECT RAISE(ABORT, 'audit entries are immutable');
+END;
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `

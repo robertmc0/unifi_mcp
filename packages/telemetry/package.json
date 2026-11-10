@@ -7,5 +7,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@unifi-local-mcp/storage": "0.0.0"
   }
 }

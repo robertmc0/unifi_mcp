@@ -14,8 +14,12 @@ All notable changes to this project are documented here. The format follows
   variable that fails closed when missing or wrong and is never generated implicitly;
   verified master key rotation; verified online backups, backup verification and
   validated offline restore; automatic pre-migration backups.
-- Operator manual: `docs/configuration.md` (data directory, master key) and
-  `docs/backup-restore.md`.
+- Telemetry (`packages/telemetry`, ADR 0008): structured JSON logger with mandatory
+  redaction; persistent, hash-chained, update-proof audit trail that fails safe when it
+  cannot be written; liveness/readiness checks with a public endpoint handler that reveals
+  only the overall status.
+- Operator manual: `docs/configuration.md` (data directory, logging, master key),
+  `docs/backup-restore.md` and `docs/monitoring.md`.
 
 ### Added — Phase 0: research and contract baseline
 

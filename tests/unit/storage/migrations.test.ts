@@ -59,7 +59,13 @@ describe('migrate', () => {
     });
     expect(state.applied[0]?.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(userVersion(db)).toBe(MIGRATIONS.length);
-    expect(tableNames(db)).toEqual(['crypto_keys', 'schema_migrations', 'secret_records']);
+    expect(tableNames(db)).toEqual([
+      'audit_entries',
+      'crypto_keys',
+      'schema_migrations',
+      'secret_records',
+      'sqlite_sequence', // created by AUTOINCREMENT on audit_entries
+    ]);
     db.close();
   });
 

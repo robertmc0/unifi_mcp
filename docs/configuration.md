@@ -1,7 +1,7 @@
 # Configuration
 
 > **Status: Phase 1 in progress.** This page covers the settings implemented so far: the
-> data directory and the master encryption key. Listener, policy, bootstrap YAML and
+> data directory, logging and the master encryption key. Listener, policy, bootstrap YAML and
 > runtime-mode settings are added here as they are implemented. Commands shown as
 > `unifi-mcp …` belong to the CLI, which is not built yet (Phase 1 step 9).
 
@@ -34,6 +34,14 @@ Requirements:
   runs.
 - The service creates the directory with mode 0700 and the database with mode 0600 if
   they do not exist. Keep the volume readable only by the service user.
+
+## Logging
+
+| Variable              | Default | Meaning                                                                                              |
+| --------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_LOG_LEVEL` | `info`  | Minimum log level: `debug`, `info`, `warn` or `error`. Any other value stops the service at startup. |
+
+Log format, redaction and the audit trail are described in [monitoring.md](monitoring.md).
 
 ## Master encryption key
 
