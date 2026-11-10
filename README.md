@@ -5,8 +5,8 @@ MCP clients such as Claude Code and Codex controlled access to the **official lo
 APIs** of UniFi applications (Network, Protect, Access). AI clients connect to this
 server, never to UniFi. UniFi credentials never leave the server.
 
-> **Status: Phase 0 (research and contract baseline) is complete. There is no runnable
-> server yet.** See [docs/phase-checklist.md](docs/phase-checklist.md).
+> **Status: Phase 1 (secure platform core) is in progress; the storage layer is done.
+> There is no runnable server yet.** See [docs/phase-checklist.md](docs/phase-checklist.md).
 
 ## Design principles
 
@@ -27,9 +27,9 @@ server, never to UniFi. UniFi credentials never leave the server.
 | [`unifi-mcp-design-spec.md`](unifi-mcp-design-spec.md) | The design specification (source of truth)                               |
 | [`docs/`](docs/index.md)                               | Manual, ADRs, threat model, API coverage                                 |
 | [`api-specs/`](api-specs/README.md)                    | Vendor contract provenance and operation inventories                     |
-| `packages/`                                            | Workspace packages (skeletons until Phase 1)                             |
+| `packages/`                                            | Workspace packages (`storage` implemented; others are Phase 1 skeletons) |
 | `scripts/`                                             | API contract tooling (fetch, reconcile, coverage report)                 |
-| `tests/`                                               | Contract and (later) unit, security, integration and compatibility tests |
+| `tests/`                                               | Contract, unit and security tests (later integration and compatibility)  |
 
 ## Development
 

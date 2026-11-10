@@ -1,7 +1,7 @@
 # unifi-local-mcp documentation
 
-> **Project status: Phase 0 complete (contract baseline). Nothing is runnable yet.**
-> The secure platform core is Phase 1. See [phase-checklist.md](phase-checklist.md).
+> **Project status: Phase 1 in progress (storage layer done). Nothing is runnable yet.**
+> See [phase-checklist.md](phase-checklist.md) for what is implemented and what is next.
 
 ## Design and decisions
 
@@ -18,16 +18,18 @@
 
 ## Operator manual (written with each phase)
 
-| Page                                                          | Phase |
-| ------------------------------------------------------------- | ----- |
-| quickstart.md, installation.md, configuration.md, security.md | 1     |
-| approval-workflow.md, administration.md, backup-restore.md    | 1     |
-| client-claude-code.md, client-codex.md, client-generic-mcp.md | 1     |
-| networking.md (single and dual interface), troubleshooting.md | 1 / 5 |
-| applications-network.md                                       | 2     |
-| applications-protect.md, events.md                            | 3     |
-| applications-access.md                                        | 4     |
-| monitoring.md, release.md, development.md                     | 5     |
+| Page                                                                     | Phase       |
+| ------------------------------------------------------------------------ | ----------- |
+| [configuration.md](configuration.md) (data directory, master key so far) | 1 (started) |
+| [backup-restore.md](backup-restore.md) (backup, restore, key rotation)   | 1 (started) |
+| quickstart.md, installation.md, security.md                              | 1           |
+| approval-workflow.md, administration.md                                  | 1           |
+| client-claude-code.md, client-codex.md, client-generic-mcp.md            | 1           |
+| networking.md (single and dual interface), troubleshooting.md            | 1 / 5       |
+| applications-network.md                                                  | 2           |
+| applications-protect.md, events.md                                       | 3           |
+| applications-access.md                                                   | 4           |
+| monitoring.md, release.md, development.md                                | 5           |
 
 ## Contributing
 

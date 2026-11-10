@@ -4,14 +4,15 @@ ADRs record decisions not already fixed by `unifi-mcp-design-spec.md`. They also
 evidence-backed deviation from the spec (spec §20, "Final change-control rule"). The process
 is defined in [ADR 0001](0001-record-architecture-decisions.md).
 
-| ADR                                                | Title                                                               | Status                                   |
-| -------------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------- |
-| [0001](0001-record-architecture-decisions.md)      | Record architecture decisions                                       | Accepted                                 |
-| [0002](0002-runtime-and-toolchain.md)              | Runtime and toolchain: Node.js 26 LTS, TypeScript 6, npm workspaces | Accepted                                 |
-| [0003](0003-mcp-sdk-v2-and-protocol-eras.md)       | MCP TypeScript SDK v2 and protocol-era support                      | Accepted (stdio bridge design: Proposed) |
-| [0004](0004-sqlite-driver.md)                      | SQLite driver: built-in `node:sqlite` behind a storage port         | Accepted, re-evaluate at Phase 1 exit    |
-| [0005](0005-official-local-unifi-api-contracts.md) | Official local UniFi API contracts and module eligibility           | Accepted                                 |
-| [0006](0006-vendor-api-artefact-handling.md)       | Vendor API artefacts: reference, verify, do not redistribute        | Accepted                                 |
+| ADR                                                   | Title                                                                   | Status                                   |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------- |
+| [0001](0001-record-architecture-decisions.md)         | Record architecture decisions                                           | Accepted                                 |
+| [0002](0002-runtime-and-toolchain.md)                 | Runtime and toolchain: Node.js 26 LTS, TypeScript 6, npm workspaces     | Accepted                                 |
+| [0003](0003-mcp-sdk-v2-and-protocol-eras.md)          | MCP TypeScript SDK v2 and protocol-era support                          | Accepted (stdio bridge design: Proposed) |
+| [0004](0004-sqlite-driver.md)                         | SQLite driver: built-in `node:sqlite` behind a storage port             | Accepted, re-evaluate at Phase 1 exit    |
+| [0005](0005-official-local-unifi-api-contracts.md)    | Official local UniFi API contracts and module eligibility               | Accepted                                 |
+| [0006](0006-vendor-api-artefact-handling.md)          | Vendor API artefacts: reference, verify, do not redistribute            | Accepted                                 |
+| [0007](0007-storage-encryption-migrations-backups.md) | Storage: secret encryption, master key handling, migrations and backups | Accepted                                 |
 
 ## Template
 

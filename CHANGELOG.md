@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added — Phase 1 (in progress): secure platform core
+
+- Storage (`packages/storage`, ADR 0007): `node:sqlite` port with hardened connection
+  settings and owner-only files; atomic, checksummed schema migrations; AES-256-GCM
+  secret records bound to their kind and id; master key from a file or environment
+  variable that fails closed when missing or wrong and is never generated implicitly;
+  verified master key rotation; verified online backups, backup verification and
+  validated offline restore; automatic pre-migration backups.
+- Operator manual: `docs/configuration.md` (data directory, master key) and
+  `docs/backup-restore.md`.
+
 ### Added — Phase 0: research and contract baseline
 
 - Repository skeleton: npm workspaces (14 private packages), strict TypeScript 6, ESLint,

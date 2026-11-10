@@ -42,12 +42,19 @@ explicitly, never dropped silently.
   security and supply-chain jobs.
 - Operator manual pages other than `docs/index.md` → written alongside Phase 1 features.
 
-## Phase 1 — Secure platform core (next)
+## Phase 1 — Secure platform core (in progress)
 
 ### Implementation order (plan)
 
-1. **storage**: `node:sqlite` port (ADR 0004), migrations in transactions, AEAD secret
+1. ✅ **storage** (2026-11-10): `node:sqlite` port (ADR 0004), migrations in transactions, AEAD secret
    records with key id, master-key loading that fails closed, backup and integrity check.
+   → `packages/storage`, [ADR 0007](adr/0007-storage-encryption-migrations-backups.md),
+   [configuration.md](configuration.md), [backup-restore.md](backup-restore.md). Also done:
+   verified key rotation, backup verification, validated offline restore, automatic
+   pre-migration backups. Tests: `tests/unit/storage/`, `tests/security/storage-master-key.test.ts`.
+   Still open, carried into later steps: `linux/arm64` run of the storage tests (step 11);
+   CLI `crypto generate-key|rotate-key` and `db backup|restore|check` (step 9); retention
+   of automatic backups; single-instance guard per data directory (step 7).
 2. **telemetry**: JSON logger with redaction, audit writer (fails safe on storage
    exhaustion), liveness/readiness.
 3. **policy**: evaluation order §6.1, deployment hard lock, runtime mode, scope
@@ -83,6 +90,8 @@ explicitly, never dropped silently.
 - [ ] High-risk action requires independent CLI/UI approval and cannot be approved via MCP
 - [ ] Reused, expired, parameter-changed, wrong-client and policy-changed approvals all fail
 - [ ] Wrong or missing master key and failed migration fail closed; migrations and backups tested
+      (storage layer verified by `tests/security/storage-master-key.test.ts` and
+      `tests/unit/storage/`; still to verify at service startup once step 7 exists)
 - [ ] stdio bridge has no UniFi key or DB access and writes nothing to stdout except protocol frames
 - [ ] Admin interface is local-only by default; MCP and admin listeners use separate auth and ports
 

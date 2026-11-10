@@ -50,6 +50,30 @@ any API change to one package.
   transaction correctly. Any future runtime warning must not reach stdout of the stdio
   bridge (which does not use SQLite anyway).
 
+## Implementation notes (Phase 1, 2026-11-10)
+
+- The port is `SqliteDatabase` in `packages/storage/src/sqlite.ts`, the only module that
+  imports `node:sqlite`. Formats and procedures built on it are recorded in
+  [ADR 0007](0007-storage-encryption-migrations-backups.md).
+- **Type-definition gap.** `@types/node@26.6.6` declares only `DatabaseSync`, not
+  `Database`. The runtime exports both (`DatabaseSync === Database`) and prints no
+  deprecation warning for either, even with `--trace-deprecation`. A minimal
+  `declare module 'node:sqlite'` augmentation at the top of
+  `packages/storage/src/sqlite.ts` names `Database`. `tests/contract/node-sqlite-runtime.test.ts`
+  checks the runtime half of the assumption.
+  - **Symptom when `@types/node` catches up:** `npm run typecheck` fails with
+    `error TS2451: Cannot redeclare block-scoped variable 'Database'` on the augmentation
+    lines (reproduced 2026-11-10 with a synthetic declaration), or ESLint reports
+    `@typescript-eslint/no-deprecated` on `DatabaseSync` there.
+  - **Fix:** delete the `declare module 'node:sqlite' { … }` block; no other code changes.
+    Run `npm run check` and update this note.
+  - **If the contract test fails instead** (the runtime no longer exports `Database` as the
+    same class), do not upgrade Node until the storage port is revisited.
+- WAL mode, `busy_timeout`, transactional migrations, `PRAGMA integrity_check`, online
+  backup and restore are covered by `tests/unit/storage/` and
+  `tests/security/storage-master-key.test.ts` on `linux/amd64`. The `linux/arm64` run is
+  still open and belongs to the container build (Phase 1 packaging, Phase 5 gate).
+
 ## Re-evaluation triggers (switch to `better-sqlite3`, compiled from source in the build stage)
 
 - A breaking `node:sqlite` change within Node 26, or a needed feature missing (for example
