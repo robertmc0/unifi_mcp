@@ -1,9 +1,8 @@
 # Logs, audit trail and health checks
 
 > **Status: Phase 1 in progress.** Logging, the audit trail and the health checks are
-> implemented in `packages/telemetry` (ADR 0008). The HTTP listener that serves the health
-> endpoints comes with the MCP server (Phase 1 step 7), and the CLI commands for the audit
-> trail with the CLI (step 9). Prometheus metrics are Phase 5.
+> implemented (ADR 0008) and served by the MCP listener (ADR 0013). The CLI commands for
+> the audit trail come with the CLI (step 9). Prometheus metrics are Phase 5.
 
 ## Runtime logs
 
@@ -72,8 +71,8 @@ identifiers, never complete sensitive responses, images or credentials.
   (CLI, not yet available) reports the first entry that was edited or whose predecessor
   was removed. The host administrator is trusted and could rewrite the database; the chain
   makes such changes visible, it cannot prevent them.
-- **Retention.** The proposed default is 90 days. The setting and automatic pruning come
-  with the service configuration and CLI. Audit metadata can include client names and
+- **Retention.** Entries older than `UNIFI_MCP_AUDIT_RETENTION_DAYS` (default 90) are
+  deleted at startup and daily. Audit metadata can include client names and
   network identifiers, so include it in your privacy and retention policy. Backups contain
   the audit trail too.
 

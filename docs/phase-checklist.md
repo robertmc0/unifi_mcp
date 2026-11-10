@@ -116,10 +116,19 @@ explicitly, never dropped silently.
    Still open, carried into later steps: wiring `ConsoleRegistry` and the client store into
    the `SecurityContextProvider` (step 7); CLI `console add|list|check|disable` (step 9);
    module capability probes and application-level response checks (Phase 2–4).
-7. **mcp-server**: bearer gate and Host/Origin allowlist in front of `createMcpHandler`;
+7. ✅ **mcp-server** (2026-11-10): bearer gate and Host/Origin allowlist in front of `createMcpHandler`;
    per-client tool factory; `unifi_list_consoles`, `unifi_list_sites` (stub until Phase 2),
    `unifi_list_modules`, `unifi_list_operations`, `unifi_describe_operation`,
-   `unifi_execute`, `unifi_get_operation_status`, resume.
+   `unifi_execute`, `unifi_get_operation_status`, resume. → `packages/mcp-server`, storage
+   migration 7 (`clients`, `client_tokens`), [ADR 0013](adr/0013-mcp-server-tokens-gate-and-tools.md),
+   [networking.md](networking.md), [client-generic-mcp.md](client-generic-mcp.md). Also done:
+   token store (digest only, constant-time, rotation, revocation closing streams), failed-auth
+   throttle, plaintext refusal on non-loopback binds, private non-cacheable tool lists,
+   service startup/shutdown and `main.ts`, health endpoints, approval sweep and audit
+   retention timers. `unifi_list_sites` is registered once an adapter provides site listing
+   (Phase 2). Tests: `tests/unit/mcp-server/`, `tests/integration-mock/`.
+   Still open, carried into later steps: stdio bridge (step 8); CLI for clients and consoles
+   (step 9); Claude Code and Codex client guides verified against their releases (step 12).
 8. **stdio-bridge**: spike and decide the transport-relay design (ADR 0003, Proposed).
 9. **cli**: `admin bootstrap/reset-*`, `client`, `console`, `policy`, `approvals`,
    `config`, `crypto`, `db`, `doctor`, `api coverage`.
@@ -133,23 +142,25 @@ explicitly, never dropped silently.
 ### Gate (spec §16)
 
 - [ ] 2025-era and 2026-era MCP clients connect over Streamable HTTP and stdio
-- [ ] Two differently scoped tokens see different tool lists; revocation blocks calls and subscriptions
-- [ ] No configured console: safe start, no write tools
-- [ ] Hard lock denies registered writes via `unifi_execute`, queued work and previously approved actions
-      (dispatcher verified for direct, queued and previously approved writes; the MCP tool in
-      step 7)
-- [ ] Generic execution cannot reach an unregistered path, alternate URL or arbitrary verb
-      (dispatcher, registry and HTTPS executor verified by `tests/security/dispatcher-gates.test.ts`
-      and `tests/security/unifi-transport-gates.test.ts`; the MCP `unifi_execute` tool in step 7)
+      (Streamable HTTP verified in `tests/integration-mock/mcp-http.test.ts`; stdio in step 8)
+- [x] Two differently scoped tokens see different tool lists; revocation blocks calls and subscriptions
+      (`tests/integration-mock/mcp-http.test.ts`: different tools; next call refused; open
+      responses, including listen streams, closed)
+- [x] No configured console: safe start, no write tools (`tests/integration-mock/mcp-http.test.ts`)
+- [x] Hard lock denies registered writes via `unifi_execute`, queued work and previously approved actions
+      (`tests/integration-mock/mcp-http.test.ts`, `tests/security/dispatcher-gates.test.ts`,
+      `tests/security/approval-gates.test.ts`)
+- [x] Generic execution cannot reach an unregistered path, alternate URL or arbitrary verb
+      (`tests/security/dispatcher-gates.test.ts`, `tests/security/unifi-transport-gates.test.ts`;
+      `unifi_execute` has a strict schema and calls the same dispatcher)
 - [ ] High-risk action requires independent CLI/UI approval and cannot be approved via MCP
-      (approval service and dispatcher verified by `tests/security/approval-gates.test.ts`;
-      the MCP tool list is verified in step 7, CLI/UI approval paths in steps 9–10)
-- [ ] Reused, expired, parameter-changed, wrong-client and policy-changed approvals all fail
-      (all five verified in `tests/security/approval-gates.test.ts` at the dispatcher; to be
-      repeated through the MCP resume tool in step 7)
-- [ ] Wrong or missing master key and failed migration fail closed; migrations and backups tested
-      (storage layer verified by `tests/security/storage-master-key.test.ts` and
-      `tests/unit/storage/`; still to verify at service startup once step 7 exists)
+      (not via MCP: verified, `tests/integration-mock/mcp-http.test.ts` and
+      `tests/security/approval-gates.test.ts`; the CLI/UI approval commands in steps 9–10)
+- [x] Reused, expired, parameter-changed, wrong-client and policy-changed approvals all fail
+      (`tests/security/approval-gates.test.ts`; reuse also through the MCP resume tool)
+- [x] Wrong or missing master key and failed migration fail closed; migrations and backups tested
+      (`tests/security/storage-master-key.test.ts`, `tests/unit/storage/`; the service entry
+      point exits 1 with `MASTER_KEY_NOT_CONFIGURED` when no key is configured)
 - [ ] stdio bridge has no UniFi key or DB access and writes nothing to stdout except protocol frames
 - [ ] Admin interface is local-only by default; MCP and admin listeners use separate auth and ports
 

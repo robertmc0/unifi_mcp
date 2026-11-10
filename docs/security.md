@@ -1,8 +1,9 @@
 # Security model
 
 > **Status: Phase 1 in progress.** This page currently covers the permission model
-> (`packages/policy`, ADR 0009), write safety (`packages/core`, ADR 0010) and connections
-> to consoles (`packages/unifi-api`, ADR 0012). Client tokens, the approval workflow, TLS
+> (`packages/policy`, ADR 0009), write safety (`packages/core`, ADR 0010), client tokens
+> (`packages/mcp-server`, ADR 0013) and connections to consoles (`packages/unifi-api`,
+> ADR 0012). Client tokens, the approval workflow, TLS
 > and network isolation are added as they are implemented. Commands shown as
 > `unifi-mcp …` belong to the CLI (Phase 1 step 9) and are not available yet.
 
@@ -119,6 +120,20 @@ Every operation, whatever tool started it, runs through one dispatcher (ADR 0010
   path are in the official vendor contract recorded in `api-specs/`. Unknown arguments are
   rejected, and argument values can never change the request path, host, method or
   headers.
+
+## Client tokens
+
+Each MCP client has its own identity and bearer token (ADR 0013).
+
+- Tokens look like `umcp_<id>_<secret>` and contain 256 random bits. A token is shown once,
+  when it is created or rotated. The service stores only a hash of it.
+- Every request is checked against the token store, so revoking a token or a client stops
+  it at once. Revocation also cancels the client's queued work and closes its open
+  connections.
+- Repeated failed sign-ins from one address are throttled.
+- The token is never logged, stored in the audit trail or passed to tool code. Logs and
+  audit entries show the client id and the token id.
+- Only an administrator or the CLI can create, rotate or revoke tokens.
 
 ## Connections to consoles
 

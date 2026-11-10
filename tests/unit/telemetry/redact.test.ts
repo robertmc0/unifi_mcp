@@ -94,6 +94,7 @@ describe('redactString', () => {
     ],
     ['GET /v1?token=abc&page=2', 'GET /v1?token=[REDACTED]&page=2'],
     ['stream rtsps://192.0.2.10:7441/AbCdEf123?enableSrtp ok', 'stream rtsps://[REDACTED] ok'],
+    [`token umcp_0123456789ab_${'A'.repeat(43)} leaked`, 'token [REDACTED] leaked'],
   ])('redacts %j', (input, expected) => {
     expect(redactString(input)).toBe(expected);
   });

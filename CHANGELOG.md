@@ -40,8 +40,16 @@ All notable changes to this project are documented here. The format follows
   request byte is sent; fixed requests from reviewed descriptors; redirects refused;
   response size caps; error mapping that never passes upstream text through; capability
   from observed application versions.
-- Operator manual: `docs/configuration.md` (hard lock, egress allowlist, data directory,
-  logging, master key), `docs/security.md` (permission model, write safety, console
+- MCP server (`packages/mcp-server`, ADR 0013): per-client bearer tokens stored as digests
+  with rotation and immediate revocation (closing open streams); the `/mcp` gate with Host
+  and Origin allowlists, failed-authentication throttling and plaintext refusal on
+  non-loopback binds; per-client tool discovery with private, non-cacheable tool lists;
+  `unifi_list_consoles`, `unifi_list_modules`, `unifi_list_operations`,
+  `unifi_describe_operation`, `unifi_execute`, named tools, `unifi_get_operation_status`
+  and `unifi_resume_approved`; health endpoints; service startup, shutdown and `main.ts`.
+- Operator manual: `docs/configuration.md` (hard lock, MCP listener, audit retention,
+  egress allowlist, data directory, logging, master key), `docs/networking.md`,
+  `docs/client-generic-mcp.md`, `docs/security.md` (permission model, write safety, console
   connections), `docs/approval-workflow.md`,
   `docs/backup-restore.md` and `docs/monitoring.md`.
 

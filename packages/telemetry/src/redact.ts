@@ -114,6 +114,8 @@ export function isSensitiveFieldName(name: string): boolean {
 
 /** Patterns replaced inside any string. Order matters: more specific patterns first. */
 const STRING_PATTERNS: readonly [RegExp, string][] = [
+  // unifi-local-mcp client tokens (ADR 0013): umcp_<12 hex token id>_<43 base64url secret>.
+  [/\bumcp_[0-9a-f]{12}_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/g, REDACTED],
   [
     /-----BEGIN ([A-Z0-9 ]*)PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z0-9 ]*PRIVATE KEY-----|$)/g,
     '[REDACTED PRIVATE KEY]',

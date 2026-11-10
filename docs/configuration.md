@@ -1,7 +1,8 @@
 # Configuration
 
 > **Status: Phase 1 in progress.** This page covers the settings implemented so far: the
-> hard lock, the egress allowlist, the data directory, logging and the master encryption key. Listener, policy, bootstrap YAML and
+> hard lock, the MCP listener, audit retention, the egress allowlist, the data directory,
+> logging and the master encryption key. Listener, policy, bootstrap YAML and
 > runtime-mode settings are added here as they are implemented. Commands shown as
 > `unifi-mcp …` belong to the CLI, which is not built yet (Phase 1 step 9).
 
@@ -20,6 +21,25 @@ the database, the admin UI or an MCP client. Leaving it unset keeps the lock on;
 `false` deliberately to allow writes. See [security.md](security.md) for the other four
 levels that must also allow a write.
 
+## MCP listener
+
+| Variable                                                      | Default     | Meaning                                                                                                          |
+| ------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_HTTP_BIND`                                         | `127.0.0.1` | Listener address (an IP address or `localhost`).                                                                 |
+| `UNIFI_MCP_HTTP_PORT`                                         | `3000`      | Listener port.                                                                                                   |
+| `UNIFI_MCP_HTTP_TLS_CERT_FILE`, `UNIFI_MCP_HTTP_TLS_KEY_FILE` | unset       | Serve HTTPS with this certificate and key (PEM). Set both or neither.                                            |
+| `UNIFI_MCP_HTTP_ALLOW_PLAINTEXT`                              | `false`     | Allow plaintext HTTP on a non-loopback bind, only when a TLS proxy or loopback-only port publishing protects it. |
+| `UNIFI_MCP_HTTP_ALLOWED_HOSTS`                                | unset       | Extra host names accepted in the `Host` header, comma-separated (local names are always accepted).               |
+| `UNIFI_MCP_HTTP_ALLOWED_ORIGINS`                              | unset       | Extra browser origin host names accepted, comma-separated.                                                       |
+
+See [networking.md](networking.md) for when to use which.
+
+## Audit retention
+
+| Variable                         | Default | Meaning                                                                  |
+| -------------------------------- | ------- | ------------------------------------------------------------------------ |
+| `UNIFI_MCP_AUDIT_RETENTION_DAYS` | `90`    | Audit entries older than this are deleted at startup and daily (1–3650). |
+
 ## Egress allowlist
 
 | Variable                       | Default                                                          | Meaning                                                                                                                                 |
@@ -33,12 +53,11 @@ listed. See [security.md](security.md#connections-to-consoles).
 
 ## Data directory
 
-| Variable             | Container value | Meaning                                           |
-| -------------------- | --------------- | ------------------------------------------------- |
-| `UNIFI_MCP_DATA_DIR` | `/data`         | Persistent directory for the database and backups |
+| Variable             | Default | Meaning                                           |
+| -------------------- | ------- | ------------------------------------------------- |
+| `UNIFI_MCP_DATA_DIR` | `/data` | Persistent directory for the database and backups |
 
-The storage layer is implemented; the service entry point that reads this variable comes
-with the MCP server (Phase 1 step 7). Contents:
+Contents:
 
 | Path                              | What it is                                                                   |
 | --------------------------------- | ---------------------------------------------------------------------------- |

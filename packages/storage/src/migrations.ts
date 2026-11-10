@@ -207,6 +207,34 @@ CREATE TABLE console_modules (
 ) STRICT;
 `,
   },
+  {
+    // MCP clients and their bearer tokens (spec §7.1; ADR 0013). Only a token id and the
+    // SHA-256 of the token secret are stored. Queries live in @unifi-local-mcp/mcp-server.
+    version: 7,
+    name: 'clients',
+    sql: `
+CREATE TABLE clients (
+  id TEXT PRIMARY KEY CHECK (length(id) BETWEEN 1 AND 64),
+  description TEXT CHECK (description IS NULL OR length(description) <= 500),
+  policy TEXT NOT NULL CHECK (json_valid(policy) AND length(policy) <= 262144),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  last_used_at TEXT
+) STRICT;
+
+CREATE TABLE client_tokens (
+  token_id TEXT PRIMARY KEY CHECK (length(token_id) = 12 AND token_id NOT GLOB '*[^0-9a-f]*'),
+  client_id TEXT NOT NULL REFERENCES clients (id) ON DELETE CASCADE,
+  secret_sha256 TEXT NOT NULL CHECK (length(secret_sha256) = 64),
+  created_at TEXT NOT NULL,
+  expires_at TEXT,
+  revoked_at TEXT,
+  last_used_at TEXT
+) STRICT;
+
+CREATE INDEX client_tokens_client ON client_tokens (client_id);
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `

@@ -1,10 +1,32 @@
 /**
  * @unifi-local-mcp/mcp-server
  *
- * MCP protocol handlers and Streamable HTTP listener (MCP TypeScript SDK v2).
- *
- * Phase 0 skeleton only. Implementation is scheduled for Phase 1
- * (see docs/phase-checklist.md). Do not add UniFi endpoints here that are
- * not recorded in api-specs/ and docs/api-coverage/.
+ * The Streamable HTTP MCP endpoint: client tokens, the bearer and Host/Origin gate in front
+ * of the MCP SDK v2 handler, the per-client tool set, service configuration and lifecycle
+ * (ADR 0003, ADR 0013).
  */
-export {};
+export {
+  ClientError,
+  ClientStore,
+  type AuthenticatedClient,
+  type ClientErrorCode,
+  type ClientStoreOptions,
+  type ClientView,
+  type IssuedToken,
+} from './clients.ts';
+export {
+  ConfigError,
+  defaultApiSpecsDir,
+  isLoopbackBind,
+  loadServiceConfig,
+  type HttpConfig,
+  type ServiceConfig,
+} from './config.ts';
+export { MCP_PATH, McpHttpService, type McpHttpOptions } from './http.ts';
+export {
+  SERVICE_VERSION,
+  startService,
+  type RunningService,
+  type ServiceOptions,
+} from './service.ts';
+export { buildMcpServer, discoverOperations, type ToolContext } from './tools.ts';

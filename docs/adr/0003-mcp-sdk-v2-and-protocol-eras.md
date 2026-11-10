@@ -96,6 +96,18 @@ on authentication failure.
   verify which cache hints the server emits for `tools/list` and make them private and
   per-client (spec §5.3).
 
+## Implementation notes (Phase 1, 2026-11-10)
+
+- The HTTP endpoint, gate and tool factory are implemented as decided here; details in
+  [ADR 0013](0013-mcp-server-tokens-gate-and-tools.md). The gate sets `req.auth`, which
+  `toNodeHandler` forwards as `authInfo`.
+- Cache hints verified on the wire: 2026-era `tools/list` results carry `ttlMs: 0` and
+  `cacheScope: 'private'` (set explicitly as well), 2025-era responses carry
+  `Cache-Control: no-cache`, and the gate adds `Cache-Control: no-store` to every
+  authenticated response (`tests/integration-mock/mcp-http.test.ts`).
+- Revocation closes open responses, which includes `subscriptions/listen` streams.
+- The stdio bridge design remains Proposed until the step 8 spike.
+
 ## Re-evaluation triggers
 
 - SDK 2.x minor releases that change `createMcpHandler`, legacy handling or caching → re-run

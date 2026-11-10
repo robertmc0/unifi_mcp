@@ -62,6 +62,8 @@ describe('migrate', () => {
     expect(tableNames(db)).toEqual([
       'approval_requests',
       'audit_entries',
+      'client_tokens',
+      'clients',
       'console_modules',
       'consoles',
       'crypto_keys',
