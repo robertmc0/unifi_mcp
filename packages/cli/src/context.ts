@@ -10,7 +10,15 @@ import { ClientStore, loadServiceConfig, type ServiceConfig } from '@unifi-local
 import { PolicyStore, type PolicyActor } from '@unifi-local-mcp/policy';
 import { loadMasterKey, openStorage, type MasterKey, type Storage } from '@unifi-local-mcp/storage';
 import { AuditLog, createLogger, type Logger } from '@unifi-local-mcp/telemetry';
-import { ConsoleRegistry, EgressGuard } from '@unifi-local-mcp/unifi-api';
+import { OperationRegistry } from '@unifi-local-mcp/core';
+import {
+  ConsoleRegistry,
+  EgressGuard,
+  loadContractInventory,
+  UnifiExecutor,
+  VersionProber,
+} from '@unifi-local-mcp/unifi-api';
+import { NETWORK_OPERATIONS, NETWORK_VERSION_PROBE } from '@unifi-local-mcp/unifi-network';
 import type { CliIo } from './io.ts';
 
 export interface Services {
@@ -26,6 +34,8 @@ export interface Services {
   egress: EgressGuard;
   actor: PolicyActor;
   logger: Logger;
+  /** Built on first use: the reviewed adapters, checked against api-specs/. */
+  prober(): Promise<VersionProber>;
   close(): void;
 }
 
@@ -68,13 +78,24 @@ export async function openServices(env: NodeJS.ProcessEnv, io: CliIo): Promise<S
   const audit = new AuditLog(storage.db, { logger });
   const policyStore = new PolicyStore(storage.db, audit);
   policyStore.current();
+  const consoles = new ConsoleRegistry({ db: storage.db, audit, secrets: storage.secrets, logger });
+  const egress = new EgressGuard(config.egress);
+  let prober: Promise<VersionProber> | undefined;
+  const buildProber = async (): Promise<VersionProber> => {
+    // The same adapters and contract check as the service (packages/mcp-server/src/main.ts).
+    const registry = new OperationRegistry(await loadContractInventory(config.apiSpecsDir));
+    for (const descriptor of NETWORK_OPERATIONS) registry.register(descriptor);
+    registry.seal();
+    const executor = new UnifiExecutor({ consoles, egress, logger });
+    return new VersionProber({ consoles, executor, registry, specs: [NETWORK_VERSION_PROBE] });
+  };
   return {
     config,
     masterKey,
     storage,
     audit,
     policyStore,
-    consoles: new ConsoleRegistry({ db: storage.db, audit, secrets: storage.secrets, logger }),
+    consoles,
     clients: new ClientStore({ db: storage.db, audit }),
     approvals: new ApprovalService({
       db: storage.db,
@@ -83,9 +104,10 @@ export async function openServices(env: NodeJS.ProcessEnv, io: CliIo): Promise<S
       policyStore,
     }),
     admins: new AdminStore({ db: storage.db, audit }),
-    egress: new EgressGuard(config.egress),
+    egress,
     actor: cliActor(),
     logger,
+    prober: () => (prober ??= buildProber()),
     close: () => {
       storage.close();
     },

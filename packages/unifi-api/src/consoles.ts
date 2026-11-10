@@ -374,19 +374,38 @@ export class ConsoleRegistry {
     });
   }
 
-  /** Records the application version reported by a capability probe. */
-  recordObservedVersion(consoleId: string, moduleId: ModuleId, version: string): void {
-    this.#db.transaction(() => {
+  /**
+   * Records the application version a probe reported (ADR 0018 §3). The time is always
+   * updated. A new or different version is audited. A *change* of a known version also
+   * bumps the policy version: pending approvals were prepared against the old version, so
+   * they are invalidated (spec §6.5).
+   */
+  recordObservedVersion(
+    consoleId: string,
+    moduleId: ModuleId,
+    version: string,
+    actor: PolicyActor = { type: 'system' },
+  ): { changed: boolean; previous: string | null } {
+    const value = version.slice(0, 64);
+    return this.#db.transaction(() => {
       this.#require(consoleId);
       this.#ensureModuleRow(consoleId, moduleId);
+      const row = this.#moduleRow(consoleId, moduleId);
+      const previous = row === undefined ? null : columnOptionalText(row, 'observed_version');
       this.#db.run(
         'UPDATE console_modules SET observed_version = ?, observed_at = ? WHERE console_id = ? AND module_id = ?',
-        [version.slice(0, 64), this.#now().toISOString(), consoleId, moduleId],
+        [value, this.#now().toISOString(), consoleId, moduleId],
       );
-      this.#record({ type: 'system' }, 'console.version_observed', consoleId, {
-        moduleId,
-        version: version.slice(0, 64),
-      });
+      const changed = previous !== value;
+      if (changed) {
+        this.#record(actor, 'console.version_observed', consoleId, {
+          moduleId,
+          version: value,
+          ...(previous === null ? {} : { previous }),
+        });
+        if (previous !== null) bumpPolicyVersion(this.#db, actor, this.#now);
+      }
+      return { changed, previous };
     });
   }
 

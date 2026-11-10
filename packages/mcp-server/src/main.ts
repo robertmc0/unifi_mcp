@@ -1,9 +1,11 @@
 /**
- * Service entry point: `node packages/mcp-server/src/main.ts` (development) or the built
- * `dist/main.js` in the container. Exits non-zero when startup fails, never starting in a
- * partially configured state.
+ * Service entry point: `node packages/mcp-server/src/main.ts`, from a checkout or in the
+ * container (Node.js runs the sources directly, ADR 0002). Exits non-zero when startup
+ * fails, never starting in a partially configured state. Registers the reviewed module
+ * adapters (Phase 2: Network).
  */
 import { createLogger, parseLogLevel } from '@unifi-local-mcp/telemetry';
+import { NETWORK_OPERATIONS, NETWORK_VERSION_PROBE } from '@unifi-local-mcp/unifi-network';
 import { loadServiceConfig } from './config.ts';
 import { startService } from './service.ts';
 
@@ -20,7 +22,11 @@ const bootLogger = createLogger({
 });
 
 try {
-  const service = await startService({ config: loadServiceConfig(process.env) });
+  const service = await startService({
+    config: loadServiceConfig(process.env),
+    operations: NETWORK_OPERATIONS,
+    probes: [NETWORK_VERSION_PROBE],
+  });
   let stopping = false;
   const shutdown = (signal: string): void => {
     if (stopping) return;

@@ -7,7 +7,7 @@ import { X509Certificate } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { acquireInstanceLock, SqliteDatabase } from '@unifi-local-mcp/storage';
 import { spkiSha256 } from '@unifi-local-mcp/unifi-api';
-import { MockConsole } from '../../fixtures/mock-console.ts';
+import { MockConsole, sendJson } from '../../fixtures/mock-console.ts';
 import { testPki } from '../../fixtures/test-pki.ts';
 import { useTempDirs } from '../storage/fixtures.ts';
 import { cliHarness } from './fixtures.ts';
@@ -453,6 +453,56 @@ describe('console check', () => {
       const insecure = await h.run(['console', 'check', 'lab']);
       expect(insecure.out).toMatch(/verified:\s+no/);
       expect(mock.requests).toEqual([]);
+    } finally {
+      await mock.stop();
+    }
+  });
+});
+
+describe('console probe', () => {
+  it('learns the version with one documented read and says whether it is supported', async () => {
+    const pki = testPki();
+    const mock = await MockConsole.start({ key: pki.serverKey, cert: pki.serverCert });
+    const reported = { version: '11.0.97' };
+    mock.respond = (req, res) => {
+      if (req.url === '/proxy/network/integration/v1/info') {
+        sendJson(res, 200, { applicationVersion: reported.version });
+      } else {
+        sendJson(res, 404, {});
+      }
+    };
+    try {
+      const h = await setup({ UNIFI_MCP_EGRESS_ALLOW_CIDRS: '127.0.0.1/32' });
+      const pin = `sha256/${spkiSha256(new X509Certificate(pki.serverCert))}`;
+      const keyFile = join(h.dir, 'network.key');
+      await writeFile(keyFile, 'synthetic-network-key-SENTINEL-55\n', { mode: 0o600 });
+      await h.run(['console', 'add', '--alias', 'lab', '--host', '127.0.0.1']);
+      await h.run(['console', 'set-tls', 'lab', '--tls', 'pinned', '--pin', pin]);
+      await h.run(['console', 'set-credential', 'lab', '--key-file', keyFile]);
+
+      const disabled = await h.run(['console', 'probe', 'lab']);
+      expect(disabled.code).toBe(1);
+      expect(disabled.err).toContain('module_disabled');
+      expect(mock.requests).toEqual([]);
+
+      await h.run(['console', 'enable-module', 'lab', '--port', String(mock.port)]);
+      const probed = await h.run(['console', 'probe', 'lab']);
+      expect(probed.code).toBe(0);
+      expect(probed.out).toContain('network on "lab": 11.0.97');
+      expect(probed.out).toContain('supported (>=11.0.97 <12)');
+      expect(mock.requests.map((r) => `${r.method} ${r.url}`)).toEqual([
+        'GET /proxy/network/integration/v1/info',
+      ]);
+
+      reported.version = '10.3.55';
+      const old = await h.run(['console', 'probe', 'lab']);
+      expect(old.code).toBe(1);
+      expect(old.out).toContain('10.3.55 (was 11.0.97)');
+      expect(old.out).toContain('NOT supported');
+      const shown = await h.json<{ consoles: { modules: { observedVersion: string | null }[] }[] }>(
+        ['console', 'show', 'lab'],
+      );
+      expect(JSON.stringify(shown)).toContain('10.3.55');
     } finally {
       await mock.stop();
     }

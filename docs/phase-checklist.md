@@ -278,8 +278,10 @@ Baseline: Network Integration API v11.0.97 (73 operations: 38 reads, 35 writes),
    (several Network bodies are discriminated unions); a pagination hook for page
    responses; `version_unknown` for unprobed consoles and an `operation_unsupported`
    message that names the observed version and the verified range (ADR 0018 §2).
-3. **Version probe**: `GET /v1/info` per console; at startup, periodically and on demand
-   when the version is unknown; `unifi-mcp console probe`; `doctor` shows observed versions.
+3. ✅ **Version probe** (2026-11-10): `GET /v1/info` through the reviewed
+   `network.info.get`; a service monitor (start, every 30 s for unknown versions, 6-hour
+   refresh, backoff, `console_versions` health check); `unifi-mcp console probe`; supported
+   range `>=11.0.97 <12` (ADR 0018 §3). First Network operation registered at startup.
 4. **Reads** (38): reviewed security metadata, credential-stripping projections, named
    tools, filter validation; a synthetic Network console; a mock test for every read with
    sanitised-output checks.

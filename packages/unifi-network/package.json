@@ -7,5 +7,11 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@unifi-local-mcp/core": "0.0.0",
+    "@unifi-local-mcp/policy": "0.0.0",
+    "@unifi-local-mcp/unifi-api": "0.0.0",
+    "zod": "4.6.7"
   }
 }

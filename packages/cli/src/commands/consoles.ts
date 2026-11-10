@@ -2,6 +2,7 @@
  * `console …` commands (spec §13.2, §4.2).
  */
 import { readFile } from 'node:fs/promises';
+import { satisfies } from '@unifi-local-mcp/core';
 import {
   checkConsoleConnection,
   isModuleId,
@@ -256,6 +257,39 @@ export const consoleCommands: Record<string, Command> = {
         ...(result.problem === undefined ? [] : [`  problem:      ${result.problem}`]),
       ]);
       return result.reachable && (result.verified || result.tlsMode === 'insecure') ? 0 : 1;
+    },
+  },
+  probe: {
+    summary: "Ask the console for a module's application version now (one documented read)",
+    usage: '<alias|id> [--module network]',
+    options: { module: { type: 'string' } },
+    args: { min: 1, max: 1 },
+    run: async (ctx) => {
+      const services = await ctx.services();
+      const id = consoleId(services, ctx.positionals[0] ?? '');
+      const moduleId = moduleOption(ctx);
+      const prober = await services.prober();
+      const spec = prober.spec(moduleId);
+      if (spec === undefined) throw new CliError(`There is no version probe for ${moduleId} yet.`);
+      const result = await prober.probe(id, moduleId, { actor: services.actor });
+      if (!result.ok) {
+        throw new CliError(`The probe failed: ${oneLine(result.message)} (${result.code})`);
+      }
+      const supported = satisfies(result.version, spec.supportedRange);
+      const alias = services.consoles.get(id)?.alias ?? id;
+      ctx.print(
+        { consoleId: id, moduleId, version: result.version, supported, range: spec.supportedRange },
+        () => [
+          `${moduleId} on "${alias}": ${oneLine(result.version)}` +
+            (result.changed && result.previous !== null
+              ? ` (was ${oneLine(result.previous)})`
+              : ''),
+          supported
+            ? `  supported (${spec.supportedRange})`
+            : `  NOT supported: operations need ${spec.supportedRange} and are refused`,
+        ],
+      );
+      return supported ? 0 : 1;
     },
   },
   remove: {

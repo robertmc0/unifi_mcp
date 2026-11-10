@@ -1,8 +1,9 @@
 # unifi-local-mcp documentation
 
-> **Project status: Phase 1 in progress. The service starts and serves MCP over HTTP and stdio,
-> and is administered with the host-only `unifi-mcp` CLI; no UniFi operations are registered
-> until the Network adapter (Phase 2).**
+> **Project status: Phase 1 (secure platform core) complete; Phase 2 (UniFi Network) in
+> progress. The service serves MCP over HTTP and stdio, is administered with the host-only
+> `unifi-mcp` CLI, and learns each console's Network version; Network operations are being
+> added.**
 > See [phase-checklist.md](phase-checklist.md) for what is implemented and what is next.
 
 ## Design and decisions

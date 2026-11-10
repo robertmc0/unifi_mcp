@@ -87,6 +87,36 @@ the decision is revisited.
   dispatcher adds the observed version and the verified range to the message. The version
   string comes from the console, so it is shown only if it looks like a version.
 
+### 3. Version probe and the supported range (step 3)
+
+- **Range.** Every Network operation carries `apiVersionRange` `>=11.0.97 <12`
+  (`NETWORK_VERSION_RANGE`). The contract was verified for 11.0.97. Later 11.x releases are
+  accepted because they serve the same `/v1` integration API, and the strict schemas refuse
+  anything that does not match (requests are rejected by the console, responses become
+  `upstream_contract_mismatch`). Earlier versions (the portal documents 9.1.120 to
+  11.0.97) and 12 or later are refused with `operation_unsupported` until their contracts
+  are reviewed. The constant is the one place to change.
+- **Probe.** `GET /v1/info` through the reviewed operation `network.info.get`, which the
+  `VersionProber` (`packages/unifi-api/src/probe.ts`) runs with the same executor, egress
+  and TLS controls as any request. The probe operation must be registered, argument-free
+  and console-level. Only enabled consoles and modules are probed. The reported version is
+  stored only if it looks like a version (`PLAUSIBLE_VERSION`).
+- **Recording.** `observed_at` is always updated. A new or different version is audited
+  (`console.version_observed`). A change of a known version also bumps the policy version,
+  so pending approvals prepared against the old version are invalidated (spec §6.5).
+- **Monitor.** `VersionMonitor` runs in the service: a pass at start and then every 30 s.
+  It probes enabled modules that have a credential and an unknown version, including
+  modules enabled by the CLI from another process. It refreshes known versions every 6 h,
+  and retries failures with exponential backoff (30 s up to 30 min). A failing probe
+  degrades the non-critical `console_versions` health check. Tool lists are computed per
+  request, so newly supported operations appear without a restart (2025-era clients after
+  reconnecting).
+- **CLI.** `unifi-mcp console probe <alias>` probes at once and says whether the version is
+  supported. `doctor` already warns about modules whose version has not been probed.
+- A dispatcher-side lazy probe (probe on first use) was not added: discovery already hides
+  operations of unprobed consoles, so a client could not call them anyway, and the monitor
+  probes within a minute.
+
 ## Evidence
 
 - `tests/unit/scripts/openapi-zod.test.ts` (synthetic documents only, 25 tests):
@@ -108,6 +138,18 @@ the decision is revisited.
   argument is sent). Mutation checks, each making a test fail: all arguments sent as the
   body; the `body` argument not required; an unknown version treated as supported; an
   unsafe version string echoed; the pagination hook ignored.
+- Step 3: `tests/unit/unifi-api/probe.test.ts` (one documented GET with the stored key;
+  only changes audited; a change bumps the policy version; disabled consoles and modules
+  never contacted; implausible, missing and non-string versions refused; console errors
+  reported; only argument-free console-level reads accepted as probes; monitor refresh,
+  backoff, degraded health and recovery, skipped modules),
+  `tests/integration-mock/network-version-probe.test.ts` (the service probes by itself,
+  then lists and runs `network.info.get`; an incompatible version hides and refuses it with
+  the version and range named, sending nothing), and the `console probe` CLI test.
+  Mutation checks, each making a test fail: probing a disabled console or module; recording
+  an implausible version; a version change keeping approvals; auditing every probe; no
+  backoff; probing without a credential; failures not degrading health; the service never
+  probing; site-scoped probes accepted.
 
 ## Consequences
 

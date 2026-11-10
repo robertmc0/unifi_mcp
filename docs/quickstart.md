@@ -1,9 +1,9 @@
 # Quickstart
 
-> **Status: Phase 1.** The service, CLI, admin interface and container image work. No UniFi
-> operations are registered until the Network adapter (Phase 2), so after this quickstart
-> an MCP client can connect and list your consoles and modules, but cannot query UniFi
-> yet.
+> **Status: Phase 2 in progress.** The service, CLI, admin interface and container image
+> work. The Network adapter is being added: so far an MCP client can list your consoles
+> and modules and read the console's Network version (`network.info.get`). The other
+> Network reads and writes follow.
 
 The shortest safe path: one Docker host, the MCP endpoint on its loopback, and the hard
 lock on. [installation.md](installation.md) explains each step.
@@ -50,7 +50,11 @@ console's certificate, pin it and enable the module, read-only:
 ```sh
 docker compose exec unifi-mcp unifi-mcp console set-tls home --tls pinned --pin sha256/…
 docker compose exec unifi-mcp unifi-mcp console enable-module home --module network --mode read_only
+docker compose exec unifi-mcp unifi-mcp console probe home
 ```
+
+`console probe` shows the console's UniFi Network version and whether it is supported
+(11.0.97 and later 11.x). The service checks it by itself as well.
 
 If the host is outside the default private ranges, set `UNIFI_MCP_EGRESS_ALLOW_CIDRS` in
 `compose.yml` ([configuration.md](configuration.md#egress-allowlist)).

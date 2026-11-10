@@ -52,7 +52,10 @@ import {
   EgressGuard,
   loadContractInventory,
   UnifiExecutor,
+  VersionMonitor,
+  VersionProber,
   type Lookup,
+  type VersionProbeSpec,
 } from '@unifi-local-mcp/unifi-api';
 import { ClientStore } from './clients.ts';
 import type { AdminListenerConfig, ServiceConfig } from './config.ts';
@@ -74,6 +77,10 @@ export interface ServiceOptions {
   masterKey?: MasterKey;
   /** Reviewed operations from the module adapters (Phase 2+). */
   operations?: readonly OperationDescriptor[];
+  /** How each module's application version is learned (ADR 0018 §3). */
+  probes?: readonly VersionProbeSpec[];
+  /** Tests only: version monitor timing. */
+  versionMonitor?: { intervalMs?: number; refreshMs?: number; maxBackoffMs?: number };
   /** Tests only: a synthetic contract inventory instead of api-specs/. */
   inventory?: ContractInventory;
   /** Tests only: a synthetic DNS resolver for the egress guard. */
@@ -97,6 +104,7 @@ export interface RunningService {
   dispatcher: Dispatcher;
   registry: OperationRegistry;
   health: HealthMonitor;
+  versions: VersionMonitor;
   admins: AdminStore;
   /** The admin interface URL, or undefined when it is disabled (the default). */
   adminUrl: string | undefined;
@@ -239,6 +247,15 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
     health.register(databaseCheck(storage.db));
     health.register(auditCheck(audit));
     health.register(diskSpaceCheck(config.dataDir));
+
+    // Console versions decide which operations can run and which tools are listed.
+    const versions = new VersionMonitor({
+      prober: new VersionProber({ consoles, executor, registry, specs: options.probes ?? [] }),
+      consoles,
+      logger,
+      ...options.versionMonitor,
+    });
+    health.register(versions.healthCheck());
 
     const handler = createMcpHandler(
       ({ authInfo }) => {
@@ -405,6 +422,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       operations: registry.list().length,
       forceReadOnly: config.deployment.forceReadOnly,
     });
+    versions.start();
 
     let stopped = false;
     return {
@@ -419,11 +437,13 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       dispatcher,
       registry,
       health,
+      versions,
       admins,
       adminUrl: admin?.url,
       stop: async () => {
         if (stopped) return;
         stopped = true;
+        await versions.stop();
         if (admin !== undefined) await closeServer(admin.server);
         clearInterval(recheck);
         clearInterval(sweep);

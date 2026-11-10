@@ -48,6 +48,17 @@ Every log record and audit entry passes through redaction:
 Redaction is conservative and may hide harmless fields whose names contain one of these
 words.
 
+### Console version messages
+
+The service learns each enabled console module's application version by itself (ADR 0018):
+shortly after start, within a minute of a module being enabled, and every 6 hours.
+
+| `msg`                          | Level | Meaning                                                                                        |
+| ------------------------------ | ----- | ---------------------------------------------------------------------------------------------- |
+| `console version observed`     | info  | A new or changed version (`version`, `previous`). A change also invalidates pending approvals. |
+| `console version probe failed` | warn  | The probe failed (`code`, `retryInMs`). Logged when it starts failing or the error changes.    |
+| `console reachable again`      | info  | A failing probe succeeded again.                                                               |
+
 ## Audit trail
 
 The audit trail is stored in the database (`audit_entries`) and records every MCP read
@@ -85,7 +96,8 @@ identifiers, never complete sensitive responses, images or credentials.
 | `/readyz` | The service can serve requests: database usable, audit trail writable, disk not full. | `200 {"status":"ready"}` or `503 {"status":"not_ready"}` |
 
 - An unreachable optional console makes the service _degraded_, never not ready, so it does
-  not cause restarts.
+  not cause restarts. The `console_versions` check is degraded while a console module's
+  version probe fails, and names the console and the error code.
 - Free space below 512 MiB on the data volume makes the service degraded; below 64 MiB it
   is not ready.
 - The endpoints are unauthenticated and therefore return only the overall status. Check

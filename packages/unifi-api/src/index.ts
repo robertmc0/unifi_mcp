@@ -3,7 +3,8 @@
  *
  * The console registry, the egress allowlist with DNS re-validation, verified TLS
  * (CA, pinning, explicit insecure override), the bounded HTTPS transport and the
- * OperationExecutor that the dispatcher uses to reach consoles (ADR 0012).
+ * OperationExecutor that the dispatcher uses to reach consoles (ADR 0012), and the version
+ * probes that learn each console module's application version (ADR 0018).
  */
 export { checkConsoleConnection, type ConsoleCheck } from './check.ts';
 export {
@@ -31,6 +32,15 @@ export {
 } from './egress.ts';
 export { UnifiExecutor, type UnifiExecutorOptions } from './executor.ts';
 export { loadContractInventory } from './inventory.ts';
+export {
+  PLAUSIBLE_VERSION,
+  VersionMonitor,
+  VersionProber,
+  type ProbeResult,
+  type VersionMonitorOptions,
+  type VersionProberOptions,
+  type VersionProbeSpec,
+} from './probe.ts';
 export {
   isModuleId,
   MODULE_ENDPOINTS,

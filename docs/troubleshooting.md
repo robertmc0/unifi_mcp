@@ -47,6 +47,9 @@ restarting it, and each attempt logs the same line.
   shows which check failed.
 - _Degraded_ (shown by `doctor` and the admin dashboard, never by `/readyz`) means a
   console is unreachable or less than 512 MiB is free. The service keeps serving.
+- `console_versions` degraded: a console module's version probe fails. The detail names
+  the console id and the error code (see [The console cannot be reached](#the-console-cannot-be-reached)).
+  `unifi-mcp console probe <alias>` tries again at once and shows the error.
 
 ## A client cannot connect
 
