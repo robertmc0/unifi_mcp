@@ -106,6 +106,37 @@ CREATE TABLE security_policy (
 ) STRICT;
 `,
   },
+  {
+    // Durable write executions (spec §10; ADR 0010). Queries live in @unifi-local-mcp/core.
+    version: 4,
+    name: 'operation_executions',
+    sql: `
+CREATE TABLE operation_executions (
+  id TEXT PRIMARY KEY CHECK (length(id) = 36),
+  client_id TEXT NOT NULL CHECK (length(client_id) BETWEEN 1 AND 128),
+  operation_id TEXT NOT NULL CHECK (length(operation_id) BETWEEN 1 AND 128),
+  console_id TEXT NOT NULL CHECK (length(console_id) BETWEEN 1 AND 128),
+  site_id TEXT CHECK (site_id IS NULL OR length(site_id) BETWEEN 1 AND 128),
+  arguments_sha256 TEXT NOT NULL CHECK (length(arguments_sha256) = 64),
+  idempotency_key TEXT CHECK (idempotency_key IS NULL OR length(idempotency_key) BETWEEN 1 AND 128),
+  status TEXT NOT NULL CHECK (status IN ('queued', 'executing', 'succeeded', 'failed',
+    'outcome_unknown', 'cancelled', 'denied')),
+  policy_version INTEGER NOT NULL CHECK (policy_version >= 1),
+  correlation_id TEXT NOT NULL CHECK (length(correlation_id) BETWEEN 1 AND 128),
+  error_code TEXT CHECK (error_code IS NULL OR length(error_code) BETWEEN 1 AND 128),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  started_at TEXT,
+  finished_at TEXT
+) STRICT;
+
+CREATE UNIQUE INDEX operation_executions_idempotency
+  ON operation_executions (client_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE INDEX operation_executions_client ON operation_executions (client_id, created_at);
+CREATE INDEX operation_executions_open ON operation_executions (status)
+  WHERE status IN ('queued', 'executing');
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `

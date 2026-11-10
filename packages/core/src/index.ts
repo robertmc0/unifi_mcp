@@ -1,10 +1,57 @@
 /**
  * @unifi-local-mcp/core
  *
- * Operation registry, input/output validation and the single execution dispatcher used by every transport.
- *
- * Phase 0 skeleton only. Implementation is scheduled for Phase 1
- * (see docs/phase-checklist.md). Do not add UniFi endpoints here that are
- * not recorded in api-specs/ and docs/api-coverage/.
+ * The operation registry, the single execution dispatcher used by every transport, bounded
+ * fair scheduling, rate limits, resource locks and durable write executions (ADR 0010).
  */
-export {};
+export { canonicalJson, requestDigest, sha256Hex } from './digest.ts';
+export {
+  DEFAULT_DISPATCHER_LIMITS,
+  Dispatcher,
+  type ApprovalGate,
+  type DispatcherDependencies,
+  type DispatcherLimits,
+  type EnvelopeError,
+  type EnvelopeStatus,
+  type ExecutionCall,
+  type ExecutionEnvelope,
+  type ExecutionRequest,
+  type ExecutionStatusView,
+  type ExecutorOutcome,
+  type OperationExecutor,
+  type Principal,
+  type ProposalContext,
+  type SecurityContextProvider,
+  type UpstreamError,
+} from './dispatcher.ts';
+export {
+  EXECUTION_STATUSES,
+  ExecutionStore,
+  TERMINAL_STATUSES,
+  type ExecutionRecord,
+  type ExecutionStatus,
+  type NewExecution,
+} from './executions.ts';
+export { KeyedMutex } from './locks.ts';
+export { RateLimiter, type RateDecision, type RateLimit } from './rate-limit.ts';
+export {
+  defineOperation,
+  HTTP_METHODS,
+  OperationRegistry,
+  renderPath,
+  RETRY_CLASSES,
+  templatePlaceholders,
+  validateDescriptor,
+  type ContractInventory,
+  type HttpMethod,
+  type OperationDescriptor,
+  type RetryClass,
+  type Target,
+} from './registry.ts';
+export {
+  Scheduler,
+  SchedulerError,
+  type JobOptions,
+  type SchedulerErrorCode,
+  type SchedulerLimits,
+} from './scheduler.ts';

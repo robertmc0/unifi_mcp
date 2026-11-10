@@ -77,8 +77,18 @@ explicitly, never dropped silently.
    resume (step 4); binding approvals to the policy version (step 5); storing console and
    client policies with `bumpPolicyVersion` (steps 6 and 7); `policy show|validate|set-runtime-mode`
    and YAML import (step 9).
-4. **core**: `OperationDescriptor` registry, central dispatcher (checks at enqueue _and_
+4. ✅ **core** (2026-11-10): `OperationDescriptor` registry, central dispatcher (checks at enqueue _and_
    dispatch), bounded queues, rate limits, resource locks, durable operation IDs.
+   → `packages/core`, storage migration 4 (`operation_executions`),
+   [ADR 0010](adr/0010-operation-registry-and-dispatcher.md), [security.md](security.md#write-safety).
+   Also done: contract-inventory check at registration; strict request and argument
+   schemas; segment-encoded path rendering; audit before act; `outcome_unknown` without
+   retry; idempotency keys; restart recovery; fair round-robin scheduling; drain.
+   Tests: `tests/unit/core/`, `tests/security/dispatcher-gates.test.ts`.
+   Still open, carried into later steps: `ApprovalGate` and resume (step 5); the real
+   `OperationExecutor`, capability probes and the inventory loader from `api-specs/`
+   (step 6); MCP tools on top of the dispatcher and limits configuration (step 7);
+   read-back reconciliation of `outcome_unknown` writes (Phase 2 adapters).
 5. **approvals**: prepare → pending → approved → resumed/executed state machine with
    atomic compare-and-set transitions, TTLs and argument digests.
 6. **unifi-api**: HTTPS client with TLS verify, CA and pinning, egress allowlist, DNS
@@ -104,7 +114,11 @@ explicitly, never dropped silently.
 - [ ] Two differently scoped tokens see different tool lists; revocation blocks calls and subscriptions
 - [ ] No configured console: safe start, no write tools
 - [ ] Hard lock denies registered writes via `unifi_execute`, queued work and previously approved actions
+      (dispatcher verified for direct and queued writes; approved actions in step 5, the MCP
+      tool in step 7)
 - [ ] Generic execution cannot reach an unregistered path, alternate URL or arbitrary verb
+      (dispatcher and registry verified by `tests/security/dispatcher-gates.test.ts`; still to
+      verify through the MCP `unifi_execute` tool and the HTTP executor in steps 6–7)
 - [ ] High-risk action requires independent CLI/UI approval and cannot be approved via MCP
 - [ ] Reused, expired, parameter-changed, wrong-client and policy-changed approvals all fail
 - [ ] Wrong or missing master key and failed migration fail closed; migrations and backups tested

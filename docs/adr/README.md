@@ -15,6 +15,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0007](0007-storage-encryption-migrations-backups.md) | Storage: secret encryption, master key handling, migrations and backups | Accepted                                 |
 | [0008](0008-telemetry-logging-audit-health.md)        | Telemetry: structured logs, redaction, audit trail and health checks    | Accepted                                 |
 | [0009](0009-policy-evaluation-model.md)               | Policy evaluation model, policy schemas and the policy version          | Accepted                                 |
+| [0010](0010-operation-registry-and-dispatcher.md)     | Operation registry and the central dispatcher                           | Accepted                                 |
 
 ## Template
 

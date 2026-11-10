@@ -23,8 +23,13 @@ All notable changes to this project are documented here. The format follows
   unset), runtime mode, layered rules by intersection with explicit client grants, default
   deny for writes and sensitive reads, credentials never released, raise-only risk
   elevation, and a versioned, audited global policy store.
+- Core (`packages/core`, ADR 0010): operation registry that admits only operations in the
+  official vendor contract, with strict schemas and segment-encoded paths; the single
+  dispatcher with policy checks at enqueue and dispatch, audit before act, durable write
+  executions with compare-and-set transitions, `outcome_unknown` without retry,
+  idempotency keys, restart recovery, rate limits, bounded fair queues and resource locks.
 - Operator manual: `docs/configuration.md` (hard lock, data directory, logging, master
-  key), `docs/security.md` (permission model), `docs/backup-restore.md` and
+  key), `docs/security.md` (permission model, write safety), `docs/backup-restore.md` and
   `docs/monitoring.md`.
 
 ### Added — Phase 0: research and contract baseline

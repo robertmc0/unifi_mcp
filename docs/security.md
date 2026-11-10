@@ -1,7 +1,7 @@
 # Security model
 
-> **Status: Phase 1 in progress.** This page currently covers the permission model, which
-> is implemented in `packages/policy` (ADR 0009). Client tokens, the approval workflow, TLS
+> **Status: Phase 1 in progress.** This page currently covers the permission model
+> (`packages/policy`, ADR 0009) and write safety (`packages/core`, ADR 0010). Client tokens, the approval workflow, TLS
 > and network isolation are added as they are implemented. Commands shown as
 > `unifi-mcp …` belong to the CLI (Phase 1 step 9) and are not available yet.
 
@@ -85,6 +85,38 @@ selected operations but never lower it. High-risk operations need an independent
 approval through the admin UI or CLI before they run (approval workflow: Phase 1 step 5).
 Some high-consequence operations are disabled by default and must be enabled explicitly in
 the global policy before they can be granted at all.
+
+## Write safety
+
+Every operation, whatever tool started it, runs through one dispatcher (ADR 0010):
+
+- **Checked twice.** Permissions are evaluated when a request arrives and again just
+  before it is sent to the console. Revoking a client, switching to read-only mode or
+  changing policy therefore also stops work that is already waiting.
+- **Audit first.** A write is recorded in the audit trail before it is sent. If that is
+  not possible, it is not sent. A read's result is returned only after its audit entry is
+  stored.
+- **Recorded.** Every write gets an execution id and a status (`queued`, `executing`,
+  `succeeded`, `failed`, `outcome_unknown`, `cancelled`, `denied`) that only moves forward.
+  The same execution can never be sent twice.
+- **Never guessed.** If the console does not answer, or answers in a way that leaves open
+  whether the change was applied, the write is marked `outcome_unknown` and is **not
+  retried**. Check the console before trying again. After a restart, writes that were in
+  progress are marked `outcome_unknown` and writes that were waiting are cancelled; none is
+  re-run.
+- **Idempotency keys.** A client may send a key with a write. Sending the same request with
+  the same key again returns the known status instead of executing it again.
+- **One change per resource at a time.** Conflicting writes to the same console resource
+  run one after another.
+- **Bounded.** Requests are rate-limited per client, per console, per module on a console
+  and globally, and queues are bounded. Excess requests get `rate_limited` (with a retry
+  delay) or `queue_full` immediately, and requests that cannot start in time get
+  `deadline_exceeded`. Defaults are conservative because Ubiquiti documents no local API
+  rate limits.
+- **Only documented operations.** An operation can be registered only if its method and
+  path are in the official vendor contract recorded in `api-specs/`. Unknown arguments are
+  rejected, and argument values can never change the request path, host, method or
+  headers.
 
 ## Policy changes
 
