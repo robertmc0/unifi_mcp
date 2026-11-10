@@ -11,6 +11,8 @@ import { readFileSync } from 'node:fs';
 import { createServer as createHttpServer, type Server } from 'node:http';
 import { createServer as createHttpsServer } from 'node:https';
 import type { AddressInfo } from 'node:net';
+import { AdminHttpService, AdminSessionStore, AdminStore } from '@unifi-local-mcp/admin-api';
+import type { DashboardView } from '@unifi-local-mcp/admin-ui';
 import { ApprovalService } from '@unifi-local-mcp/approvals';
 import {
   Dispatcher,
@@ -48,7 +50,7 @@ import {
   type Lookup,
 } from '@unifi-local-mcp/unifi-api';
 import { ClientStore } from './clients.ts';
-import type { ServiceConfig } from './config.ts';
+import type { AdminListenerConfig, ServiceConfig } from './config.ts';
 import { McpHttpService } from './http.ts';
 import { buildMcpServer } from './tools.ts';
 
@@ -90,7 +92,56 @@ export interface RunningService {
   dispatcher: Dispatcher;
   registry: OperationRegistry;
   health: HealthMonitor;
+  admins: AdminStore;
+  /** The admin interface URL, or undefined when it is disabled (the default). */
+  adminUrl: string | undefined;
   stop(): Promise<void>;
+}
+
+function createListener(
+  tls: { certFile: string; keyFile: string } | undefined,
+  listener: (
+    req: import('node:http').IncomingMessage,
+    res: import('node:http').ServerResponse,
+  ) => void,
+): Server {
+  const server =
+    tls === undefined
+      ? createHttpServer(listener)
+      : createHttpsServer(
+          {
+            cert: readFileSync(tls.certFile),
+            key: readFileSync(tls.keyFile),
+            minVersion: 'TLSv1.2',
+          },
+          listener,
+        );
+  server.headersTimeout = 20_000;
+  server.requestTimeout = 120_000;
+  return server;
+}
+
+async function listen(server: Server, port: number, bind: string, tls: boolean): Promise<string> {
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, bind, () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+  const address = server.address() as AddressInfo;
+  const host = address.family === 'IPv6' ? `[${address.address}]` : address.address;
+  return `${tls ? 'https' : 'http'}://${host}:${String(address.port)}`;
+}
+
+async function closeServer(server: Server): Promise<void> {
+  const closed = new Promise<void>((resolve) => {
+    server.close(() => {
+      resolve();
+    });
+  });
+  server.closeAllConnections();
+  await closed;
 }
 
 export async function startService(options: ServiceOptions): Promise<RunningService> {
@@ -258,6 +309,56 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       );
     }
 
+    const admins = new AdminStore({ db: storage.db, audit, now });
+    let admin: { server: Server; url: string; sessions: AdminSessionStore } | undefined;
+    if (config.admin !== undefined) {
+      try {
+        admin = await startAdmin(config.admin, {
+          db: storage.db,
+          admins,
+          approvals,
+          audit,
+          logger,
+          now,
+          status: async (adminUrl) => {
+            const policy = policyStore.current();
+            const report = await health.readiness();
+            return {
+              runtimeMode: policy.document.runtimeMode,
+              forceReadOnly: config.deployment.forceReadOnly,
+              policyVersion: policy.version,
+              ready: report.ready,
+              checks: report.checks.map((check) => ({
+                name: check.name,
+                status: check.status,
+                ...(check.detail === undefined ? {} : { detail: check.detail }),
+              })),
+              mcpListener: url,
+              adminListener: adminUrl,
+              consoles: consoles.list().map((view) => ({
+                alias: view.alias,
+                host: view.host,
+                state: view.policy?.state ?? 'invalid policy',
+                tlsMode: view.tls.mode,
+                modules: view.modules.map((module) => ({
+                  moduleId: module.moduleId,
+                  state: view.policy?.modules[module.moduleId]?.state ?? 'disabled',
+                  hasCredential: module.hasCredential,
+                  observedVersion: module.observedVersion,
+                })),
+              })),
+              clients: clients.list().length,
+              pendingApprovals: approvals.list({ status: 'pending' }).length,
+            };
+          },
+        });
+      } catch (error) {
+        await closeServer(server);
+        throw error;
+      }
+      logger.info('admin interface listening', { url: admin.url });
+    }
+
     // Revocations made by another process (the CLI) are stored in the database but do not
     // reach the in-process listener above: re-check open responses periodically.
     const recheck = setInterval(() => {
@@ -284,6 +385,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       try {
         const cutoff = new Date(now().getTime() - config.auditRetentionDays * 86_400_000);
         audit.prune(cutoff);
+        admin?.sessions.prune();
       } catch (error) {
         logger.error('audit retention pruning failed', { err: error });
       }
@@ -304,6 +406,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
         consoles: consoles.list().length,
         forceReadOnly: config.deployment.forceReadOnly,
         tls: config.http.tls !== undefined,
+        adminInterface: admin !== undefined,
       },
     });
     logger.info('service started', {
@@ -326,9 +429,12 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       dispatcher,
       registry,
       health,
+      admins,
+      adminUrl: admin?.url,
       stop: async () => {
         if (stopped) return;
         stopped = true;
+        if (admin !== undefined) await closeServer(admin.server);
         clearInterval(recheck);
         clearInterval(sweep);
         clearInterval(pruneTimer);
@@ -365,4 +471,47 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
     instanceLock.release();
     throw error;
   }
+}
+
+async function startAdmin(
+  config: AdminListenerConfig,
+  deps: {
+    db: Storage['db'];
+    admins: AdminStore;
+    approvals: ApprovalService;
+    audit: AuditLog;
+    logger: Logger;
+    now: () => Date;
+    status: (adminUrl: string) => Promise<DashboardView>;
+  },
+): Promise<{ server: Server; url: string; sessions: AdminSessionStore }> {
+  const sessions = new AdminSessionStore({
+    db: deps.db,
+    admins: deps.admins,
+    limits: {
+      idleMs: config.sessionIdleMinutes * 60_000,
+      lifetimeMs: config.sessionMaxHours * 60 * 60_000,
+    },
+    now: deps.now,
+  });
+  let url = '';
+  const http = new AdminHttpService({
+    admins: deps.admins,
+    sessions,
+    approvals: deps.approvals,
+    audit: deps.audit,
+    logger: deps.logger,
+    status: () => deps.status(url),
+    allowedHosts: config.allowedHosts,
+    tls: config.tls !== undefined,
+    now: deps.now,
+  });
+  const server = createListener(config.tls, http.listener);
+  url = await listen(server, config.port, config.bind, config.tls !== undefined);
+  if (config.tls === undefined && config.allowPlaintext) {
+    deps.logger.warn(
+      'admin interface uses plaintext HTTP (UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT); TLS must be provided in front of it',
+    );
+  }
+  return { server, url, sessions };
 }

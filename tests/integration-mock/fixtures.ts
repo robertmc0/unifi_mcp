@@ -52,6 +52,8 @@ export async function startTestService(options: {
   forceReadOnly?: boolean;
   withConsole?: boolean;
   streamRecheckMs?: number;
+  /** Enable the admin listener on an ephemeral loopback port. */
+  admin?: boolean;
 }): Promise<TestService> {
   const pki = testPki();
   const logs: string[] = [];
@@ -61,6 +63,18 @@ export async function startTestService(options: {
     deployment: { forceReadOnly: options.forceReadOnly ?? false },
     egress: { allow: ['127.0.0.1/32'] },
     http: { ...base.http, port: 0 },
+    admin:
+      options.admin === true
+        ? {
+            bind: '127.0.0.1',
+            port: 0,
+            tls: undefined,
+            allowPlaintext: false,
+            allowedHosts: ['localhost', '127.0.0.1', '[::1]'],
+            sessionIdleMinutes: 30,
+            sessionMaxHours: 12,
+          }
+        : undefined,
   };
   const service = await startService({
     config,

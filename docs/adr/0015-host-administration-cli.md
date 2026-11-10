@@ -88,8 +88,8 @@ a valid JSON escape for the same character, so machine-readable output stays exa
   characters.
 - `admin bootstrap` works only while no administrator exists. `admin reset-password` is
   host recovery: it also re-enables a disabled account. Both require the CLI actor, a
-  terminal, and the password typed twice. The web sign-in, sessions, MFA enrolment, and so
-  `admin reset-mfa`, arrive with the admin UI (step 10).
+  terminal, and the password typed twice. The web sign-in and sessions are in ADR 0016.
+  MFA enrolment, and with it `admin reset-mfa`, is Phase 5.
 
 ### Declarative bootstrap file (`config import` / `config apply`)
 
@@ -194,4 +194,4 @@ puts `unifi-mcp` on the `PATH`.
 - Node.js changes the stability of `crypto.argon2Sync`, or OWASP changes its Argon2id
   recommendations.
 - A deployment needs the data directory on a network filesystem.
-- The admin UI (step 10) needs further CLI recovery commands (`admin reset-mfa`).
+- MFA (Phase 5) needs further CLI recovery commands (`admin reset-mfa`).

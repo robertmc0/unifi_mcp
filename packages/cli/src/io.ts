@@ -4,6 +4,8 @@
  * never from command-line arguments, which would expose them in the process list and shell
  * history.
  */
+import { displaySafe, displaySafeLine } from '@unifi-local-mcp/core';
+
 export class CliError extends Error {
   override readonly name = 'CliError';
   readonly exitCode: number;
@@ -14,35 +16,14 @@ export class CliError extends Error {
   }
 }
 
-// C0 controls other than tab and newline, DEL, C1 controls (U+009B is an 8-bit CSI on some
-// terminals), line and paragraph separators, and bidirectional formatting characters, which
-// can reorder how text is displayed.
-const UNSAFE =
-  // eslint-disable-next-line no-control-regex -- matching control characters is the point
-  /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u061c\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069]/gu;
-const UNSAFE_ONE_LINE =
-  // eslint-disable-next-line no-control-regex -- matching control characters is the point
-  /[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069]/gu;
-
-function escape(char: string): string {
-  return `\\u${(char.codePointAt(0) ?? 0).toString(16).padStart(4, '0')}`;
-}
-
 /**
- * Makes text safe to print on a terminal: characters that could move the cursor, change
- * colours, rewrite or reorder what the operator sees are shown as `\uXXXX`. Text from UniFi
- * and from MCP clients (names, arguments, certificate subjects) is untrusted, and the
- * approval prompt must show exactly what will run. Inside JSON strings the replacement is a
- * valid JSON escape for the same character, so `--json` output stays exact.
+ * Makes text safe to print on a terminal (see `displaySafe` in core): text from UniFi and
+ * from MCP clients cannot move the cursor, rewrite lines or reorder what the operator sees.
  */
-export function terminalSafe(text: string): string {
-  return text.replace(UNSAFE, escape);
-}
+export const terminalSafe = displaySafe;
 
 /** Like `terminalSafe`, and also escapes newlines and tabs: for one table cell or field. */
-export function oneLine(text: string): string {
-  return text.replace(UNSAFE_ONE_LINE, escape);
-}
+export const oneLine = displaySafeLine;
 
 /** Wraps an IO so that every line and prompt passes through `terminalSafe`. */
 export function safeIo(io: CliIo): CliIo {

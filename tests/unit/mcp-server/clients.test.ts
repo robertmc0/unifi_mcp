@@ -205,3 +205,53 @@ describe('loadServiceConfig', () => {
     expect(() => loadServiceConfig(env)).toThrow(pattern);
   });
 });
+
+describe('admin listener configuration', () => {
+  it('is disabled by default, and loopback on its own port when enabled', () => {
+    expect(loadServiceConfig({}).admin).toBeUndefined();
+    expect(loadServiceConfig({ UNIFI_MCP_ADMIN_ENABLED: 'false' }).admin).toBeUndefined();
+    expect(loadServiceConfig({ UNIFI_MCP_ADMIN_ENABLED: 'true' }).admin).toEqual({
+      bind: '127.0.0.1',
+      port: 3001,
+      tls: undefined,
+      allowPlaintext: false,
+      allowedHosts: ['localhost', '127.0.0.1', '[::1]'],
+      sessionIdleMinutes: 30,
+      sessionMaxHours: 12,
+    });
+  });
+
+  it.each([
+    [{ UNIFI_MCP_ADMIN_PORT: '3000' }, /must differ/],
+    [{ UNIFI_MCP_ADMIN_BIND: '0.0.0.0' }, /plaintext HTTP/],
+    [{ UNIFI_MCP_ADMIN_BIND: 'admin.example' }, /IP address/],
+    [{ UNIFI_MCP_ADMIN_TLS_CERT_FILE: '/x.pem' }, /both/],
+    [{ UNIFI_MCP_ADMIN_SESSION_IDLE_MINUTES: '1' }, /from 5 to 480/],
+    [{ UNIFI_MCP_ADMIN_ENABLED: 'maybe' }, /"true" or "false"/],
+  ])('refuses %j', (extra, pattern) => {
+    expect(() => loadServiceConfig({ UNIFI_MCP_ADMIN_ENABLED: 'true', ...extra })).toThrow(pattern);
+  });
+
+  it('allows a non-loopback bind with TLS or an explicit plaintext opt-in', () => {
+    expect(
+      loadServiceConfig({
+        UNIFI_MCP_ADMIN_ENABLED: 'true',
+        UNIFI_MCP_ADMIN_BIND: '0.0.0.0',
+        UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT: 'true',
+        UNIFI_MCP_ADMIN_ALLOWED_HOSTS: 'admin.lan',
+      }).admin,
+    ).toMatchObject({
+      bind: '0.0.0.0',
+      allowPlaintext: true,
+      allowedHosts: ['localhost', '127.0.0.1', '[::1]', 'admin.lan'],
+    });
+    expect(
+      loadServiceConfig({
+        UNIFI_MCP_ADMIN_ENABLED: 'true',
+        UNIFI_MCP_ADMIN_BIND: '0.0.0.0',
+        UNIFI_MCP_ADMIN_TLS_CERT_FILE: '/c.pem',
+        UNIFI_MCP_ADMIN_TLS_KEY_FILE: '/k.pem',
+      }).admin?.tls,
+    ).toEqual({ certFile: '/c.pem', keyFile: '/k.pem' });
+  });
+});

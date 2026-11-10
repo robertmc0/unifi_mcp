@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('terminalSafe', () => {
   it('escapes control, C1, separator and bidi characters but keeps newlines and tabs', () => {
-    expect(terminalSafe('a\u001b[31mb\rc\u0007d\u007fe\u009bf g‮h⁦i‏j')).toBe(
+    expect(terminalSafe('a\u001b[31mb\rc\u0007d\u007fe\u009bf\u2028g\u202eh\u2066i\u200fj')).toBe(
       'a\\u001b[31mb\\u000dc\\u0007d\\u007fe\\u009bf\\u2028g\\u202eh\\u2066i\\u200fj',
     );
     expect(terminalSafe('line 1\nline 2\tx')).toBe('line 1\nline 2\tx');
@@ -14,7 +14,7 @@ describe('terminalSafe', () => {
   });
 
   it('produces JSON that parses to the same value', () => {
-    const value = { name: 'x\u009b‮ y' };
+    const value = { name: 'x\u009b\u202e\u2028y' };
     expect(JSON.parse(terminalSafe(JSON.stringify(value)))).toEqual(value);
   });
 });

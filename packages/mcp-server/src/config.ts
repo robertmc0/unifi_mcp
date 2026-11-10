@@ -29,6 +29,21 @@ export interface HttpConfig {
   allowedOrigins: string[];
 }
 
+/**
+ * The admin web listener (spec §7.3, §13.1; ADR 0016). Separate bind, port, certificate
+ * and authentication from the MCP listener; disabled unless UNIFI_MCP_ADMIN_ENABLED=true.
+ */
+export interface AdminListenerConfig {
+  bind: string;
+  port: number;
+  tls: { certFile: string; keyFile: string } | undefined;
+  allowPlaintext: boolean;
+  /** Accepted Host header names (DNS-rebinding protection). */
+  allowedHosts: string[];
+  sessionIdleMinutes: number;
+  sessionMaxHours: number;
+}
+
 export interface ServiceConfig {
   dataDir: string;
   databasePath: string;
@@ -36,6 +51,8 @@ export interface ServiceConfig {
   deployment: DeploymentOverrides;
   egress: EgressPolicy;
   http: HttpConfig;
+  /** Undefined when the admin interface is disabled (the default). */
+  admin: AdminListenerConfig | undefined;
   auditRetentionDays: number;
   apiSpecsDir: string;
 }
@@ -92,6 +109,56 @@ export function defaultApiSpecsDir(): string {
   return fileURLToPath(new URL('../../../api-specs', import.meta.url));
 }
 
+function tlsFiles(
+  env: NodeJS.ProcessEnv,
+  prefix: string,
+): { certFile: string; keyFile: string } | undefined {
+  const certFile = env[`${prefix}_TLS_CERT_FILE`]?.trim() ?? '';
+  const keyFile = env[`${prefix}_TLS_KEY_FILE`]?.trim() ?? '';
+  if ((certFile === '') !== (keyFile === '')) {
+    throw new ConfigError(
+      `Set both ${prefix}_TLS_CERT_FILE and ${prefix}_TLS_KEY_FILE, or neither.`,
+    );
+  }
+  return certFile === '' ? undefined : { certFile, keyFile };
+}
+
+function loadAdminConfig(
+  env: NodeJS.ProcessEnv,
+  http: HttpConfig,
+): AdminListenerConfig | undefined {
+  if (!flag(env, 'UNIFI_MCP_ADMIN_ENABLED')) return undefined;
+  const bind = env['UNIFI_MCP_ADMIN_BIND']?.trim() || '127.0.0.1';
+  if (bind !== 'localhost' && isIP(bind) === 0) {
+    throw new ConfigError('UNIFI_MCP_ADMIN_BIND must be an IP address (or localhost).');
+  }
+  const port = integer(env, 'UNIFI_MCP_ADMIN_PORT', 3001, 1, 65535);
+  if (port === http.port) {
+    throw new ConfigError(
+      'UNIFI_MCP_ADMIN_PORT must differ from UNIFI_MCP_HTTP_PORT: the admin and MCP listeners are separate.',
+    );
+  }
+  const tls = tlsFiles(env, 'UNIFI_MCP_ADMIN');
+  const allowPlaintext = flag(env, 'UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT');
+  if (tls === undefined && !isLoopbackBind(bind) && !allowPlaintext) {
+    throw new ConfigError(
+      `Refusing to serve the admin interface over plaintext HTTP on ${bind}. Configure ` +
+        'UNIFI_MCP_ADMIN_TLS_CERT_FILE and UNIFI_MCP_ADMIN_TLS_KEY_FILE, bind to a loopback ' +
+        'address, or set UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT=true when a TLS reverse proxy or a ' +
+        'host-loopback port publication protects it (docs/networking.md).',
+    );
+  }
+  return {
+    bind,
+    port,
+    tls,
+    allowPlaintext,
+    allowedHosts: [...new Set([...LOCAL_NAMES, ...hostList(env, 'UNIFI_MCP_ADMIN_ALLOWED_HOSTS')])],
+    sessionIdleMinutes: integer(env, 'UNIFI_MCP_ADMIN_SESSION_IDLE_MINUTES', 30, 5, 480),
+    sessionMaxHours: integer(env, 'UNIFI_MCP_ADMIN_SESSION_MAX_HOURS', 12, 1, 72),
+  };
+}
+
 export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
   const dataDir = resolve(env['UNIFI_MCP_DATA_DIR']?.trim() || '/data');
   const bind = env['UNIFI_MCP_HTTP_BIND']?.trim() || '127.0.0.1';
@@ -115,7 +182,7 @@ export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
         'host-level binding protects the listener (docs/networking.md).',
     );
   }
-  return {
+  const config: ServiceConfig = {
     dataDir,
     databasePath: databasePathFor(dataDir),
     logLevel: parseLogLevel(env['UNIFI_MCP_LOG_LEVEL']),
@@ -133,6 +200,7 @@ export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
         ...new Set([...LOCAL_NAMES, ...hostList(env, 'UNIFI_MCP_HTTP_ALLOWED_ORIGINS')]),
       ],
     },
+    admin: undefined,
     auditRetentionDays: integer(
       env,
       'UNIFI_MCP_AUDIT_RETENTION_DAYS',
@@ -142,4 +210,6 @@ export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
     ),
     apiSpecsDir: env['UNIFI_MCP_API_SPECS_DIR']?.trim() || defaultApiSpecsDir(),
   };
+  config.admin = loadAdminConfig(env, config.http);
+  return config;
 }

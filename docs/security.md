@@ -136,6 +136,25 @@ Each MCP client has its own identity and bearer token (ADR 0013).
   audit entries show the client id and the token id.
 - Only an administrator or the CLI can create, rotate or revoke tokens.
 
+## Admin web interface
+
+The optional admin interface (ADR 0016) is off by default, listens on host loopback when
+enabled, and is separate from MCP: its own port, certificate and sign-in. MCP tokens do
+not open it, and its cookie does not open MCP.
+
+- Sign-in uses Argon2id password hashes, with throttling per username and per address.
+  There is no default account: the first administrator is created on the host with the
+  CLI.
+- The session cookie is `__Host-`, `Secure`, `HttpOnly` and `SameSite=Strict`. Only a hash
+  of it is stored. Sessions have an idle timeout and an absolute lifetime, and end at
+  sign-out or a password reset.
+- Every state change must come from the same origin and carry a per-session CSRF token.
+  Every request must name an allowed `Host`.
+- Pages contain no JavaScript. The Content-Security-Policy forbids scripts, framing and
+  foreign form targets. Responses are never cached. All text is escaped, with control
+  and bidirectional characters made visible.
+- Approving needs the password again, every time. Credentials are never shown on any page.
+
 ## Host administration
 
 The `unifi-mcp` CLI ([administration.md](administration.md)) is host-level authority:

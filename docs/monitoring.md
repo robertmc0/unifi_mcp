@@ -90,5 +90,5 @@ identifiers, never complete sensitive responses, images or credentials.
   is not ready.
 - The endpoints are unauthenticated and therefore return only the overall status. Check
   names and details (which can include console identifiers) are shown only to
-  administrators (`unifi-mcp doctor`, and the admin UI in Phase 1 step 10).
+  administrators (`unifi-mcp doctor`, and the dashboard of the admin web interface).
 - Responses are `Cache-Control: no-store` and accept only `GET` and `HEAD`.

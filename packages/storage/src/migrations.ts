@@ -253,6 +253,25 @@ CREATE TABLE admins (
 ) STRICT;
 `,
   },
+  {
+    // Admin UI sessions (spec §7.2; ADR 0016). The cookie carries a random secret; only its
+    // SHA-256 is stored. Queries live in @unifi-local-mcp/admin-api.
+    version: 9,
+    name: 'admin_sessions',
+    sql: `
+CREATE TABLE admin_sessions (
+  id TEXT PRIMARY KEY CHECK (length(id) = 16),
+  secret_sha256 TEXT NOT NULL CHECK (length(secret_sha256) = 64),
+  admin_id TEXT NOT NULL REFERENCES admins(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL,
+  last_seen_at TEXT NOT NULL,
+  authenticated_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  revoked_at TEXT
+) STRICT;
+CREATE INDEX admin_sessions_admin ON admin_sessions (admin_id);
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `

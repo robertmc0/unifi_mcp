@@ -2,7 +2,7 @@
 
 > **Status: Phase 1 in progress.** The workflow is implemented and tested in
 > `packages/approvals` and the dispatcher (ADR 0011), with the MCP tools (ADR 0013) and
-> the CLI commands (ADR 0015). The admin UI page is Phase 1 step 10.
+> the CLI commands (ADR 0015) and the admin web interface (ADR 0016).
 
 High-risk operations, such as changing firewall rules, rebooting a gateway or unlocking a
 door, never run just because an AI client asks. A human approves each one.
@@ -42,7 +42,16 @@ arguments, with sensitive values such as passwords or pre-shared keys shown as
 soon as the request is approved and used, rejected, expired or invalidated.
 
 Administrators must have signed in within the last 5 minutes to approve. A deployment can
-also require a verified second factor (MFA arrives with the admin UI).
+also require a verified second factor (MFA arrives in Phase 5).
+
+### Approving in the admin web interface
+
+The approval page asks for your password on every approval, even within an active
+session. That re-authentication is what the 5-minute rule checks. The page shows the
+client, operation, risk, console and site, the times, and the redacted arguments. Text in
+them is escaped, and control and bidirectional-text characters are shown as `\uXXXX`. The
+decision is recorded as `admin:<username>`. See
+[administration.md](administration.md#admin-web-interface).
 
 ### Approving with the CLI
 

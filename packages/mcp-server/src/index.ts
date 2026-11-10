@@ -20,6 +20,7 @@ export {
   isLoopbackBind,
   loadServiceConfig,
   type HttpConfig,
+  type AdminListenerConfig,
   type ServiceConfig,
 } from './config.ts';
 export { MCP_PATH, McpHttpService, type McpHttpOptions } from './http.ts';

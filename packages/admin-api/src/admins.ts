@@ -126,7 +126,12 @@ export class AdminStore {
         "UPDATE admins SET password_hash = ?, status = 'active', updated_at = ?, password_changed_at = ? WHERE username = ?",
         [hashPassword(password), timestamp, timestamp, name],
       );
-      this.#record(actor, 'admin.reset_password', { username: name });
+      // A new password ends every existing admin UI session of the account.
+      const revoked = this.#db.run(
+        'UPDATE admin_sessions SET revoked_at = ? WHERE admin_id = (SELECT id FROM admins WHERE username = ?) AND revoked_at IS NULL',
+        [timestamp, name],
+      ).changes;
+      this.#record(actor, 'admin.reset_password', { username: name, sessionsEnded: revoked });
       return this.#require(name);
     });
   }
@@ -143,6 +148,20 @@ export class AdminStore {
     const ok = verifyPassword(hash, password);
     if (row === undefined || !ok || columnText(row, 'status') !== 'active') return undefined;
     return toView(row);
+  }
+
+  /** The account by id, or undefined. */
+  byId(id: string): AdminView | undefined {
+    const row = this.#db.get('SELECT * FROM admins WHERE id = ?', [id]);
+    return row === undefined ? undefined : toView(row);
+  }
+
+  /** Records a successful admin UI sign-in. */
+  recordLogin(id: string): void {
+    this.#db.run('UPDATE admins SET last_login_at = ? WHERE id = ?', [
+      this.#now().toISOString(),
+      id,
+    ]);
   }
 
   #validate(username: string, password: string): string {

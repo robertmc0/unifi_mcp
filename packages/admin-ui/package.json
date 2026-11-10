@@ -2,10 +2,13 @@
   "name": "@unifi-local-mcp/admin-ui",
   "version": "0.0.0",
   "private": true,
-  "description": "Optional web administration interface bundle.",
+  "description": "Server-rendered pages of the optional admin web interface (no client-side JavaScript).",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@unifi-local-mcp/core": "0.0.0"
   }
 }

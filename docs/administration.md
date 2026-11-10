@@ -1,8 +1,9 @@
 # Administration with the `unifi-mcp` CLI
 
-> **Status: Phase 1 in progress.** The CLI described here is implemented and tested
-> (`packages/cli`, [ADR 0015](adr/0015-host-administration-cli.md)). The admin web
-> interface, with sign-in, MFA and an approvals page, is Phase 1 step 10. The container
+> **Status: Phase 1 in progress.** The CLI ([ADR 0015](adr/0015-host-administration-cli.md))
+> and the admin web interface's sign-in, dashboard, approvals and audit pages
+> ([ADR 0016](adr/0016-admin-listener-sessions-and-ui.md)) are implemented and tested.
+> Editing consoles, clients and policy in the browser, and MFA, are Phase 5. The container
 > image that puts `unifi-mcp` on the `PATH`, and the Docker commands for maintenance with
 > the service stopped, are Phase 1 step 11.
 
@@ -85,7 +86,7 @@ audit trail as `cli:<operating-system user>`.
    operations again. `--sensitive <tag>` grants a sensitive-data class (spec §6.4). The
    `credential` class can never be granted.
 
-5. Optionally, create the first administrator for the admin web interface (step 10):
+5. Optionally, create the first administrator for the [admin web interface](#admin-web-interface):
    `unifi-mcp admin bootstrap --username alice`.
 6. Run `unifi-mcp doctor`, and fix anything it reports as `FAIL` or `WARN`.
 
@@ -191,8 +192,38 @@ See [monitoring.md](monitoring.md#audit-trail).
 | `api coverage`                        | Shows the official operations per module and how many are implemented.                                                                                             |
 
 Passwords must have at least 12 characters, must not contain the username, and need at
-least 4 different characters. They are stored as Argon2id hashes. `admin reset-mfa`
-arrives with MFA in the admin interface (step 10).
+least 4 different characters. They are stored as Argon2id hashes. `admin reset-password`
+also ends all of the account's web sessions. `admin reset-mfa` arrives with MFA
+(Phase 5).
+
+## Admin web interface
+
+An optional browser interface for the dashboard, approvals and the audit trail. It is
+off by default and never needed: the CLI does everything it does.
+
+1. Create an administrator on the host: `unifi-mcp admin bootstrap --username alice`.
+2. Set `UNIFI_MCP_ADMIN_ENABLED=true` and restart the service. It listens on
+   `127.0.0.1:3001` by default; see [networking.md](networking.md#the-admin-listener) for
+   Docker and remote access.
+3. Open `http://localhost:3001` (or your `https://` address) and sign in.
+
+| Page      | What it shows                                                                                                                                               |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard | Hard lock, runtime mode, policy version, readiness and every health check, listeners, consoles and their modules, counts.                                   |
+| Approvals | Pending and recent requests. A request's page shows the client, operation, risk, target, times and the redacted arguments, with **Approve** and **Reject**. |
+| Audit     | The audit trail, newest first, filtered by actor, outcome and event type, with paging.                                                                      |
+
+- **Approving needs your password every time**, on the approval form. Approving does not
+  run anything: the requesting client must resume the request before the time shown.
+  Rejecting needs no password.
+- Sessions end after 30 minutes without use, 12 hours after sign-in, at **Sign out**,
+  when your password is reset on the host, or when the account is disabled.
+- After 5 failed sign-ins for a username (or 20 from one address) within 15 minutes,
+  sign-in is refused for the rest of the 15 minutes.
+- Sign-ins, sign-outs and failures are in the audit trail (`admin.auth`), and your
+  decisions too (`approval`).
+- Text from MCP clients and UniFi is shown escaped. Control and bidirectional-text
+  characters appear as `\uXXXX`, so a request cannot hide or reorder what you read.
 
 ## Bootstrap file
 

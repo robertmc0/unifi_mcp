@@ -1,9 +1,9 @@
 # Networking
 
-> **Status: Phase 1 in progress.** This page covers the MCP listener and egress to
-> consoles, as implemented (ADR 0012, ADR 0013). Docker Compose examples for single- and
-> dual-interface deployments arrive with packaging (Phase 1 step 11); the separate admin
-> listener with step 10.
+> **Status: Phase 1 in progress.** This page covers the MCP listener, the admin listener
+> and egress to consoles, as implemented (ADR 0012, ADR 0013, ADR 0016). Docker Compose
+> examples for single- and dual-interface deployments arrive with packaging (Phase 1
+> step 11).
 
 ## The MCP listener
 
@@ -45,6 +45,32 @@ A proxy must pass the original `Host` header (or one listed in
 `text/event-stream` responses, and should allow long-lived responses. The service never
 trusts `X-Forwarded-*` headers. Behind a proxy, the failed-authentication throttle sees
 the proxy's address for every client.
+
+## The admin listener
+
+The optional admin web interface ([administration.md](administration.md#admin-web-interface))
+has its own listener, separate from MCP, with its own port, address, certificate and
+sign-in. It is **off** unless `UNIFI_MCP_ADMIN_ENABLED=true`, and then listens on
+`127.0.0.1:3001` by default. MCP tokens are not accepted on it, and its session cookie is
+not accepted on `/mcp`.
+
+The same three setups as for the MCP listener apply, with the `UNIFI_MCP_ADMIN_*`
+variables ([configuration.md](configuration.md#admin-listener)). In addition:
+
+- The session cookie is `Secure`. Browsers send it over plain HTTP only to `localhost` or
+  `127.0.0.1`, so a plaintext admin listener works only when you browse to a loopback
+  address: on the host itself, through an SSH tunnel
+  (`ssh -L 3001:127.0.0.1:3001 host`), or through a TLS reverse proxy.
+- **Docker:** `127.0.0.1` inside a container is the container's own loopback, which a
+  published port cannot reach. To keep the interface host-local, bind the container to its
+  interface (`UNIFI_MCP_ADMIN_BIND=0.0.0.0` with `UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT=true`) and
+  publish the port on the **host's** loopback only: `127.0.0.1:3001:3001`. Never publish it
+  as `3001:3001`, which exposes it on every host interface. The Compose examples follow
+  with the packaging (Phase 1 step 11).
+- If you browse to it by another name (for example through a proxy at
+  `admin.example.lan`), add that name to `UNIFI_MCP_ADMIN_ALLOWED_HOSTS`. The proxy must pass
+  the original `Host` and `Origin` headers.
+- Never expose the admin interface to the internet or to networks that MCP clients use.
 
 ## Connections to consoles
 

@@ -69,6 +69,15 @@ All notable changes to this project are documented here. The format follows
 - Open MCP responses are re-checked every 5 seconds, so revocations, rotations and
   disabled clients from the CLI (another process) also close streams in the running
   service.
+- Admin web interface (`packages/admin-api`, `packages/admin-ui`, storage migration 9,
+  ADR 0016): optional separate listener (off by default, loopback, own port, certificate
+  and Host allowlist); password sign-in with throttling; `__Host-` Secure, HttpOnly,
+  SameSite=Strict session cookies stored as digests, with idle and absolute limits;
+  same-origin and CSRF checks on every form; server-rendered pages without JavaScript under
+  a strict CSP; dashboard, approvals (password required for every approval) and audit
+  pages. `admin reset-password` now ends the account's web sessions.
+- Control, C1 and bidirectional characters are shown escaped in the CLI and the admin
+  pages (shared `displaySafe` in core), and a repository test refuses raw ones in sources.
 - Operator manual: `docs/administration.md`; `docs/configuration.md` (hard lock, MCP listener, audit retention,
   egress allowlist, data directory, logging, master key), `docs/networking.md`,
   `docs/client-generic-mcp.md`, `docs/security.md` (permission model, write safety, console

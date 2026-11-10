@@ -1,8 +1,8 @@
 /**
  * @unifi-local-mcp/admin-api
  *
- * Administrator identities (ADR 0015). The separate admin listener, sessions, CSRF and the
- * approvals page follow in Phase 1 step 10.
+ * Administrator identities (ADR 0015), admin UI sessions and the separate admin web
+ * listener with CSRF protection and the approvals page (ADR 0016).
  */
 export {
   AdminError,
@@ -19,3 +19,11 @@ export {
   passwordProblem,
   verifyPassword,
 } from './passwords.ts';
+export { AdminHttpService, SESSION_COOKIE, type AdminHttpOptions } from './http.ts';
+export {
+  AdminSessionStore,
+  DEFAULT_SESSION_LIMITS,
+  safeEqual,
+  type AdminSession,
+  type SessionLimits,
+} from './sessions.ts';

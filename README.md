@@ -25,15 +25,15 @@ server, never to UniFi. UniFi credentials never leave the server.
 
 ## Repository map
 
-| Path                                                   | Contents                                                                    |
-| ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| [`unifi-mcp-design-spec.md`](unifi-mcp-design-spec.md) | The design specification (source of truth)                                  |
-| [`docs/`](docs/index.md)                               | Manual, ADRs, threat model, API coverage                                    |
-| [`api-specs/`](api-specs/README.md)                    | Vendor contract provenance and operation inventories                        |
-| `packages/`                                            | Workspace packages (`admin-ui` and the module adapters are still skeletons) |
-| `deploy/`                                              | Deployment examples (bootstrap file; Compose files follow in Phase 1)       |
-| `scripts/`                                             | API contract tooling (fetch, reconcile, coverage report)                    |
-| `tests/`                                               | Contract, unit and security tests (later integration and compatibility)     |
+| Path                                                   | Contents                                                                |
+| ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| [`unifi-mcp-design-spec.md`](unifi-mcp-design-spec.md) | The design specification (source of truth)                              |
+| [`docs/`](docs/index.md)                               | Manual, ADRs, threat model, API coverage                                |
+| [`api-specs/`](api-specs/README.md)                    | Vendor contract provenance and operation inventories                    |
+| `packages/`                                            | Workspace packages (the module adapters are still skeletons)            |
+| `deploy/`                                              | Deployment examples (bootstrap file; Compose files follow in Phase 1)   |
+| `scripts/`                                             | API contract tooling (fetch, reconcile, coverage report)                |
+| `tests/`                                               | Contract, unit and security tests (later integration and compatibility) |
 
 ## Development
 

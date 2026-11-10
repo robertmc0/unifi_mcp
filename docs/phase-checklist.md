@@ -156,11 +156,28 @@ explicitly, never dropped silently.
    `tests/unit/admin-api/`, `tests/unit/storage/instance-lock.test.ts`,
    `tests/security/cli-invariants.test.ts`, `tests/integration-mock/cli-beside-service.test.ts`,
    `tests/integration-mock/instance-lock.test.ts`; 29 mutation checks.
-   Still open, carried into later steps: `admin reset-mfa` with MFA (step 10); Docker
+   Still open, carried into later steps: `admin reset-mfa` with MFA (Phase 5); Docker
    commands for offline maintenance and the `unifi-mcp` command in the image (step 11);
    retention of automatic backups.
-10. **admin-api / admin-ui**: separate listener (loopback default), sessions, CSRF,
-    approvals page.
+10. ✅ **admin-api / admin-ui** (2026-11-10): separate listener (off by default, loopback,
+    own port, TLS and Host allowlist), sessions, CSRF, approvals page.
+    → `packages/admin-api` (`AdminSessionStore`, `AdminHttpService`), `packages/admin-ui`
+    (server-rendered pages, no JavaScript), storage migration 9 (`admin_sessions`),
+    [ADR 0016](adr/0016-admin-listener-sessions-and-ui.md),
+    [administration.md](administration.md#admin-web-interface),
+    [networking.md](networking.md#the-admin-listener). Also done: `__Host-` Secure HttpOnly
+    SameSite=Strict cookie with digest-only storage; idle and absolute session limits;
+    sessions ended by sign-out, host password reset and disabled accounts; sign-in throttle
+    per username and address; same-origin `Origin` check and HMAC CSRF token on every
+    POST; strict CSP without scripts and other security headers; password required for
+    every approval (recent re-authentication); dashboard and audit pages; shared
+    `displaySafe` escaping (core) for the CLI and HTML; Trojan Source hygiene test.
+    Tests: `tests/integration-mock/admin-http.test.ts`, `tests/unit/admin-api/sessions.test.ts`,
+    `tests/unit/admin-ui/`, `tests/contract/source-hygiene.test.ts`; 16 mutation checks.
+    Deferred to Phase 5 (with the spec's "admin MFA" task): the other §13.1 pages (editing
+    consoles, clients and policy, permission preview, settings and maintenance, audit
+    export), TOTP MFA with recovery codes and `admin reset-mfa`. Until then the CLI covers
+    them.
 11. **Packaging**: Dockerfile (multi-stage, non-root, read-only rootfs), `deploy/compose.single.yml`,
     health checks.
 12. **Docs**: quickstart, installation, configuration, security, approval workflow,
@@ -195,7 +212,10 @@ explicitly, never dropped silently.
       point exits 1 with `MASTER_KEY_NOT_CONFIGURED` when no key is configured)
 - [x] stdio bridge has no UniFi key or DB access and writes nothing to stdout except protocol frames
       (`tests/security/stdio-bridge-isolation.test.ts`, `tests/integration-mock/stdio-bridge.test.ts`)
-- [ ] Admin interface is local-only by default; MCP and admin listeners use separate auth and ports
+- [x] Admin interface is local-only by default; MCP and admin listeners use separate auth and ports
+      (`tests/integration-mock/admin-http.test.ts`: off unless enabled, loopback default,
+      separate port, MCP tokens refused on admin and admin cookies refused on MCP;
+      `tests/unit/mcp-server/clients.test.ts`: same port and remote plaintext refused)
 
 ## Phase 2 — UniFi Network
 

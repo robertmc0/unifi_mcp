@@ -21,6 +21,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0013](0013-mcp-server-tokens-gate-and-tools.md)            | MCP server: client tokens, the HTTP gate, the tool set and the service lifecycle | Accepted                                 |
 | [0014](0014-stdio-bridge-transport-relay.md)                | stdio bridge: a message relay with one client token                              | Accepted                                 |
 | [0015](0015-host-administration-cli.md)                     | Host administration CLI, administrator accounts and the data-directory lock      | Accepted                                 |
+| [0016](0016-admin-listener-sessions-and-ui.md)              | Admin web listener, sessions and a server-rendered interface                     | Accepted                                 |
 
 ## Template
 
