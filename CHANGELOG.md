@@ -78,7 +78,16 @@ All notable changes to this project are documented here. The format follows
   pages. `admin reset-password` now ends the account's web sessions.
 - Control, C1 and bidirectional characters are shown escaped in the CLI and the admin
   pages (shared `displaySafe` in core), and a repository test refuses raw ones in sources.
-- Operator manual: `docs/administration.md`; `docs/configuration.md` (hard lock, MCP listener, audit retention,
+- Container image (`Dockerfile`, ADR 0017): digest-pinned Node.js 26 base, production
+  dependencies installed without lifecycle scripts, no package managers in the final
+  image, non-root user, read-only-root friendly, `HEALTHCHECK` on `/livez`, and the
+  `unifi-mcp` CLI and `unifi-mcp-bridge` on the `PATH`.
+- `deploy/compose.single.yml`: read-only, no capabilities, `no-new-privileges`, hard lock
+  on, MCP port on host loopback only, admin interface off with its port unpublished.
+- Basic CI (`.github/workflows/check.yml`): format, lint, typecheck, tests, contract
+  reconciliation, and an image build with a read-only smoke run; actions pinned by
+  commit SHA.
+- Operator manual: `docs/installation.md`, `docs/administration.md`; `docs/configuration.md` (hard lock, MCP listener, audit retention,
   egress allowlist, data directory, logging, master key), `docs/networking.md`,
   `docs/client-generic-mcp.md`, `docs/security.md` (permission model, write safety, console
   connections), `docs/approval-workflow.md`,

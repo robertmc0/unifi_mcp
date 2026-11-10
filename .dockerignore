@@ -25,3 +25,11 @@ tests/integration-live-readonly/
 .claude/
 .vscode/
 .idea/
+# Not needed in the image (the runtime reads only packages/, api-specs/ and the root files).
+tests/
+docs/
+scripts/
+deploy/*.yml
+deploy/*.yaml
+*.md
+!api-specs/README.md

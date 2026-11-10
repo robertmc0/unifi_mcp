@@ -47,6 +47,21 @@ env:     UNIFI_MCP_URL=http://127.0.0.1:3000/mcp
 The bridge needs Node.js 26. It exits with code 1 if the service rejects the token and
 with code 2 if its configuration is invalid; in both cases the reason is on stderr.
 
+Without Node.js, the client can start the bridge from the service image instead
+(`docker run -i`, with the token file mounted read-only):
+
+```text
+command: docker
+args:    run -i --rm --network host --user 1000:1000
+         -v /home/you/.config/unifi-mcp/token:/run/token:ro
+         -e UNIFI_MCP_URL=http://127.0.0.1:3000/mcp -e UNIFI_MCP_TOKEN_FILE=/run/token
+         --entrypoint unifi-mcp-bridge unifi-local-mcp:local
+```
+
+The bridge exits when its standard input closes. As the MCP stdio binding specifies,
+requests still in flight at that moment are not answered, so clients keep stdin open
+until they have read their responses.
+
 ## Tools
 
 | Tool                                            | Purpose                                                                                                                            |

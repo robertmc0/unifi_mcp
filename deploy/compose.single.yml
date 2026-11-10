@@ -1,0 +1,65 @@
+# Single-host deployment of unifi-local-mcp (spec §11; ADR 0017; docs/installation.md).
+#
+# - The MCP endpoint is published on the HOST's loopback only (127.0.0.1:3000). MCP clients
+#   on this machine connect directly; clients elsewhere use the stdio bridge over SSH or a
+#   TLS reverse proxy (docs/networking.md).
+# - Writes stay impossible until you deliberately set UNIFI_MCP_FORCE_READ_ONLY=false.
+# - Before the first start (in the directory that holds this file):
+#     mkdir -m 0700 data secrets
+#     (umask 077 && openssl rand -base64 32 > secrets/unifi_mcp_master_key)
+#     chmod 0400 secrets/unifi_mcp_master_key
+#   Back the key up separately from the data directory (docs/backup-restore.md).
+# - The container runs as your user (UNIFI_MCP_UID/GID, default 1000) so that it can read the
+#   key file and write ./data without changing their ownership. Check with `id -u` / `id -g`.
+name: unifi-local-mcp
+
+services:
+  unifi-mcp:
+    image: ${UNIFI_MCP_IMAGE:-unifi-local-mcp:local}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    user: '${UNIFI_MCP_UID:-1000}:${UNIFI_MCP_GID:-1000}'
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 512m
+    environment:
+      # Immutable deployment lock: no write can run while this is true (the default).
+      UNIFI_MCP_FORCE_READ_ONLY: 'true'
+      # Inside the container the listener must use the container's interface; the port is
+      # published on the host's loopback only (below), which is what protects it.
+      UNIFI_MCP_HTTP_BIND: 0.0.0.0
+      UNIFI_MCP_HTTP_ALLOW_PLAINTEXT: 'true'
+      UNIFI_MCP_MASTER_KEY_FILE: /run/secrets/unifi_mcp_master_key
+      # Consoles the service may reach (default: private ranges, CGNAT and IPv6 ULA).
+      # UNIFI_MCP_EGRESS_ALLOW_CIDRS: 192.0.2.0/24
+      UNIFI_MCP_LOG_LEVEL: info
+      # Optional admin web interface (docs/administration.md#admin-web-interface). To enable
+      # it, set this to true AND uncomment the 3001 port line below.
+      UNIFI_MCP_ADMIN_ENABLED: 'false'
+      UNIFI_MCP_ADMIN_BIND: 0.0.0.0
+      UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT: 'true'
+    ports:
+      - '127.0.0.1:${UNIFI_MCP_HTTP_HOST_PORT:-3000}:3000'
+      # - '127.0.0.1:${UNIFI_MCP_ADMIN_HOST_PORT:-3001}:3001'
+    volumes:
+      - ./data:/data
+    secrets:
+      - unifi_mcp_master_key
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+secrets:
+  unifi_mcp_master_key:
+    file: ./secrets/unifi_mcp_master_key

@@ -1,9 +1,9 @@
 # Networking
 
 > **Status: Phase 1 in progress.** This page covers the MCP listener, the admin listener
-> and egress to consoles, as implemented (ADR 0012, ADR 0013, ADR 0016). Docker Compose
-> examples for single- and dual-interface deployments arrive with packaging (Phase 1
-> step 11).
+> and egress to consoles, as implemented (ADR 0012, ADR 0013, ADR 0016), and the
+> single-host Docker example (`deploy/compose.single.yml`, ADR 0017). Dual-interface and
+> TLS examples are Phase 5.
 
 ## The MCP listener
 
@@ -65,8 +65,8 @@ variables ([configuration.md](configuration.md#admin-listener)). In addition:
   published port cannot reach. To keep the interface host-local, bind the container to its
   interface (`UNIFI_MCP_ADMIN_BIND=0.0.0.0` with `UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT=true`) and
   publish the port on the **host's** loopback only: `127.0.0.1:3001:3001`. Never publish it
-  as `3001:3001`, which exposes it on every host interface. The Compose examples follow
-  with the packaging (Phase 1 step 11).
+  as `3001:3001`, which exposes it on every host interface. `deploy/compose.single.yml`
+  is set up this way, with the admin port line commented out until you enable it.
 - If you browse to it by another name (for example through a proxy at
   `admin.example.lan`), add that name to `UNIFI_MCP_ADMIN_ALLOWED_HOSTS`. The proxy must pass
   the original `Host` and `Origin` headers.

@@ -26,7 +26,8 @@
 | [backup-restore.md](backup-restore.md) (backup, restore, key rotation)                                   | 1 (started)     |
 | [monitoring.md](monitoring.md) (logs, audit trail, health; metrics in Phase 5)                           | 1 (started) / 5 |
 | [security.md](security.md) (permissions, write safety, client tokens, console connections)               | 1 (started)     |
-| quickstart.md, installation.md                                                                           | 1               |
+| [installation.md](installation.md) (Docker Compose, from source, maintenance, upgrades)                  | 1 (started)     |
+| quickstart.md                                                                                            | 1               |
 | [approval-workflow.md](approval-workflow.md)                                                             | 1 (started)     |
 | [administration.md](administration.md) (the `unifi-mcp` CLI, bootstrap file, maintenance)                | 1 (started)     |
 | [client-generic-mcp.md](client-generic-mcp.md) (HTTP and stdio connection, tools, results)               | 1 (started)     |

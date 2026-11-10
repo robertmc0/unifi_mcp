@@ -8,7 +8,12 @@
  * Shutdown: stop accepting, drain running operations, close the database.
  */
 import { readFileSync } from 'node:fs';
-import { createServer as createHttpServer, type Server } from 'node:http';
+import {
+  createServer as createHttpServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from 'node:http';
 import { createServer as createHttpsServer } from 'node:https';
 import type { AddressInfo } from 'node:net';
 import { AdminHttpService, AdminSessionStore, AdminStore } from '@unifi-local-mcp/admin-api';
@@ -280,29 +285,13 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       });
     });
 
-    const server: Server =
-      config.http.tls === undefined
-        ? createHttpServer(http.listener)
-        : createHttpsServer(
-            {
-              cert: readFileSync(config.http.tls.certFile),
-              key: readFileSync(config.http.tls.keyFile),
-              minVersion: 'TLSv1.2',
-            },
-            http.listener,
-          );
-    server.headersTimeout = 20_000;
-    server.requestTimeout = 120_000;
-    await new Promise<void>((resolve, reject) => {
-      server.once('error', reject);
-      server.listen(config.http.port, config.http.bind, () => {
-        server.off('error', reject);
-        resolve();
-      });
-    });
-    const address = server.address() as AddressInfo;
-    const host = address.family === 'IPv6' ? `[${address.address}]` : address.address;
-    const url = `${config.http.tls === undefined ? 'http' : 'https'}://${host}:${String(address.port)}`;
+    const server = createListener(config.http.tls, http.listener);
+    const url = await listen(
+      server,
+      config.http.port,
+      config.http.bind,
+      config.http.tls !== undefined,
+    );
     if (config.http.tls === undefined && config.http.allowPlaintext) {
       logger.warn(
         'MCP listener uses plaintext HTTP (UNIFI_MCP_HTTP_ALLOW_PLAINTEXT); TLS must be provided in front of it',

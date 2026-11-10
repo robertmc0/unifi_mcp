@@ -1,0 +1,60 @@
+# Basic checks for every push and pull request (Phase 1; Phase 5 adds security and
+# supply-chain jobs). Actions are pinned by commit SHA. No live UniFi access, no secrets,
+# and nothing is published.
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - run: npm ci
+      - name: Fetch and verify the vendor API contracts
+        run: npm run api:fetch-specs
+      - run: npm run check
+      - run: npm run api:reconcile
+
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the service image (linux/amd64)
+        run: docker build --tag unifi-local-mcp:ci .
+      - name: Start it read-only and wait until healthy
+        run: |
+          mkdir -m 0700 data secrets
+          (umask 077 && openssl rand -base64 32 > secrets/master.key)
+          docker run --detach --name smoke --read-only --cap-drop ALL \
+            --security-opt no-new-privileges:true --user "$(id -u):$(id -g)" \
+            --volume "$PWD/data:/data" --volume "$PWD/secrets/master.key:/run/secrets/master.key:ro" \
+            --env UNIFI_MCP_MASTER_KEY_FILE=/run/secrets/master.key unifi-local-mcp:ci
+          for i in $(seq 1 30); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' smoke)
+            [ "$status" = healthy ] && break
+            sleep 2
+          done
+          docker logs smoke
+          test "$status" = healthy
+          docker exec smoke unifi-mcp doctor
+          docker stop --time 15 smoke
+          test "$(docker inspect --format '{{.State.ExitCode}}' smoke)" = 0

@@ -92,3 +92,5 @@ identifiers, never complete sensitive responses, images or credentials.
   names and details (which can include console identifiers) are shown only to
   administrators (`unifi-mcp doctor`, and the dashboard of the admin web interface).
 - Responses are `Cache-Control: no-store` and accept only `GET` and `HEAD`.
+- The container image's Docker `HEALTHCHECK` probes `/livez` every 30 seconds (every 2
+  seconds while starting), so `docker compose ps` shows `healthy` (ADR 0017).

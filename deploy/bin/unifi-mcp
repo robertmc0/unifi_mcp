@@ -1,0 +1,3 @@
+#!/bin/sh
+# Host administration CLI (docs/administration.md). For human administrators only.
+exec node /app/packages/cli/src/main.ts "$@"

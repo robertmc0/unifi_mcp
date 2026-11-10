@@ -4,8 +4,7 @@
 > and the admin web interface's sign-in, dashboard, approvals and audit pages
 > ([ADR 0016](adr/0016-admin-listener-sessions-and-ui.md)) are implemented and tested.
 > Editing consoles, clients and policy in the browser, and MFA, are Phase 5. The container
-> image that puts `unifi-mcp` on the `PATH`, and the Docker commands for maintenance with
-> the service stopped, are Phase 1 step 11.
+> image has `unifi-mcp` on the `PATH` ([installation.md](installation.md)).
 
 `unifi-mcp` is the host administrator's tool. It manages MCP clients and their tokens,
 consoles and their credentials, policy, approvals, the bootstrap file, the master key,
@@ -19,10 +18,11 @@ backups and the audit trail.
 
 ## Running it
 
-| Where                  | Command                                                     |
-| ---------------------- | ----------------------------------------------------------- |
-| In the container       | `docker exec -it <container> unifi-mcp <group> <command> …` |
-| From a source checkout | `npm run unifi-mcp -- <group> <command> …`                  |
+| Where                   | Command                                                                |
+| ----------------------- | ---------------------------------------------------------------------- |
+| Docker Compose          | `docker compose exec unifi-mcp unifi-mcp <group> <command> …`          |
+| Docker, service stopped | `docker compose run --rm --no-deps --entrypoint unifi-mcp unifi-mcp …` |
+| From a source checkout  | `npm run unifi-mcp -- <group> <command> …`                             |
 
 Do **not** run `npx unifi-mcp`. The package `unifi-mcp` on the public npm registry is an
 unrelated project, and `npx` downloads and runs it whenever the local command is not
@@ -268,6 +268,17 @@ data directory. `crypto rotate-key` and `db restore` need the same lock, so they
 `DATA_DIRECTORY_IN_USE` until the service is stopped. A crashed service never leaves a
 stale lock: the operating system releases it when the process exits. The data directory
 must be on a local filesystem, not a network share.
+
+With Docker Compose:
+
+```sh
+docker compose stop unifi-mcp
+docker compose run --rm --no-deps --entrypoint unifi-mcp unifi-mcp crypto rotate-key --new-key-file /run/secrets/<new key>
+docker compose start unifi-mcp
+```
+
+The new key file must be mounted into the one-off container, for example as a second
+Compose secret. Afterwards, point the `unifi_mcp_master_key` secret at the new file.
 
 ## Common errors
 

@@ -1,0 +1,3 @@
+#!/bin/sh
+# stdio bridge for MCP harnesses (docs/client-generic-mcp.md).
+exec node /app/packages/stdio-bridge/src/main.ts "$@"

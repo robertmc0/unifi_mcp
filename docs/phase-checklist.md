@@ -37,9 +37,10 @@ explicitly, never dropped silently.
 
 ### Deferred from Phase 0 (by design)
 
-- Dockerfile and Compose examples → Phase 1 (§16 Phase 1 "safe Docker examples").
-- CI workflows (`.github/`) → Phase 1 adds a basic check workflow; Phase 5 adds the
-  security and supply-chain jobs.
+- Dockerfile and Compose examples → Phase 1 (§16 Phase 1 "safe Docker examples"); done
+  in Phase 1 step 11.
+- CI workflows (`.github/`) → Phase 1 adds a basic check workflow (done in step 11);
+  Phase 5 adds the security and supply-chain jobs.
 - Operator manual pages other than `docs/index.md` → written alongside Phase 1 features.
 
 ## Phase 1 — Secure platform core (in progress)
@@ -52,7 +53,8 @@ explicitly, never dropped silently.
    [configuration.md](configuration.md), [backup-restore.md](backup-restore.md). Also done:
    verified key rotation, backup verification, validated offline restore, automatic
    pre-migration backups. Tests: `tests/unit/storage/`, `tests/security/storage-master-key.test.ts`.
-   Still open, carried into later steps: `linux/arm64` run of the storage tests (step 11);
+   Still open, carried into later steps: `linux/arm64` run of the storage tests (still open
+   after step 11: needs arm64 emulation on the build host, which needs the owner's consent);
    ~~CLI `crypto generate-key|rotate-key` and `db backup|restore|check`~~ (done in step 9);
    retention of automatic backups; ~~single-instance guard per data directory~~ (done in
    step 9).
@@ -178,8 +180,23 @@ explicitly, never dropped silently.
     consoles, clients and policy, permission preview, settings and maintenance, audit
     export), TOTP MFA with recovery codes and `admin reset-mfa`. Until then the CLI covers
     them.
-11. **Packaging**: Dockerfile (multi-stage, non-root, read-only rootfs), `deploy/compose.single.yml`,
-    health checks.
+11. ✅ **Packaging** (2026-11-10): Dockerfile (multi-stage, non-root, read-only rootfs),
+    `deploy/compose.single.yml`, health checks. → `Dockerfile`, `.dockerignore`,
+    `deploy/compose.single.yml`, `deploy/bin/`, `packages/mcp-server/src/healthcheck.ts`,
+    `.github/workflows/check.yml`, [ADR 0017](adr/0017-container-image-and-compose.md),
+    [installation.md](installation.md). Also done: base image pinned by multi-arch digest;
+    production dependencies without lifecycle scripts; no npm, npx or corepack in the
+    final image; UID 10001; `unifi-mcp` and `unifi-mcp-bridge` on the `PATH`; Compose with
+    `read_only`, `cap_drop: ALL`, `no-new-privileges`, init, limits, hard lock on, MCP
+    port on host loopback only and the admin port commented out; bridge from the image;
+    basic CI (check job and image smoke job, actions pinned by SHA). Verified with a local
+    Compose smoke test (health, read-only root, no capabilities, CLI via exec, rotation
+    refused while running, bridge relay, clean stop, offline `db check`); the CI image job
+    script was run locally, the workflow itself has not run on GitHub yet. Tests:
+    `tests/contract/packaging.test.ts`, `tests/integration-mock/healthcheck.test.ts`.
+    Still open: `linux/arm64` build and storage tests (needs binfmt/QEMU on the build
+    host: the owner's decision); dual-network and TLS Compose examples (Phase 5);
+    registry publishing, SBOM and signing (Phase 5).
 12. **Docs**: quickstart, installation, configuration, security, approval workflow,
     administration, client guides.
 

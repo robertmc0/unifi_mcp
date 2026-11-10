@@ -8,8 +8,8 @@ server, never to UniFi. UniFi credentials never leave the server.
 > **Status: Phase 1 (secure platform core) is in progress. The service starts and serves
 > MCP over Streamable HTTP and, through the stdio bridge, over stdio, and is administered
 > with the host-only `unifi-mcp` CLI; UniFi operations arrive with the Network adapter
-> (Phase 2).** See [docs/phase-checklist.md](docs/phase-checklist.md) and
-> [docs/administration.md](docs/administration.md).
+> (Phase 2).** See [docs/phase-checklist.md](docs/phase-checklist.md),
+> [docs/installation.md](docs/installation.md) and [docs/administration.md](docs/administration.md).
 
 ## Design principles
 
@@ -31,7 +31,7 @@ server, never to UniFi. UniFi credentials never leave the server.
 | [`docs/`](docs/index.md)                               | Manual, ADRs, threat model, API coverage                                |
 | [`api-specs/`](api-specs/README.md)                    | Vendor contract provenance and operation inventories                    |
 | `packages/`                                            | Workspace packages (the module adapters are still skeletons)            |
-| `deploy/`                                              | Deployment examples (bootstrap file; Compose files follow in Phase 1)   |
+| `deploy/`                                              | Deployment examples: single-host Compose file, bootstrap file           |
 | `scripts/`                                             | API contract tooling (fetch, reconcile, coverage report)                |
 | `tests/`                                               | Contract, unit and security tests (later integration and compatibility) |
 
