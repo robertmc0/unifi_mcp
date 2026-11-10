@@ -291,8 +291,12 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
    (`tests/integration-mock/network-reads.test.ts`); the review table is pinned in
    `tests/contract/network-security-review.test.ts`;
    [applications-network.md](applications-network.md) (ADR 0018 §4).
-5. **Writes** (32): reviewed risk, approval, resource locks and retry classes; mock tests
-   for authorisation, approval, duplicates and uncertain outcomes.
+5. ✅ **Writes** (32, 2026-11-10): 27 high risk with human approval, 5 medium; device
+   removal and bulk voucher deletion off by default; site-level locks per kind; every
+   write tested against the synthetic console for every body variant (approval, single
+   resume, exact body, no credential in audit, logs, approval summaries or results;
+   refusal under read-only grants, hard lock and read-only module; idempotency;
+   `outcome_unknown`) in `tests/integration-mock/network-writes.test.ts` (ADR 0018 §5).
 6. **Coverage**: matrix status and evidence per operation, `unifi-mcp api coverage`, and
    reconciliation of the registry against the matrix.
 7. **Live read-only test** (opt-in, never in CI) and a manual write runbook.

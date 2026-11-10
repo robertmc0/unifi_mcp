@@ -12,6 +12,11 @@ All notable changes to this project are documented here. The format follows
   request schemas, response schemas that strip undocumented fields, discriminated unions
   with JSON Schema semantics, and no vendor prose. Generated Network 11.0.97 schemas in
   `packages/unifi-network/src/generated/`; `api:reconcile` fails when they are stale.
+- All 32 documented Network writes (ADR 0018 §5): ACL rules, firewall policies and zones,
+  networks, Wi-Fi broadcasts, DNS policies, traffic matching lists, device adoption,
+  removal, restart and port power-cycle, client guest access, hotspot vouchers. 27 are
+  high risk and need human approval; device removal and bulk voucher deletion are off by
+  default.
 - All 41 documented Network reads (ADR 0018 §4): sites, devices, statistics, pending
   devices, device tags, clients (sensitive grants required), networks, Wi-Fi broadcasts,
   firewall policies and zones, ACL rules, DNS policies, hotspot vouchers, switching, traffic

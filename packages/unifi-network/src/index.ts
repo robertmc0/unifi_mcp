@@ -7,26 +7,65 @@
  * `api-specs/network/11.0.97/` can be implemented here.
  */
 import type { OperationDescriptor } from '@unifi-local-mcp/core';
-import { getAclRule, getAclRuleOrdering, listAclRules } from './operations/acl.ts';
-import { getClient, listClients } from './operations/clients.ts';
 import {
+  createAclRule,
+  deleteAclRule,
+  getAclRule,
+  getAclRuleOrdering,
+  listAclRules,
+  updateAclRule,
+  updateAclRuleOrdering,
+} from './operations/acl.ts';
+import { getClient, listClients, runClientAction } from './operations/clients.ts';
+import {
+  adoptDevice,
   getDevice,
   getDeviceStatistics,
   listDevices,
   listDeviceTags,
   listPendingDevices,
+  powerCyclePort,
+  removeDevice,
+  restartDevice,
 } from './operations/devices.ts';
-import { getDnsPolicy, listDnsPolicies } from './operations/dns.ts';
 import {
+  createDnsPolicy,
+  deleteDnsPolicy,
+  getDnsPolicy,
+  listDnsPolicies,
+  updateDnsPolicy,
+} from './operations/dns.ts';
+import {
+  createFirewallPolicy,
+  createFirewallZone,
+  deleteFirewallPolicy,
+  deleteFirewallZone,
   getFirewallPolicy,
   getFirewallPolicyOrdering,
   getFirewallZone,
   listFirewallPolicies,
   listFirewallZones,
+  patchFirewallPolicy,
+  updateFirewallPolicy,
+  updateFirewallPolicyOrdering,
+  updateFirewallZone,
 } from './operations/firewall.ts';
-import { getVoucher, listVouchers } from './operations/hotspot.ts';
+import {
+  createVouchers,
+  deleteVoucher,
+  deleteVouchers,
+  getVoucher,
+  listVouchers,
+} from './operations/hotspot.ts';
 import { getInfo } from './operations/info.ts';
-import { getNetwork, getNetworkReferences, listNetworks } from './operations/networks.ts';
+import {
+  createNetwork,
+  deleteNetwork,
+  getNetwork,
+  getNetworkReferences,
+  listNetworks,
+  updateNetwork,
+} from './operations/networks.ts';
 import { listSites } from './operations/sites.ts';
 import {
   listCountries,
@@ -45,8 +84,20 @@ import {
   listMcLagDomains,
   listSwitchStacks,
 } from './operations/switching.ts';
-import { getTrafficMatchingList, listTrafficMatchingLists } from './operations/traffic-lists.ts';
-import { getWifiBroadcast, listWifiBroadcasts } from './operations/wifi.ts';
+import {
+  createTrafficMatchingList,
+  deleteTrafficMatchingList,
+  getTrafficMatchingList,
+  listTrafficMatchingLists,
+  updateTrafficMatchingList,
+} from './operations/traffic-lists.ts';
+import {
+  createWifiBroadcast,
+  deleteWifiBroadcast,
+  getWifiBroadcast,
+  listWifiBroadcasts,
+  updateWifiBroadcast,
+} from './operations/wifi.ts';
 
 export { ALWAYS_REMOVED, withoutCredentials } from './credentials.ts';
 export {
@@ -104,5 +155,47 @@ export const NETWORK_READS: readonly OperationDescriptor[] = [
   listDpiCategories,
 ];
 
+/**
+ * Every documented Network write (32), reviewed 2026-11-10: 27 high risk (human approval),
+ * 5 medium. Two are also disabled until a global policy enables them.
+ */
+export const NETWORK_WRITES: readonly OperationDescriptor[] = [
+  createAclRule,
+  updateAclRule,
+  deleteAclRule,
+  updateAclRuleOrdering,
+  createFirewallPolicy,
+  updateFirewallPolicy,
+  patchFirewallPolicy,
+  deleteFirewallPolicy,
+  updateFirewallPolicyOrdering,
+  createFirewallZone,
+  updateFirewallZone,
+  deleteFirewallZone,
+  createNetwork,
+  updateNetwork,
+  deleteNetwork,
+  createWifiBroadcast,
+  updateWifiBroadcast,
+  deleteWifiBroadcast,
+  createDnsPolicy,
+  updateDnsPolicy,
+  deleteDnsPolicy,
+  createTrafficMatchingList,
+  updateTrafficMatchingList,
+  deleteTrafficMatchingList,
+  adoptDevice,
+  removeDevice,
+  restartDevice,
+  powerCyclePort,
+  runClientAction,
+  createVouchers,
+  deleteVoucher,
+  deleteVouchers,
+];
+
 /** Every implemented Network operation, registered by the service at startup. */
-export const NETWORK_OPERATIONS: readonly OperationDescriptor[] = [...NETWORK_READS];
+export const NETWORK_OPERATIONS: readonly OperationDescriptor[] = [
+  ...NETWORK_READS,
+  ...NETWORK_WRITES,
+];

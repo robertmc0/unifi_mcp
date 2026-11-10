@@ -50,6 +50,11 @@ interface ReviewCommon<K extends VendorOperationId> {
   credentialFields?: readonly string[];
 }
 
+/** A lock shared by every write of one kind on one site (conflicting writes run in turn). */
+export function siteLock(name: string): (args: unknown, target: Target) => string {
+  return (_args, target) => `site:${target.siteId ?? ''}/${name}`;
+}
+
 /** The shape of every Network list response. */
 export interface NetworkPage {
   offset: number;

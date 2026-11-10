@@ -1,8 +1,9 @@
 # Quickstart
 
 > **Status: Phase 2 in progress.** The service, CLI, admin interface and container image
-> work, and all UniFi Network reads are available ([applications-network.md](applications-network.md)).
-> Network writes follow.
+> work, and all UniFi Network reads and writes are available
+> ([applications-network.md](applications-network.md)); writes stay locked until you
+> unlock them deliberately.
 
 The shortest safe path: one Docker host, the MCP endpoint on its loopback, and the hard
 lock on. [installation.md](installation.md) explains each step.

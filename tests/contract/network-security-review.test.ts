@@ -69,6 +69,42 @@ const REVIEW: Record<string, Row> = {
   getCountries: ['network.reference.list_countries', 'read', 'low', false, [], false, null],
   getDpiApplications: ['network.reference.list_dpi_applications', 'read', 'low', false, [], false, null],
   getDpiApplicationCategories: ['network.reference.list_dpi_categories', 'read', 'low', false, [], false, null],
+
+  // Writes. High risk needs independent human approval (spec §6.3): security functions
+  // (firewall, ACL, DNS, Wi-Fi security), routing (networks/VLANs), device adoption,
+  // removal and restarts, and destructive bulk deletes. Medium: limited, reversible effect.
+  createAclRule: ['network.acl.create', 'write', 'high', true, [], false, null],
+  updateAclRule: ['network.acl.update', 'write', 'high', true, [], false, null],
+  deleteAclRule: ['network.acl.delete', 'write', 'high', true, [], false, null],
+  updateAclRuleOrdering: ['network.acl.update_ordering', 'write', 'high', true, [], false, null],
+  createFirewallPolicy: ['network.firewall.create_policy', 'write', 'high', true, [], false, null],
+  updateFirewallPolicy: ['network.firewall.update_policy', 'write', 'high', true, [], false, null],
+  patchFirewallPolicy: ['network.firewall.patch_policy', 'write', 'medium', false, [], false, null],
+  deleteFirewallPolicy: ['network.firewall.delete_policy', 'write', 'high', true, [], false, null],
+  updateFirewallPolicyOrdering: ['network.firewall.update_policy_ordering', 'write', 'high', true, [], false, null],
+  createFirewallZone: ['network.firewall.create_zone', 'write', 'high', true, [], false, null],
+  updateFirewallZone: ['network.firewall.update_zone', 'write', 'high', true, [], false, null],
+  deleteFirewallZone: ['network.firewall.delete_zone', 'write', 'high', true, [], false, null],
+  createNetwork: ['network.networks.create', 'write', 'high', true, [], false, null],
+  updateNetwork: ['network.networks.update', 'write', 'high', true, [], false, null],
+  deleteNetwork: ['network.networks.delete', 'write', 'high', true, [], false, null],
+  createWifiBroadcast: ['network.wifi.create', 'write', 'high', true, [], false, null],
+  updateWifiBroadcast: ['network.wifi.update', 'write', 'high', true, [], false, null],
+  deleteWifiBroadcast: ['network.wifi.delete', 'write', 'high', true, [], false, null],
+  createDnsPolicy: ['network.dns.create', 'write', 'high', true, [], false, null],
+  updateDnsPolicy: ['network.dns.update', 'write', 'high', true, [], false, null],
+  deleteDnsPolicy: ['network.dns.delete', 'write', 'high', true, [], false, null],
+  createTrafficMatchingList: ['network.traffic_lists.create', 'write', 'medium', false, [], false, null],
+  updateTrafficMatchingList: ['network.traffic_lists.update', 'write', 'high', true, [], false, null],
+  deleteTrafficMatchingList: ['network.traffic_lists.delete', 'write', 'high', true, [], false, null],
+  adoptDevice: ['network.devices.adopt', 'write', 'high', true, [], false, null],
+  removeDevice: ['network.devices.remove', 'write', 'high', true, [], true, null],
+  executeAdoptedDeviceAction: ['network.devices.run_action', 'write', 'high', true, [], false, null],
+  executePortAction: ['network.devices.run_port_action', 'write', 'high', true, [], false, null],
+  executeConnectedClientAction: ['network.clients.run_action', 'write', 'medium', false, PEOPLE, false, null],
+  createVouchers: ['network.hotspot.create_vouchers', 'write', 'medium', false, [], false, null],
+  deleteVoucher: ['network.hotspot.delete_voucher', 'write', 'medium', false, [], false, null],
+  deleteVouchers: ['network.hotspot.delete_vouchers', 'write', 'high', true, [], true, null],
 };
 
 interface InventoryOperation {
@@ -87,6 +123,10 @@ const inventory = JSON.parse(
 const byKey = new Map(inventory.operations.map((op) => [`${op.method} ${op.path}`, op]));
 
 describe('Network security review', () => {
+  it('covers all 73 documented operations', () => {
+    expect(Object.keys(REVIEW)).toHaveLength(inventory.operations.length);
+  });
+
   it('records every implemented operation, and only those', () => {
     const implemented = NETWORK_OPERATIONS.map((descriptor) => {
       const op = byKey.get(`${descriptor.httpMethod} ${descriptor.pathTemplate}`);

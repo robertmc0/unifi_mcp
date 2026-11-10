@@ -169,7 +169,7 @@ describe('every documented Network read', () => {
         }
       }
       await h.close();
-    });
+    }, 30_000); // one round trip per response or body variant
   }
 
   it('exercises the credential sentinels it checks for', () => {

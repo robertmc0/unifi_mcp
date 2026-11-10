@@ -142,6 +142,46 @@ the decision is revisited.
   `network_list_networks` (spec §5.1). Everything else is reached through
   `unifi_execute`.
 
+### 5. Writes (step 5)
+
+Risk follows spec §6.3. High risk needs independent human approval and the original
+client's resume; medium needs only explicit grants.
+
+- **High (27):**
+  - security functions: firewall policies, zones and order; ACL rules and order; DNS
+    policies (local records can redirect any name for every client of the site); Wi-Fi
+    broadcasts (they carry the security settings);
+  - routing: networks and VLANs;
+  - devices: adoption, removal, restart, PoE power-cycle;
+  - changing or deleting a traffic matching list, which changes what existing policies
+    match;
+  - deleting vouchers by filter, which deletes all vouchers without a filter.
+- **Medium (5):**
+  - the firewall policy PATCH, which only switches logging and flow reporting;
+  - creating a traffic matching list, which has no effect until a high-risk policy uses
+    it;
+  - authorising or withdrawing a client's guest access ("a client association", the
+    spec's medium example);
+  - creating vouchers;
+  - deleting one voucher.
+- **Off by default:** device removal (it resets the device) and bulk voucher deletion
+  (`defaultDisabled`; a global policy must list them in `enabledOperations`).
+- **Sensitivity.** The client action acts on a person's device and carries the client-data
+  tags, so it needs the same sensitive grants as the client reads.
+- **Locks.** Writes of one kind on one site share a lock (`site:<id>/acl`, `/firewall`,
+  `/networks`, `/wifi`, `/dns`, `/traffic_lists`, `/vouchers`, `/adoption`), because they
+  interact through order or references. Device and client actions lock the device or the
+  client. The dispatcher prefixes every key with the console id.
+- **Retry classes.** POST and PATCH are `non-idempotent`, PUT and DELETE `idempotent`. The
+  dispatcher retries a write only if it was certainly not sent. Anything else that fails
+  after sending is `outcome_unknown`.
+- **Credentials in requests.** A Wi-Fi passphrase is sent to the console as part of the
+  validated body. Redaction (`passphrase`, `psk`, …) keeps it out of logs, the audit
+  trail and the approval summary. The stored approval arguments are encrypted (ADR 0011).
+- **No concurrency precondition.** The contract offers no version or ETag for any write
+  (spec §6.5). An approved write applies the approved arguments to the console's state at
+  execution time. This is disclosed to reviewers in the Network guide.
+
 ## Evidence
 
 - `tests/unit/scripts/openapi-zod.test.ts` (synthetic documents only, 25 tests):
@@ -186,6 +226,25 @@ the decision is revisited.
   checks, each making a test fail: `passphrase` not removed; voucher codes kept; removal
   not applied; removal only at the top level; client reads untagged; no pagination; a named
   tool dropped.
+- Step 5: `tests/integration-mock/network-writes.test.ts` runs all 32 writes against the
+  synthetic console for every body variant:
+  - High risk: `approval_required` with nothing sent, a summary without credentials,
+    approval, resume, exactly one request, and a refused second resume.
+  - Medium risk: exactly one request.
+  - Each request has the documented method and path, the stored key and exactly the
+    validated body, credentials included.
+  - Results contain no credential or undocumented field. Audit and logs contain no
+    credential.
+  - Every write is refused, and nothing is sent, under read-only grants, the hard lock and
+    a read-only module. Default-disabled writes are refused until enabled. The client
+    action needs the sensitive grants.
+  - An idempotency key prevents a second request, and a broken connection after sending
+    is `outcome_unknown` and not retried.
+
+  The review table covers all 73 operations. Mutation checks, each making a test fail:
+  new voucher codes returned; `passphrase` not redacted; network creation without
+  approval; device removal enabled by default; an approval consumed twice; client actions
+  without the sensitive tags.
 
 ## Consequences
 

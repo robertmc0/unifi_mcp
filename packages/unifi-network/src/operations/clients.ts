@@ -25,3 +25,20 @@ export const getClient = networkOperation('getConnectedClientDetails', {
   sensitivityTags: PEOPLE,
   description: 'One connected client in detail.',
 });
+
+// Writes: authorising or withdrawing guest access changes one client's association
+// (spec §6.3 medium). It acts on a person's device, so it needs the same sensitive grants
+// as the client reads.
+
+export const runClientAction = networkOperation('executeConnectedClientAction', {
+  operationId: 'network.clients.run_action',
+  category: 'clients',
+  effect: 'write',
+  risk: 'medium',
+  approvalRequired: false,
+  sensitivityTags: PEOPLE,
+  retryClass: 'non-idempotent',
+  resourceLockKey: (args) => `client:${args.clientId}`,
+  description:
+    'Authorise or withdraw guest access for a connected client (AUTHORIZE_GUEST_ACCESS, UNAUTHORIZE_GUEST_ACCESS).',
+});

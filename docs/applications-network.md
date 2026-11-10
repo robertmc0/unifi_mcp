@@ -1,8 +1,8 @@
 # UniFi Network
 
-> **Status: Phase 2 in progress.** All 41 documented reads of the Network Integration API
-> 11.0.97 are implemented and tested against a synthetic console. Writes follow in the next
-> step. Testing against real consoles is optional and opt-in (see the phase checklist).
+> **Status: Phase 2 in progress.** All 73 documented operations of the Network Integration
+> API 11.0.97 (41 reads, 32 writes) are implemented and tested against a synthetic console.
+> Testing against real consoles is optional and opt-in (see the phase checklist).
 
 The service uses the **official local** UniFi Network Integration API on each console,
 `https://<console>/proxy/network/integration/v1/…`, with the API key you stored for the
@@ -86,8 +86,50 @@ Without them the reads are refused (`sensitive_scope_missing`) and not listed.
 
 ## Writes
 
-The 32 documented writes are implemented in the next step of Phase 2. Until then, no
-Network write is registered.
+No write can run until every gate allows it ([security.md](security.md#making-writes-possible)):
+the hard lock is off, the runtime mode is `read_write`, the console's `network` module is
+`read_write`, and the client has a write grant such as `network.firewall.write`.
+
+- **High risk** writes return `approval_required` and an `approvalId`. Nothing is sent to
+  the console until a human approves on the host or in the admin interface; the same
+  client then calls `unifi_resume_approved` ([approval-workflow.md](approval-workflow.md)).
+- **Medium risk** writes run once the grants allow them.
+- Writes that take a body get it as one `body` argument, next to the path arguments, for
+  example `{ "networkId": "…", "body": { "management": "GATEWAY", … } }`.
+  `unifi_describe_operation` shows the full schema.
+- Pass an `idempotencyKey` to make a retry safe: the same key returns the first result and
+  sends nothing again. A write whose connection broke after sending returns
+  `outcome_unknown` and is never retried automatically; check the console first.
+- A passphrase in a request (Wi-Fi) is sent to the console, but never logged, audited,
+  shown to approvers or returned.
+
+| Operation                                                                                                                                       | Risk                     | What it does                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `network.acl.create`, `network.acl.update`, `network.acl.delete`, `network.acl.update_ordering`                                                 | high                     | ACL rules and their order.                                                                                   |
+| `network.firewall.create_policy`, `network.firewall.update_policy`, `network.firewall.delete_policy`, `network.firewall.update_policy_ordering` | high                     | Firewall policies and their order between two zones.                                                         |
+| `network.firewall.patch_policy`                                                                                                                 | medium                   | Turns a policy's logging or flow reporting on or off; does not change what is allowed.                       |
+| `network.firewall.create_zone`, `network.firewall.update_zone`, `network.firewall.delete_zone`                                                  | high                     | Firewall zones and their networks.                                                                           |
+| `network.networks.create`, `network.networks.update`, `network.networks.delete`                                                                 | high                     | Networks and VLANs. `delete` with `force` deletes even while referenced.                                     |
+| `network.wifi.create`, `network.wifi.update`, `network.wifi.delete`                                                                             | high                     | Wi-Fi broadcasts and their security settings.                                                                |
+| `network.dns.create`, `network.dns.update`, `network.dns.delete`                                                                                | high                     | DNS policies. Local records can redirect any name for every client.                                          |
+| `network.traffic_lists.create`                                                                                                                  | medium                   | A new traffic matching list; it changes nothing until a policy uses it.                                      |
+| `network.traffic_lists.update`, `network.traffic_lists.delete`                                                                                  | high                     | Changes what the policies using the list match.                                                              |
+| `network.devices.adopt`                                                                                                                         | high                     | Adopts a pending device by MAC address.                                                                      |
+| `network.devices.remove`                                                                                                                        | high, **off by default** | Removes (forgets) a device, which resets it.                                                                 |
+| `network.devices.run_action`                                                                                                                    | high                     | `RESTART` a device.                                                                                          |
+| `network.devices.run_port_action`                                                                                                               | high                     | `POWER_CYCLE` a PoE port.                                                                                    |
+| `network.clients.run_action`                                                                                                                    | medium                   | `AUTHORIZE_GUEST_ACCESS` or `UNAUTHORIZE_GUEST_ACCESS` for a client. Needs the client-data sensitive grants. |
+| `network.hotspot.create_vouchers`                                                                                                               | medium                   | Creates vouchers. Their codes are not returned; print them from UniFi Network.                               |
+| `network.hotspot.delete_voucher`                                                                                                                | medium                   | Deletes one voucher.                                                                                         |
+| `network.hotspot.delete_vouchers`                                                                                                               | high, **off by default** | Deletes every voucher matching a filter, or all without one.                                                 |
+
+Operations that are off by default must be listed in the global policy's
+`enabledOperations` before any client can use them
+([administration.md](administration.md)), and they still need approval.
+
+None of these writes has a concurrency precondition in the contract (no version or ETag).
+An approved write applies the approved arguments to whatever the console holds at that
+moment, so review the current state before approving.
 
 ## Limitations
 
@@ -103,3 +145,7 @@ Network write is registered.
   administrator credential.
 - Rate limits of the local API are not documented. The service limits its own request rate
   per client, console and module.
+- **Voucher codes** are never returned, not even for new vouchers. An agent can create
+  vouchers, but a person prints or reads the codes in UniFi Network.
+- Writes are tested only against the synthetic console. Validating them against a real
+  console is a manual, human-approved runbook, never part of CI.
