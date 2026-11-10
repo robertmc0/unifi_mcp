@@ -184,13 +184,13 @@ See [monitoring.md](monitoring.md#audit-trail).
 
 ### Administrators, diagnostics and coverage
 
-| Command                               | What it does                                                                                                                                                       |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `admin bootstrap --username <u>`      | Creates the first administrator for the admin web interface. Refused once one exists.                                                                              |
-| `admin reset-password --username <u>` | Sets a new password and re-enables the account (local recovery).                                                                                                   |
-| `admin list`                          | Lists administrators.                                                                                                                                              |
-| `doctor`                              | Checks configuration, key, database, audit chain, policy, hard lock, listener, egress, consoles, clients, administrators and disk space. Exits 1 if a check fails. |
-| `api coverage`                        | Shows the official operations per module and how many are implemented.                                                                                             |
+| Command                               | What it does                                                                                                                                                          |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `admin bootstrap --username <u>`      | Creates the first administrator for the admin web interface. Refused once one exists.                                                                                 |
+| `admin reset-password --username <u>` | Sets a new password and re-enables the account (local recovery).                                                                                                      |
+| `admin list`                          | Lists administrators.                                                                                                                                                 |
+| `doctor`                              | Checks configuration, key, database, audit chain, policy, hard lock, listener, egress, consoles, clients, administrators and disk space. Exits 1 if a check fails.    |
+| `api coverage`                        | Shows the official operations per module and how many this service implements. The full matrix, with reviewed metadata and test evidence, is in `docs/api-coverage/`. |
 
 Passwords must have at least 12 characters, must not contain the username, and need at
 least 4 different characters. They are stored as Argon2id hashes. `admin reset-password`

@@ -297,14 +297,17 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
    resume, exact body, no credential in audit, logs, approval summaries or results;
    refusal under read-only grants, hard lock and read-only module; idempotency;
    `outcome_unknown`) in `tests/integration-mock/network-writes.test.ts` (ADR 0018 §5).
-6. **Coverage**: matrix status and evidence per operation, `unifi-mcp api coverage`, and
-   reconciliation of the registry against the matrix.
+6. ✅ **Coverage** (2026-11-10): the matrix derives status, reviewed metadata and test
+   evidence from the registered adapters (`packages/mcp-server/src/adapters.ts`);
+   `api:reconcile` check 7 and `tests/contract/api-coverage-matrix.test.ts` fail on drift;
+   `unifi-mcp api coverage` counts implemented operations (ADR 0018 §6).
 7. **Live read-only test** (opt-in, never in CI) and a manual write runbook.
 8. **Docs**: `applications-network.md`, ADR 0018, client and security updates.
 
 ### Gate (spec §16)
 
-- [ ] Every Network v11.0.97 operation in the coverage report with status and test evidence
+- [x] Every Network v11.0.97 operation in the coverage report with status and test evidence
+      ([network/11.0.97.md](api-coverage/network/11.0.97.md): 73 of 73 implemented, evidence per operation)
 - [ ] Version probe; incompatible versions get a clear unsupported error with no guessed fallback
 - [ ] All documented reads mock-tested with sanitised output; writes tested for authz, approval and duplicates
 - [ ] Optional live read-only test (console, site, device, client, network); no state-changing request

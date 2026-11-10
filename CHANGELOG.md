@@ -12,6 +12,9 @@ All notable changes to this project are documented here. The format follows
   request schemas, response schemas that strip undocumented fields, discriminated unions
   with JSON Schema semantics, and no vendor prose. Generated Network 11.0.97 schemas in
   `packages/unifi-network/src/generated/`; `api:reconcile` fails when they are stale.
+- Coverage matrix from the registered adapters (ADR 0018 §6): status, reviewed metadata
+  and test evidence per operation; reconciliation and an offline test fail on drift;
+  `unifi-mcp api coverage` counts implemented operations.
 - All 32 documented Network writes (ADR 0018 §5): ACL rules, firewall policies and zones,
   networks, Wi-Fi broadcasts, DNS policies, traffic matching lists, device adoption,
   removal, restart and port power-cycle, client guest access, hotspot vouchers. 27 are

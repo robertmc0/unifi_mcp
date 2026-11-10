@@ -17,7 +17,6 @@
     "@unifi-local-mcp/storage": "0.0.0",
     "@unifi-local-mcp/telemetry": "0.0.0",
     "@unifi-local-mcp/unifi-api": "0.0.0",
-    "@unifi-local-mcp/unifi-network": "0.0.0",
     "yaml": "2.9.1",
     "zod": "4.6.7"
   },

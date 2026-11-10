@@ -6,7 +6,13 @@
 import { userInfo } from 'node:os';
 import { AdminStore } from '@unifi-local-mcp/admin-api';
 import { ApprovalService } from '@unifi-local-mcp/approvals';
-import { ClientStore, loadServiceConfig, type ServiceConfig } from '@unifi-local-mcp/mcp-server';
+import {
+  ADAPTER_OPERATIONS,
+  ADAPTER_PROBES,
+  ClientStore,
+  loadServiceConfig,
+  type ServiceConfig,
+} from '@unifi-local-mcp/mcp-server';
 import { PolicyStore, type PolicyActor } from '@unifi-local-mcp/policy';
 import { loadMasterKey, openStorage, type MasterKey, type Storage } from '@unifi-local-mcp/storage';
 import { AuditLog, createLogger, type Logger } from '@unifi-local-mcp/telemetry';
@@ -18,7 +24,6 @@ import {
   UnifiExecutor,
   VersionProber,
 } from '@unifi-local-mcp/unifi-api';
-import { NETWORK_OPERATIONS, NETWORK_VERSION_PROBE } from '@unifi-local-mcp/unifi-network';
 import type { CliIo } from './io.ts';
 
 export interface Services {
@@ -82,12 +87,12 @@ export async function openServices(env: NodeJS.ProcessEnv, io: CliIo): Promise<S
   const egress = new EgressGuard(config.egress);
   let prober: Promise<VersionProber> | undefined;
   const buildProber = async (): Promise<VersionProber> => {
-    // The same adapters and contract check as the service (packages/mcp-server/src/main.ts).
+    // The same adapters and contract check as the service (packages/mcp-server/src/adapters.ts).
     const registry = new OperationRegistry(await loadContractInventory(config.apiSpecsDir));
-    for (const descriptor of NETWORK_OPERATIONS) registry.register(descriptor);
+    for (const descriptor of ADAPTER_OPERATIONS) registry.register(descriptor);
     registry.seal();
     const executor = new UnifiExecutor({ consoles, egress, logger });
-    return new VersionProber({ consoles, executor, registry, specs: [NETWORK_VERSION_PROBE] });
+    return new VersionProber({ consoles, executor, registry, specs: ADAPTER_PROBES });
   };
   return {
     config,

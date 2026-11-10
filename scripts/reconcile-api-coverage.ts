@@ -12,7 +12,9 @@
  *   3. OpenAPI: the llms.txt endpoint index lists exactly the same operations as the OpenAPI;
  *   4. OpenAPI: the documented local server URL equals provenance.localBaseUrlTemplate's path;
  *   5. every inventory operation appears in docs/api-coverage/api-coverage.json and vice versa;
- *   6. the generated adapter schemas equal a fresh generation from the vendor cache.
+ *   6. the generated adapter schemas equal a fresh generation from the vendor cache;
+ *   7. the coverage matrix equals a fresh build from the inventories and the registered
+ *      adapters (status, reviewed metadata, test evidence).
  * PDF-sourced contracts (Access) are hand-transcribed; only checks 1 and 5 apply.
  */
 import { readFile } from 'node:fs/promises';
@@ -20,6 +22,7 @@ import { join } from 'node:path';
 import {
   COVERAGE_DIR,
   listSpecRevisions,
+  REPO_ROOT,
   readJson,
   sha256,
   vendorPath,
@@ -29,6 +32,7 @@ import {
   type SpecRevision,
 } from './lib/api-specs.ts';
 import { generateAdapterSchemas } from './generate-adapter-schemas.ts';
+import { buildCoverageFiles } from './lib/coverage-report.ts';
 import {
   inventoryFromOpenApi,
   openApiServers,
@@ -178,6 +182,15 @@ for (const rev of await listSpecRevisions()) {
   console.log(
     `checked ${application}/${revision}: ${inventory.operations.length} operations (${contractKind})`,
   );
+}
+
+// 7. The coverage matrix matches the registered adapters (status, metadata, evidence).
+if (!write) {
+  for (const [path, content] of await buildCoverageFiles()) {
+    const current = await readFile(join(REPO_ROOT, path), 'utf8').catch(() => '');
+    if (current !== content) problems.push(`${path} is stale: run npm run api:coverage-report`);
+  }
+  console.log('checked docs/api-coverage/ against the registered adapters');
 }
 
 // 6. Generated adapter schemas are current (ADR 0018).

@@ -7,7 +7,7 @@ measured against the vendor contract, not by counting hand-written tools.
 
 | Module  | Revision         | Documented | Implemented | Page                                         |
 | ------- | ---------------- | ---------: | ----------: | -------------------------------------------- |
-| Network | 11.0.97          |         73 |           0 | [network/11.0.97.md](network/11.0.97.md)     |
+| Network | 11.0.97          |         73 |          73 | [network/11.0.97.md](network/11.0.97.md)     |
 | Protect | 7.3.74           |         74 |           0 | [protect/7.3.74.md](protect/7.3.74.md)       |
 | Access  | 2026-03-23 (PDF) |        107 |           0 | [access/2026-03-23.md](access/2026-03-23.md) |
 
@@ -16,13 +16,20 @@ Machine-readable: [`api-coverage.json`](api-coverage.json).
 ## How it is produced
 
 - Pages and JSON are **generated** by `npm run api:coverage-report` from
-  `api-specs/<app>/<revision>/{provenance,operations}.json`. Do not edit them by hand.
-- `npm run api:reconcile` fails CI when the vendor contract, the committed inventory and
-  this matrix disagree.
-- Until an adapter registry exists (Phase 2+), every operation is `not_implemented`.
-  From Phase 2 the generator reads each adapter's reviewed operation registry and fills in
-  status, exposure (named tool or generic), permission, reviewed risk, sensitivity, and
-  test evidence. Operations deliberately left unsupported carry a `statusReason`.
+  `api-specs/<app>/<revision>/{provenance,operations}.json` and the module adapters the
+  service registers (`packages/mcp-server/src/adapters.ts`). Do not edit them by hand.
+- An operation is `implemented` exactly when an adapter registers a descriptor for its
+  method and path in that revision. The entry then carries the reviewed `operationId`,
+  `permission`, `risk`, `approvalRequired`, `defaultDisabled`, `sensitivity`, `exposure`
+  (named tool, and always the generic `unifi_execute`), `schemaValidation` (generated
+  schemas), `mockTests` and `evidence` (the test files that run it end to end).
+  `liveReadValidation` stays `false` until an opt-in live read-only run is recorded.
+  Operations deliberately left unsupported carry a `statusReason`.
+- `npm run api:reconcile` fails when the vendor contract, the committed inventory, the
+  generated schemas or this matrix disagree. `tests/contract/api-coverage-matrix.test.ts`
+  checks the matrix offline in every `npm run check`.
+- Pages of modules without an adapter yet show the Phase 0 provisional classification
+  below; pages of implemented modules show the reviewed metadata instead.
 
 ## Provisional classification (Phase 0)
 

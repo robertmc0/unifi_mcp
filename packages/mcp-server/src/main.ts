@@ -5,7 +5,7 @@
  * adapters (Phase 2: Network).
  */
 import { createLogger, parseLogLevel } from '@unifi-local-mcp/telemetry';
-import { NETWORK_OPERATIONS, NETWORK_VERSION_PROBE } from '@unifi-local-mcp/unifi-network';
+import { ADAPTER_OPERATIONS, ADAPTER_PROBES } from './adapters.ts';
 import { loadServiceConfig } from './config.ts';
 import { startService } from './service.ts';
 
@@ -24,8 +24,8 @@ const bootLogger = createLogger({
 try {
   const service = await startService({
     config: loadServiceConfig(process.env),
-    operations: NETWORK_OPERATIONS,
-    probes: [NETWORK_VERSION_PROBE],
+    operations: ADAPTER_OPERATIONS,
+    probes: ADAPTER_PROBES,
   });
   let stopping = false;
   const shutdown = (signal: string): void => {

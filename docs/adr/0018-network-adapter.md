@@ -182,6 +182,19 @@ client's resume; medium needs only explicit grants.
   (spec §6.5). An approved write applies the approved arguments to the console's state at
   execution time. This is disclosed to reviewers in the Network guide.
 
+### 6. Coverage (step 6)
+
+- `packages/mcp-server/src/adapters.ts` lists the registered module adapters (operations
+  and version probe). The service, the CLI and the coverage tooling all use this one list.
+- The coverage matrix (`scripts/lib/coverage-report.ts`) marks an operation
+  `implemented` exactly when an adapter registers its method and path in that revision.
+  It copies the reviewed metadata from the descriptor and lists the test files that run
+  every operation of the module (`evidence`). `liveReadValidation` stays `false` until an
+  opt-in live run is recorded (step 7).
+- Drift is caught twice: `api:reconcile` (check 7) and the offline contract test
+  `tests/contract/api-coverage-matrix.test.ts` regenerate the matrix and compare.
+  `unifi-mcp api coverage` counts the registered operations.
+
 ## Evidence
 
 - `tests/unit/scripts/openapi-zod.test.ts` (synthetic documents only, 25 tests):
@@ -245,6 +258,10 @@ client's resume; medium needs only explicit grants.
   new voucher codes returned; `passphrase` not redacted; network creation without
   approval; device removal enabled by default; an approval consumed twice; client actions
   without the sensitive tags.
+
+- Step 6: the regenerated matrix reports 73 of 73 Network operations implemented (27 high,
+  5 medium, 41 low; 2 off by default) with evidence; `api:reconcile` flagged the stale
+  matrix before regeneration; a changed risk makes the matrix test fail (mutation check).
 
 ## Consequences
 

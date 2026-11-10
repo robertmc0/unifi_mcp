@@ -423,11 +423,14 @@ describe('doctor and api coverage', () => {
 
   it('lists the documented official operations', async () => {
     const h = await setup();
-    const rows = await h.json<{ module: string; documented: number }[]>(['api', 'coverage']);
-    expect(Object.fromEntries(rows.map((r) => [r.module, r.documented]))).toEqual({
-      access: 107,
-      network: 73,
-      protect: 74,
+    const rows = await h.json<{ module: string; documented: number; implemented: number }[]>([
+      'api',
+      'coverage',
+    ]);
+    expect(Object.fromEntries(rows.map((r) => [r.module, [r.documented, r.implemented]]))).toEqual({
+      access: [107, 0],
+      network: [73, 73],
+      protect: [74, 0],
     });
   });
 });

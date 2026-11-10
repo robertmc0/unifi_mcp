@@ -3,7 +3,12 @@
  */
 import { readdir, readFile, statfs } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { defaultApiSpecsDir, isLoopbackBind, loadServiceConfig } from '@unifi-local-mcp/mcp-server';
+import {
+  defaultApiSpecsDir,
+  isLoopbackBind,
+  loadServiceConfig,
+  ADAPTERS,
+} from '@unifi-local-mcp/mcp-server';
 import { requireString, string, type Command, type RunContext } from '../cli.ts';
 import {
   apply,
@@ -275,7 +280,9 @@ export const apiCoverageCommand: Command = {
           module: app.name,
           revision: revision.name,
           documented: inventory.operations.length,
-          implemented: 0,
+          implemented:
+            ADAPTERS.find((a) => a.moduleId === app.name && a.contractRevision === revision.name)
+              ?.operations.length ?? 0,
         });
       }
     }
@@ -285,7 +292,8 @@ export const apiCoverageCommand: Command = {
         ...rows.map((r) => [r.module, r.revision, String(r.documented), String(r.implemented)]),
       ]),
       '',
-      'Module adapters register operations from Phase 2. Full matrix: docs/api-coverage/.',
+      'Implemented: reviewed operations this service registers. Full matrix with test',
+      'evidence: docs/api-coverage/.',
     ]);
     return 0;
   },
