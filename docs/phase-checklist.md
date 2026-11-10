@@ -53,8 +53,8 @@ explicitly, never dropped silently.
    [configuration.md](configuration.md), [backup-restore.md](backup-restore.md). Also done:
    verified key rotation, backup verification, validated offline restore, automatic
    pre-migration backups. Tests: `tests/unit/storage/`, `tests/security/storage-master-key.test.ts`.
-   Still open, carried into later steps: `linux/arm64` run of the storage tests (still open
-   after step 11: needs arm64 emulation on the build host, which needs the owner's consent);
+   Still open, carried into later steps: ~~`linux/arm64` run of the storage tests~~ (done
+   2026-11-10 under QEMU emulation: 63 of 63; see ADR 0017);
    ~~CLI `crypto generate-key|rotate-key` and `db backup|restore|check`~~ (done in step 9);
    retention of automatic backups; ~~single-instance guard per data directory~~ (done in
    step 9).
@@ -194,18 +194,32 @@ explicitly, never dropped silently.
     refused while running, bridge relay, clean stop, offline `db check`); the CI image job
     script was run locally, the workflow itself has not run on GitHub yet. Tests:
     `tests/contract/packaging.test.ts`, `tests/integration-mock/healthcheck.test.ts`.
-    Still open: `linux/arm64` build and storage tests (needs binfmt/QEMU on the build
-    host: the owner's decision); dual-network and TLS Compose examples (Phase 5);
-    registry publishing, SBOM and signing (Phase 5).
+    `linux/arm64` (2026-11-10, under QEMU emulation, ADR 0017): the image builds and the
+    storage tests pass (63 of 63). The full suite passes 573 of 582 with the default
+    limits; the other 9 pass with longer ones. The service and CLI from the image start
+    only with `--wasm-enforce-bounds-checks`, because Node.js's WebAssembly type stripper
+    fails under emulation. With that flag, the smoke test passes.
+    Still open: a run on arm64 hardware (or a native arm64 CI runner, Phase 5);
+    dual-network and TLS Compose examples (Phase 5); registry publishing, SBOM and signing
+    (Phase 5).
 12. **Docs** (in progress): quickstart, installation, configuration, security, approval
     workflow, administration, client guides.
     Done (2026-11-10): [quickstart.md](quickstart.md), [installation.md](installation.md),
     [configuration.md](configuration.md), [security.md](security.md),
     [approval-workflow.md](approval-workflow.md), [administration.md](administration.md),
     [client-generic-mcp.md](client-generic-mcp.md); a link checker
-    (`tests/contract/doc-links.test.ts`) for every relative link and heading anchor.
-    Open: `client-claude-code.md` and `client-codex.md`, which must be verified against the
-    current releases of those clients before they are published; `troubleshooting.md`.
+    (`tests/contract/doc-links.test.ts`) for every relative link and heading anchor;
+    [client-claude-code.md](client-claude-code.md), verified with Claude Code 2.1.322 in a
+    separate configuration (HTTP with a `${…}` header reference, and the stdio bridge;
+    `claude mcp list` connected, negotiated `2026-07-28` and fetched the tool list);
+    [troubleshooting.md](troubleshooting.md), with the refusals and messages checked
+    against the running image and bridge. Found while doing so: the plaintext refusal was
+    partly redacted in the log (`Bearer [REDACTED]`); reworded, and a test now requires
+    startup refusals to survive redaction.
+    Open: `client-codex.md`. Codex 0.161.0 offers `codex mcp add` with `--url`
+    and `--bearer-token-env-var`, and stdio servers with `--env`; the owner will try it before
+    the guide is written. Using the tools inside a Claude Code session has not been
+    checked yet (it needs a model session).
 
 ### Gate (spec §16)
 

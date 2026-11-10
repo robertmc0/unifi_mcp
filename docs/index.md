@@ -31,9 +31,10 @@
 | [approval-workflow.md](approval-workflow.md)                                                             | 1 (started)     |
 | [administration.md](administration.md) (the `unifi-mcp` CLI, bootstrap file, maintenance)                | 1 (started)     |
 | [client-generic-mcp.md](client-generic-mcp.md) (HTTP and stdio connection, tools, results)               | 1 (started)     |
-| client-claude-code.md, client-codex.md                                                                   | 1               |
+| [client-claude-code.md](client-claude-code.md) (bridge and HTTP; verified with Claude Code 2.1.322)      | 1               |
+| client-codex.md                                                                                          | 1               |
 | [networking.md](networking.md) (MCP listener, egress)                                                    | 1 (started) / 5 |
-| troubleshooting.md                                                                                       | 1 / 5           |
+| [troubleshooting.md](troubleshooting.md) (startup, connections, refusals, consoles, admin)               | 1 / 5           |
 | applications-network.md                                                                                  | 2               |
 | applications-protect.md, events.md                                                                       | 3               |
 | applications-access.md                                                                                   | 4               |

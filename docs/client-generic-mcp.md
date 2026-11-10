@@ -3,8 +3,9 @@
 > **Status: Phase 1 in progress.** The MCP endpoint and tools are implemented and tested
 > with the official MCP TypeScript SDK v2 clients (2025-era and 2026-era protocols). Client
 > tokens are issued with the CLI (`unifi-mcp client create`, see
-> [administration.md](administration.md)). Guides for Claude Code and Codex follow once
-> they have been verified against the current releases of those clients.
+> [administration.md](administration.md)). For Claude Code, see
+> [client-claude-code.md](client-claude-code.md). A Codex guide follows once it has been
+> verified against the current Codex release.
 
 ## Connection details
 

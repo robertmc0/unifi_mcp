@@ -11,7 +11,7 @@ import {
 } from '@unifi-local-mcp/mcp-server';
 import { PolicyStore, type PolicyActor } from '@unifi-local-mcp/policy';
 import { databasePathFor, openStorage } from '@unifi-local-mcp/storage';
-import { AuditLog } from '@unifi-local-mcp/telemetry';
+import { AuditLog, redactString } from '@unifi-local-mcp/telemetry';
 import { describe, expect, it, vi } from 'vitest';
 import { testKey, useTempDirs } from '../storage/fixtures.ts';
 import { memoryLogger } from '../telemetry/fixtures.ts';
@@ -203,6 +203,27 @@ describe('loadServiceConfig', () => {
     [{ UNIFI_MCP_LOG_LEVEL: 'loud' }, /LOG_LEVEL/],
   ])('rejects %j', (env, pattern) => {
     expect(() => loadServiceConfig(env)).toThrow(pattern);
+  });
+});
+
+describe('configuration errors in the runtime log', () => {
+  // Startup refusals are logged, and the log redactor treats any word after "Bearer" as a
+  // credential. The operator must still be able to read every refusal in full.
+  it.each([
+    { UNIFI_MCP_HTTP_BIND: '0.0.0.0' },
+    { UNIFI_MCP_HTTP_TLS_CERT_FILE: '/c.pem' },
+    { UNIFI_MCP_HTTP_ALLOWED_HOSTS: 'https://x' },
+    { UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_ADMIN_BIND: '0.0.0.0' },
+    { UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_ADMIN_PORT: '3000' },
+  ])('survive redaction unchanged: %j', (env) => {
+    let message = '';
+    try {
+      loadServiceConfig(env);
+    } catch (error) {
+      message = (error as Error).message;
+    }
+    expect(message).not.toBe('');
+    expect(redactString(message)).toBe(message);
   });
 });
 

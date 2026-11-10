@@ -176,7 +176,7 @@ export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
   const allowPlaintext = flag(env, 'UNIFI_MCP_HTTP_ALLOW_PLAINTEXT');
   if (tls === undefined && !isLoopbackBind(bind) && !allowPlaintext) {
     throw new ConfigError(
-      `Refusing to accept bearer tokens over plaintext HTTP on ${bind}. Configure ` +
+      `Refusing to accept client tokens over plaintext HTTP on ${bind}. Configure ` +
         'UNIFI_MCP_HTTP_TLS_CERT_FILE and UNIFI_MCP_HTTP_TLS_KEY_FILE, bind to a loopback ' +
         'address, or set UNIFI_MCP_HTTP_ALLOW_PLAINTEXT=true when a TLS reverse proxy or ' +
         'host-level binding protects the listener (docs/networking.md).',

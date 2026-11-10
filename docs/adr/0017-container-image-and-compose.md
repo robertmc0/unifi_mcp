@@ -112,20 +112,47 @@ task (Phase 5).
   check, ignore list, Compose isolation, hard lock, admin off, loopback-only MCP port.
 - `tests/integration-mock/healthcheck.test.ts`: exit 0 while the service answers, 1 when
   it is gone.
+- **`linux/arm64` under QEMU user-mode emulation** (2026-11-10, on the amd64 development
+  host, with the owner's consent to register `qemu-aarch64` through a digest-pinned
+  `tonistiigi/binfmt`):
+  - `docker buildx build --platform linux/arm64` builds the image with the same Dockerfile
+    and base digest.
+  - The full test suite, run with `npm ci` in the pinned arm64 Node.js image on a clean
+    copy of the committed tree, passes 573 of 582 tests with the default 5-second
+    limits. That includes all storage tests (7 files, 63 tests: `node:sqlite`, AEAD
+    secrets, migrations, backup and restore, the instance lock). The other 9 are
+    integration tests that start a service or a bridge process. They pass with longer
+    limits: emulation is slow.
+  - **The service and the CLI from the image do not start under emulation.** Node.js's
+    TypeScript stripper (WebAssembly) fails with
+    `ERR_INTERNAL_ASSERTION: memory access out of bounds` once its memory has grown,
+    after about 20 files. Every file strips on amd64. Under emulation they strip only
+    with V8's `--wasm-enforce-bounds-checks`, which replaces bounds checks based on
+    guard pages and signal handling with explicit checks. Emulation is therefore the
+    likely cause, not the image or our sources.
+  - With that flag, which was added only to the emulated test run, the arm64 image works:
+    healthy after 8 s, read-only root, `CapEff` 0, `NoNewPrivs` 1, `/app` not writable;
+    `doctor`, `client create`, `db check`, `db backup` and `audit verify` succeed; and
+    `docker stop` exits 0.
 
 ## Consequences
 
 - One image serves the service, the CLI and the bridge.
 - Upgrading means building or pulling a new image and restarting. The service upgrades
   the database itself after writing a pre-migration backup (ADR 0007).
-- **Not yet verified on arm64.** No arm64 emulation (binfmt/QEMU) is registered on the
-  development host, and installing one changes the host, so it needs the owner's consent.
-  The digest pin covers arm64 and there is no native module, but a `linux/arm64` build
-  and a run of the storage tests remain open in the checklist.
+- **arm64 is verified under emulation only.** The image builds, the tests pass, and the
+  service works when the emulation workaround above is used. No arm64 hardware has been
+  tested. The image does not carry `--wasm-enforce-bounds-checks`: it is an emulation
+  workaround, and it would slow every native start. Running the arm64 image on an amd64
+  host under QEMU is therefore not supported. Use the image for the host's architecture.
+  An arm64 CI job (Phase 5) should use a native arm64 runner, or pass the flag when it
+  starts the service under emulation.
 
 ## Re-evaluation triggers
 
 - A dependency gains a native module, or Node.js type stripping changes.
+- The first run on arm64 hardware, or a Node.js or QEMU release that changes the
+  emulation result.
 - Publishing images (Phase 5): signing, SBOM, provenance, multi-arch manifests.
 - A deployment cannot run as the file owner's UID (for example rootless setups with
   user-namespace remapping).

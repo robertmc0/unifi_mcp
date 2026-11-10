@@ -2,12 +2,16 @@
 
 > **Status: Phase 1 in progress.** The container image and the single-host Compose example
 > are implemented and tested on `linux/amd64` ([ADR 0017](adr/0017-container-image-and-compose.md)).
-> `linux/arm64` is not yet verified. Images are built locally; no registry images are
-> published yet. Dual-network and TLS Compose examples are Phase 5.
+> `linux/arm64` is tested under emulation only, not yet on arm64 hardware. Images are
+> built locally; no registry images are published yet. Dual-network and TLS Compose
+> examples are Phase 5.
 
 ## Requirements
 
 - Docker Engine with Compose v2, or Node.js 26.13.0+ (26.x LTS) to run from source.
+- Build the image on the architecture it will run on. The `linux/arm64` image does not
+  start under QEMU emulation on an amd64 host
+  ([troubleshooting.md](troubleshooting.md#the-service-does-not-start)).
 - A local filesystem for the data directory, not NFS or SMB.
 - Network access from the service to your UniFi consoles' local API ports (LAN or VPN).
   The service never needs internet access.

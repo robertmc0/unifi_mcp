@@ -85,6 +85,13 @@ All notable changes to this project are documented here. The format follows
 - `deploy/compose.single.yml`: read-only, no capabilities, `no-new-privileges`, hard lock
   on, MCP port on host loopback only, admin interface off with its port unpublished.
 - A documentation link checker: every relative link and heading anchor must resolve.
+- Client guide for Claude Code (`docs/client-claude-code.md`), verified with Claude Code
+  2.1.322 over the stdio bridge and over HTTP with a `${…}` header reference; a
+  troubleshooting guide (`docs/troubleshooting.md`).
+- The image also builds for `linux/arm64`. It is tested under QEMU emulation only, where
+  the service needs a V8 flag to start (ADR 0017).
+- The plaintext-HTTP refusal is now readable in the runtime log (it was partly redacted),
+  and a test requires startup refusals to survive log redaction.
 - Basic CI (`.github/workflows/check.yml`): format, lint, typecheck, tests, contract
   reconciliation, and an image build with a read-only smoke run; actions pinned by
   commit SHA.
