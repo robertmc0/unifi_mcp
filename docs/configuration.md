@@ -1,13 +1,24 @@
 # Configuration
 
 > **Status: Phase 1 in progress.** This page covers the settings implemented so far: the
-> data directory, logging and the master encryption key. Listener, policy, bootstrap YAML and
+> hard lock, the data directory, logging and the master encryption key. Listener, policy, bootstrap YAML and
 > runtime-mode settings are added here as they are implemented. Commands shown as
 > `unifi-mcp …` belong to the CLI, which is not built yet (Phase 1 step 9).
 
 Configuration precedence (spec §8.1): immutable deployment overrides first, then settings
 stored in the database, then YAML/environment bootstrap values. The settings on this page
 are deployment settings read from the environment at every start.
+
+## Deployment hard lock
+
+| Variable                    | Default when unset | Meaning                                                                                                                                                                                |
+| --------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_FORCE_READ_ONLY` | `true`             | When true, no write can run through any path, including approved actions. Accepts `true`/`false` (also `1`/`0`, `yes`/`no`, `on`/`off`). Any other value stops the service at startup. |
+
+This is an immutable deployment override: it is read at startup and cannot be changed from
+the database, the admin UI or an MCP client. Leaving it unset keeps the lock on; set it to
+`false` deliberately to allow writes. See [security.md](security.md) for the other four
+levels that must also allow a write.
 
 ## Data directory
 

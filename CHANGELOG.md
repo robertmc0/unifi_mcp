@@ -18,8 +18,14 @@ All notable changes to this project are documented here. The format follows
   redaction; persistent, hash-chained, update-proof audit trail that fails safe when it
   cannot be written; liveness/readiness checks with a public endpoint handler that reveals
   only the overall status.
-- Operator manual: `docs/configuration.md` (data directory, logging, master key),
-  `docs/backup-restore.md` and `docs/monitoring.md`.
+- Policy (`packages/policy`, ADR 0009): pure permission evaluation in the order of spec
+  §6.1 with deny-wins, deployment hard lock (`UNIFI_MCP_FORCE_READ_ONLY`, locked when
+  unset), runtime mode, layered rules by intersection with explicit client grants, default
+  deny for writes and sensitive reads, credentials never released, raise-only risk
+  elevation, and a versioned, audited global policy store.
+- Operator manual: `docs/configuration.md` (hard lock, data directory, logging, master
+  key), `docs/security.md` (permission model), `docs/backup-restore.md` and
+  `docs/monitoring.md`.
 
 ### Added — Phase 0: research and contract baseline
 

@@ -220,6 +220,14 @@ export class AuditLog {
     this.#now = options.now ?? (() => new Date());
   }
 
+  /**
+   * True when this log writes through `db`. Stores that audit their own changes check this,
+   * because an entry is only atomic with a change made on the same connection.
+   */
+  writesTo(db: SqliteDatabase): boolean {
+    return this.#db === db;
+  }
+
   /** False after a failed write, until a later write succeeds. Feeds readiness. */
   get healthy(): boolean {
     return this.#healthy;

@@ -65,8 +65,18 @@ explicitly, never dropped silently.
    `HEALTHCHECK` (steps 7 and 11); token string pattern in redaction once the token format
    exists (step 7); audit-before-act wiring in the dispatcher (step 4); retention setting
    and scheduled pruning, CLI audit and chain-verification commands (step 9).
-3. **policy**: evaluation order §6.1, deployment hard lock, runtime mode, scope
-   intersection, default deny for writes and sensitive reads.
+3. ✅ **policy** (2026-11-10): evaluation order §6.1, deployment hard lock, runtime mode, scope
+   intersection, default deny for writes and sensitive reads. → `packages/policy`, storage
+   migration 3 (`security_policy`), [ADR 0009](adr/0009-policy-evaluation-model.md),
+   [security.md](security.md). Also done: strict schemas for global, console and client
+   policy; risk elevation (raise only); default-disabled operations; credential exposure
+   always denied; versioned, audited policy store with compare-and-set;
+   `UNIFI_MCP_FORCE_READ_ONLY` unset means locked. Tests: `tests/unit/policy/`,
+   `tests/security/policy-invariants.test.ts`.
+   Still open, carried into later steps: running `evaluate()` at enqueue, dispatch and
+   resume (step 4); binding approvals to the policy version (step 5); storing console and
+   client policies with `bumpPolicyVersion` (steps 6 and 7); `policy show|validate|set-runtime-mode`
+   and YAML import (step 9).
 4. **core**: `OperationDescriptor` registry, central dispatcher (checks at enqueue _and_
    dispatch), bounded queues, rate limits, resource locks, durable operation IDs.
 5. **approvals**: prepare → pending → approved → resumed/executed state machine with

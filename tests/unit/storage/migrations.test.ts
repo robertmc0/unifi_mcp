@@ -64,6 +64,7 @@ describe('migrate', () => {
       'crypto_keys',
       'schema_migrations',
       'secret_records',
+      'security_policy',
       'sqlite_sequence', // created by AUTOINCREMENT on audit_entries
     ]);
     db.close();

@@ -91,6 +91,21 @@ BEGIN
 END;
 `,
   },
+  {
+    // Global security policy and the policy version (spec §6.1, §6.5; ADR 0009).
+    // Queries live in @unifi-local-mcp/policy.
+    version: 3,
+    name: 'security_policy',
+    sql: `
+CREATE TABLE security_policy (
+  singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
+  version INTEGER NOT NULL CHECK (version >= 1),
+  document TEXT NOT NULL CHECK (json_valid(document) AND length(document) <= 262144),
+  updated_at TEXT NOT NULL,
+  updated_by TEXT NOT NULL CHECK (length(updated_by) BETWEEN 1 AND 160)
+) STRICT;
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `
