@@ -10,7 +10,7 @@
  *   failure.
  * - Identity comes only from the verified principal, never from the request.
  */
-import { OperationRegistry, renderPath } from '@unifi-local-mcp/core';
+import { OperationRegistry, renderPath, type OperationDescriptor } from '@unifi-local-mcp/core';
 import { describe, expect, it, vi } from 'vitest';
 import * as z from 'zod';
 import { useTempDirs } from '../unit/storage/fixtures.ts';
@@ -21,8 +21,10 @@ import {
   DEVICE_A,
   harness,
   inventory,
+  listDevices,
   restartDevice,
   SITE,
+  updateFirewallRule,
 } from '../unit/core/fixtures.ts';
 
 const tempDir = useTempDirs();
@@ -110,6 +112,42 @@ describe('generic execution cannot escape the registry', () => {
     expect(() => {
       registry.register({ ...restartDevice, inputSchema: z.object({ deviceId: z.string() }) });
     }).toThrow(/strict object schema/);
+  });
+
+  it('accepts a JSON body only as the single body argument (ADR 0018)', () => {
+    const registry = new OperationRegistry(inventory);
+    // Deliberately invalid descriptors, built without the type checker's help.
+    const invalid = (changes: Record<string, unknown>, base: object): OperationDescriptor =>
+      Object.fromEntries(
+        Object.entries({ ...base, ...changes }).filter(([, value]) => value !== undefined),
+      ) as unknown as OperationDescriptor;
+    expect(() => {
+      registry.register(
+        invalid(
+          { inputSchema: z.strictObject({ ruleId: z.uuid(), action: z.string() }) },
+          updateFirewallRule,
+        ),
+      );
+    }).toThrow(/needs a "body" argument.*argument action has no place/);
+    expect(() => {
+      registry.register(
+        invalid(
+          {
+            requestBody: undefined,
+            inputSchema: z.strictObject({ ruleId: z.uuid(), body: z.strictObject({}) }),
+          },
+          updateFirewallRule,
+        ),
+      );
+    }).toThrow(/argument body has no place/);
+    expect(() => {
+      registry.register(
+        invalid(
+          { queryParameters: ['body'], inputSchema: z.strictObject({ body: z.string() }) },
+          listDevices,
+        ),
+      );
+    }).toThrow(/"body" is reserved/);
   });
 
   it('encodes every path value as exactly one segment', () => {

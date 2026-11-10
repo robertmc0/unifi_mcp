@@ -209,6 +209,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       clientPolicy: (clientId) => clients.policy(clientId),
       consolePolicy: (consoleId) => consoles.policy(consoleId),
       capability: (consoleId, descriptor) => consoles.capability(consoleId, descriptor),
+      observedVersion: (consoleId, moduleId) => consoles.observedVersion(consoleId, moduleId),
     };
     const executor =
       options.executor ??

@@ -95,6 +95,8 @@ export interface SecurityContextProvider {
   clientPolicy(clientId: string): ClientPolicy | undefined;
   consolePolicy(consoleId: string): ConsolePolicy | undefined;
   capability(consoleId: string, operation: OperationDescriptor): Capability;
+  /** The module version a probe last observed, used only to explain an unsupported result. */
+  observedVersion?(consoleId: string, moduleId: string): string | undefined;
 }
 
 export interface UpstreamError {
@@ -265,6 +267,7 @@ const RequestSchema = z.strictObject({
 });
 const OPERATION_ID_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$/;
 const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9_.:-]{1,128}$/;
+const SAFE_VERSION = /^[0-9][0-9A-Za-z.+-]{0,63}$/;
 
 const MESSAGES: Record<string, string> = {
   unknown_operation: 'No registered operation has this id.',
@@ -648,8 +651,24 @@ export class Dispatcher {
       ...context.base,
       status: 'denied',
       ...(execution === undefined ? {} : { executionId: execution.id, outcome: 'denied' as const }),
-      error: { code: decision.reason, message: decision.message },
+      error: {
+        code: decision.reason,
+        message:
+          decision.reason === 'operation_unsupported'
+            ? this.#unsupportedMessage(context, decision.message)
+            : decision.message,
+      },
     };
+  }
+
+  /** Names the observed version and the verified range, so the operator knows what to do. */
+  #unsupportedMessage(context: Context, base: string): string {
+    const { moduleId, apiVersionRange } = context.descriptor;
+    const observed = this.#deps.security.observedVersion?.(context.target.consoleId, moduleId);
+    // The version string comes from the console: it is shown only if it looks like one.
+    const shown =
+      observed !== undefined && SAFE_VERSION.test(observed) ? observed : 'an unrecognised version';
+    return `${base} The console reports ${moduleId} ${shown}; this operation is verified for ${apiVersionRange}.`;
   }
 
   #rateLimit(context: Context): number | undefined {
@@ -689,13 +708,14 @@ export class Dispatcher {
             context.descriptor.project === undefined
               ? output.data
               : context.descriptor.project(output.data);
+          const pagination = context.descriptor.pagination?.(output.data) ?? outcome.pagination;
           // The read is returned only once its audit entry is stored.
           this.#audit(context, { outcome: 'success' });
           return {
             ...context.base,
             status: 'ok',
             data,
-            ...(outcome.pagination === undefined ? {} : { pagination: outcome.pagination }),
+            ...(pagination === undefined ? {} : { pagination }),
           };
         },
       );

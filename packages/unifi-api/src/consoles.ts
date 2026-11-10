@@ -408,6 +408,13 @@ export class ConsoleRegistry {
     return row === undefined ? undefined : this.#parsePolicy(consoleId, columnText(row, 'policy'));
   }
 
+  /** The application version a probe last reported for a module, if any. */
+  observedVersion(consoleId: string, moduleId: string): string | undefined {
+    if (!isModuleId(moduleId)) return undefined;
+    const row = this.#moduleRow(consoleId, moduleId);
+    return (row === undefined ? null : columnOptionalText(row, 'observed_version')) ?? undefined;
+  }
+
   /** Supported only when the probed version satisfies the operation's version range. */
   capability(
     consoleId: string,

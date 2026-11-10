@@ -100,6 +100,12 @@ Every operation returns the same envelope (as structured content and as JSON tex
 - Writes add `executionId` and `outcome` (`succeeded`, `failed`, `outcome_unknown`,
   `cancelled`, `denied`).
 - `error` has a stable `code`, a message and, for invalid arguments, `issues`.
+- List operations return the items as `data` and the paging facts as `pagination`
+  (for Network: `offset`, `limit`, `count`, `totalCount`). Pass `offset` and `limit` in
+  `arguments` to page.
+- Operations that send a request body take it as one `body` argument, next to the path
+  arguments, for example `{ "networkId": "…", "body": { … } }`.
+  `unifi_describe_operation` shows its schema.
 - `outcome_unknown` means the console may or may not have applied the change. It is not
   retried automatically; check the console before trying again.
 

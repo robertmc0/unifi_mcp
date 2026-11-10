@@ -39,7 +39,7 @@ export interface OperationDescriptor<
   pathTemplate: string;
   /** Input fields sent as query parameters. */
   queryParameters?: readonly string[];
-  /** `json`: input fields not used in the path or query form the JSON request body. */
+  /** `json`: the `body` argument is sent as the JSON request body (ADR 0018). */
   requestBody?: 'json';
   /** Response size cap in bytes. Default 4 MiB, maximum 32 MiB. */
   maxResponseBytes?: number;
@@ -57,6 +57,8 @@ export interface OperationDescriptor<
   resourceLockKey?(args: z.output<Input>, target: Target): string;
   /** Minimises validated output before it is returned (spec §6.4). */
   project?(output: z.output<Output>): unknown;
+  /** Paging facts of a validated page response, returned as the envelope's `pagination`. */
+  pagination?(output: z.output<Output>): Readonly<Record<string, number>> | undefined;
   namedTool?: string;
 }
 
@@ -171,15 +173,22 @@ export function validateDescriptor(
     if (keys.has('siteId') || keys.has('consoleId')) {
       problems.push('consoleId and siteId are targets, not arguments');
     }
-    // Every argument has exactly one, declared place in the request.
+    // Every argument has exactly one, declared place in the request: a path placeholder, a
+    // query parameter, or (`requestBody: 'json'`) the single `body` argument.
     const query = new Set(descriptor.queryParameters ?? []);
     for (const name of query) {
       if (!keys.has(name)) problems.push(`query parameter ${name} is not an input field`);
       if (placeholders.includes(name))
         problems.push(`${name} is both a path and a query parameter`);
+      if (name === 'body') problems.push('"body" is reserved for the request body');
+    }
+    if (placeholders.includes('body')) problems.push('"body" is reserved for the request body');
+    if (descriptor.requestBody === 'json' && !keys.has('body')) {
+      problems.push('a JSON request body needs a "body" argument');
     }
     for (const key of keys) {
-      if (!placeholders.includes(key) && !query.has(key) && descriptor.requestBody !== 'json') {
+      const isBody = key === 'body' && descriptor.requestBody === 'json';
+      if (!placeholders.includes(key) && !query.has(key) && !isBody) {
         problems.push(`argument ${key} has no place in the request (path, query or body)`);
       }
     }

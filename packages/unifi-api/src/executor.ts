@@ -146,11 +146,10 @@ export class UnifiExecutor implements OperationExecutor {
       }
       pathValues[name] = value;
     }
-    const used = new Set([...placeholders, ...(descriptor.queryParameters ?? [])]);
-    const bodyFields = Object.fromEntries(Object.entries(args).filter(([key]) => !used.has(key)));
+    // The body is exactly the validated `body` argument (ADR 0018); nothing else is added.
     const body =
-      descriptor.requestBody === 'json'
-        ? Buffer.from(JSON.stringify(bodyFields), 'utf8')
+      descriptor.requestBody === 'json' && args['body'] !== undefined
+        ? Buffer.from(JSON.stringify(args['body']), 'utf8')
         : undefined;
     let path: string;
     try {

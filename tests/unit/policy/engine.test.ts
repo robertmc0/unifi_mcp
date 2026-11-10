@@ -150,7 +150,7 @@ const READ_DENIALS: Mutation[] = [
     'not_granted_to_client',
     6,
   ],
-  ['capability unknown', (i) => (i.capability = 'unknown'), 'operation_unsupported', 7],
+  ['capability unknown', (i) => (i.capability = 'unknown'), 'version_unknown', 7],
   ['capability unsupported', (i) => (i.capability = 'unsupported'), 'operation_unsupported', 7],
 ];
 

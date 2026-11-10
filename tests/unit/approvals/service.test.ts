@@ -12,7 +12,7 @@ const UPDATE = {
   operationId: 'network.firewall.update_rule',
   consoleId: CONSOLE,
   siteId: SITE,
-  arguments: { ruleId: RULE, action: 'allow' },
+  arguments: { ruleId: RULE, body: { action: 'allow' } },
 };
 
 async function setup(ttl?: { pendingMs?: number; executeMs?: number }) {

@@ -70,6 +70,23 @@ unaffected. The omission is declared, with its reason, in the generator configur
 in the generated file. Generation fails if the vendor removes or changes the parameter, so
 the decision is revisited.
 
+### 2. Core contract additions (step 2)
+
+- **A JSON body is one `body` argument.** Twelve Network request bodies are discriminated
+  unions, which cannot be flattened next to the path arguments. An operation with
+  `requestBody: 'json'` must therefore have a `body` argument, and the executor sends
+  exactly its value as the request body, with nothing added. `body` cannot also be a path or
+  query parameter. This replaces the Phase 1 rule ("fields not used in the path or query
+  form the body"), which no adapter used yet.
+- **Pagination.** An optional descriptor hook, `pagination(output)`, returns the paging
+  facts of a validated page response. The dispatcher returns them as the envelope's
+  `pagination`, next to the projected `data`.
+- **Unknown versus unsupported versions.** The policy engine denies an operation whose
+  console version has not been probed as `version_unknown`, and one outside its verified
+  range as `operation_unsupported` (both at stage 7). For `operation_unsupported` the
+  dispatcher adds the observed version and the verified range to the message. The version
+  string comes from the console, so it is shown only if it looks like a version.
+
 ## Evidence
 
 - `tests/unit/scripts/openapi-zod.test.ts` (synthetic documents only, 25 tests):
@@ -84,6 +101,13 @@ the decision is revisited.
   no default string bound; lenient request enums; uniqueness ignored; disagreeing bases
   accepted; recursion accepted; narrowing ignored.
 - `npm run api:reconcile` reports the generated module up to date.
+- Step 2: `tests/security/dispatcher-gates.test.ts` (a body only as the `body` argument;
+  `body` reserved), `tests/unit/core/dispatcher.test.ts` (`version_unknown` sends nothing;
+  the unsupported message names the version and range; an implausible version string is
+  not echoed; page responses), `tests/unit/unifi-api/executor.test.ts` (exactly the `body`
+  argument is sent). Mutation checks, each making a test fail: all arguments sent as the
+  body; the `body` argument not required; an unknown version treated as supported; an
+  unsafe version string echoed; the pagination hook ignored.
 
 ## Consequences
 

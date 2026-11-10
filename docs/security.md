@@ -194,7 +194,10 @@ documented local API of each module (ADR 0012).
 - **Credentials are write-only.** API keys and tokens are stored encrypted and are never
   shown again by the service, in its logs or in the audit trail.
 - **Version checks.** An operation runs only if the console's application version is known
-  and within the range the operation was reviewed for.
+  and within the range the operation was reviewed for. An unknown version is refused as
+  `version_unknown`, never assumed to be compatible. An incompatible one is refused as
+  `operation_unsupported`, and the message names the observed version and the verified
+  range.
 
 ### Computing a pin
 

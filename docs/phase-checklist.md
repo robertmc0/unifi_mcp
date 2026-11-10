@@ -274,9 +274,10 @@ Baseline: Network Integration API v11.0.97 (73 operations: 38 reads, 35 writes),
    `tests/unit/scripts/openapi-zod.test.ts`, `tests/contract/network-generated-schemas.test.ts`.
    Reviewed deviation: the device-tag `filter` (an object schema for a query string) is
    left out.
-2. **Core contract additions**: JSON bodies travel as one `body` argument (several Network
-   bodies are discriminated unions); a pagination hook for page responses; a clear
-   unsupported-version error.
+2. ✅ **Core contract additions** (2026-11-10): JSON bodies travel as one `body` argument
+   (several Network bodies are discriminated unions); a pagination hook for page
+   responses; `version_unknown` for unprobed consoles and an `operation_unsupported`
+   message that names the observed version and the verified range (ADR 0018 §2).
 3. **Version probe**: `GET /v1/info` per console; at startup, periodically and on demand
    when the version is unknown; `unifi-mcp console probe`; `doctor` shows observed versions.
 4. **Reads** (38): reviewed security metadata, credential-stripping projections, named

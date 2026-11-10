@@ -23,6 +23,7 @@ import {
   ClientPolicySchema,
   ConsolePolicySchema,
   PolicyStore,
+  type Capability,
   type ClientPolicy,
   type ConsolePolicy,
 } from '@unifi-local-mcp/policy';
@@ -153,8 +154,10 @@ export const updateFirewallRule = defineOperation({
   retryClass: 'idempotent',
   inputSchema: z.strictObject({
     ruleId: z.uuid(),
-    action: z.enum(['allow', 'block']),
-    presharedKey: z.string().min(8).optional(),
+    body: z.strictObject({
+      action: z.enum(['allow', 'block']),
+      presharedKey: z.string().min(8).optional(),
+    }),
   }),
   outputSchema: z.object({ updated: z.boolean() }),
   resourceLockKey: (args) => `firewall-rule:${args.ruleId}`,
@@ -226,6 +229,12 @@ export interface HarnessOptions {
   approvalService?: { ttl?: Partial<ApprovalTtl> };
   /** Controllable clock shared by the dispatcher and the approval service. */
   clock?: { now: Date };
+  /** The console's capability for every operation (default `supported`). */
+  capability?: Capability;
+  /** What a probe last observed, reported in unsupported-version messages. */
+  observedVersion?: string;
+  /** Replaces the registered operations. */
+  descriptors?: OperationDescriptor[];
   dir: string;
 }
 
@@ -251,7 +260,7 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
   const executions = new ExecutionStore(storage.db);
   const executor = new MockExecutor();
   const registry = new OperationRegistry(inventory);
-  const descriptors: OperationDescriptor[] = [
+  const descriptors: OperationDescriptor[] = options.descriptors ?? [
     listDevices,
     getInfo,
     restartDevice,
@@ -302,7 +311,8 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
     security: {
       clientPolicy: (id) => clients.get(id),
       consolePolicy: (id) => consoles.get(id),
-      capability: () => 'supported',
+      capability: () => options.capability ?? 'supported',
+      observedVersion: () => options.observedVersion,
     },
     policyStore,
     deployment,

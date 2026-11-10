@@ -12,6 +12,9 @@ All notable changes to this project are documented here. The format follows
   request schemas, response schemas that strip undocumented fields, discriminated unions
   with JSON Schema semantics, and no vendor prose. Generated Network 11.0.97 schemas in
   `packages/unifi-network/src/generated/`; `api:reconcile` fails when they are stale.
+- Operations with a request body take it as one `body` argument; list results carry
+  `pagination`; an unprobed console version is refused as `version_unknown`, and an
+  incompatible one names the observed version and the verified range.
 
 ### Added — Phase 1: secure platform core
 

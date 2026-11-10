@@ -39,6 +39,7 @@ export type DenyReason =
   | 'denied_by_client_policy'
   | 'not_granted_to_client'
   | 'operation_unsupported'
+  | 'version_unknown'
   | 'operation_disabled'
   | 'credential_exposure_forbidden'
   | 'sensitive_denied_by_policy'
@@ -108,6 +109,9 @@ const MESSAGES: Record<DenyReason, string> = {
   denied_by_client_policy: 'The operation is denied for this client.',
   not_granted_to_client: 'This client has not been granted this operation.',
   operation_unsupported: "The operation is not supported by this console's API version.",
+  version_unknown:
+    "This console's application version has not been determined yet, so no operation can " +
+    'run. The service checks it automatically; try again shortly.',
   operation_disabled: 'The operation is disabled by default and has not been enabled.',
   credential_exposure_forbidden: 'Operations that expose credentials are never available.',
   sensitive_denied_by_policy: 'The data this operation returns is denied by policy.',
@@ -224,7 +228,9 @@ export function evaluate(input: EvaluationInput): Decision {
   if (anyMatch(client.deny, operation)) return deny('denied_by_client_policy', 6);
   if (!anyMatch(client.allow, operation)) return deny('not_granted_to_client', 6);
 
-  // 7. The operation must be supported by this console's verified API version.
+  // 7. The operation must be supported by this console's verified API version. An
+  //    unprobed version is never assumed to be compatible.
+  if (input.capability === 'unknown') return deny('version_unknown', 7);
   if (input.capability !== 'supported') return deny('operation_unsupported', 7);
 
   // 8. Default-disabled operations, sensitive data, then risk and approval.

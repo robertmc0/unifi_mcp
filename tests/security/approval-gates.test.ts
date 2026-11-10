@@ -31,7 +31,7 @@ const UPDATE = {
   operationId: 'network.firewall.update_rule',
   consoleId: CONSOLE,
   siteId: SITE,
-  arguments: { ruleId: RULE, action: 'block', presharedKey: SECRET },
+  arguments: { ruleId: RULE, body: { action: 'block', presharedKey: SECRET } },
 };
 
 interface Setup extends Harness {
@@ -291,7 +291,7 @@ describe('stored arguments', () => {
     const view = h.approvals.get(id);
     expect(JSON.stringify(view)).not.toContain(SECRET);
     expect(view?.summary).toMatchObject({
-      arguments: { ruleId: RULE, action: 'block', presharedKey: '[REDACTED]' },
+      arguments: { ruleId: RULE, body: { action: 'block', presharedKey: '[REDACTED]' } },
     });
     for (const file of await readdir(join(h.storage.db.path, '..'))) {
       const content = await readFile(join(h.storage.db.path, '..', file));

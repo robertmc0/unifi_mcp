@@ -48,7 +48,7 @@ describe('CLI beside the service', () => {
           operationId: 'network.firewall.update_rule',
           consoleId: t.consoleId,
           siteId: 'site-1',
-          arguments: { ruleId: RULE, action: 'block' },
+          arguments: { ruleId: RULE, body: { action: 'block' } },
         },
       }),
     );

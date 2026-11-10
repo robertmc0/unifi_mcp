@@ -47,7 +47,7 @@ describe('requests', () => {
     await h.close();
   });
 
-  it('send non-path arguments as a JSON body for body operations', async () => {
+  it('send exactly the body argument as the JSON body for body operations', async () => {
     const h = await setup();
     h.mock.respond = (_req, res) => {
       sendJson(res, 200, { updated: true });
@@ -55,8 +55,7 @@ describe('requests', () => {
     await h.executor.execute(
       call(updateFirewallRule, h.consoleId, {
         ruleId: RULE,
-        action: 'block',
-        presharedKey: 'synthetic-psk',
+        body: { action: 'block', presharedKey: 'synthetic-psk' },
       }),
     );
     expect(h.mock.requests[0]).toMatchObject({
