@@ -1,0 +1,11 @@
+{
+  "name": "@unifi-local-mcp/approvals",
+  "version": "0.0.0",
+  "private": true,
+  "description": "High-impact proposal / independent human approval / original-client resume state machine.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

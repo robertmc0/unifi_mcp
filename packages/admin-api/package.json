@@ -1,0 +1,11 @@
+{
+  "name": "@unifi-local-mcp/admin-api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Separate administration HTTP API with independent authentication, sessions, CSRF and MFA.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

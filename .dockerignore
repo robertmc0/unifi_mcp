@@ -1,0 +1,27 @@
+# Keep the build context minimal; never send secrets or local data to the daemon.
+.git/
+node_modules/
+**/node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+master.key
+data/
+.data/
+*.db
+*.db-*
+*.sqlite*
+*.log
+api-specs/**/vendor/
+tests/integration-live-readonly/
+.claude/
+.vscode/
+.idea/

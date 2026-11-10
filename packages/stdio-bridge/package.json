@@ -1,0 +1,15 @@
+{
+  "name": "@unifi-local-mcp/stdio-bridge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Authenticated stdio-to-Streamable-HTTP bridge; holds a client token only, never UniFi credentials.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "@modelcontextprotocol/server": "2.4.0"
+  }
+}

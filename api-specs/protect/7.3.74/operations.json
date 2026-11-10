@@ -1,0 +1,748 @@
+{
+  "application": "protect",
+  "revision": "7.3.74",
+  "derivedFrom": "vendor/openapi.json + vendor/llms.txt (scripts/reconcile-api-coverage.ts --write)",
+  "operationCount": 74,
+  "operations": [
+    {
+      "key": "GET /v1/alarm-hubs",
+      "method": "GET",
+      "path": "/v1/alarm-hubs",
+      "vendorOperationId": null,
+      "category": "Alarm hub information & management",
+      "summary": "Get all alarm hubs",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1alarm-hubs",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/alarm-hubs/{id}",
+      "method": "GET",
+      "path": "/v1/alarm-hubs/{id}",
+      "vendorOperationId": null,
+      "category": "Alarm hub information & management",
+      "summary": "Get alarm hub details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1alarm-hubsid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/alarm-hubs/{id}",
+      "method": "PATCH",
+      "path": "/v1/alarm-hubs/{id}",
+      "vendorOperationId": null,
+      "category": "Alarm hub information & management",
+      "summary": "Patch alarm hub settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1alarm-hubsid",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/alarm-hubs/{id}/outputs/{outputId}/trigger",
+      "method": "POST",
+      "path": "/v1/alarm-hubs/{id}/outputs/{outputId}/trigger",
+      "vendorOperationId": null,
+      "category": "Alarm hub information & management",
+      "summary": "Trigger alarm hub output",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1alarm-hubsidoutputsoutputidtrigger",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/alarm-manager/webhook/{id}",
+      "method": "POST",
+      "path": "/v1/alarm-manager/webhook/{id}",
+      "vendorOperationId": null,
+      "category": "Alarm manager integration",
+      "summary": "Send a webhook to the alarm manager",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1alarm-managerwebhookid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/arm-profiles",
+      "method": "GET",
+      "path": "/v1/arm-profiles",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Get all arm profiles",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1arm-profiles",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/arm-profiles",
+      "method": "POST",
+      "path": "/v1/arm-profiles",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Create arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profiles",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/arm-profiles/disable",
+      "method": "POST",
+      "path": "/v1/arm-profiles/disable",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Disable arm alarm",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profilesdisable",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/arm-profiles/enable",
+      "method": "POST",
+      "path": "/v1/arm-profiles/enable",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Enable arm alarm",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profilesenable",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/arm-profiles/settings",
+      "method": "PATCH",
+      "path": "/v1/arm-profiles/settings",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Set current arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1arm-profilessettings",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/arm-profiles/{id}",
+      "method": "PATCH",
+      "path": "/v1/arm-profiles/{id}",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Update arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1arm-profilesid",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/arm-profiles/{id}",
+      "method": "DELETE",
+      "path": "/v1/arm-profiles/{id}",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Delete arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/delete-v1arm-profilesid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/bridges",
+      "method": "GET",
+      "path": "/v1/bridges",
+      "vendorOperationId": null,
+      "category": "Bridge information & management",
+      "summary": "Get all bridges",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1bridges",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/bridges/{id}",
+      "method": "GET",
+      "path": "/v1/bridges/{id}",
+      "vendorOperationId": null,
+      "category": "Bridge information & management",
+      "summary": "Get bridge details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1bridgesid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/bridges/{id}",
+      "method": "PATCH",
+      "path": "/v1/bridges/{id}",
+      "vendorOperationId": null,
+      "category": "Bridge information & management",
+      "summary": "Patch bridge settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1bridgesid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/cameras",
+      "method": "GET",
+      "path": "/v1/cameras",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Get all cameras",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1cameras",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/cameras/{id}",
+      "method": "GET",
+      "path": "/v1/cameras/{id}",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Get camera details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/cameras/{id}",
+      "method": "PATCH",
+      "path": "/v1/cameras/{id}",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Patch camera settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1camerasid",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/cameras/{id}/disable-mic-permanently",
+      "method": "POST",
+      "path": "/v1/cameras/{id}/disable-mic-permanently",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Permanently disable camera microphone",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasiddisable-mic-permanently",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/cameras/{id}/ptz/goto/{slot}",
+      "method": "POST",
+      "path": "/v1/cameras/{id}/ptz/goto/{slot}",
+      "vendorOperationId": null,
+      "category": "Camera PTZ control & management",
+      "summary": "Move PTZ camera to preset",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzgotoslot",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/cameras/{id}/ptz/patrol/start/{slot}",
+      "method": "POST",
+      "path": "/v1/cameras/{id}/ptz/patrol/start/{slot}",
+      "vendorOperationId": null,
+      "category": "Camera PTZ control & management",
+      "summary": "Start a camera PTZ patrol",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzpatrolstartslot",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/cameras/{id}/ptz/patrol/stop",
+      "method": "POST",
+      "path": "/v1/cameras/{id}/ptz/patrol/stop",
+      "vendorOperationId": null,
+      "category": "Camera PTZ control & management",
+      "summary": "Stop active camera PTZ patrol",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzpatrolstop",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/cameras/{id}/rtsps-stream",
+      "method": "GET",
+      "path": "/v1/cameras/{id}/rtsps-stream",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Get RTSPS streams for camera",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasidrtsps-stream",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/cameras/{id}/rtsps-stream",
+      "method": "POST",
+      "path": "/v1/cameras/{id}/rtsps-stream",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Create RTSPS streams for camera",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidrtsps-stream",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/cameras/{id}/rtsps-stream",
+      "method": "DELETE",
+      "path": "/v1/cameras/{id}/rtsps-stream",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Delete camera RTSPS stream",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/delete-v1camerasidrtsps-stream",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/cameras/{id}/snapshot",
+      "method": "GET",
+      "path": "/v1/cameras/{id}/snapshot",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Get camera snapshot",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasidsnapshot",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/cameras/{id}/talkback-session",
+      "method": "POST",
+      "path": "/v1/cameras/{id}/talkback-session",
+      "vendorOperationId": null,
+      "category": "Camera information & management",
+      "summary": "Create talkback session for camera",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidtalkback-session",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/chimes",
+      "method": "GET",
+      "path": "/v1/chimes",
+      "vendorOperationId": null,
+      "category": "Chime information & management",
+      "summary": "Get all chimes",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1chimes",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/chimes/{id}",
+      "method": "GET",
+      "path": "/v1/chimes/{id}",
+      "vendorOperationId": null,
+      "category": "Chime information & management",
+      "summary": "Get chime details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1chimesid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/chimes/{id}",
+      "method": "PATCH",
+      "path": "/v1/chimes/{id}",
+      "vendorOperationId": null,
+      "category": "Chime information & management",
+      "summary": "Patch chime settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1chimesid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/files/{fileType}",
+      "method": "GET",
+      "path": "/v1/files/{fileType}",
+      "vendorOperationId": null,
+      "category": "Device asset file management",
+      "summary": "Get device asset files",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1filesfiletype",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/files/{fileType}",
+      "method": "POST",
+      "path": "/v1/files/{fileType}",
+      "vendorOperationId": null,
+      "category": "Device asset file management",
+      "summary": "Upload device asset file",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1filesfiletype",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/fobs",
+      "method": "GET",
+      "path": "/v1/fobs",
+      "vendorOperationId": null,
+      "category": "Fob information & management",
+      "summary": "Get all fobs",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1fobs",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/fobs/{id}",
+      "method": "GET",
+      "path": "/v1/fobs/{id}",
+      "vendorOperationId": null,
+      "category": "Fob information & management",
+      "summary": "Get fob details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1fobsid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/fobs/{id}",
+      "method": "PATCH",
+      "path": "/v1/fobs/{id}",
+      "vendorOperationId": null,
+      "category": "Fob information & management",
+      "summary": "Patch fob settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1fobsid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/lights",
+      "method": "GET",
+      "path": "/v1/lights",
+      "vendorOperationId": null,
+      "category": "Light information & management",
+      "summary": "Get all lights",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1lights",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/lights/{id}",
+      "method": "GET",
+      "path": "/v1/lights/{id}",
+      "vendorOperationId": null,
+      "category": "Light information & management",
+      "summary": "Get light details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1lightsid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/lights/{id}",
+      "method": "PATCH",
+      "path": "/v1/lights/{id}",
+      "vendorOperationId": null,
+      "category": "Light information & management",
+      "summary": "Patch light settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1lightsid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/link-stations",
+      "method": "GET",
+      "path": "/v1/link-stations",
+      "vendorOperationId": null,
+      "category": "Link station information & management",
+      "summary": "Get all link stations",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1link-stations",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/link-stations/{id}",
+      "method": "GET",
+      "path": "/v1/link-stations/{id}",
+      "vendorOperationId": null,
+      "category": "Link station information & management",
+      "summary": "Get link station details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1link-stationsid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/link-stations/{id}",
+      "method": "PATCH",
+      "path": "/v1/link-stations/{id}",
+      "vendorOperationId": null,
+      "category": "Link station information & management",
+      "summary": "Patch link station settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1link-stationsid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/liveviews",
+      "method": "GET",
+      "path": "/v1/liveviews",
+      "vendorOperationId": null,
+      "category": "Live view management",
+      "summary": "Get all live views",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1liveviews",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/liveviews",
+      "method": "POST",
+      "path": "/v1/liveviews",
+      "vendorOperationId": null,
+      "category": "Live view management",
+      "summary": "Create live view",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1liveviews",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/liveviews/{id}",
+      "method": "GET",
+      "path": "/v1/liveviews/{id}",
+      "vendorOperationId": null,
+      "category": "Live view management",
+      "summary": "Get live view details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1liveviewsid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/liveviews/{id}",
+      "method": "PATCH",
+      "path": "/v1/liveviews/{id}",
+      "vendorOperationId": null,
+      "category": "Live view management",
+      "summary": "Patch live view configuration",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1liveviewsid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/meta/info",
+      "method": "GET",
+      "path": "/v1/meta/info",
+      "vendorOperationId": null,
+      "category": "Information about application",
+      "summary": "Get application information",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1metainfo",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/nvrs",
+      "method": "GET",
+      "path": "/v1/nvrs",
+      "vendorOperationId": null,
+      "category": "NVR information & management",
+      "summary": "Get NVR details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1nvrs",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/pos/cameras/{id}/transactions",
+      "method": "POST",
+      "path": "/v1/pos/cameras/{id}/transactions",
+      "vendorOperationId": null,
+      "category": "Point of sale event ingestion",
+      "summary": "Ingest a POS transaction",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1poscamerasidtransactions",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/relays",
+      "method": "GET",
+      "path": "/v1/relays",
+      "vendorOperationId": null,
+      "category": "Relay information & management",
+      "summary": "Get all relays",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1relays",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/relays/{id}",
+      "method": "GET",
+      "path": "/v1/relays/{id}",
+      "vendorOperationId": null,
+      "category": "Relay information & management",
+      "summary": "Get relay details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1relaysid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/relays/{id}",
+      "method": "PATCH",
+      "path": "/v1/relays/{id}",
+      "vendorOperationId": null,
+      "category": "Relay information & management",
+      "summary": "Patch relay settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1relaysid",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/relays/{id}/outputs/{outputId}/activate",
+      "method": "POST",
+      "path": "/v1/relays/{id}/outputs/{outputId}/activate",
+      "vendorOperationId": null,
+      "category": "Relay information & management",
+      "summary": "Activate relay output",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1relaysidoutputsoutputidactivate",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sensors",
+      "method": "GET",
+      "path": "/v1/sensors",
+      "vendorOperationId": null,
+      "category": "Sensor information & management",
+      "summary": "Get all sensors",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sensors",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sensors/{id}",
+      "method": "GET",
+      "path": "/v1/sensors/{id}",
+      "vendorOperationId": null,
+      "category": "Sensor information & management",
+      "summary": "Get sensor details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sensorsid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/sensors/{id}",
+      "method": "PATCH",
+      "path": "/v1/sensors/{id}",
+      "vendorOperationId": null,
+      "category": "Sensor information & management",
+      "summary": "Patch sensor settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1sensorsid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sirens",
+      "method": "GET",
+      "path": "/v1/sirens",
+      "vendorOperationId": null,
+      "category": "Siren information & management",
+      "summary": "Get all sirens",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sirens",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sirens/{id}",
+      "method": "GET",
+      "path": "/v1/sirens/{id}",
+      "vendorOperationId": null,
+      "category": "Siren information & management",
+      "summary": "Get siren details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sirensid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/sirens/{id}",
+      "method": "PATCH",
+      "path": "/v1/sirens/{id}",
+      "vendorOperationId": null,
+      "category": "Siren information & management",
+      "summary": "Patch siren settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1sirensid",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sirens/{id}/play",
+      "method": "POST",
+      "path": "/v1/sirens/{id}/play",
+      "vendorOperationId": null,
+      "category": "Siren information & management",
+      "summary": "Play siren",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidplay",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sirens/{id}/stop",
+      "method": "POST",
+      "path": "/v1/sirens/{id}/stop",
+      "vendorOperationId": null,
+      "category": "Siren information & management",
+      "summary": "Stop siren",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidstop",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sirens/{id}/test-sound",
+      "method": "POST",
+      "path": "/v1/sirens/{id}/test-sound",
+      "vendorOperationId": null,
+      "category": "Siren information & management",
+      "summary": "Test siren sound",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidtest-sound",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/speakers",
+      "method": "GET",
+      "path": "/v1/speakers",
+      "vendorOperationId": null,
+      "category": "Speaker information & management",
+      "summary": "Get all speakers",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1speakers",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/speakers/{id}",
+      "method": "GET",
+      "path": "/v1/speakers/{id}",
+      "vendorOperationId": null,
+      "category": "Speaker information & management",
+      "summary": "Get speaker details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1speakersid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/speakers/{id}",
+      "method": "PATCH",
+      "path": "/v1/speakers/{id}",
+      "vendorOperationId": null,
+      "category": "Speaker information & management",
+      "summary": "Patch speaker settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1speakersid",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/speakers/{id}/test-sound",
+      "method": "POST",
+      "path": "/v1/speakers/{id}/test-sound",
+      "vendorOperationId": null,
+      "category": "Speaker information & management",
+      "summary": "Test speaker sound",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1speakersidtest-sound",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/subscribe/devices",
+      "method": "GET",
+      "path": "/v1/subscribe/devices",
+      "vendorOperationId": null,
+      "category": "WebSocket updates",
+      "summary": "Get update messages about devices",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1subscribedevices",
+      "transport": "websocket"
+    },
+    {
+      "key": "GET /v1/subscribe/events",
+      "method": "GET",
+      "path": "/v1/subscribe/events",
+      "vendorOperationId": null,
+      "category": "WebSocket updates",
+      "summary": "Get Protect event messages",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1subscribeevents",
+      "transport": "websocket"
+    },
+    {
+      "key": "GET /v1/ulp-users",
+      "method": "GET",
+      "path": "/v1/ulp-users",
+      "vendorOperationId": null,
+      "category": "UniFi Identity User information",
+      "summary": "Get all identity users",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1ulp-users",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/ulp-users/{id}",
+      "method": "GET",
+      "path": "/v1/ulp-users/{id}",
+      "vendorOperationId": null,
+      "category": "UniFi Identity User information",
+      "summary": "Get identity user details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1ulp-usersid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/users",
+      "method": "GET",
+      "path": "/v1/users",
+      "vendorOperationId": null,
+      "category": "Protect User information",
+      "summary": "Get all users",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1users",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/users/{id}",
+      "method": "GET",
+      "path": "/v1/users/{id}",
+      "vendorOperationId": null,
+      "category": "Protect User information",
+      "summary": "Get user details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1usersid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/viewers",
+      "method": "GET",
+      "path": "/v1/viewers",
+      "vendorOperationId": null,
+      "category": "Viewer information & management",
+      "summary": "Get all viewers",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1viewers",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/viewers/{id}",
+      "method": "GET",
+      "path": "/v1/viewers/{id}",
+      "vendorOperationId": null,
+      "category": "Viewer information & management",
+      "summary": "Get viewer details",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1viewersid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/viewers/{id}",
+      "method": "PATCH",
+      "path": "/v1/viewers/{id}",
+      "vendorOperationId": null,
+      "category": "Viewer information & management",
+      "summary": "Patch viewer settings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1viewersid",
+      "transport": "http"
+    }
+  ]
+}

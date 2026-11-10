@@ -1,0 +1,58 @@
+{
+  "application": "network",
+  "revision": "11.0.97",
+  "vendorVersionLabel": "v11.0.97",
+  "contractKind": "openapi",
+  "retrievedAt": "2026-11-10",
+  "localBaseUrlTemplate": "https://{consoleHost}/proxy/network/integration",
+  "forbiddenBaseUrlTemplates": [
+    "https://api.ui.com/v1/connector/consoles/{consoleId}/proxy/network/integration"
+  ],
+  "authentication": {
+    "scheme": "api-key-header",
+    "header": "X-API-KEY",
+    "valueFormat": "<api-key>",
+    "credentialCreation": "Sign in to the local UniFi application, open Integrations, select \"Create New API Key\"; the key is displayed once (developer.ui.com Getting Started, \"Local\" connection type).",
+    "sources": [
+      "https://developer.ui.com/network/v11.0.97/gettingstarted",
+      "https://developer.ui.com/llms.txt",
+      "https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API"
+    ]
+  },
+  "minimumApplicationVersion": null,
+  "artifacts": [
+    {
+      "name": "openapi.json",
+      "url": "https://developer.ui.com/network/v11.0.97/openapi.json",
+      "sha256": "0828aa9f017cce92cd035429c7e19c933d0b3387c561aac17c468b4c2ca8be66",
+      "bytes": 412138,
+      "mediaType": "application/json",
+      "role": "contract"
+    },
+    {
+      "name": "llms.txt",
+      "url": "https://developer.ui.com/network/v11.0.97/llms.txt",
+      "sha256": "511cdf651a5b6864b5412765ccd6ef199ef44fd161ed1fa9e35e161628172575",
+      "bytes": 11175,
+      "mediaType": "text/plain",
+      "role": "index"
+    }
+  ],
+  "notes": [
+    "OpenAPI 3.1.0, info.version 11.0.97, 73 operations, 380 component schemas.",
+    "OpenAPI declares two servers: \"UniFi API Cloud Connector\" (api.ui.com, forbidden by design, spec §1.2) and \"Local Console\" https://{consoleIP}/proxy/network/integration. Adapters use only the local server.",
+    "OpenAPI declares no securitySchemes; the X-API-KEY header is specified in portal prose and the developer.ui.com llms.txt index.",
+    "The OpenAPI documents only 2xx responses. The Error Handling page documents the error body: statusCode, statusName, code (e.g. api.authentication.missing-credentials), message, timestamp, requestPath (e.g. /integration/v1/sites/123), requestId (UUID, for 500s).",
+    "Documented action enums: device action RESTART; port action POWER_CYCLE; client actions AUTHORIZE_GUEST_ACCESS and UNAUTHORIZE_GUEST_ACCESS.",
+    "Credential-bearing fields in schemas: Hotspot voucher `code`; Wi-Fi pre-shared key `passphrase`.",
+    "The developer portal publishes Network API documentation for versions 9.1.120 through 11.0.97; older consoles may expose fewer operations (spec §19)."
+  ],
+  "unverified": [
+    "Whether one console API key created under Integrations also authorises the Protect integration API on the same console. Until verified by an opt-in live read-only test, treat it as a console-wide administrative credential.",
+    "Whether a local API key can be limited to read-only or to specific applications. No vendor statement was found; assume full administrative scope.",
+    "Header casing differs between sources (X-API-KEY vs X-API-Key). HTTP header names are case-insensitive, so this is cosmetic.",
+    "Local API rate limits are not documented.",
+    "Filtering and pagination rules (https://developer.ui.com/network/v11.0.97/filtering) are not yet transcribed into adapter tests (Phase 2).",
+    "The vendor gives no TLS trust guidance for the local console certificate; per-console CA or pin is required by spec §4.4."
+  ]
+}

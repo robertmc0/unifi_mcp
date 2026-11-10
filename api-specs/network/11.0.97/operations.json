@@ -1,0 +1,738 @@
+{
+  "application": "network",
+  "revision": "11.0.97",
+  "derivedFrom": "vendor/openapi.json + vendor/llms.txt (scripts/reconcile-api-coverage.ts --write)",
+  "operationCount": 73,
+  "operations": [
+    {
+      "key": "GET /v1/countries",
+      "method": "GET",
+      "path": "/v1/countries",
+      "vendorOperationId": "getCountries",
+      "category": "Supporting Resources",
+      "summary": "List Countries",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getcountries",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/dpi/applications",
+      "method": "GET",
+      "path": "/v1/dpi/applications",
+      "vendorOperationId": "getDpiApplications",
+      "category": "Supporting Resources",
+      "summary": "List DPI Applications",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getdpiapplications",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/dpi/categories",
+      "method": "GET",
+      "path": "/v1/dpi/categories",
+      "vendorOperationId": "getDpiApplicationCategories",
+      "category": "Supporting Resources",
+      "summary": "List DPI Application Categories",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getdpiapplicationcategories",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/info",
+      "method": "GET",
+      "path": "/v1/info",
+      "vendorOperationId": "getInfo",
+      "category": "Application Info",
+      "summary": "Get Application Info",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getinfo",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/pending-devices",
+      "method": "GET",
+      "path": "/v1/pending-devices",
+      "vendorOperationId": "getPendingDevicePage",
+      "category": "UniFi Devices",
+      "summary": "List Devices Pending Adoption",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getpendingdevicepage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites",
+      "method": "GET",
+      "path": "/v1/sites",
+      "vendorOperationId": "getSiteOverviewPage",
+      "category": "Sites",
+      "summary": "List Local Sites",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getsiteoverviewpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/acl-rules",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/acl-rules",
+      "vendorOperationId": "getAclRulePage",
+      "category": "Access Control (ACL Rules)",
+      "summary": "List ACL Rules",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getaclrulepage",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/acl-rules",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/acl-rules",
+      "vendorOperationId": "createAclRule",
+      "category": "Access Control (ACL Rules)",
+      "summary": "Create ACL Rule",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/createaclrule",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/acl-rules/ordering",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/acl-rules/ordering",
+      "vendorOperationId": "getAclRuleOrdering",
+      "category": "Access Control (ACL Rules)",
+      "summary": "Get User-Defined ACL Rule Ordering",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getaclruleordering",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/acl-rules/ordering",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/acl-rules/ordering",
+      "vendorOperationId": "updateAclRuleOrdering",
+      "category": "Access Control (ACL Rules)",
+      "summary": "Reorder User-Defined ACL Rules",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updateaclruleordering",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/acl-rules/{aclRuleId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/acl-rules/{aclRuleId}",
+      "vendorOperationId": "getAclRule",
+      "category": "Access Control (ACL Rules)",
+      "summary": "Get ACL Rule",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getaclrule",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/acl-rules/{aclRuleId}",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/acl-rules/{aclRuleId}",
+      "vendorOperationId": "updateAclRule",
+      "category": "Access Control (ACL Rules)",
+      "summary": "Update ACL Rule",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updateaclrule",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/acl-rules/{aclRuleId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/acl-rules/{aclRuleId}",
+      "vendorOperationId": "deleteAclRule",
+      "category": "Access Control (ACL Rules)",
+      "summary": "Delete ACL Rule",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deleteaclrule",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/clients",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/clients",
+      "vendorOperationId": "getConnectedClientOverviewPage",
+      "category": "Clients",
+      "summary": "List Connected Clients",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getconnectedclientoverviewpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/clients/{clientId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/clients/{clientId}",
+      "vendorOperationId": "getConnectedClientDetails",
+      "category": "Clients",
+      "summary": "Get Connected Client Details",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getconnectedclientdetails",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/clients/{clientId}/actions",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/clients/{clientId}/actions",
+      "vendorOperationId": "executeConnectedClientAction",
+      "category": "Clients",
+      "summary": "Execute Client Action",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/executeconnectedclientaction",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/device-tags",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/device-tags",
+      "vendorOperationId": "getDeviceTagPage",
+      "category": "Supporting Resources",
+      "summary": "List Device Tags",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getdevicetagpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/devices",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/devices",
+      "vendorOperationId": "getAdoptedDeviceOverviewPage",
+      "category": "UniFi Devices",
+      "summary": "List Adopted Devices",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getadopteddeviceoverviewpage",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/devices",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/devices",
+      "vendorOperationId": "adoptDevice",
+      "category": "UniFi Devices",
+      "summary": "Adopt Devices",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/adoptdevice",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/devices/{deviceId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/devices/{deviceId}",
+      "vendorOperationId": "getAdoptedDeviceDetails",
+      "category": "UniFi Devices",
+      "summary": "Get Adopted Device Details",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getadopteddevicedetails",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/devices/{deviceId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/devices/{deviceId}",
+      "vendorOperationId": "removeDevice",
+      "category": "UniFi Devices",
+      "summary": "Remove (Unadopt) Device",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/removedevice",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/devices/{deviceId}/actions",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/devices/{deviceId}/actions",
+      "vendorOperationId": "executeAdoptedDeviceAction",
+      "category": "UniFi Devices",
+      "summary": "Execute Adopted Device Action",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/executeadopteddeviceaction",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/devices/{deviceId}/interfaces/ports/{portIdx}/actions",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/devices/{deviceId}/interfaces/ports/{portIdx}/actions",
+      "vendorOperationId": "executePortAction",
+      "category": "UniFi Devices",
+      "summary": "Execute Port Action",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/executeportaction",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/devices/{deviceId}/statistics/latest",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/devices/{deviceId}/statistics/latest",
+      "vendorOperationId": "getAdoptedDeviceLatestStatistics",
+      "category": "UniFi Devices",
+      "summary": "Get Latest Adopted Device Statistics",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getadopteddevicelateststatistics",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/dns/policies",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/dns/policies",
+      "vendorOperationId": "getDnsPolicyPage",
+      "category": "DNS Policies",
+      "summary": "List DNS Policies",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getdnspolicypage",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/dns/policies",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/dns/policies",
+      "vendorOperationId": "createDnsPolicy",
+      "category": "DNS Policies",
+      "summary": "Create DNS Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/creatednspolicy",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/dns/policies/{dnsPolicyId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/dns/policies/{dnsPolicyId}",
+      "vendorOperationId": "getDnsPolicy",
+      "category": "DNS Policies",
+      "summary": "Get DNS Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getdnspolicy",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/dns/policies/{dnsPolicyId}",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/dns/policies/{dnsPolicyId}",
+      "vendorOperationId": "updateDnsPolicy",
+      "category": "DNS Policies",
+      "summary": "Update DNS Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updatednspolicy",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/dns/policies/{dnsPolicyId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/dns/policies/{dnsPolicyId}",
+      "vendorOperationId": "deleteDnsPolicy",
+      "category": "DNS Policies",
+      "summary": "Delete DNS Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deletednspolicy",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/firewall/policies",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/firewall/policies",
+      "vendorOperationId": "getFirewallPolicies",
+      "category": "Firewall",
+      "summary": "List Firewall Policies",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getfirewallpolicies",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/firewall/policies",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/firewall/policies",
+      "vendorOperationId": "createFirewallPolicy",
+      "category": "Firewall",
+      "summary": "Create Firewall Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/createfirewallpolicy",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/firewall/policies/ordering",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/firewall/policies/ordering",
+      "vendorOperationId": "getFirewallPolicyOrdering",
+      "category": "Firewall",
+      "summary": "Get User-Defined Firewall Policy Ordering",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getfirewallpolicyordering",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/firewall/policies/ordering",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/firewall/policies/ordering",
+      "vendorOperationId": "updateFirewallPolicyOrdering",
+      "category": "Firewall",
+      "summary": "Reorder User-Defined Firewall Policies",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updatefirewallpolicyordering",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/firewall/policies/{firewallPolicyId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/firewall/policies/{firewallPolicyId}",
+      "vendorOperationId": "getFirewallPolicy",
+      "category": "Firewall",
+      "summary": "Get Firewall Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getfirewallpolicy",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/firewall/policies/{firewallPolicyId}",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/firewall/policies/{firewallPolicyId}",
+      "vendorOperationId": "updateFirewallPolicy",
+      "category": "Firewall",
+      "summary": "Update Firewall Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updatefirewallpolicy",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/sites/{siteId}/firewall/policies/{firewallPolicyId}",
+      "method": "PATCH",
+      "path": "/v1/sites/{siteId}/firewall/policies/{firewallPolicyId}",
+      "vendorOperationId": "patchFirewallPolicy",
+      "category": "Firewall",
+      "summary": "Patch Firewall Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/patchfirewallpolicy",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/firewall/policies/{firewallPolicyId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/firewall/policies/{firewallPolicyId}",
+      "vendorOperationId": "deleteFirewallPolicy",
+      "category": "Firewall",
+      "summary": "Delete Firewall Policy",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deletefirewallpolicy",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/firewall/zones",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/firewall/zones",
+      "vendorOperationId": "getFirewallZones",
+      "category": "Firewall",
+      "summary": "List Firewall Zones",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getfirewallzones",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/firewall/zones",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/firewall/zones",
+      "vendorOperationId": "createFirewallZone",
+      "category": "Firewall",
+      "summary": "Create Custom Firewall Zone",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/createfirewallzone",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/firewall/zones/{firewallZoneId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/firewall/zones/{firewallZoneId}",
+      "vendorOperationId": "getFirewallZone",
+      "category": "Firewall",
+      "summary": "Get Firewall Zone",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getfirewallzone",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/firewall/zones/{firewallZoneId}",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/firewall/zones/{firewallZoneId}",
+      "vendorOperationId": "updateFirewallZone",
+      "category": "Firewall",
+      "summary": "Update Firewall Zone",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updatefirewallzone",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/firewall/zones/{firewallZoneId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/firewall/zones/{firewallZoneId}",
+      "vendorOperationId": "deleteFirewallZone",
+      "category": "Firewall",
+      "summary": "Delete Custom Firewall Zone",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deletefirewallzone",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/hotspot/vouchers",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/hotspot/vouchers",
+      "vendorOperationId": "getVouchers",
+      "category": "Hotspot",
+      "summary": "List Vouchers",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getvouchers",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/hotspot/vouchers",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/hotspot/vouchers",
+      "vendorOperationId": "createVouchers",
+      "category": "Hotspot",
+      "summary": "Generate Vouchers",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/createvouchers",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/hotspot/vouchers",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/hotspot/vouchers",
+      "vendorOperationId": "deleteVouchers",
+      "category": "Hotspot",
+      "summary": "Delete Vouchers",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deletevouchers",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/hotspot/vouchers/{voucherId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/hotspot/vouchers/{voucherId}",
+      "vendorOperationId": "getVoucher",
+      "category": "Hotspot",
+      "summary": "Get Voucher Details",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getvoucher",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/hotspot/vouchers/{voucherId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/hotspot/vouchers/{voucherId}",
+      "vendorOperationId": "deleteVoucher",
+      "category": "Hotspot",
+      "summary": "Delete Voucher",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deletevoucher",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/networks",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/networks",
+      "vendorOperationId": "getNetworksOverviewPage",
+      "category": "Networks",
+      "summary": "List Networks",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getnetworksoverviewpage",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/networks",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/networks",
+      "vendorOperationId": "createNetwork",
+      "category": "Networks",
+      "summary": "Create Network",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/createnetwork",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/networks/{networkId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/networks/{networkId}",
+      "vendorOperationId": "getNetworkDetails",
+      "category": "Networks",
+      "summary": "Get Network Details",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getnetworkdetails",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/networks/{networkId}",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/networks/{networkId}",
+      "vendorOperationId": "updateNetwork",
+      "category": "Networks",
+      "summary": "Update Network",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updatenetwork",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/networks/{networkId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/networks/{networkId}",
+      "vendorOperationId": "deleteNetwork",
+      "category": "Networks",
+      "summary": "Delete Network",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deletenetwork",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/networks/{networkId}/references",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/networks/{networkId}/references",
+      "vendorOperationId": "getNetworkReferences",
+      "category": "Networks",
+      "summary": "Get Network References",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getnetworkreferences",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/radius/profiles",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/radius/profiles",
+      "vendorOperationId": "getRadiusProfileOverviewPage",
+      "category": "Supporting Resources",
+      "summary": "List Radius Profiles",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getradiusprofileoverviewpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/switching/lags",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/switching/lags",
+      "vendorOperationId": "getLagPage",
+      "category": "Switching",
+      "summary": "List LAGs",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getlagpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/switching/lags/{lagId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/switching/lags/{lagId}",
+      "vendorOperationId": "getLag",
+      "category": "Switching",
+      "summary": "Get LAG Details",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getlag",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/switching/mc-lag-domains",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/switching/mc-lag-domains",
+      "vendorOperationId": "getMcLagDomainPage",
+      "category": "Switching",
+      "summary": "List MC-LAG Domains",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getmclagdomainpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/switching/mc-lag-domains/{mcLagDomainId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/switching/mc-lag-domains/{mcLagDomainId}",
+      "vendorOperationId": "getMcLagDomain",
+      "category": "Switching",
+      "summary": "Get MC-LAG Domain",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getmclagdomain",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/switching/switch-stacks",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/switching/switch-stacks",
+      "vendorOperationId": "getSwitchStackPage",
+      "category": "Switching",
+      "summary": "List Switch Stacks",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getswitchstackpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/switching/switch-stacks/{switchStackId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/switching/switch-stacks/{switchStackId}",
+      "vendorOperationId": "getSwitchStack",
+      "category": "Switching",
+      "summary": "Get Switch Stack",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getswitchstack",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/traffic-matching-lists",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/traffic-matching-lists",
+      "vendorOperationId": "getTrafficMatchingLists",
+      "category": "Traffic Matching Lists",
+      "summary": "List Traffic Matching Lists",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/gettrafficmatchinglists",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/traffic-matching-lists",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/traffic-matching-lists",
+      "vendorOperationId": "createTrafficMatchingList",
+      "category": "Traffic Matching Lists",
+      "summary": "Create Traffic Matching List",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/createtrafficmatchinglist",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}",
+      "vendorOperationId": "getTrafficMatchingList",
+      "category": "Traffic Matching Lists",
+      "summary": "Get Traffic Matching List",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/gettrafficmatchinglist",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}",
+      "vendorOperationId": "updateTrafficMatchingList",
+      "category": "Traffic Matching Lists",
+      "summary": "Update Traffic Matching List",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updatetrafficmatchinglist",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}",
+      "vendorOperationId": "deleteTrafficMatchingList",
+      "category": "Traffic Matching Lists",
+      "summary": "Delete Traffic Matching List",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deletetrafficmatchinglist",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/vpn/servers",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/vpn/servers",
+      "vendorOperationId": "getVpnServerPage",
+      "category": "Supporting Resources",
+      "summary": "List VPN Servers",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getvpnserverpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/vpn/site-to-site-tunnels",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/vpn/site-to-site-tunnels",
+      "vendorOperationId": "getSiteToSiteVpnTunnelPage",
+      "category": "Supporting Resources",
+      "summary": "List Site-To-Site VPN Tunnels",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getsitetositevpntunnelpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/wans",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/wans",
+      "vendorOperationId": "getWansOverviewPage",
+      "category": "Supporting Resources",
+      "summary": "List WAN Interfaces",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getwansoverviewpage",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/wifi/broadcasts",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/wifi/broadcasts",
+      "vendorOperationId": "getWifiBroadcastPage",
+      "category": "WiFi Broadcasts",
+      "summary": "List Wifi Broadcasts",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getwifibroadcastpage",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/sites/{siteId}/wifi/broadcasts",
+      "method": "POST",
+      "path": "/v1/sites/{siteId}/wifi/broadcasts",
+      "vendorOperationId": "createWifiBroadcast",
+      "category": "WiFi Broadcasts",
+      "summary": "Create Wifi Broadcast",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/createwifibroadcast",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}",
+      "method": "GET",
+      "path": "/v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}",
+      "vendorOperationId": "getWifiBroadcastDetails",
+      "category": "WiFi Broadcasts",
+      "summary": "Get Wifi Broadcast Details",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/getwifibroadcastdetails",
+      "transport": "http"
+    },
+    {
+      "key": "PUT /v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}",
+      "method": "PUT",
+      "path": "/v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}",
+      "vendorOperationId": "updateWifiBroadcast",
+      "category": "WiFi Broadcasts",
+      "summary": "Update Wifi Broadcast",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/updatewifibroadcast",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}",
+      "method": "DELETE",
+      "path": "/v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}",
+      "vendorOperationId": "deleteWifiBroadcast",
+      "category": "WiFi Broadcasts",
+      "summary": "Delete Wifi Broadcast",
+      "documentationUrl": "https://developer.ui.com/network/v11.0.97/deletewifibroadcast",
+      "transport": "http"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@unifi-local-mcp/unifi-api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hardened HTTPS transport to UniFi consoles: console registry, TLS trust/pinning, egress validation, version probes.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

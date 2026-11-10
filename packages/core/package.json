@@ -1,0 +1,14 @@
+{
+  "name": "@unifi-local-mcp/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Operation registry, input/output validation and the single execution dispatcher used by every transport.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

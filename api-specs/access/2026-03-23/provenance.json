@@ -1,0 +1,47 @@
+{
+  "application": "access",
+  "revision": "2026-03-23",
+  "vendorVersionLabel": null,
+  "contractKind": "pdf-manual",
+  "retrievedAt": "2026-11-10",
+  "localBaseUrlTemplate": "https://{consoleHost}:12445",
+  "forbiddenBaseUrlTemplates": [],
+  "authentication": {
+    "scheme": "bearer-token",
+    "header": "Authorization",
+    "valueFormat": "Bearer <api-token>",
+    "credentialCreation": "In UniFi Access: Settings > General > Advanced > API Token > Create New; set a name, validity period and permission scopes; the token is displayed once (API reference §1.1).",
+    "sources": [
+      "https://assets.identity.ui.com/unifi-access/api_reference.pdf",
+      "https://help.ui.com/hc/en-us/articles/30076656117655-Getting-Started-with-the-Official-UniFi-API"
+    ]
+  },
+  "minimumApplicationVersion": "1.9.1",
+  "artifacts": [
+    {
+      "name": "api_reference.pdf",
+      "url": "https://assets.identity.ui.com/unifi-access/api_reference.pdf",
+      "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e",
+      "bytes": 2150514,
+      "mediaType": "application/pdf",
+      "role": "contract"
+    }
+  ],
+  "notes": [
+    "Revision label is the PDF creation date (2026-03-23; HTTP Last-Modified 2026-03-26). The document states no version number. It documents features up to UniFi Access 3.1.30, with per-operation minimum versions from 1.20.11 to 3.1.30.",
+    "Port 12445 per API reference §1.2 and §2.6 and the Required Ports Reference (help.ui.com article 218506997, updated 2026-11-06). The \"Getting Started with UniFi Access\" FAQ (article 17452334269975) lists 12455 for \"OpenAPI access\". This is treated as a vendor documentation discrepancy: the port stays configurable per console, with default 12445.",
+    "§2.6: \"The server certificate is self-generated and untrusted.\" Consoles therefore need certificate pinning or a custom CA (spec §4.4). §12.1 lets an administrator upload a custom HTTPS certificate.",
+    "Response envelope {code, msg, data}; success only when code == \"SUCCESS\". HTTP status alone is not success (spec §4.4). Error codes are listed in §2.4.",
+    "§1.5: the API is unavailable after upgrading to UniFi Identity Enterprise (CODE_OTHERS_UID_ADOPTED_NOT_SUPPORTED).",
+    "Every operation declares a vendor permission key (view:* / edit:*), which the token's permission scopes enforce on the console. This is a vendor-side least-privilege layer in addition to this project's policy.",
+    "§11.1 notifications use WebSocket: wss://{consoleHost}:12445/api/v1/developer/devices/notifications with the same bearer token.",
+    "§11.7 describes the inbound webhook delivery contract (console to your endpoint). It is not an outbound operation and is excluded from the inventory. This project exposes no inbound webhook receiver.",
+    "Transcription normalisations: \":param\" becomes \"{param}\"; §8.3 method printed as \"PUT\\\" is read as PUT; §9.4 and §9.5 paths printed without a leading slash were given one (documentedPath keeps the original)."
+  ],
+  "unverified": [
+    "No machine-readable OpenAPI is published. The Access UI offers \"Download API documentation\" next to API Token; Phase 4 must check whether the installed version provides a versioned machine-readable contract.",
+    "The PDF has no version. Phase 4 must pin the adapter to the installed Access version and re-verify every operation.",
+    "Pagination and limit parameters for list endpoints are not yet transcribed (Phase 4).",
+    "Token permission-scope names in the UI are expected to match the per-operation permission keys; to be confirmed in Phase 4."
+  ]
+}

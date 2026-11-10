@@ -1,0 +1,11 @@
+{
+  "name": "@unifi-local-mcp/policy",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Effective-permission evaluation, risk tiers, sensitivity tags and redaction rules.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@unifi-local-mcp/storage",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SQLite persistence, migrations, envelope encryption of secret records and backup.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

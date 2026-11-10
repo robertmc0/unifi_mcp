@@ -1,0 +1,16 @@
+{
+  "name": "@unifi-local-mcp/mcp-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "MCP protocol handlers and Streamable HTTP listener (MCP TypeScript SDK v2).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/node": "2.1.2",
+    "@modelcontextprotocol/server": "2.4.0",
+    "zod": "4.6.7"
+  }
+}

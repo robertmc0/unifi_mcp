@@ -1,0 +1,11 @@
+{
+  "name": "@unifi-local-mcp/unifi-access",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Official local UniFi Access developer API adapter (distinct port and bearer-token auth).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@unifi-local-mcp/telemetry",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Structured logging, audit trail, health/readiness and optional Prometheus metrics.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

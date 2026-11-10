@@ -1,0 +1,9 @@
+unifi-local-mcp
+Copyright 2026 The unifi-local-mcp contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+UniFi, UniFi Network, UniFi Protect and UniFi Access are trademarks of Ubiquiti Inc.
+This project is independent and is not affiliated with, endorsed by, or sponsored by
+Ubiquiti Inc. Ubiquiti API documentation is not redistributed in this repository; see
+api-specs/README.md for how vendor artefacts are referenced and verified.
