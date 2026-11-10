@@ -35,6 +35,9 @@ These rules apply to Codex, Claude Code and human contributors alike.
   Site Manager cloud connector from an adapter.
 - Do not commit vendor artefacts. They are cached in `api-specs/**/vendor/` (gitignored).
   Run `npm run api:fetch-specs` and then `npm run api:reconcile`.
+- Adapter request/response schemas are generated from the vendor cache by
+  `scripts/generate-adapter-schemas.ts` (ADR 0018). Never edit a file under
+  `packages/*/src/generated/` by hand; regenerate it and review the diff.
 - Security metadata (risk, sensitivity, permission) is reviewed in code inside each
   adapter package. It must never be derived from vendor documents automatically. The
   provisional classes in `docs/api-coverage/` are planning aids only.

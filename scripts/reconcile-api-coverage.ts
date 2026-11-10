@@ -11,7 +11,8 @@
  *   2. OpenAPI: the vendor operation set equals operations.json (added / removed / changed);
  *   3. OpenAPI: the llms.txt endpoint index lists exactly the same operations as the OpenAPI;
  *   4. OpenAPI: the documented local server URL equals provenance.localBaseUrlTemplate's path;
- *   5. every inventory operation appears in docs/api-coverage/api-coverage.json and vice versa.
+ *   5. every inventory operation appears in docs/api-coverage/api-coverage.json and vice versa;
+ *   6. the generated adapter schemas equal a fresh generation from the vendor cache.
  * PDF-sourced contracts (Access) are hand-transcribed; only checks 1 and 5 apply.
  */
 import { readFile } from 'node:fs/promises';
@@ -27,6 +28,7 @@ import {
   type InventoryOperation,
   type SpecRevision,
 } from './lib/api-specs.ts';
+import { generateAdapterSchemas } from './generate-adapter-schemas.ts';
 import {
   inventoryFromOpenApi,
   openApiServers,
@@ -175,6 +177,16 @@ for (const rev of await listSpecRevisions()) {
   }
   console.log(
     `checked ${application}/${revision}: ${inventory.operations.length} operations (${contractKind})`,
+  );
+}
+
+// 6. Generated adapter schemas are current (ADR 0018).
+for (const result of await generateAdapterSchemas(write)) {
+  if (!result.upToDate && !write) {
+    problems.push(`${result.output} is stale: run node scripts/generate-adapter-schemas.ts`);
+  }
+  console.log(
+    `checked ${result.output}: ${result.upToDate ? 'up to date' : write ? 'rewritten' : 'STALE'}`,
   );
 }
 

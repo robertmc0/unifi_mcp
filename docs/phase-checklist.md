@@ -43,7 +43,11 @@ explicitly, never dropped silently.
   Phase 5 adds the security and supply-chain jobs.
 - Operator manual pages other than `docs/index.md` → written alongside Phase 1 features.
 
-## Phase 1 — Secure platform core (in progress)
+## Phase 1 — Secure platform core ✅ (gate passed 2026-11-10)
+
+All gate items below are met. Carried forward: `docs/client-codex.md` (waiting for the
+owner's trial of Codex 0.161.0), the arm64 hardware run (Phase 5), retention of automatic
+backups, and the Phase 5 items listed under the steps.
 
 ### Implementation order (plan)
 
@@ -255,7 +259,37 @@ explicitly, never dropped silently.
       separate port, MCP tokens refused on admin and admin cookies refused on MCP;
       `tests/unit/mcp-server/clients.test.ts`: same port and remote plaintext refused)
 
-## Phase 2 — UniFi Network
+## Phase 2 — UniFi Network (in progress)
+
+Baseline: Network Integration API v11.0.97 (73 operations: 38 reads, 35 writes),
+`api-specs/network/11.0.97/`.
+
+### Implementation order (plan)
+
+1. ✅ **Schema generator** (2026-11-10): OpenAPI 3.1 → zod code in
+   `packages/unifi-network/src/generated/`, strict for requests, tolerant of added fields
+   for responses, no vendor prose copied (ADR 0006 item 6). `api:reconcile` fails when the
+   generated file is stale. → `scripts/generate-adapter-schemas.ts`,
+   `scripts/lib/openapi-zod.ts`, [ADR 0018](adr/0018-network-adapter.md). Tests:
+   `tests/unit/scripts/openapi-zod.test.ts`, `tests/contract/network-generated-schemas.test.ts`.
+   Reviewed deviation: the device-tag `filter` (an object schema for a query string) is
+   left out.
+2. **Core contract additions**: JSON bodies travel as one `body` argument (several Network
+   bodies are discriminated unions); a pagination hook for page responses; a clear
+   unsupported-version error.
+3. **Version probe**: `GET /v1/info` per console; at startup, periodically and on demand
+   when the version is unknown; `unifi-mcp console probe`; `doctor` shows observed versions.
+4. **Reads** (38): reviewed security metadata, credential-stripping projections, named
+   tools, filter validation; a synthetic Network console; a mock test for every read with
+   sanitised-output checks.
+5. **Writes** (35): reviewed risk, approval, resource locks and retry classes; mock tests
+   for authorisation, approval, duplicates and uncertain outcomes.
+6. **Coverage**: matrix status and evidence per operation, `unifi-mcp api coverage`, and
+   reconciliation of the registry against the matrix.
+7. **Live read-only test** (opt-in, never in CI) and a manual write runbook.
+8. **Docs**: `applications-network.md`, ADR 0018, client and security updates.
+
+### Gate (spec §16)
 
 - [ ] Every Network v11.0.97 operation in the coverage report with status and test evidence
 - [ ] Version probe; incompatible versions get a clear unsupported error with no guessed fallback

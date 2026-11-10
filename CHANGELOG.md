@@ -6,7 +6,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Added — Phase 1 (in progress): secure platform core
+### Added — Phase 2 (in progress): UniFi Network
+
+- OpenAPI → zod schema generator (`scripts/generate-adapter-schemas.ts`, ADR 0018): strict
+  request schemas, response schemas that strip undocumented fields, discriminated unions
+  with JSON Schema semantics, and no vendor prose. Generated Network 11.0.97 schemas in
+  `packages/unifi-network/src/generated/`; `api:reconcile` fails when they are stale.
+
+### Added — Phase 1: secure platform core
 
 - Storage (`packages/storage`, ADR 0007): `node:sqlite` port with hardened connection
   settings and owner-only files; atomic, checksummed schema migrations; AES-256-GCM
