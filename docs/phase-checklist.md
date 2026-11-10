@@ -129,7 +129,14 @@ explicitly, never dropped silently.
    (Phase 2). Tests: `tests/unit/mcp-server/`, `tests/integration-mock/`.
    Still open, carried into later steps: stdio bridge (step 8); CLI for clients and consoles
    (step 9); Claude Code and Codex client guides verified against their releases (step 12).
-8. **stdio-bridge**: spike and decide the transport-relay design (ADR 0003, Proposed).
+8. ✅ **stdio-bridge** (2026-11-10): spike and decide the transport-relay design (ADR 0003, Proposed).
+   → `packages/stdio-bridge`, [ADR 0014](adr/0014-stdio-bridge-transport-relay.md) (relay
+   accepted), [client-generic-mcp.md](client-generic-mcp.md#connecting-over-stdio). Also done:
+   storage-free logger export; strict configuration (loopback-only plaintext, token file
+   preferred, env token removed); no redirects; JSON-RPC errors instead of hangs; exit
+   codes; console redirection. Tests: `tests/unit/stdio-bridge/`,
+   `tests/integration-mock/stdio-bridge.test.ts`, `tests/security/stdio-bridge-isolation.test.ts`.
+   Still open, carried into later steps: packaging the bridge for client machines (step 11).
 9. **cli**: `admin bootstrap/reset-*`, `client`, `console`, `policy`, `approvals`,
    `config`, `crypto`, `db`, `doctor`, `api coverage`.
 10. **admin-api / admin-ui**: separate listener (loopback default), sessions, CSRF,
@@ -141,8 +148,8 @@ explicitly, never dropped silently.
 
 ### Gate (spec §16)
 
-- [ ] 2025-era and 2026-era MCP clients connect over Streamable HTTP and stdio
-      (Streamable HTTP verified in `tests/integration-mock/mcp-http.test.ts`; stdio in step 8)
+- [x] 2025-era and 2026-era MCP clients connect over Streamable HTTP and stdio
+      (`tests/integration-mock/mcp-http.test.ts`, `tests/integration-mock/stdio-bridge.test.ts`)
 - [x] Two differently scoped tokens see different tool lists; revocation blocks calls and subscriptions
       (`tests/integration-mock/mcp-http.test.ts`: different tools; next call refused; open
       responses, including listen streams, closed)
@@ -161,7 +168,8 @@ explicitly, never dropped silently.
 - [x] Wrong or missing master key and failed migration fail closed; migrations and backups tested
       (`tests/security/storage-master-key.test.ts`, `tests/unit/storage/`; the service entry
       point exits 1 with `MASTER_KEY_NOT_CONFIGURED` when no key is configured)
-- [ ] stdio bridge has no UniFi key or DB access and writes nothing to stdout except protocol frames
+- [x] stdio bridge has no UniFi key or DB access and writes nothing to stdout except protocol frames
+      (`tests/security/stdio-bridge-isolation.test.ts`, `tests/integration-mock/stdio-bridge.test.ts`)
 - [ ] Admin interface is local-only by default; MCP and admin listeners use separate auth and ports
 
 ## Phase 2 — UniFi Network

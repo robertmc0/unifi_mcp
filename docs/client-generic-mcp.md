@@ -4,7 +4,7 @@
 > with the official MCP TypeScript SDK v2 clients (2025-era and 2026-era protocols). Client
 > tokens are issued with the CLI (`unifi-mcp client create`, Phase 1 step 9, not yet
 > available). Guides for Claude Code and Codex follow once they have been verified against
-> the current releases of those clients. The stdio bridge is Phase 1 step 8.
+> the current releases of those clients.
 
 ## Connection details
 
@@ -21,6 +21,31 @@ should have its own token, so it can be revoked on its own.
 Clients that speak the 2025 protocol revision are served statelessly: when an
 administrator changes their permissions, they see the new tool list after reconnecting.
 2026-revision clients see changes on their next request.
+
+## Connecting over stdio
+
+For clients that start local stdio servers, use the bridge (ADR 0014). It runs on the
+client's machine, holds only the client token, and forwards every message to the service
+over HTTP; it has no UniFi credentials and no access to the service's data.
+
+Configure the client to start:
+
+```text
+command: node
+args:    /path/to/unifi-local-mcp/packages/stdio-bridge/src/main.ts
+env:     UNIFI_MCP_URL=http://127.0.0.1:3000/mcp
+         UNIFI_MCP_TOKEN_FILE=/home/you/.config/unifi-mcp/token
+```
+
+| Variable                     | Meaning                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_URL`              | The service's MCP URL. `http://` is accepted only for loopback addresses; use `https://` otherwise (with `NODE_EXTRA_CA_CERTS` for a private CA). |
+| `UNIFI_MCP_TOKEN_FILE`       | File containing the client token (mode 0600). Preferred.                                                                                          |
+| `UNIFI_MCP_TOKEN`            | The token itself, if a file is not possible. Removed from the bridge's environment once read.                                                     |
+| `UNIFI_MCP_BRIDGE_LOG_LEVEL` | `debug`, `info`, `warn` (default) or `error`. Logs go to stderr.                                                                                  |
+
+The bridge needs Node.js 26. It exits with code 1 if the service rejects the token and
+with code 2 if its configuration is invalid; in both cases the reason is on stderr.
 
 ## Tools
 

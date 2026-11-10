@@ -47,6 +47,10 @@ All notable changes to this project are documented here. The format follows
   `unifi_list_consoles`, `unifi_list_modules`, `unifi_list_operations`,
   `unifi_describe_operation`, `unifi_execute`, named tools, `unifi_get_operation_status`
   and `unifi_resume_approved`; health endpoints; service startup, shutdown and `main.ts`.
+- stdio bridge (`packages/stdio-bridge`, ADR 0014): a local stdio MCP server that relays
+  messages unchanged to the service over authenticated Streamable HTTP for 2025-era and
+  2026-era clients; holds one client token and nothing else; stdout carries protocol
+  frames only; refuses remote plaintext and redirects; clear exit codes.
 - Operator manual: `docs/configuration.md` (hard lock, MCP listener, audit retention,
   egress allowlist, data directory, logging, master key), `docs/networking.md`,
   `docs/client-generic-mcp.md`, `docs/security.md` (permission model, write safety, console

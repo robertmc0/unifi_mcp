@@ -1,6 +1,7 @@
 # 0003. MCP TypeScript SDK v2 and protocol-era support
 
-- Status: Accepted. The stdio bridge design (below) is Proposed and will be settled by a Phase 1 spike.
+- Status: Accepted. The stdio bridge design (below) was settled by the Phase 1 spike: see
+  [ADR 0014](0014-stdio-bridge-transport-relay.md).
 - Date: 2026-11-10
 - Phase: 0
 - Spec references: §1.3, §3.1, §3.2, §5.3, §7.1, §7.3, §16 Phase 1 gate
@@ -106,7 +107,7 @@ on authentication failure.
   `Cache-Control: no-cache`, and the gate adds `Cache-Control: no-store` to every
   authenticated response (`tests/integration-mock/mcp-http.test.ts`).
 - Revocation closes open responses, which includes `subscriptions/listen` streams.
-- The stdio bridge design remains Proposed until the step 8 spike.
+- The stdio bridge: transport relay confirmed and accepted in ADR 0014.
 
 ## Re-evaluation triggers
 
