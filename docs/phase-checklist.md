@@ -261,7 +261,7 @@ backups, and the Phase 5 items listed under the steps.
 
 ## Phase 2 — UniFi Network (in progress)
 
-Baseline: Network Integration API v11.0.97 (73 operations: 38 reads, 35 writes),
+Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
 `api-specs/network/11.0.97/`.
 
 ### Implementation order (plan)
@@ -282,10 +282,16 @@ Baseline: Network Integration API v11.0.97 (73 operations: 38 reads, 35 writes),
    `network.info.get`; a service monitor (start, every 30 s for unknown versions, 6-hour
    refresh, backoff, `console_versions` health check); `unifi-mcp console probe`; supported
    range `>=11.0.97 <12` (ADR 0018 §3). First Network operation registered at startup.
-4. **Reads** (38): reviewed security metadata, credential-stripping projections, named
-   tools, filter validation; a synthetic Network console; a mock test for every read with
-   sanitised-output checks.
-5. **Writes** (35): reviewed risk, approval, resource locks and retry classes; mock tests
+4. ✅ **Reads** (41, 2026-11-10): reviewed security metadata (`network.<category>.read`,
+   low risk; client reads tagged `personal_identifier` and `network_identity`), credential
+   removal at any depth (Wi-Fi `passphrase`, voucher `code`), page results split into
+   `data` and `pagination`, named tools `network_list_sites|devices|clients|networks` and
+   `network_get_device`. Every read tested end to end against the synthetic console for
+   every response variant, with credential and undocumented-field sentinels
+   (`tests/integration-mock/network-reads.test.ts`); the review table is pinned in
+   `tests/contract/network-security-review.test.ts`;
+   [applications-network.md](applications-network.md) (ADR 0018 §4).
+5. **Writes** (32): reviewed risk, approval, resource locks and retry classes; mock tests
    for authorisation, approval, duplicates and uncertain outcomes.
 6. **Coverage**: matrix status and evidence per operation, `unifi-mcp api coverage`, and
    reconciliation of the registry against the matrix.

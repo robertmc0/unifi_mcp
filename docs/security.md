@@ -78,7 +78,10 @@ Operations that return personal or security-relevant data carry sensitivity tags
 global or console policy can deny a tag for everyone.
 
 Credentials (API keys, passwords, Wi-Fi passphrases, voucher codes and the like) are never
-returned to any client. There is no grant for them.
+returned to any client. There is no grant for them. Adapters remove them from every result
+at any depth, after every projection, and response schemas drop every field the vendor
+contract does not document. For Network, the client reads need `personal_identifier` and
+`network_identity` ([applications-network.md](applications-network.md#client-data-needs-sensitive-grants)).
 
 ## Risk and approval
 

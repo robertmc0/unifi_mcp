@@ -1,0 +1,151 @@
+/**
+ * The reviewed security metadata of every Network operation (spec §4.3, §6.3, §6.4;
+ * ADR 0018 §4). The table below is the review record: a change to permissions, risk,
+ * approval, sensitivity, default state or named tools must change this table too, so it
+ * cannot happen silently, for instance through a regenerated schema.
+ *
+ * Columns: operationId, effect, risk, approval required, sensitivity tags, default
+ * disabled, named tool. The permission is always `network.<category>.<effect>`.
+ */
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { NETWORK_OPERATIONS } from '@unifi-local-mcp/unifi-network';
+import { describe, expect, it } from 'vitest';
+
+type Row = [
+  operationId: string,
+  effect: 'read' | 'write',
+  risk: 'low' | 'medium' | 'high',
+  approval: boolean,
+  sensitivity: string[],
+  defaultDisabled: boolean,
+  namedTool: string | null,
+];
+
+const PEOPLE = ['personal_identifier', 'network_identity'];
+
+/** Reviewed 2026-11-10 against contract 11.0.97, by vendor operationId. */
+// prettier-ignore
+const REVIEW: Record<string, Row> = {
+  // Reads: low risk, no approval. Client data needs sensitive grants.
+  getInfo: ['network.info.get', 'read', 'low', false, [], false, null],
+  getSiteOverviewPage: ['network.sites.list', 'read', 'low', false, [], false, 'network_list_sites'],
+  getAdoptedDeviceOverviewPage: ['network.devices.list', 'read', 'low', false, [], false, 'network_list_devices'],
+  getAdoptedDeviceDetails: ['network.devices.get', 'read', 'low', false, [], false, 'network_get_device'],
+  getAdoptedDeviceLatestStatistics: ['network.devices.get_statistics', 'read', 'low', false, [], false, null],
+  getPendingDevicePage: ['network.devices.list_pending', 'read', 'low', false, [], false, null],
+  getDeviceTagPage: ['network.devices.list_tags', 'read', 'low', false, [], false, null],
+  getConnectedClientOverviewPage: ['network.clients.list', 'read', 'low', false, PEOPLE, false, 'network_list_clients'],
+  getConnectedClientDetails: ['network.clients.get', 'read', 'low', false, PEOPLE, false, null],
+  getNetworksOverviewPage: ['network.networks.list', 'read', 'low', false, [], false, 'network_list_networks'],
+  getNetworkDetails: ['network.networks.get', 'read', 'low', false, [], false, null],
+  getNetworkReferences: ['network.networks.get_references', 'read', 'low', false, [], false, null],
+  getWifiBroadcastPage: ['network.wifi.list', 'read', 'low', false, [], false, null],
+  getWifiBroadcastDetails: ['network.wifi.get', 'read', 'low', false, [], false, null],
+  getFirewallPolicies: ['network.firewall.list_policies', 'read', 'low', false, [], false, null],
+  getFirewallPolicy: ['network.firewall.get_policy', 'read', 'low', false, [], false, null],
+  getFirewallPolicyOrdering: ['network.firewall.get_policy_ordering', 'read', 'low', false, [], false, null],
+  getFirewallZones: ['network.firewall.list_zones', 'read', 'low', false, [], false, null],
+  getFirewallZone: ['network.firewall.get_zone', 'read', 'low', false, [], false, null],
+  getAclRulePage: ['network.acl.list', 'read', 'low', false, [], false, null],
+  getAclRule: ['network.acl.get', 'read', 'low', false, [], false, null],
+  getAclRuleOrdering: ['network.acl.get_ordering', 'read', 'low', false, [], false, null],
+  getDnsPolicyPage: ['network.dns.list', 'read', 'low', false, [], false, null],
+  getDnsPolicy: ['network.dns.get', 'read', 'low', false, [], false, null],
+  getVouchers: ['network.hotspot.list_vouchers', 'read', 'low', false, [], false, null],
+  getVoucher: ['network.hotspot.get_voucher', 'read', 'low', false, [], false, null],
+  getLagPage: ['network.switching.list_lags', 'read', 'low', false, [], false, null],
+  getLag: ['network.switching.get_lag', 'read', 'low', false, [], false, null],
+  getMcLagDomainPage: ['network.switching.list_mc_lag_domains', 'read', 'low', false, [], false, null],
+  getMcLagDomain: ['network.switching.get_mc_lag_domain', 'read', 'low', false, [], false, null],
+  getSwitchStackPage: ['network.switching.list_switch_stacks', 'read', 'low', false, [], false, null],
+  getSwitchStack: ['network.switching.get_switch_stack', 'read', 'low', false, [], false, null],
+  getTrafficMatchingLists: ['network.traffic_lists.list', 'read', 'low', false, [], false, null],
+  getTrafficMatchingList: ['network.traffic_lists.get', 'read', 'low', false, [], false, null],
+  getVpnServerPage: ['network.vpn.list_servers', 'read', 'low', false, [], false, null],
+  getSiteToSiteVpnTunnelPage: ['network.vpn.list_site_to_site_tunnels', 'read', 'low', false, [], false, null],
+  getWansOverviewPage: ['network.wans.list', 'read', 'low', false, [], false, null],
+  getRadiusProfileOverviewPage: ['network.radius.list_profiles', 'read', 'low', false, [], false, null],
+  getCountries: ['network.reference.list_countries', 'read', 'low', false, [], false, null],
+  getDpiApplications: ['network.reference.list_dpi_applications', 'read', 'low', false, [], false, null],
+  getDpiApplicationCategories: ['network.reference.list_dpi_categories', 'read', 'low', false, [], false, null],
+};
+
+interface InventoryOperation {
+  method: string;
+  path: string;
+  vendorOperationId: string;
+  documentationUrl: string;
+}
+
+const inventory = JSON.parse(
+  await readFile(
+    join(import.meta.dirname, '../../api-specs/network/11.0.97/operations.json'),
+    'utf8',
+  ),
+) as { operations: InventoryOperation[] };
+const byKey = new Map(inventory.operations.map((op) => [`${op.method} ${op.path}`, op]));
+
+describe('Network security review', () => {
+  it('records every implemented operation, and only those', () => {
+    const implemented = NETWORK_OPERATIONS.map((descriptor) => {
+      const op = byKey.get(`${descriptor.httpMethod} ${descriptor.pathTemplate}`);
+      expect(op, descriptor.operationId).toBeDefined();
+      return op?.vendorOperationId ?? '';
+    });
+    expect(implemented.sort()).toEqual(Object.keys(REVIEW).sort());
+  });
+
+  it('matches the reviewed metadata exactly', () => {
+    for (const descriptor of NETWORK_OPERATIONS) {
+      const op = byKey.get(`${descriptor.httpMethod} ${descriptor.pathTemplate}`);
+      const row = REVIEW[op?.vendorOperationId ?? ''];
+      expect(row, descriptor.operationId).toBeDefined();
+      if (row === undefined || op === undefined) continue;
+      const [operationId, effect, risk, approval, sensitivity, defaultDisabled, namedTool] = row;
+      expect(
+        {
+          operationId: descriptor.operationId,
+          effect: descriptor.effect,
+          risk: descriptor.risk,
+          approval: descriptor.approvalRequired,
+          sensitivity: [...descriptor.sensitivityTags].sort(),
+          defaultDisabled: descriptor.defaultDisabled ?? false,
+          namedTool: descriptor.namedTool ?? null,
+          permission: descriptor.permission,
+          documentationUrl: descriptor.documentationUrl,
+        },
+        op.vendorOperationId,
+      ).toEqual({
+        operationId,
+        effect,
+        risk,
+        approval,
+        sensitivity: [...sensitivity].sort(),
+        defaultDisabled,
+        namedTool,
+        permission: `network.${descriptor.category}.${effect}`,
+        documentationUrl: op.documentationUrl,
+      });
+    }
+  });
+
+  it('documents every implemented operation in docs/applications-network.md', async () => {
+    const manual = await readFile(
+      join(import.meta.dirname, '../../docs/applications-network.md'),
+      'utf8',
+    );
+    for (const descriptor of NETWORK_OPERATIONS) {
+      expect(manual, descriptor.operationId).toContain(`\`${descriptor.operationId}\``);
+      if (descriptor.namedTool !== undefined) {
+        expect(manual, descriptor.namedTool).toContain(`\`${descriptor.namedTool}\``);
+      }
+    }
+  });
+
+  it('never tags an operation with the non-grantable credential tag', () => {
+    for (const descriptor of NETWORK_OPERATIONS) {
+      expect(descriptor.sensitivityTags, descriptor.operationId).not.toContain('credential');
+    }
+  });
+});

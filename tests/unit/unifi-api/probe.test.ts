@@ -10,11 +10,7 @@ import {
   VersionProber,
   type VersionProbeSpec,
 } from '@unifi-local-mcp/unifi-api';
-import {
-  NETWORK_OPERATIONS,
-  NETWORK_VERSION_PROBE,
-  networkOperation,
-} from '@unifi-local-mcp/unifi-network';
+import { NETWORK_OPERATIONS, NETWORK_VERSION_PROBE } from '@unifi-local-mcp/unifi-network';
 import { describe, expect, it } from 'vitest';
 import { sendJson } from '../../fixtures/mock-console.ts';
 import { useTempDirs } from '../storage/fixtures.ts';
@@ -156,27 +152,8 @@ describe('VersionProber', () => {
     expect(make({ operationId: 'network.unknown.get' })).toThrow(/version probe/);
     expect(make({ moduleId: 'protect' })).toThrow(/version probe/);
     // Registered reads that are site-scoped, or take arguments, cannot be probes.
-    const siteScoped = networkOperation('getAclRuleOrdering', {
-      operationId: 'network.acl.get_ordering',
-      category: 'acl',
-      effect: 'read',
-      description: 'Test only.',
-    });
-    const withArguments = networkOperation('getSiteOverviewPage', {
-      operationId: 'network.sites.list',
-      category: 'sites',
-      effect: 'read',
-      description: 'Test only.',
-    });
-    const probeWith = (descriptor: OperationDescriptor) => () =>
-      new VersionProber({
-        consoles: h.consoles,
-        executor: h.executor,
-        registry: registry([...NETWORK_OPERATIONS, descriptor]),
-        specs: [{ ...NETWORK_VERSION_PROBE, operationId: descriptor.operationId }],
-      });
-    expect(probeWith(siteScoped)).toThrow(/version probe/);
-    expect(probeWith(withArguments)).toThrow(/version probe/);
+    expect(make({ operationId: 'network.acl.get_ordering' })).toThrow(/version probe/);
+    expect(make({ operationId: 'network.sites.list' })).toThrow(/version probe/);
     await h.close();
   });
 });

@@ -8,7 +8,7 @@
 ## Context
 
 Phase 2 implements the official UniFi Network Integration API, revision 11.0.97: 73
-operations (38 reads, 35 writes) in `api-specs/network/11.0.97/`. Every operation needs a
+operations (41 reads, 32 writes) in `api-specs/network/11.0.97/`. Every operation needs a
 strict input schema, an output schema, and hand-reviewed security metadata (spec §4.3).
 The vendor OpenAPI document has 380 component schemas. 77 of them are polymorphic, with
 discriminators over `allOf` inheritance.
@@ -117,6 +117,31 @@ the decision is revisited.
   operations of unprobed consoles, so a client could not call them anyway, and the monitor
   probes within a minute.
 
+### 4. Reads (step 4)
+
+- **Descriptors.** `networkOperation()` joins the generated contract facts of one vendor
+  operation with hand-written review metadata. Each read gets an id
+  `network.<category>.<action>`, a category (sites, devices, clients, networks, wifi,
+  firewall, acl, dns, hotspot, switching, traffic_lists, vpn, wans, radius, reference,
+  info), our own description, low risk, `safe-read` and a 15 s timeout. The review is
+  pinned in `tests/contract/network-security-review.test.ts`, so a metadata change must
+  change that table too.
+- **Sensitive data.** The two client reads return names that usually identify people and
+  MAC and IP addresses of their devices, so they carry `personal_identifier` and
+  `network_identity`. Device, network and configuration reads carry no tag: they describe
+  infrastructure, not people.
+- **Credentials.** Removed from every result after every projection, at any depth:
+  `passphrase` everywhere (Wi-Fi pre-shared keys, including `presharedKeys` entries), and
+  `code` for hotspot operations (voucher codes). `code` is not removed elsewhere, because
+  it also names harmless values such as country codes. The `credential` tag is not used:
+  it would make the whole operation unavailable, while only these fields are secret.
+- **Pages.** The 23 list reads return `data` (the items) and `pagination` (`offset`,
+  `limit`, `count`, `totalCount`, and `nextOffset` while more items remain).
+- **Named tools.** `network_list_sites` (needed first, to learn site ids),
+  `network_list_devices`, `network_get_device`, `network_list_clients` and
+  `network_list_networks` (spec §5.1). Everything else is reached through
+  `unifi_execute`.
+
 ## Evidence
 
 - `tests/unit/scripts/openapi-zod.test.ts` (synthetic documents only, 25 tests):
@@ -150,6 +175,17 @@ the decision is revisited.
   an implausible version; a version change keeping approvals; auditing every probe; no
   backoff; probing without a credential; failures not degrading health; the service never
   probing; site-scoped probes accepted.
+- Step 4: `tests/integration-mock/network-reads.test.ts` runs all 41 reads through the
+  dispatcher, the real contract inventory and the HTTPS executor against the synthetic
+  console, once per response variant (every union option and enum value). Responses fill
+  every documented field and carry credential sentinels and an undocumented field in every
+  object. Checked: exactly one GET to the documented path with the stored key; no
+  sentinel, undocumented field or key in the result; paging facts; country codes kept;
+  client reads refused without the sensitive grants and not sent; a response missing
+  required fields refused; every read's arguments describable as JSON Schema. Mutation
+  checks, each making a test fail: `passphrase` not removed; voucher codes kept; removal
+  not applied; removal only at the top level; client reads untagged; no pagination; a named
+  tool dropped.
 
 ## Consequences
 

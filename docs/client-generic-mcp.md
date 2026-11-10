@@ -65,16 +65,16 @@ until they have read their responses.
 
 ## Tools
 
-| Tool                                            | Purpose                                                                                                                            |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `unifi_list_consoles`                           | Consoles you may use: `consoleId`, alias, enabled modules and their application versions.                                          |
-| `unifi_list_modules`                            | UniFi modules and how many operations you can use in each.                                                                         |
-| `unifi_list_operations`                         | Operations you may use, filtered by `moduleId`, `category` or `effect`, paged with `cursor` and `limit` (≤ 50).                    |
-| `unifi_describe_operation`                      | One operation's argument schema, risk, whether it needs approval, and its consoles.                                                |
-| `unifi_execute`                                 | Run one operation: `operationId`, `consoleId`, `siteId` (site-scoped operations), `arguments`, optional `idempotencyKey` (writes). |
-| Named tools, for example `network_list_devices` | Shortcuts for common operations; same checks as `unifi_execute`.                                                                   |
-| `unifi_get_operation_status`                    | Status of one of your writes (`executionId`) or approval requests (`approvalId`). Shown only if you can write.                     |
-| `unifi_resume_approved`                         | Run a request after a human approved it. Shown only if you can write.                                                              |
+| Tool                                                                                                                             | Purpose                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unifi_list_consoles`                                                                                                            | Consoles you may use: `consoleId`, alias, enabled modules and their application versions.                                                                       |
+| `unifi_list_modules`                                                                                                             | UniFi modules and how many operations you can use in each.                                                                                                      |
+| `unifi_list_operations`                                                                                                          | Operations you may use, filtered by `moduleId`, `category` or `effect`, paged with `cursor` and `limit` (≤ 50).                                                 |
+| `unifi_describe_operation`                                                                                                       | One operation's argument schema, risk, whether it needs approval, and its consoles.                                                                             |
+| `unifi_execute`                                                                                                                  | Run one operation: `operationId`, `consoleId`, `siteId` (site-scoped operations), `arguments`, optional `idempotencyKey` (writes).                              |
+| Named tools: `network_list_sites`, `network_list_devices`, `network_get_device`, `network_list_clients`, `network_list_networks` | Shortcuts for common operations, listed only when the client may use them; same checks as `unifi_execute` ([applications-network.md](applications-network.md)). |
+| `unifi_get_operation_status`                                                                                                     | Status of one of your writes (`executionId`) or approval requests (`approvalId`). Shown only if you can write.                                                  |
+| `unifi_resume_approved`                                                                                                          | Run a request after a human approved it. Shown only if you can write.                                                                                           |
 
 You only see the operations and tools you are allowed to use. There is no default console:
 every call names its `consoleId`. Read-only clients see no write tools.

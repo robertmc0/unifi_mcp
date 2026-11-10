@@ -36,7 +36,7 @@
 | client-codex.md                                                                                          | 1               |
 | [networking.md](networking.md) (MCP listener, egress)                                                    | 1 (started) / 5 |
 | [troubleshooting.md](troubleshooting.md) (startup, connections, refusals, consoles, admin)               | 1 / 5           |
-| applications-network.md                                                                                  | 2               |
+| [applications-network.md](applications-network.md) (versions, reads, sensitive data, limitations)        | 2 (started)     |
 | applications-protect.md, events.md                                                                       | 3               |
 | applications-access.md                                                                                   | 4               |
 | release.md, development.md                                                                               | 5               |

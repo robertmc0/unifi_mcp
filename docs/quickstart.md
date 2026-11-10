@@ -1,9 +1,8 @@
 # Quickstart
 
 > **Status: Phase 2 in progress.** The service, CLI, admin interface and container image
-> work. The Network adapter is being added: so far an MCP client can list your consoles
-> and modules and read the console's Network version (`network.info.get`). The other
-> Network reads and writes follow.
+> work, and all UniFi Network reads are available ([applications-network.md](applications-network.md)).
+> Network writes follow.
 
 The shortest safe path: one Docker host, the MCP endpoint on its loopback, and the hard
 lock on. [installation.md](installation.md) explains each step.

@@ -12,6 +12,13 @@ All notable changes to this project are documented here. The format follows
   request schemas, response schemas that strip undocumented fields, discriminated unions
   with JSON Schema semantics, and no vendor prose. Generated Network 11.0.97 schemas in
   `packages/unifi-network/src/generated/`; `api:reconcile` fails when they are stale.
+- All 41 documented Network reads (ADR 0018 §4): sites, devices, statistics, pending
+  devices, device tags, clients (sensitive grants required), networks, Wi-Fi broadcasts,
+  firewall policies and zones, ACL rules, DNS policies, hotspot vouchers, switching, traffic
+  matching lists, VPN, WANs, RADIUS profiles and reference data. Wi-Fi passphrases and
+  voucher codes are never returned; lists return `data` and `pagination`; named tools
+  `network_list_sites`, `network_list_devices`, `network_get_device`,
+  `network_list_clients`, `network_list_networks`. `docs/applications-network.md`.
 - Console version probes (ADR 0018 §3): the service learns each enabled module's
   application version by itself (`GET /v1/info` for Network), refreshes it every 6 hours,
   backs off on failure and reports it in the `console_versions` health check;

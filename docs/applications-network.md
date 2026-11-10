@@ -1,0 +1,105 @@
+# UniFi Network
+
+> **Status: Phase 2 in progress.** All 41 documented reads of the Network Integration API
+> 11.0.97 are implemented and tested against a synthetic console. Writes follow in the next
+> step. Testing against real consoles is optional and opt-in (see the phase checklist).
+
+The service uses the **official local** UniFi Network Integration API on each console,
+`https://<console>/proxy/network/integration/v1/…`, with the API key you stored for the
+`network` module. It never uses the cloud connector. Every operation was reviewed against
+the published contract, revision 11.0.97 ([ADR 0018](adr/0018-network-adapter.md)).
+
+## Supported versions
+
+| Network application version | Result                                                                        |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| 11.0.97 and later 11.x      | Supported.                                                                    |
+| Earlier, or 12 and later    | Refused as `operation_unsupported`; the message names the version.            |
+| Not yet known               | Refused as `version_unknown`. The service checks the version within a minute. |
+
+The service learns each console's version by itself (`GET /v1/info`) and refreshes it every
+6 hours. `unifi-mcp console probe <alias>` checks at once. The operations of an
+unsupported console are not listed to clients.
+
+## Getting started
+
+1. Store the API key and enable the module, read-only:
+   `unifi-mcp console set-credential <alias> --module network` and
+   `unifi-mcp console enable-module <alias> --module network`.
+2. Give a client the reads it needs, for example everything except client data:
+   `unifi-mcp client create <id> --console <alias> --allow 'network.*.read'`.
+3. The client first calls `network_list_sites` (or `unifi_execute` with
+   `network.sites.list`) to learn the `siteId` that site-scoped operations need.
+
+## Reads
+
+Every read is low risk and needs only the matching grant, for example `network.devices.read`
+(or `network.*.read` for all). Lists take optional `offset` and `limit` (up to 200), and most
+take a `filter` in the console's documented filter syntax (for example
+`name.eq('Office AP')`). Their results carry `pagination` with `offset`, `limit`, `count`,
+`totalCount` and, while more items remain, `nextOffset`.
+
+| Operation                                                                                                              | Named tool                                   | What it returns                                                         |
+| ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------- |
+| `network.info.get`                                                                                                     |                                              | The Network application version.                                        |
+| `network.sites.list`                                                                                                   | `network_list_sites`                         | Sites and their `siteId`.                                               |
+| `network.devices.list`, `network.devices.get`                                                                          | `network_list_devices`, `network_get_device` | Adopted devices: model, state, firmware, addresses, interfaces, uplink. |
+| `network.devices.get_statistics`                                                                                       |                                              | Uptime, CPU, memory, load and interface statistics of a device.         |
+| `network.devices.list_pending`                                                                                         |                                              | Devices waiting to be adopted (console-wide).                           |
+| `network.devices.list_tags`                                                                                            |                                              | Device tags. No `filter` (see Limitations).                             |
+| `network.clients.list`, `network.clients.get`                                                                          | `network_list_clients`                       | Connected clients. **Needs sensitive grants** (below).                  |
+| `network.networks.list`, `network.networks.get`, `network.networks.get_references`                                     | `network_list_networks`                      | Networks and VLANs, their IP configuration, and what refers to them.    |
+| `network.wifi.list`, `network.wifi.get`                                                                                |                                              | Wi-Fi broadcasts (SSIDs). **Passphrases are never returned.**           |
+| `network.firewall.list_policies`, `network.firewall.get_policy`, `network.firewall.get_policy_ordering`                |                                              | Firewall policies and their order between two zones.                    |
+| `network.firewall.list_zones`, `network.firewall.get_zone`                                                             |                                              | Firewall zones and their networks.                                      |
+| `network.acl.list`, `network.acl.get`, `network.acl.get_ordering`                                                      |                                              | ACL rules and their order.                                              |
+| `network.dns.list`, `network.dns.get`                                                                                  |                                              | DNS policies: local records and forwarding.                             |
+| `network.hotspot.list_vouchers`, `network.hotspot.get_voucher`                                                         |                                              | Hotspot vouchers. **Voucher codes are never returned.**                 |
+| `network.switching.list_lags`, `network.switching.get_lag`                                                             |                                              | Link aggregation groups.                                                |
+| `network.switching.list_mc_lag_domains`, `network.switching.get_mc_lag_domain`                                         |                                              | Multi-chassis LAG domains.                                              |
+| `network.switching.list_switch_stacks`, `network.switching.get_switch_stack`                                           |                                              | Switch stacks.                                                          |
+| `network.traffic_lists.list`, `network.traffic_lists.get`                                                              |                                              | Traffic matching lists (ports, IPv4 and IPv6 addresses).                |
+| `network.vpn.list_servers`, `network.vpn.list_site_to_site_tunnels`                                                    |                                              | VPN servers and site-to-site tunnels.                                   |
+| `network.wans.list`                                                                                                    |                                              | WAN interfaces.                                                         |
+| `network.radius.list_profiles`                                                                                         |                                              | RADIUS profiles (names only).                                           |
+| `network.reference.list_countries`, `network.reference.list_dpi_applications`, `network.reference.list_dpi_categories` |                                              | Reference values for other operations (console-wide).                   |
+
+`unifi_list_operations` lists what a client may use, and `unifi_describe_operation` shows
+the arguments of each.
+
+### Client data needs sensitive grants
+
+Client names usually identify people, and MAC and IP addresses identify their devices. The
+two client reads therefore carry the `personal_identifier` and `network_identity` tags. A
+client must be granted both, for example
+`unifi-mcp client create <id> --console <alias> --allow 'network.*.read' --sensitive personal_identifier --sensitive network_identity`.
+Without them the reads are refused (`sensitive_scope_missing`) and not listed.
+
+### What is never returned
+
+- **Credentials.** Wi-Fi passphrases (including every entry of `presharedKeys`) and hotspot
+  voucher codes are removed from every result, at any depth.
+- **Undocumented fields.** Anything the console sends that the contract does not document
+  is dropped, so a newer console cannot leak a new field.
+- The console's own error text. Only the HTTP status and a documented error code are passed
+  on.
+
+## Writes
+
+The 32 documented writes are implemented in the next step of Phase 2. Until then, no
+Network write is registered.
+
+## Limitations
+
+- **Device tag filter.** The contract documents the `filter` of `network.devices.list_tags`
+  as an object rather than a string, so the service does not send it. Filter the result
+  yourself, or page through it.
+- **Required fields.** A console that omits a field the contract marks as required makes
+  that read fail with `upstream_contract_mismatch`, rather than returning partial data.
+  Please report it with the console version.
+- **API key scope.** UniFi documents no way to limit what an API key can do, and whether a
+  Network key also works for Protect on the same console is unverified
+  ([ADR 0005](adr/0005-official-local-unifi-api-contracts.md)). Treat the key as an
+  administrator credential.
+- Rate limits of the local API are not documented. The service limits its own request rate
+  per client, console and module.

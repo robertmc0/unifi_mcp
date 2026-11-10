@@ -12,6 +12,7 @@
 import { defineOperation, type OperationDescriptor, type Target } from '@unifi-local-mcp/core';
 import type { Risk, SensitivityTag } from '@unifi-local-mcp/policy';
 import type * as z from 'zod';
+import { withoutCredentials } from './credentials.ts';
 import { OPERATIONS } from './generated/network-11.0.97.ts';
 
 /** The vendor contract revision every Network operation was reviewed against. */
@@ -45,7 +46,30 @@ interface ReviewCommon<K extends VendorOperationId> {
   maxResponseBytes?: number;
   project?: (output: z.output<Out<K>>) => unknown;
   pagination?: (output: z.output<Out<K>>) => Readonly<Record<string, number>> | undefined;
+  /** Fields of this operation's result that carry credentials, besides `passphrase`. */
+  credentialFields?: readonly string[];
 }
+
+/** The shape of every Network list response. */
+export interface NetworkPage {
+  offset: number;
+  limit: number;
+  count: number;
+  totalCount: number;
+  data: unknown[];
+}
+
+/** For list operations: the items become `data`, the paging facts `pagination`. */
+export const PAGED = {
+  project: (page: NetworkPage): unknown => page.data,
+  pagination: ({ offset, limit, count, totalCount }: NetworkPage): Record<string, number> => ({
+    offset,
+    limit,
+    count,
+    totalCount,
+    ...(offset + count < totalCount ? { nextOffset: offset + count } : {}),
+  }),
+} as const;
 
 export interface ReadReview<K extends VendorOperationId> extends ReviewCommon<K> {
   effect: 'read';
@@ -94,7 +118,12 @@ export function networkOperation<K extends VendorOperationId>(
     retryClass: write?.retryClass ?? 'safe-read',
     timeoutMs: review.timeoutMs ?? (write === undefined ? READ_TIMEOUT_MS : WRITE_TIMEOUT_MS),
     ...(write === undefined ? {} : { resourceLockKey: write.resourceLockKey }),
-    ...(review.project === undefined ? {} : { project: review.project }),
+    // Credentials are removed after every projection (credentials.ts).
+    project: (output: z.output<Out<K>>) =>
+      withoutCredentials(
+        review.project === undefined ? output : review.project(output),
+        review.credentialFields,
+      ),
     ...(review.pagination === undefined ? {} : { pagination: review.pagination }),
     ...(review.namedTool === undefined ? {} : { namedTool: review.namedTool }),
   });
