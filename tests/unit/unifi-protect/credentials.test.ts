@@ -48,9 +48,9 @@ describe('protectOperation', () => {
       effect: 'read',
       description: 'Test.',
     });
-    expect(info.project?.({ applicationVersion: '7.4.96', url: 'rtp://h.invalid:7004' })).toEqual({
-      applicationVersion: '7.4.96',
-    });
+    // Wider than the schema, as a projection may see after a future schema change.
+    const output = { applicationVersion: '7.4.96', url: 'rtp://h.invalid:7004' };
+    expect(info.project?.(output)).toEqual({ applicationVersion: '7.4.96' });
   });
 
   it('makes every operation console-level, and binary reads unprojected bytes', () => {
@@ -66,6 +66,6 @@ describe('protectOperation', () => {
       moduleId: 'protect',
       permission: 'protect.cameras.read',
     });
-    expect(snapshot.project).toBeUndefined();
+    expect(Object.hasOwn(snapshot, 'project')).toBe(false);
   });
 });
