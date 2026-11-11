@@ -144,6 +144,9 @@ never part of `npm run check` or CI.
 - The hard lock is on, and the client can only read.
 - It runs one documented Protect read with the same key, to learn whether a Network key
   also works for Protect (an open question, [ADR 0005](adr/0005-official-local-unifi-api-contracts.md)).
+  The Protect contract declares no authentication, so it repeats the read with a random
+  key as a control. Only if Protect accepts the real key and rejects the random one is
+  the answer `yes`.
 
 ```sh
 unifi-mcp console check <alias>          # shows the certificate pin

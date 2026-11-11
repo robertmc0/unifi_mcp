@@ -416,7 +416,8 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
     report['filter'] = { accepted: filtered !== undefined };
 
     // 6. Key scope (ADR 0005, unverified): does the Network key also authorise Protect?
-    //    One documented Protect read, through the same guard, with the same key.
+    //    One documented Protect read, through the same guard, with the same key, and once
+    //    more with a random key as the control.
     const protectRegistry = new OperationRegistry(inventory);
     const protectInfo = defineOperation({
       operationId: 'protect.info.get',
@@ -446,19 +447,33 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
       { modules: { network: { state: 'read_only' }, protect: { state: 'read_only' } } },
       CLI,
     );
-    const protect = await guard.execute({
-      descriptor: protectInfo,
-      arguments: {},
-      target: { consoleId: view.id },
-      signal: AbortSignal.timeout(15_000),
-      correlationId: 'live-key-scope',
-      attempt: 1,
-    });
-    report['networkKeyAuthorisesProtect'] = protect.ok
-      ? 'yes'
-      : protect.error.code === 'upstream_unauthorized'
+    const askProtect = () =>
+      guard.execute({
+        descriptor: protectInfo,
+        arguments: {},
+        target: { consoleId: view.id },
+        signal: AbortSignal.timeout(15_000),
+        correlationId: 'live-key-scope',
+        attempt: 1,
+      });
+    const protect = await askProtect();
+    // The Protect contract declares no authentication, so a success alone could mean the
+    // endpoint answers anyone. Control: the same request with a random key nobody issued.
+    consoles.setCredential(view.id, 'protect', randomBytes(24).toString('base64url'), CLI);
+    const control = await askProtect();
+    report['protectKeyCheck'] = {
+      withNetworkKey: protect.ok ? 'ok' : protect.error.code,
+      withRandomKey: control.ok ? 'ok' : control.error.code,
+    };
+    report['networkKeyAuthorisesProtect'] = !protect.ok
+      ? protect.error.code === 'upstream_unauthorized'
         ? 'no'
-        : `inconclusive (${protect.error.code})`;
+        : `inconclusive (${protect.error.code})`
+      : control.ok
+        ? 'inconclusive (Protect also answered a random key)'
+        : control.error.code === 'upstream_unauthorized'
+          ? 'yes'
+          : `inconclusive (control: ${control.error.code})`;
 
     close();
 

@@ -32,8 +32,12 @@ docker compose ps        # wait for (healthy)
 
 ## 3. Add your console
 
-Create an API key in UniFi Network under _Integrations → Create New API Key_; it is
-shown once. UniFi documents no way to limit what such a key can do, so treat it as an
+Create an API key **on the console**: sign in to it locally, open UniFi Network and choose
+_Integrations → Create New API Key_. Where Integrations sits in the menu differs between
+versions (the sidebar, or under Settings). The key is shown once. A Site Manager key from
+unifi.ui.com does not work: the console rejects it (`upstream_unauthorized`, HTTP 401).
+
+UniFi documents no way to limit what such a key can do, so treat it as an
 administrator credential: the service keeps it encrypted, never shows it to clients, and
 limits what each client can do with it ([ADR 0005](adr/0005-official-local-unifi-api-contracts.md)).
 Then:

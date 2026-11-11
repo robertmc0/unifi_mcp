@@ -15,7 +15,10 @@ All notable changes to this project are documented here. The format follows
 - Opt-in live read-only test (`npm run test:live`, never in CI) and a manual write runbook
   (ADR 0018 §7).
 - The live test names why a read failed and, for a contract mismatch, which fields
-  (never their values). It creates the report folder.
+  (never their values). It creates the report folder. It checks the references of up to
+  five networks, and checks Protect key scope against a random-key control.
+- Quickstart and troubleshooting: the API key must be created on the console; a Site
+  Manager key from unifi.ui.com is rejected.
 - Manual pages updated for Phase 2: status notes, Claude Code guide (named tools,
   client-data grants), approval workflow (the Network contract has no concurrency
   precondition), troubleshooting.
