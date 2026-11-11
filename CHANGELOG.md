@@ -24,6 +24,9 @@ All notable changes to this project are documented here. The format follows
 - All 38 documented Protect reads, with `camera_image`, `location` and
   `personal_identifier` grants where needed; RTSPS stream URLs are never returned
   (ADR 0019 §5).
+- 41 Protect writes: 25 high risk with human approval (alarm manager, anything that
+  silences alarms or monitoring, sirens, relays, alarm outputs), 16 medium; the permanent
+  microphone disable and talkback are off by default (ADR 0019 §6).
 
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 

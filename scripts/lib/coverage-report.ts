@@ -51,7 +51,7 @@ const EVIDENCE: Record<string, { all: string[]; read: string[]; write: string[] 
       'tests/integration-mock/protect-reads.test.ts',
       'tests/integration-mock/protect-version-probe.test.ts',
     ],
-    write: [],
+    write: ['tests/integration-mock/protect-writes.test.ts'],
   },
 };
 

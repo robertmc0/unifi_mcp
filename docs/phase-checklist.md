@@ -377,8 +377,10 @@ subscriptions, 42 writes), `api-specs/protect/7.4.96/`
    `location` (fobs), `personal_identifier` (users); RTSPS stream URLs reduced to which
    qualities exist. ADR 0019 §5. Tests: `tests/integration-mock/protect-reads.test.ts`,
    `tests/contract/protect-security-review.test.ts`.
-6. **Writes** with risk review (arming, disarming, sirens, relays and alarm outputs high;
-   permanent microphone disable high and off by default; the multipart upload).
+6. ✅ **Writes** (2026-11-11): 41 of 42 (the upload is the reviewed omission); 25 high
+   with approval (alarm manager, anything that silences alarms or monitoring, physical
+   actions), 16 medium; the permanent microphone disable and talkback off by default; PINs
+   redacted. ADR 0019 §6. Tests: `tests/integration-mock/protect-writes.test.ts`.
 7. **Events**: WebSocket subscriptions over the same TLS and egress controls, a connection
    manager, MCP resources with `subscriptions/listen`, per-client filtering; tests for
    expiry, revocation, client and upstream disconnects, reconnect storms and slow

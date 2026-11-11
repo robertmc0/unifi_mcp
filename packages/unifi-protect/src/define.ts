@@ -76,6 +76,11 @@ export function consoleLock(name: string): (args: unknown, target: Target) => st
   return (_args, target) => `console:${target.consoleId}/protect/${name}`;
 }
 
+/** A lock per device: writes to one device run in turn, different devices in parallel. */
+export function deviceLock(kind: string): (args: { id: string }, target: Target) => string {
+  return (args, target) => `console:${target.consoleId}/protect/${kind}/${args.id}`;
+}
+
 const READ_TIMEOUT_MS = 15_000;
 const WRITE_TIMEOUT_MS = 30_000;
 

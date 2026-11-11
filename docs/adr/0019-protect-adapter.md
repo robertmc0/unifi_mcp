@@ -159,6 +159,43 @@ access token: anyone who has one can watch the stream. The operation is implemen
 its projection turns each quality into `true` or `false`, so a client learns which
 streams exist and never their URLs. A person who needs a URL reads it in UniFi Protect.
 
+### 6. Writes (step 6)
+
+41 of the 42 documented writes are implemented (the multipart upload is the §2 omission):
+25 high risk with human approval, 16 medium. The rule used for every one:
+
+- **High** — anything that can arm or disarm the alarm (every alarm-manager write: local
+  and external arm profiles, settings, the alarm webhook; arming and disarming are treated
+  like locking and unlocking, spec §6.3); anything that can silence or disable alarms or
+  monitoring (camera settings, which include motion and smart detection; sensor, siren,
+  link-station, alarm-hub and fob settings; stopping a siren); and anything acting in the
+  physical world (sounding a siren, switching a relay output, triggering an alarm-hub
+  output).
+- **Medium** — visible, reversible effects with no security consequence: floodlight,
+  speaker, chime and bridge settings; viewers and live views; PTZ presets and patrols;
+  short test sounds; a POS transaction overlay; enabling and disabling RTSPS streams
+  (their URLs never reach a client, so enabling one gives a client nothing).
+- **Off by default** — `protect.cameras.disable_microphone_permanently`, which cannot be
+  undone (high, and listed in `enabledOperations` before it can run), and
+  `protect.cameras.start_talkback`: the session endpoint is a credential and is removed
+  from the result, so an MCP client cannot use the session it starts while it blocks a
+  person's talkback (the contract's 409).
+
+Retry classes: PATCH and DELETE are idempotent; POST actions and creations are not and are
+never retried once they may have reached the console. Locks: writes to one device run in
+turn (`console/protect/<kind>/<id>`); every alarm-manager write shares one lock per
+console, because arming state spans profiles.
+
+**PINs.** External arm profiles take an optional `pin_code` in create and update requests.
+It is sent to the console as given. The redactor already treats any field whose name
+contains the word `pin` as secret, so the PIN never appears in logs, audit entries or
+approval summaries, and `pin_code` is removed from results. Tested with a distinctive PIN
+value.
+
+**PTZ** is medium although pointing a camera away reduces coverage: presets and patrols
+are routine, visible and undone by the next preset. Revisit if a deployment relies on PTZ
+cameras for coverage.
+
 ## Consequences
 
 - Consoles with a Protect version older than the supported range will be refused with a

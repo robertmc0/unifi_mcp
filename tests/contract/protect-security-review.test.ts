@@ -67,6 +67,48 @@ const REVIEW: Record<string, Row> = {
   'GET /v1/ulp-users': ['protect.users.list_ulp', 'read', 'low', false, PEOPLE, false, null],
   'GET /v1/ulp-users/{id}': ['protect.users.get_ulp', 'read', 'low', false, PEOPLE, false, null],
   'GET /v1/files/{fileType}': ['protect.files.list', 'read', 'low', false, [], false, null],
+  // Writes: high risk needs human approval. Two are off until a global policy enables them.
+  'PATCH /v1/cameras/{id}': ['protect.cameras.update', 'write', 'high', true, [], false, null],
+  'POST /v1/cameras/{id}/rtsps-stream': ['protect.cameras.create_rtsps_streams', 'write', 'medium', false, [], false, null],
+  'DELETE /v1/cameras/{id}/rtsps-stream': ['protect.cameras.delete_rtsps_streams', 'write', 'medium', false, [], false, null],
+  'POST /v1/cameras/{id}/disable-mic-permanently': ['protect.cameras.disable_microphone_permanently', 'write', 'high', true, [], true, null],
+  'POST /v1/cameras/{id}/talkback-session': ['protect.cameras.start_talkback', 'write', 'medium', false, [], true, null],
+  'POST /v1/cameras/{id}/ptz/goto/{slot}': ['protect.cameras.ptz_goto', 'write', 'medium', false, [], false, null],
+  'POST /v1/cameras/{id}/ptz/patrol/start/{slot}': ['protect.cameras.ptz_start_patrol', 'write', 'medium', false, [], false, null],
+  'POST /v1/cameras/{id}/ptz/patrol/stop': ['protect.cameras.ptz_stop_patrol', 'write', 'medium', false, [], false, null],
+  'POST /v1/pos/cameras/{id}/transactions': ['protect.cameras.add_pos_transaction', 'write', 'medium', false, [], false, null],
+  'PATCH /v1/lights/{id}': ['protect.lights.update', 'write', 'medium', false, [], false, null],
+  'PATCH /v1/sensors/{id}': ['protect.sensors.update', 'write', 'high', true, [], false, null],
+  'PATCH /v1/sirens/{id}': ['protect.sirens.update', 'write', 'high', true, [], false, null],
+  'POST /v1/sirens/{id}/play': ['protect.sirens.play', 'write', 'high', true, [], false, null],
+  'POST /v1/sirens/{id}/stop': ['protect.sirens.stop', 'write', 'high', true, [], false, null],
+  'POST /v1/sirens/{id}/test-sound': ['protect.sirens.test_sound', 'write', 'medium', false, [], false, null],
+  'PATCH /v1/speakers/{id}': ['protect.speakers.update', 'write', 'medium', false, [], false, null],
+  'POST /v1/speakers/{id}/test-sound': ['protect.speakers.test_sound', 'write', 'medium', false, [], false, null],
+  'POST /v1/speakers/{id}/stop-siren': ['protect.speakers.stop_siren', 'write', 'high', true, [], false, null],
+  'PATCH /v1/chimes/{id}': ['protect.chimes.update', 'write', 'medium', false, [], false, null],
+  'PATCH /v1/relays/{id}': ['protect.relays.update', 'write', 'high', true, [], false, null],
+  'POST /v1/relays/{id}/outputs/{outputId}/activate': ['protect.relays.activate_output', 'write', 'high', true, [], false, null],
+  'PATCH /v1/bridges/{id}': ['protect.bridges.update', 'write', 'medium', false, [], false, null],
+  'PATCH /v1/link-stations/{id}': ['protect.link_stations.update', 'write', 'high', true, [], false, null],
+  'PATCH /v1/alarm-hubs/{id}': ['protect.alarm_hubs.update', 'write', 'high', true, [], false, null],
+  'POST /v1/alarm-hubs/{id}/outputs/{outputId}/trigger': ['protect.alarm_hubs.trigger_output', 'write', 'high', true, [], false, null],
+  'PATCH /v1/fobs/{id}': ['protect.fobs.update', 'write', 'high', true, [], false, null],
+  'POST /v1/arm-profiles': ['protect.alarm.create_arm_profile', 'write', 'high', true, [], false, null],
+  'PATCH /v1/arm-profiles/settings': ['protect.alarm.update_settings', 'write', 'high', true, [], false, null],
+  'PATCH /v1/arm-profiles/{id}': ['protect.alarm.update_arm_profile', 'write', 'high', true, [], false, null],
+  'DELETE /v1/arm-profiles/{id}': ['protect.alarm.delete_arm_profile', 'write', 'high', true, [], false, null],
+  'POST /v1/arm-profiles/enable': ['protect.alarm.arm', 'write', 'high', true, [], false, null],
+  'POST /v1/arm-profiles/disable': ['protect.alarm.disarm', 'write', 'high', true, [], false, null],
+  'POST /v1/alarm-manager/webhook/{id}': ['protect.alarm.trigger_webhook', 'write', 'high', true, [], false, null],
+  'POST /v1/external/arm-profiles': ['protect.alarm.create_external_profile', 'write', 'high', true, [], false, null],
+  'PATCH /v1/external/arm-profiles/{id}': ['protect.alarm.update_external_profile', 'write', 'high', true, [], false, null],
+  'DELETE /v1/external/arm-profiles/{id}': ['protect.alarm.delete_external_profile', 'write', 'high', true, [], false, null],
+  'POST /v1/external/arm-profiles/{id}/actions/arm': ['protect.alarm.arm_external_profile', 'write', 'high', true, [], false, null],
+  'POST /v1/external/arm-profiles/{id}/actions/disarm': ['protect.alarm.disarm_external_profile', 'write', 'high', true, [], false, null],
+  'PATCH /v1/viewers/{id}': ['protect.viewers.update', 'write', 'medium', false, [], false, null],
+  'POST /v1/liveviews': ['protect.liveviews.create', 'write', 'medium', false, [], false, null],
+  'PATCH /v1/liveviews/{id}': ['protect.liveviews.update', 'write', 'medium', false, [], false, null],
 };
 
 interface InventoryOperation {
@@ -85,6 +127,14 @@ const inventory = JSON.parse(
 const byKey = new Map(inventory.operations.map((op) => [op.key, op]));
 
 describe('Protect security review', () => {
+  it('covers every documented operation except the subscriptions and the omitted upload', () => {
+    const http = inventory.operations.filter(
+      (op) => !op.path.startsWith('/v1/subscribe/') && op.key !== 'POST /v1/files/{fileType}',
+    );
+    expect(http).toHaveLength(79);
+    expect(Object.keys(REVIEW).sort()).toEqual(http.map((op) => op.key).sort());
+  });
+
   it('records every implemented operation, and only those', () => {
     const implemented = PROTECT_OPERATIONS.map((descriptor) => {
       const key = `${descriptor.httpMethod} ${descriptor.pathTemplate}`;

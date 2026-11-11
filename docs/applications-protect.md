@@ -1,8 +1,9 @@
 # UniFi Protect
 
 > **Status: Phase 3 in progress.** The Protect adapter targets the Protect integration API
-> 7.4.96 (83 documented operations). All 38 documented HTTP reads are available and tested
-> against a synthetic console. Writes and event subscriptions follow in the next steps
+> 7.4.96 (83 documented operations). All 38 documented HTTP reads and 41 of the 42 writes
+> are available and tested against a synthetic console. Event subscriptions follow in the
+> next steps
 > ([phase-checklist.md](phase-checklist.md#phase-3--unifi-protect-in-progress)).
 
 The service uses the **official local** UniFi Protect integration API on each console,
@@ -80,6 +81,62 @@ Three kinds of data need a grant of their own besides the read permission
 
 For example:
 `unifi-mcp client create <id> --console <alias> --allow 'protect.*.read' --sensitive camera_image`.
+
+## Writes
+
+No write can run until every gate allows it ([security.md](security.md#making-writes-possible)):
+the hard lock is off, the runtime mode is `read_write`, the console's `protect` module is
+`read_write`, and the client has a write grant such as `protect.lights.write`. Grants are
+per category, so a client can be allowed to move cameras (`protect.cameras.write`) without
+being allowed to arm or disarm the alarm (`protect.alarm.write`).
+
+- **High risk** writes return `approval_required` and an `approvalId`. Nothing is sent to
+  the console until a human approves on the host or in the admin interface; the same
+  client then calls `unifi_resume_approved` ([approval-workflow.md](approval-workflow.md)).
+  Everything that can arm or disarm the alarm, silence or disable an alarm, a siren or a
+  sensor's alerts, or act in the physical world (sirens, relays, alarm outputs) is high
+  risk.
+- **Medium risk** writes run once the grants allow them: comfort settings, live views, PTZ
+  moves, short test sounds, and enabling or disabling RTSPS streams.
+- Writes that take a body get it as one `body` argument next to `id`, for example
+  `{ "id": "…", "body": { "name": "Porch" } }`. `unifi_describe_operation` shows the schema.
+- Pass an `idempotencyKey` to make a retry safe. A write whose connection broke after
+  sending returns `outcome_unknown` and is never retried automatically.
+- An arm-profile PIN (`pin_code`) in a request is sent to the console, but never logged,
+  audited, shown to approvers or returned.
+
+| Operation                                                                                                                                   | Risk                       | What it does                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `protect.cameras.update`                                                                                                                    | high                       | Camera settings, including motion and smart detection, microphone, LEDs, overlays.                                                |
+| `protect.cameras.create_rtsps_streams`, `protect.cameras.delete_rtsps_streams`                                                              | medium                     | Enable or disable RTSPS streams. Returns which qualities exist, never the URLs.                                                   |
+| `protect.cameras.disable_microphone_permanently`                                                                                            | high, **off by default**   | Disables a camera microphone for good. Cannot be undone.                                                                          |
+| `protect.cameras.start_talkback`                                                                                                            | medium, **off by default** | Starts a talkback session. Returns only the audio format: the session endpoint is never returned, so an MCP client cannot use it. |
+| `protect.cameras.ptz_goto`, `protect.cameras.ptz_start_patrol`, `protect.cameras.ptz_stop_patrol`                                           | medium                     | Move a PTZ camera to a preset, or start and stop a patrol.                                                                        |
+| `protect.cameras.add_pos_transaction`                                                                                                       | medium                     | Attaches a point-of-sale transaction to a camera's recording.                                                                     |
+| `protect.lights.update`                                                                                                                     | medium                     | Floodlight settings.                                                                                                              |
+| `protect.sensors.update`                                                                                                                    | high                       | Sensor settings, including which readings raise alerts.                                                                           |
+| `protect.sirens.update`, `protect.sirens.play`, `protect.sirens.stop`                                                                       | high                       | Siren settings; sound a siren; stop a sounding siren.                                                                             |
+| `protect.sirens.test_sound`, `protect.speakers.test_sound`                                                                                  | medium                     | A short test sound.                                                                                                               |
+| `protect.speakers.update`, `protect.chimes.update`, `protect.bridges.update`                                                                | medium                     | Speaker, chime and bridge settings.                                                                                               |
+| `protect.speakers.stop_siren`                                                                                                               | high                       | Stops a siren sound playing on a speaker.                                                                                         |
+| `protect.relays.update`, `protect.relays.activate_output`                                                                                   | high                       | Relay settings; switch a relay output (doors, gates).                                                                             |
+| `protect.link_stations.update`                                                                                                              | high                       | Link station settings, including its sensors' wireless network.                                                                   |
+| `protect.alarm_hubs.update`, `protect.alarm_hubs.trigger_output`                                                                            | high                       | Alarm hub settings; trigger an output wired to it.                                                                                |
+| `protect.fobs.update`                                                                                                                       | high                       | Fob settings, including whether it may arm and disarm.                                                                            |
+| `protect.alarm.create_arm_profile`, `protect.alarm.update_arm_profile`, `protect.alarm.delete_arm_profile`, `protect.alarm.update_settings` | high                       | Arm profiles and settings of the local alarm manager.                                                                             |
+| `protect.alarm.arm`, `protect.alarm.disarm`                                                                                                 | high                       | Arm or disarm the local alarm manager.                                                                                            |
+| `protect.alarm.trigger_webhook`                                                                                                             | high                       | Triggers an alarm manager webhook, which runs its alarm and actions.                                                              |
+| `protect.alarm.create_external_profile`, `protect.alarm.update_external_profile`, `protect.alarm.delete_external_profile`                   | high                       | External arm profiles, with an optional PIN.                                                                                      |
+| `protect.alarm.arm_external_profile`, `protect.alarm.disarm_external_profile`                                                               | high                       | Arm or disarm an external arm profile.                                                                                            |
+| `protect.viewers.update`, `protect.liveviews.create`, `protect.liveviews.update`                                                            | medium                     | What viewers show; live view layouts.                                                                                             |
+
+Operations that are off by default must be listed in the global policy's
+`enabledOperations` before any client can use them
+([administration.md](administration.md)); the microphone disable still needs approval.
+
+None of these writes has a concurrency precondition in the contract (no version or ETag).
+An approved write applies the approved arguments to whatever the console holds at that
+moment, so review the current state before approving.
 
 ## Credentials are never returned
 

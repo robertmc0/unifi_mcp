@@ -3,7 +3,7 @@
  * risk. Fobs report whether they are in range, which says whether the person carrying
  * one is at the site, so they need the `location` grant (ADR 0019 §5).
  */
-import { protectOperation } from '../define.ts';
+import { deviceLock, protectOperation } from '../define.ts';
 
 export const listLights = protectOperation('GET /v1/lights', {
   operationId: 'protect.lights.list',
@@ -153,3 +153,210 @@ export const listNvrs = protectOperation('GET /v1/nvrs', {
   effect: 'read',
   description: 'The recorder (NVR): arm mode, doorbell settings and features.',
 });
+
+// Writes (ADR 0019 §6). Anything that can silence or disable an alarm, a sensor's alerts
+// or a security device, or acts in the physical world (sirens, relays, alarm outputs),
+// is high risk. Comfort settings and audible tests are medium.
+interface DeviceWrite {
+  operationId: string;
+  category: string;
+  description: string;
+  risk: 'medium' | 'high';
+  retryClass: 'idempotent' | 'non-idempotent';
+}
+
+function write(spec: DeviceWrite) {
+  return {
+    ...spec,
+    effect: 'write' as const,
+    approvalRequired: spec.risk === 'high',
+    resourceLockKey: deviceLock(spec.category),
+  };
+}
+
+export const updateLight = protectOperation(
+  'PATCH /v1/lights/{id}',
+  write({
+    operationId: 'protect.lights.update',
+    category: 'lights',
+    description: 'Change floodlight settings (mode, brightness, motion sensitivity).',
+    risk: 'medium',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const updateSensor = protectOperation(
+  'PATCH /v1/sensors/{id}',
+  write({
+    operationId: 'protect.sensors.update',
+    category: 'sensors',
+    description: 'Change sensor settings, including which readings raise alerts.',
+    risk: 'high',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const updateSiren = protectOperation(
+  'PATCH /v1/sirens/{id}',
+  write({
+    operationId: 'protect.sirens.update',
+    category: 'sirens',
+    description: 'Change siren settings (volume, duration).',
+    risk: 'high',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const playSiren = protectOperation(
+  'POST /v1/sirens/{id}/play',
+  write({
+    operationId: 'protect.sirens.play',
+    category: 'sirens',
+    description: 'Sound a siren.',
+    risk: 'high',
+    retryClass: 'non-idempotent',
+  }),
+);
+
+export const stopSiren = protectOperation(
+  'POST /v1/sirens/{id}/stop',
+  write({
+    operationId: 'protect.sirens.stop',
+    category: 'sirens',
+    description: 'Stop a sounding siren (which may be a real alarm).',
+    risk: 'high',
+    retryClass: 'non-idempotent',
+  }),
+);
+
+export const testSiren = protectOperation(
+  'POST /v1/sirens/{id}/test-sound',
+  write({
+    operationId: 'protect.sirens.test_sound',
+    category: 'sirens',
+    description: 'Play a short test sound on a siren.',
+    risk: 'medium',
+    retryClass: 'non-idempotent',
+  }),
+);
+
+export const updateSpeaker = protectOperation(
+  'PATCH /v1/speakers/{id}',
+  write({
+    operationId: 'protect.speakers.update',
+    category: 'speakers',
+    description: 'Change speaker settings (volume and the like).',
+    risk: 'medium',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const testSpeaker = protectOperation(
+  'POST /v1/speakers/{id}/test-sound',
+  write({
+    operationId: 'protect.speakers.test_sound',
+    category: 'speakers',
+    description: 'Play a short test sound on a speaker.',
+    risk: 'medium',
+    retryClass: 'non-idempotent',
+  }),
+);
+
+export const stopSpeakerSiren = protectOperation(
+  'POST /v1/speakers/{id}/stop-siren',
+  write({
+    operationId: 'protect.speakers.stop_siren',
+    category: 'speakers',
+    description: 'Stop a siren sound playing on a speaker (which may be a real alarm).',
+    risk: 'high',
+    retryClass: 'non-idempotent',
+  }),
+);
+
+export const updateChime = protectOperation(
+  'PATCH /v1/chimes/{id}',
+  write({
+    operationId: 'protect.chimes.update',
+    category: 'chimes',
+    description: 'Change chime settings (volume, ring tones, paired doorbells).',
+    risk: 'medium',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const updateRelay = protectOperation(
+  'PATCH /v1/relays/{id}',
+  write({
+    operationId: 'protect.relays.update',
+    category: 'relays',
+    description: 'Change relay settings. Relays can drive doors, gates and alarms.',
+    risk: 'high',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const activateRelayOutput = protectOperation(
+  'POST /v1/relays/{id}/outputs/{outputId}/activate',
+  write({
+    operationId: 'protect.relays.activate_output',
+    category: 'relays',
+    description: 'Switch a relay output, which may open a door or gate.',
+    risk: 'high',
+    retryClass: 'non-idempotent',
+  }),
+);
+
+export const updateBridge = protectOperation(
+  'PATCH /v1/bridges/{id}',
+  write({
+    operationId: 'protect.bridges.update',
+    category: 'bridges',
+    description: 'Change bridge settings.',
+    risk: 'medium',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const updateLinkStation = protectOperation(
+  'PATCH /v1/link-stations/{id}',
+  write({
+    operationId: 'protect.link_stations.update',
+    category: 'link_stations',
+    description: 'Change link station settings, including the wireless network its sensors use.',
+    risk: 'high',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const updateAlarmHub = protectOperation(
+  'PATCH /v1/alarm-hubs/{id}',
+  write({
+    operationId: 'protect.alarm_hubs.update',
+    category: 'alarm_hubs',
+    description: 'Change alarm hub settings (inputs, outputs, terminals).',
+    risk: 'high',
+    retryClass: 'idempotent',
+  }),
+);
+
+export const triggerAlarmHubOutput = protectOperation(
+  'POST /v1/alarm-hubs/{id}/outputs/{outputId}/trigger',
+  write({
+    operationId: 'protect.alarm_hubs.trigger_output',
+    category: 'alarm_hubs',
+    description: 'Trigger an alarm hub output (a siren, strobe or relay wired to it).',
+    risk: 'high',
+    retryClass: 'non-idempotent',
+  }),
+);
+
+export const updateFob = protectOperation(
+  'PATCH /v1/fobs/{id}',
+  write({
+    operationId: 'protect.fobs.update',
+    category: 'fobs',
+    description: 'Change fob settings, including whether it may arm and disarm the alarm.',
+    risk: 'high',
+    retryClass: 'idempotent',
+  }),
+);
