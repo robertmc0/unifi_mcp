@@ -259,7 +259,13 @@ backups, and the Phase 5 items listed under the steps.
       separate port, MCP tokens refused on admin and admin cookies refused on MCP;
       `tests/unit/mcp-server/clients.test.ts`: same port and remote plaintext refused)
 
-## Phase 2 — UniFi Network (in progress)
+## Phase 2 — UniFi Network ✅ (gate passed 2026-11-11)
+
+All gate items below are met. Carried forward: the optional manual write runbook on a real
+console (owner's choice, never required); the 7 reads with nothing to read on the test
+console, and `network.networks.get_references`, which fails in the console (documented
+limitation), are not live-validated; the Phase 1 carry-forwards (Codex guide, arm64
+hardware, Phase 5 items).
 
 Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
 `api-specs/network/11.0.97/`.
@@ -304,7 +310,7 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
 7. ✅ **Live read-only test and write runbook** (2026-11-10): `npm run test:live`
    (opt-in, never in CI), dry-run against the synthetic console; reviewed reports feed
    `liveReadValidation`; [runbook-network-writes.md](runbook-network-writes.md)
-   (ADR 0018 §7). **Open: a run against a real console (the owner's).**
+   (ADR 0018 §7). Run against a real console on 2026-11-11 (gate below).
 8. ✅ **Docs** (2026-11-11): [applications-network.md](applications-network.md),
    [runbook-network-writes.md](runbook-network-writes.md), ADR 0018 §1–§7; updates to the
    client guides (body argument, paging, named tools, client-data grants), security,
@@ -333,12 +339,11 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
       (HTTP 401 for a Site Manager key, HTTP 500 `api.unexpected-error`). Paging worked
       across two pages, and a documented filter was accepted.
 - [x] Manual human-approved write runbook (not CI) ([runbook-network-writes.md](runbook-network-writes.md))
-- [ ] Resolve flagged unknowns: key scope across apps, read-only keys, filtering/pagination
-      Key scope: **resolved**, a Network key also authorises Protect (checked against a
-      random-key control; ADR 0005). Filtering/pagination: **resolved** (above).
-      Read-only keys: cannot be tested without a write. **Open:** confirm that the
-      console's Create API Key dialog offers no scope or read-only choice; keys stay
-      treated as administrator credentials either way.
+- [x] Resolve flagged unknowns: key scope across apps, read-only keys, filtering/pagination
+      Key scope: a Network key also authorises Protect (checked against a random-key
+      control). Read-only keys: none; the Create API Key dialog asks only for a name
+      (Network 11.0.99). Filtering/pagination: checked live (above). Keys stay treated as
+      console-wide administrator credentials (ADR 0005).
 
 ## Phase 3 — UniFi Protect
 

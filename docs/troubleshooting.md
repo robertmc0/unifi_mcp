@@ -1,6 +1,6 @@
 # Troubleshooting
 
-> **Status: Phase 2 in progress.** Covers the service, the CLI, the admin interface,
+> **Status: Phase 2 complete.** Covers the service, the CLI, the admin interface,
 > client connections and UniFi Network operations
 > ([applications-network.md](applications-network.md)). Protect and Access follow with
 > their adapters; metrics arrive in Phase 5.

@@ -1,6 +1,6 @@
 # Approval workflow
 
-> **Status: Phase 1 in progress.** The workflow is implemented and tested in
+> **Status: Phase 2 complete.** The workflow is implemented and tested in
 > `packages/approvals` and the dispatcher (ADR 0011), with the MCP tools (ADR 0013) and
 > the CLI commands (ADR 0015) and the admin web interface (ADR 0016).
 

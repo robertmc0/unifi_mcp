@@ -87,6 +87,9 @@ UniFi Protect installed. The record is
   This confirms the credential decision above: a stored Network key is also a Protect
   credential. Storing it only for the `network` module limits what this service does with
   it, not what the key can do.
+- **No scoped or read-only keys.** The _Create API Key_ dialog in UniFi Network 11.0.99
+  asks only for a name: no scope, application or read-only choice. Together with the
+  previous point, every key has full administrative scope across the console.
 - **Site Manager keys do not work locally.** A key created at unifi.ui.com was rejected
   with HTTP 401; a key created on the console worked. The operator guide says so.
 - **Paging and filtering** behaved as documented: one item per page, a next page with a
@@ -97,7 +100,7 @@ UniFi Protect installed. The record is
 | Assumption                                                                                   | Resolve by                                             |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | ~~One Integrations API key may or may not cover both Network and Protect~~                   | **Resolved:** it covers both (live evidence above)     |
-| No read-only API key type exists for Network/Protect                                         | Phase 2, check console UI and vendor release notes     |
+| ~~No read-only API key type exists for Network/Protect~~                                     | **Resolved:** none in the UI (live evidence above)     |
 | WebSocket subscription authentication for Protect                                            | Phase 3                                                |
 | Installed Access version may ship a machine-readable contract ("Download API documentation") | Phase 4                                                |
 | Local API rate limits (not documented for any application)                                   | Phase 2–4. Conservative defaults until then (spec §10) |

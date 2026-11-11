@@ -1,6 +1,6 @@
 # UniFi Network
 
-> **Status: Phase 2 in progress.** All 73 documented operations of the Network Integration
+> **Status: Phase 2 complete.** All 73 documented operations of the Network Integration
 > API 11.0.97 (41 reads, 32 writes) are implemented and tested against a synthetic console.
 > 33 reads were also checked on a real console running Network 11.0.99; the others had
 > nothing to read there, or failed in the console (see Limitations). Testing against your

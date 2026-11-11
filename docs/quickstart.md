@@ -1,6 +1,6 @@
 # Quickstart
 
-> **Status: Phase 2 in progress.** The service, CLI, admin interface and container image
+> **Status: Phase 2 complete.** The service, CLI, admin interface and container image
 > work, and all UniFi Network reads and writes are available
 > ([applications-network.md](applications-network.md)); writes stay locked until you
 > unlock them deliberately.
