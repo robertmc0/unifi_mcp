@@ -3,7 +3,8 @@
 > **Project status: Phase 1 (secure platform core) complete; Phase 2 (UniFi Network) in
 > progress. The service serves MCP over HTTP and stdio, is administered with the host-only
 > `unifi-mcp` CLI, and implements all 73 documented UniFi Network operations, tested
-> against a synthetic console; a run against a real console is pending.**
+> against a synthetic console. 33 of the 41 reads were also checked on a real console
+> (Network 11.0.99).**
 > See [phase-checklist.md](phase-checklist.md) for what is implemented and what is next.
 
 ## Design and decisions

@@ -32,8 +32,27 @@ describe('API coverage matrix', () => {
     for (const op of network?.operations ?? []) {
       expect(op.status).toBe('implemented');
       expect(op.evidence.length).toBeGreaterThanOrEqual(3);
-      expect(op.liveReadValidation).toBe(false); // only the opt-in live test may set this
     }
+  });
+
+  it('marks exactly the reads of the committed live record that succeeded', async () => {
+    const record = JSON.parse(
+      await readFile(join(ROOT, 'docs/api-coverage/live/network-11.0.97.json'), 'utf8'),
+    ) as { results: { operationId: string; outcome: string }[] };
+    const ok = new Set(record.results.filter((r) => r.outcome === 'ok').map((r) => r.operationId));
+    const files = await buildCoverageFiles();
+    const matrix = JSON.parse(files.get('docs/api-coverage/api-coverage.json') ?? '{}') as {
+      modules: {
+        application: string;
+        operations: { operationId: string | null; method: string; liveReadValidation: boolean }[];
+      }[];
+    };
+    const operations = matrix.modules.find((m) => m.application === 'network')?.operations ?? [];
+    for (const op of operations) {
+      expect(op.liveReadValidation, op.operationId ?? '').toBe(ok.has(op.operationId ?? ''));
+      if (op.liveReadValidation) expect(op.method).toBe('GET');
+    }
+    expect(operations.filter((o) => o.liveReadValidation)).toHaveLength(ok.size);
   });
 
   it('marks reads validated only from a reviewed live record, never writes', async () => {

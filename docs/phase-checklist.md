@@ -320,25 +320,25 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
       (`tests/integration-mock/network-version-probe.test.ts`)
 - [x] All documented reads mock-tested with sanitised output; writes tested for authz, approval and duplicates
       (`tests/integration-mock/network-reads.test.ts`, `tests/integration-mock/network-writes.test.ts`)
-- [ ] Optional live read-only test (console, site, device, client, network); no state-changing request
-      Built and dry-run against the synthetic console (45 requests, all GET;
-      `tests/contract/live-tests.test.ts` keeps it opt-in and read-only). First real-console
-      runs 2026-11-11 (Network 11.0.99): console, site, device, client and network reads
-      matched the contract; `network.networks.get_references` fails in the console (HTTP
-      500 for four of five networks). **One more run pending** (Protect key control,
-      multi-page paging), then the record is committed.
-- [ ] Field shapes, pagination, filtering and errors compared against official docs
+- [x] Optional live read-only test (console, site, device, client, network); no state-changing request
+      Run 2026-11-11 against a console with Network 11.0.99, GET only
+      ([record](api-coverage/live/network-11.0.97.json)): 33 reads matched the contract, 7
+      had nothing to read, and `network.networks.get_references` fails in the console
+      (HTTP 500 for four of five networks; a documented limitation).
+      `tests/contract/live-tests.test.ts` keeps the test opt-in and read-only.
+- [x] Field shapes, pagination, filtering and errors compared against official docs
       Field shapes come from the official contract (generated schemas, strict requests,
-      documented required fields enforced on responses); errors pass on only the HTTP
-      status and the documented `code`. Real-console errors so far match: HTTP 401 for a
-      Site Manager key, HTTP 500 `api.unexpected-error` for references. Filtering accepted;
-      paging past page one is checked by the pending run.
+      documented required fields enforced on responses), and 33 real responses matched.
+      Errors pass on only the HTTP status and the documented `code`; real errors matched
+      (HTTP 401 for a Site Manager key, HTTP 500 `api.unexpected-error`). Paging worked
+      across two pages, and a documented filter was accepted.
 - [x] Manual human-approved write runbook (not CI) ([runbook-network-writes.md](runbook-network-writes.md))
 - [ ] Resolve flagged unknowns: key scope across apps, read-only keys, filtering/pagination
-      Key scope across apps and paging/filtering are measured by the live test (report
-      fields `networkKeyAuthorisesProtect`, `pagination`, `filter`). Read-only keys cannot
-      be tested without a write; they stay unverified, and keys are treated as
-      administrator credentials (ADR 0005). **Waiting for the real-console run.**
+      Key scope: **resolved**, a Network key also authorises Protect (checked against a
+      random-key control; ADR 0005). Filtering/pagination: **resolved** (above).
+      Read-only keys: cannot be tested without a write. **Open:** confirm that the
+      console's Create API Key dialog offers no scope or read-only choice; keys stay
+      treated as administrator credentials either way.
 
 ## Phase 3 — UniFi Protect
 

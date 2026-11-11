@@ -197,6 +197,12 @@ documented local API of each module (ADR 0012).
   Redirects are never followed. Responses are size-limited.
 - **Credentials are write-only.** API keys and tokens are stored encrypted and are never
   shown again by the service, in its logs or in the audit trail.
+- **One UniFi key opens every application.** A key created in UniFi Network also works for
+  UniFi Protect on the same console, and UniFi offers no way to limit it
+  ([ADR 0005](adr/0005-official-local-unifi-api-contracts.md#live-evidence-phase-2-2026-11-11)).
+  The service's grants limit what clients can do with it, not what the key can do.
+  Protect it like an administrator password, use a key only for this service, and delete
+  it in UniFi if it may have leaked.
 - **Version checks.** An operation runs only if the console's application version is known
   and within the range the operation was reviewed for. An unknown version is refused as
   `version_unknown`, never assumed to be compatible. An incompatible one is refused as

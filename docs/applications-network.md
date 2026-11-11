@@ -2,8 +2,9 @@
 
 > **Status: Phase 2 in progress.** All 73 documented operations of the Network Integration
 > API 11.0.97 (41 reads, 32 writes) are implemented and tested against a synthetic console.
-> Testing against a real console is optional and opt-in
-> ([below](#testing-against-a-real-console)).
+> 33 reads were also checked on a real console running Network 11.0.99; the others had
+> nothing to read there, or failed in the console (see Limitations). Testing against your
+> own console is optional and opt-in ([below](#testing-against-a-real-console)).
 
 The service uses the **official local** UniFi Network Integration API on each console,
 `https://<console>/proxy/network/integration/v1/…`, with the API key you stored for the
@@ -171,8 +172,10 @@ The report records only these facts:
 
 - the outcome of each operation;
 - the console's Network version;
-- whether paging and a filter worked;
-- whether the key also worked for Protect.
+- whether paging across two pages and a filter worked;
+- whether the key also worked for Protect, with a random key as the control;
+- for up to five networks, the result of the references read and the network's kind
+  (management, default, origin).
 
 It holds no names, addresses, ids or data. Read it, then commit it as
 `docs/api-coverage/live/network-11.0.97.json` and run `npm run api:coverage-report`. The
@@ -198,10 +201,10 @@ Validating writes on a real console is a manual runbook, approved step by step b
   five networks and worked for the fifth, with requests of the same documented form. The
   service reports it as `upstream_unavailable`. It is a fault in the console. Before you
   change or delete a network, check what uses it in UniFi Network.
-- **API key scope.** UniFi documents no way to limit what an API key can do, and whether a
-  Network key also works for Protect on the same console is unverified
-  ([ADR 0005](adr/0005-official-local-unifi-api-contracts.md)). Treat the key as an
-  administrator credential.
+- **API key scope.** UniFi documents no way to limit what an API key can do, and a Network
+  key also works for Protect on the same console (observed on Network 11.0.99,
+  [ADR 0005](adr/0005-official-local-unifi-api-contracts.md#live-evidence-phase-2-2026-11-11)).
+  Treat the key as an administrator credential for the whole console.
 - Rate limits of the local API are not documented. The service limits its own request rate
   per client, console and module.
 - **Voucher codes** are never returned, not even for new vouchers. An agent can create

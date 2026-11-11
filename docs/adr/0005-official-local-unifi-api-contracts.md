@@ -74,16 +74,34 @@ verified them by re-downloading through `scripts/fetch-api-specs.ts`. The Networ
 (`scripts/reconcile-api-coverage.ts`). The InnerSpace, Mobility, Carrier Fabric and Site
 Manager OpenAPI `servers` arrays were inspected directly (2026-11-10).
 
+## Live evidence (Phase 2, 2026-11-11)
+
+The opt-in live read-only test ran against one console with UniFi Network 11.0.99 and
+UniFi Protect installed. The record is
+[api-coverage/live/network-11.0.97.json](../api-coverage/live/network-11.0.97.json).
+
+- **One key covers Network and Protect.** A key created under _Integrations_ in UniFi
+  Network authorised a documented Protect read on the same console. The Protect contract
+  declares no authentication, so the test repeated the read with a random key as a
+  control. Protect rejected it (HTTP 401), so the real key is what authorised the read.
+  This confirms the credential decision above: a stored Network key is also a Protect
+  credential. Storing it only for the `network` module limits what this service does with
+  it, not what the key can do.
+- **Site Manager keys do not work locally.** A key created at unifi.ui.com was rejected
+  with HTTP 401; a key created on the console worked. The operator guide says so.
+- **Paging and filtering** behaved as documented: one item per page, a next page with a
+  different item, and an accepted filter expression.
+
 ## Unverified assumptions (flagged; must be resolved before the named phase)
 
 | Assumption                                                                                   | Resolve by                                             |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| One Integrations API key may or may not cover both Network and Protect                       | Phase 2 optional live read-only test                   |
+| ~~One Integrations API key may or may not cover both Network and Protect~~                   | **Resolved:** it covers both (live evidence above)     |
 | No read-only API key type exists for Network/Protect                                         | Phase 2, check console UI and vendor release notes     |
 | WebSocket subscription authentication for Protect                                            | Phase 3                                                |
 | Installed Access version may ship a machine-readable contract ("Download API documentation") | Phase 4                                                |
 | Local API rate limits (not documented for any application)                                   | Phase 2–4. Conservative defaults until then (spec §10) |
-| Network filtering/pagination rules not yet transcribed                                       | Phase 2                                                |
+| ~~Network filtering/pagination rules not yet transcribed~~                                   | **Resolved:** checked live (above)                     |
 
 ## Re-evaluation triggers
 

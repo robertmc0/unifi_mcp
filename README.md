@@ -9,7 +9,8 @@ server, never to UniFi. UniFi credentials never leave the server.
 > progress. The service serves MCP over Streamable HTTP and, through the stdio bridge, over
 > stdio, is administered with the host-only `unifi-mcp` CLI, and implements all 73
 > documented UniFi Network operations ([docs/applications-network.md](docs/applications-network.md));
-> they are tested against a synthetic console, and a real-console run is pending.** See [docs/phase-checklist.md](docs/phase-checklist.md),
+> they are tested against a synthetic console, and 33 of the 41 reads were also checked on
+> a real console (Network 11.0.99).** See [docs/phase-checklist.md](docs/phase-checklist.md),
 > [docs/installation.md](docs/installation.md) and [docs/administration.md](docs/administration.md).
 
 ## Design principles

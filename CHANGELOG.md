@@ -20,6 +20,9 @@ All notable changes to this project are documented here. The format follows
   past the first page on the first list with two or more items.
 - Network limitation documented: on Network 11.0.99 the console fails
   `network.networks.get_references` for most networks (HTTP 500).
+- First real-console record (`docs/api-coverage/live/network-11.0.97.json`, Network
+  11.0.99): 33 reads live-validated in the coverage matrix. A Network API key also
+  authorises Protect (ADR 0005, security model, threat model).
 - Quickstart and troubleshooting: the API key must be created on the console; a Site
   Manager key from unifi.ui.com is rejected.
 - Manual pages updated for Phase 2: status notes, Claude Code guide (named tools,
