@@ -23,10 +23,50 @@ type Row = [
   namedTool: string | null,
 ];
 
+const PEOPLE = ['personal_identifier'];
+
 /** Reviewed 2026-11-11 against contract 7.4.96, by inventory key. */
 // prettier-ignore
 const REVIEW: Record<string, Row> = {
+  // Reads: low risk, no approval. People, presence and images need sensitive grants.
   'GET /v1/meta/info': ['protect.info.get', 'read', 'low', false, [], false, null],
+  'GET /v1/cameras': ['protect.cameras.list', 'read', 'low', false, [], false, 'protect_list_cameras'],
+  'GET /v1/cameras/{id}': ['protect.cameras.get', 'read', 'low', false, [], false, 'protect_get_camera'],
+  'GET /v1/cameras/{id}/snapshot': ['protect.cameras.get_snapshot', 'read', 'low', false, ['camera_image'], false, 'protect_get_snapshot'],
+  'GET /v1/cameras/{id}/rtsps-stream': ['protect.cameras.get_rtsps_streams', 'read', 'low', false, [], false, null],
+  'GET /v1/lights': ['protect.lights.list', 'read', 'low', false, [], false, null],
+  'GET /v1/lights/{id}': ['protect.lights.get', 'read', 'low', false, [], false, null],
+  'GET /v1/sensors': ['protect.sensors.list', 'read', 'low', false, [], false, null],
+  'GET /v1/sensors/{id}': ['protect.sensors.get', 'read', 'low', false, [], false, null],
+  'GET /v1/sirens': ['protect.sirens.list', 'read', 'low', false, [], false, null],
+  'GET /v1/sirens/{id}': ['protect.sirens.get', 'read', 'low', false, [], false, null],
+  'GET /v1/speakers': ['protect.speakers.list', 'read', 'low', false, [], false, null],
+  'GET /v1/speakers/{id}': ['protect.speakers.get', 'read', 'low', false, [], false, null],
+  'GET /v1/chimes': ['protect.chimes.list', 'read', 'low', false, [], false, null],
+  'GET /v1/chimes/{id}': ['protect.chimes.get', 'read', 'low', false, [], false, null],
+  'GET /v1/relays': ['protect.relays.list', 'read', 'low', false, [], false, null],
+  'GET /v1/relays/{id}': ['protect.relays.get', 'read', 'low', false, [], false, null],
+  'GET /v1/bridges': ['protect.bridges.list', 'read', 'low', false, [], false, null],
+  'GET /v1/bridges/{id}': ['protect.bridges.get', 'read', 'low', false, [], false, null],
+  'GET /v1/link-stations': ['protect.link_stations.list', 'read', 'low', false, [], false, null],
+  'GET /v1/link-stations/{id}': ['protect.link_stations.get', 'read', 'low', false, [], false, null],
+  'GET /v1/alarm-hubs': ['protect.alarm_hubs.list', 'read', 'low', false, [], false, null],
+  'GET /v1/alarm-hubs/{id}': ['protect.alarm_hubs.get', 'read', 'low', false, [], false, null],
+  'GET /v1/fobs': ['protect.fobs.list', 'read', 'low', false, ['location'], false, null],
+  'GET /v1/fobs/{id}': ['protect.fobs.get', 'read', 'low', false, ['location'], false, null],
+  'GET /v1/nvrs': ['protect.nvrs.list', 'read', 'low', false, [], false, null],
+  'GET /v1/arm-profiles': ['protect.alarm.list_arm_profiles', 'read', 'low', false, [], false, null],
+  'GET /v1/external/arm-profiles': ['protect.alarm.list_external_profiles', 'read', 'low', false, [], false, null],
+  'GET /v1/external/arm-profiles/{id}': ['protect.alarm.get_external_profile', 'read', 'low', false, [], false, null],
+  'GET /v1/viewers': ['protect.viewers.list', 'read', 'low', false, [], false, null],
+  'GET /v1/viewers/{id}': ['protect.viewers.get', 'read', 'low', false, [], false, null],
+  'GET /v1/liveviews': ['protect.liveviews.list', 'read', 'low', false, [], false, null],
+  'GET /v1/liveviews/{id}': ['protect.liveviews.get', 'read', 'low', false, [], false, null],
+  'GET /v1/users': ['protect.users.list', 'read', 'low', false, PEOPLE, false, null],
+  'GET /v1/users/{id}': ['protect.users.get', 'read', 'low', false, PEOPLE, false, null],
+  'GET /v1/ulp-users': ['protect.users.list_ulp', 'read', 'low', false, PEOPLE, false, null],
+  'GET /v1/ulp-users/{id}': ['protect.users.get_ulp', 'read', 'low', false, PEOPLE, false, null],
+  'GET /v1/files/{fileType}': ['protect.files.list', 'read', 'low', false, [], false, null],
 };
 
 interface InventoryOperation {

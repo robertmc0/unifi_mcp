@@ -135,6 +135,30 @@ and path, and a contract test compares it with the inventory for every operation
   deep removal moved to `@unifi-local-mcp/core` (`withoutFields`) and is shared with
   Network.
 
+### 5. Reads (step 5)
+
+All 38 documented HTTP reads are implemented: low risk, no approval, console-level,
+permission `protect.<category>.read`. Categories follow the API's device types (`cameras`,
+`lights`, `sensors`, `sirens`, `speakers`, `chimes`, `relays`, `bridges`,
+`link_stations`, `alarm_hubs`, `fobs`, `nvrs`, `viewers`, `liveviews`), plus `alarm`
+(local and external arm profiles), `users` (users and ULP users) and `files`. Named tools:
+`protect_list_cameras`, `protect_get_camera`, `protect_get_snapshot`.
+
+Sensitivity, reviewed field by field:
+
+- **`camera_image`**: the snapshot (8 MiB cap, 20 s timeout, returned as image content
+  per §3).
+- **`personal_identifier`**: users and ULP users (names, e-mail addresses).
+- **`location`**: key fobs. A fob's presence state (`ONLINE` … `DEVICE_LOST`) says
+  whether the person carrying it is at the site.
+- Devices are infrastructure, as in Network, and carry no tag. A live view's `owner` is
+  only a user id.
+
+**RTSPS streams.** `GET /v1/cameras/{id}/rtsps-stream` returns stream URLs whose path is an
+access token: anyone who has one can watch the stream. The operation is implemented, but
+its projection turns each quality into `true` or `false`, so a client learns which
+streams exist and never their URLs. A person who needs a URL reads it in UniFi Protect.
+
 ## Consequences
 
 - Consoles with a Protect version older than the supported range will be refused with a

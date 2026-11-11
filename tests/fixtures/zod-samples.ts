@@ -16,12 +16,22 @@ interface Def {
   shape?: Record<string, z.ZodType>;
   innerType?: z.ZodType;
   element?: z.ZodType;
+  valueType?: z.ZodType;
   options?: z.ZodType[];
   in?: z.ZodType;
   values?: unknown[];
   entries?: Record<string, string>;
   checks?: {
-    _zod: { def: { check: string; value?: number; minimum?: number; maximum?: number } };
+    _zod: {
+      def: {
+        check: string;
+        value?: number;
+        minimum?: number;
+        maximum?: number;
+        format?: string;
+        pattern?: RegExp;
+      };
+    };
   }[];
 }
 
@@ -46,6 +56,7 @@ export function branches(schema: z.ZodType, seen = new Set<unknown>()): number {
     ...Object.values(d.shape ?? {}),
     ...(d.innerType === undefined ? [] : [d.innerType]),
     ...(d.element === undefined ? [] : [d.element]),
+    ...(d.valueType === undefined ? [] : [d.valueType]),
     ...(d.in === undefined ? [] : [d.in]),
     ...(d.options ?? []),
   ];
@@ -57,6 +68,18 @@ let uuidCounter = 0;
 function uuid(): string {
   uuidCounter += 1;
   return `00000000-0000-4000-8000-${String(uuidCounter).padStart(12, '0')}`;
+}
+
+/** Values tried, in order, for a string with a pattern (the first that matches wins). */
+const PATTERNED = ['1234', 'NZD', 'ab12', 'camera', 'camera,light', '00000000-0000-4000-8000-0'];
+
+function patterns(d: Def): RegExp[] {
+  return (d.checks ?? []).flatMap((check) => {
+    const c = check._zod.def;
+    return c.check === 'string_format' && c.format === 'regex' && c.pattern !== undefined
+      ? [c.pattern]
+      : [];
+  });
 }
 
 function bound(d: Def, kind: 'min' | 'max'): number | undefined {
@@ -89,10 +112,17 @@ export function sample(schema: z.ZodType, options: SampleOptions = {}, path = '$
       return result;
     }
     case 'string': {
+      const regexes = patterns(d);
+      if (regexes.length > 0) {
+        const value = PATTERNED.find((candidate) => regexes.every((re) => re.test(candidate)));
+        if (value === undefined) throw new Error(`No sample for the pattern at ${path}.`);
+        return value;
+      }
       // Identifiers look like the console's (UUIDs), so they can be used as targets.
       if (d.format === 'guid' || d.format === 'uuid' || /(^|\.)(id|\w+Id)$/.test(path)) {
         return uuid();
       }
+      if (d.format === 'url') return `https://v.invalid/${encodeURIComponent(path)}`;
       if (d.format === 'datetime') return '2026-11-10T12:00:00Z';
       if (d.format === 'date') return '2026-11-10';
       const max = bound(d, 'max') ?? 64;
@@ -134,6 +164,11 @@ export function sample(schema: z.ZodType, options: SampleOptions = {}, path = '$
     }
     case 'pipe':
       return d.in === undefined ? null : sample(d.in, options, path);
+    case 'record':
+      return d.valueType === undefined ? {} : { k1: sample(d.valueType, options, `${path}.k1`) };
+    case 'custom':
+      // z.instanceof(Uint8Array): the bytes of a binary read, JPEG-looking.
+      return new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
     case 'unknown':
       return { anything: 'v:unknown' };
     case 'null':

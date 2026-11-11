@@ -21,6 +21,9 @@ All notable changes to this project are documented here. The format follows
   audit trail (ADR 0019 §3).
 - Protect adapter skeleton: version probe (`protect.info.get`), supported range
   `>=7.4.96 <8`, credential removal, `docs/applications-protect.md` (ADR 0019 §4).
+- All 38 documented Protect reads, with `camera_image`, `location` and
+  `personal_identifier` grants where needed; RTSPS stream URLs are never returned
+  (ADR 0019 §5).
 
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 

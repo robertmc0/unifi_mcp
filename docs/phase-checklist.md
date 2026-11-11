@@ -373,8 +373,10 @@ subscriptions, 42 writes), `api-specs/protect/7.4.96/`
    `pin_code`), registered in `ADAPTERS`; [applications-protect.md](applications-protect.md)
    started. ADR 0019 §4. Tests: `tests/integration-mock/protect-version-probe.test.ts`,
    `tests/contract/protect-security-review.test.ts`, `tests/unit/unifi-protect/`.
-5. **Reads** with security review (users: `personal_identifier`; stream and talkback URLs
-   grant access by themselves).
+5. ✅ **Reads** (2026-11-11): all 38 documented HTTP reads; `camera_image` (snapshot),
+   `location` (fobs), `personal_identifier` (users); RTSPS stream URLs reduced to which
+   qualities exist. ADR 0019 §5. Tests: `tests/integration-mock/protect-reads.test.ts`,
+   `tests/contract/protect-security-review.test.ts`.
 6. **Writes** with risk review (arming, disarming, sirens, relays and alarm outputs high;
    permanent microphone disable high and off by default; the multipart upload).
 7. **Events**: WebSocket subscriptions over the same TLS and egress controls, a connection
