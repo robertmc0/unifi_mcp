@@ -82,6 +82,17 @@ class ReadOnlyGuard implements OperationExecutor {
   }
 }
 
+/** An upstream enum value such as `GATEWAY`, or `other`; never free text. */
+const category = (value: unknown): string =>
+  typeof value === 'string' && /^[A-Z][A-Z_]{0,31}$/.test(value) ? value : 'other';
+
+/** ` (HTTP 500, code …)` from an executor message, which carries only a vetted code. */
+const httpDetail = (message: string): string => {
+  const match = /\(HTTP (\d{3})(?:, code ([A-Za-z0-9][A-Za-z0-9_.-]{0,63}))?\)/.exec(message);
+  if (match === null) return '';
+  return ` (HTTP ${match[1] ?? ''}${match[2] === undefined ? '' : `, code ${match[2]}`})`;
+};
+
 interface Outcome {
   operationId: string;
   outcome: string;
@@ -339,6 +350,39 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
     const networkId = firsts.get('networkId');
     if (networkId === undefined) skip('network.networks.get_references');
     else await run('network.networks.get_references', { networkId }, siteId);
+
+    // 3b. References of up to five networks, informational: does the console answer for
+    //     every kind of network? Only the network's categories and the result are kept.
+    const networks = await run('network.networks.list', { limit: 5 }, siteId);
+    const references = descriptorOf('network.networks.get_references');
+    const perNetwork: Record<string, unknown>[] = [];
+    for (const network of ((networks as { data?: unknown[] } | undefined)?.data ?? []).slice(
+      0,
+      5,
+    )) {
+      const entry = network as {
+        id?: unknown;
+        management?: unknown;
+        default?: unknown;
+        metadata?: { origin?: unknown };
+      };
+      if (typeof entry.id !== 'string') continue;
+      const outcome = await guard.execute({
+        descriptor: references,
+        arguments: { networkId: entry.id },
+        target: { consoleId: view.id, siteId },
+        signal: AbortSignal.timeout(references.timeoutMs),
+        correlationId: 'live-references',
+        attempt: 1,
+      });
+      perNetwork.push({
+        management: category(entry.management),
+        default: entry.default === true,
+        origin: category(entry.metadata?.origin),
+        result: outcome.ok ? 'ok' : `${outcome.error.code}${httpDetail(outcome.error.message)}`,
+      });
+    }
+    report['networkReferences'] = perNetwork;
     await run('network.acl.get_ordering', {}, siteId);
     const zones = await run('network.firewall.list_zones', { limit: 2 }, siteId);
     const zoneIds = ((zones as { data?: { id?: string }[] } | undefined)?.data ?? []).map(
