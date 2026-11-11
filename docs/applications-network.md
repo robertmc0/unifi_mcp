@@ -193,6 +193,11 @@ Validating writes on a real console is a manual runbook, approved step by step b
 - **Required fields.** A console that omits a field the contract marks as required makes
   that read fail with `upstream_contract_mismatch`, rather than returning partial data.
   Please report it with the console version.
+- **Network references fail on some consoles.** On a console running Network 11.0.99,
+  `network.networks.get_references` returned HTTP 500 (`api.unexpected-error`) for four of
+  five networks and worked for the fifth, with requests of the same documented form. The
+  service reports it as `upstream_unavailable`. It is a fault in the console. Before you
+  change or delete a network, check what uses it in UniFi Network.
 - **API key scope.** UniFi documents no way to limit what an API key can do, and whether a
   Network key also works for Protect on the same console is unverified
   ([ADR 0005](adr/0005-official-local-unifi-api-contracts.md)). Treat the key as an

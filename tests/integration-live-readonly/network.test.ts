@@ -398,16 +398,38 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
       );
     }
 
-    // 4. Paging: a page of one, and the next page when there is one.
-    const one = (await run('network.sites.list', { limit: 1, offset: 0 })) as
-      { pagination?: { count?: number; totalCount?: number; nextOffset?: number } } | undefined;
-    const paging: Record<string, unknown> = {
-      firstPageCount: one?.pagination?.count,
-      morePages: one?.pagination?.nextOffset !== undefined,
-    };
-    if (one?.pagination?.nextOffset !== undefined) {
-      const next = await run('network.sites.list', { limit: 1, offset: one.pagination.nextOffset });
-      paging['nextPageOk'] = next !== undefined;
+    // 4. Paging: a page of one, then the next page, on the first list with two or more
+    //    items. Only whether paging behaved is kept, never counts or ids.
+    type Page =
+      | {
+          data?: { id?: unknown }[];
+          pagination?: { count?: number; totalCount?: number; nextOffset?: number };
+        }
+      | undefined;
+    const pageable: [list: string, siteId: string | undefined][] = [
+      ['network.sites.list', undefined],
+      ['network.networks.list', siteId],
+      ['network.devices.list', siteId],
+      ['network.firewall.list_zones', siteId],
+      ['network.firewall.list_policies', siteId],
+    ];
+    let paging: Record<string, unknown> = { list: null };
+    for (const [list, site] of pageable) {
+      const first = (await run(list, { limit: 1, offset: 0 }, site)) as Page;
+      const page = first?.pagination;
+      if (page === undefined || (page.totalCount ?? 0) < 2) continue;
+      const next = (await run(list, { limit: 1, offset: page.nextOffset ?? 1 }, site)) as Page;
+      const a = first?.data?.[0]?.id;
+      const b = next?.data?.[0]?.id;
+      paging = {
+        list,
+        firstPageHasOne: page.count === 1 && first?.data?.length === 1,
+        morePages: page.nextOffset === 1,
+        nextPageOk: next !== undefined,
+        nextPageHasOne: next?.pagination?.count === 1 && next.data?.length === 1,
+        distinctItems: typeof a === 'string' && typeof b === 'string' && a !== b,
+      };
+      break;
     }
     report['pagination'] = paging;
 

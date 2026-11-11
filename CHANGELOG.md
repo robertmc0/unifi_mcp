@@ -16,7 +16,10 @@ All notable changes to this project are documented here. The format follows
   (ADR 0018 §7).
 - The live test names why a read failed and, for a contract mismatch, which fields
   (never their values). It creates the report folder. It checks the references of up to
-  five networks, and checks Protect key scope against a random-key control.
+  five networks, checks Protect key scope against a random-key control, and checks paging
+  past the first page on the first list with two or more items.
+- Network limitation documented: on Network 11.0.99 the console fails
+  `network.networks.get_references` for most networks (HTTP 500).
 - Quickstart and troubleshooting: the API key must be created on the console; a Site
   Manager key from unifi.ui.com is rejected.
 - Manual pages updated for Phase 2: status notes, Claude Code guide (named tools,
