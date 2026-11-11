@@ -38,8 +38,17 @@ Compared with 7.3.74:
   `POST /v1/speakers/{id}/stop-siren`, and the `GET /v1/subscribe/updates?modelKeys=…`
   WebSocket subscription.
 - **Removed:** none.
-- **Changed (1):** `POST /v1/cameras/{id}/talkback-session` documents a 409 when another
-  talkback session is in progress.
+- **Changed:** resolved schemas differ for 9 shared operations. The camera video mode
+  gains `antiFlicker` (both camera reads, the camera PATCH, whose body accepts it, and the
+  microphone disable); the NVR gains a **required** `featureFlags`; sensors gain a
+  **required** `isMountedIncorrectly` (both sensor reads and the sensor PATCH); the devices
+  subscription carries both. `POST /v1/cameras/{id}/talkback-session` documents a 409
+  when another talkback session is in progress.
+
+  _Correction (2026-11-11):_ this section first said the 409 was the only change. That
+  comparison looked at the operation objects without resolving their `$ref`s, so changes
+  inside shared component schemas were missed. The comparison now resolves every
+  reference.
 
 The document still declares no authentication scheme. The live test of Phase 2 showed that
 the console's Integrations key authorises it ([ADR 0005](0005-official-local-unifi-api-contracts.md#live-evidence-phase-2-2026-11-11)).

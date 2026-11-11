@@ -47,6 +47,7 @@
   "filter": {
     "accepted": true
   },
+  "protectApplicationVersion": "7.3.74",
   "protectKeyCheck": {
     "withNetworkKey": "ok",
     "withRandomKey": "upstream_unauthorized"
