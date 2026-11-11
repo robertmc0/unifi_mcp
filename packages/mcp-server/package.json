@@ -20,6 +20,7 @@
     "@unifi-local-mcp/telemetry": "0.0.0",
     "@unifi-local-mcp/unifi-api": "0.0.0",
     "@unifi-local-mcp/unifi-network": "0.0.0",
+    "@unifi-local-mcp/unifi-protect": "0.0.0",
     "zod": "4.6.7"
   }
 }

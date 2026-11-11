@@ -6394,9 +6394,9 @@
       "localBaseUrlTemplate": "https://{consoleHost}/proxy/protect/integration",
       "totals": {
         "documented": 83,
-        "implemented": 0,
+        "implemented": 1,
         "unsupported": 0,
-        "notImplemented": 83
+        "notImplemented": 82
       },
       "operations": [
         {
@@ -8071,19 +8071,26 @@
           "sourceRef": null,
           "vendorPermission": null,
           "transport": "http",
-          "status": "not_implemented",
+          "status": "implemented",
           "statusReason": null,
-          "operationId": null,
-          "exposure": null,
-          "permission": null,
-          "risk": null,
-          "approvalRequired": null,
-          "defaultDisabled": null,
-          "sensitivity": null,
-          "schemaValidation": false,
-          "mockTests": false,
+          "operationId": "protect.info.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.info.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
           "liveReadValidation": false,
-          "evidence": [],
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
           "provisional": {
             "effect": "read",
             "risk": "low",

@@ -39,7 +39,8 @@
 | [troubleshooting.md](troubleshooting.md) (startup, connections, refusals, consoles, admin)                  | 1 / 5           |
 | [applications-network.md](applications-network.md) (versions, reads, sensitive data, limitations)           | 2 (started)     |
 | [runbook-network-writes.md](runbook-network-writes.md) (optional manual write validation on a real console) | 2               |
-| applications-protect.md, events.md                                                                          | 3               |
+| [applications-protect.md](applications-protect.md) (versions, reads, credentials, limitations)              | 3 (started)     |
+| events.md                                                                                                   | 3               |
 | applications-access.md                                                                                      | 4               |
 | release.md, development.md                                                                                  | 5               |
 

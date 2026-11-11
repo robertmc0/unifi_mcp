@@ -9,6 +9,11 @@ import {
   NETWORK_OPERATIONS,
   NETWORK_VERSION_PROBE,
 } from '@unifi-local-mcp/unifi-network';
+import {
+  PROTECT_CONTRACT_REVISION,
+  PROTECT_OPERATIONS,
+  PROTECT_VERSION_PROBE,
+} from '@unifi-local-mcp/unifi-protect';
 
 export interface ModuleAdapter {
   moduleId: ModuleId;
@@ -24,6 +29,12 @@ export const ADAPTERS: readonly ModuleAdapter[] = [
     contractRevision: NETWORK_CONTRACT_REVISION,
     operations: NETWORK_OPERATIONS,
     probe: NETWORK_VERSION_PROBE,
+  },
+  {
+    moduleId: 'protect',
+    contractRevision: PROTECT_CONTRACT_REVISION,
+    operations: PROTECT_OPERATIONS,
+    probe: PROTECT_VERSION_PROBE,
   },
 ];
 

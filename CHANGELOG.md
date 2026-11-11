@@ -19,6 +19,8 @@ All notable changes to this project are documented here. The format follows
 - Binary reads: an operation can return documented `image/jpeg` content, checked by media
   type and signature, delivered as an MCP `image` content block and never stored in the
   audit trail (ADR 0019 §3).
+- Protect adapter skeleton: version probe (`protect.info.get`), supported range
+  `>=7.4.96 <8`, credential removal, `docs/applications-protect.md` (ADR 0019 §4).
 
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 

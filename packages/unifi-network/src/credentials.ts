@@ -12,17 +12,11 @@
  * every undocumented field.
  */
 
+import { withoutFields } from '@unifi-local-mcp/core';
+
 /** Removed from every Network result, wherever it appears. */
 export const ALWAYS_REMOVED = ['passphrase'] as const;
 
 export function withoutCredentials(value: unknown, extra: readonly string[] = []): unknown {
-  const names = new Set<string>([...ALWAYS_REMOVED, ...extra]);
-  const strip = (node: unknown): unknown => {
-    if (Array.isArray(node)) return node.map(strip);
-    if (node === null || typeof node !== 'object') return node;
-    return Object.fromEntries(
-      Object.entries(node).flatMap(([key, child]) => (names.has(key) ? [] : [[key, strip(child)]])),
-    );
-  };
-  return strip(value);
+  return withoutFields(value, new Set<string>([...ALWAYS_REMOVED, ...extra]));
 }

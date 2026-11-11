@@ -114,6 +114,27 @@ projected nor paged.
 Which client may read an image is a policy question: the snapshot carries the
 `camera_image` sensitivity tag (step 5), so it needs its own grant.
 
+### 4. Adapter, version probe and supported range (step 4)
+
+`packages/unifi-protect` mirrors the Network adapter. `protectOperation(key, review)` joins
+the generated contract facts of one operation, by inventory key, with hand-written
+security metadata. WebSocket subscriptions cannot be made into HTTP operations (their key
+type excludes them). Every Protect operation is console-level (`siteScoped: false`); the
+permission is `protect.<category>.<effect>`; the documentation URL is derived from method
+and path, and a contract test compares it with the inventory for every operation.
+
+- **Version probe.** `GET /v1/meta/info` (`protect.info.get`) reports `applicationVersion`.
+  The service probes it like Network's (ADR 0018 §3).
+- **Supported range: `>=7.4.96 <8`.** The contract was verified for 7.4.96; later 7.x
+  releases are accepted because they keep the `/v1` API. Earlier versions, including
+  7.3.x, are refused rather than served from a newer contract than they implement.
+- **Credentials** (`credentials.ts`). `url` (the talkback session endpoint) and
+  `pin_code` (an arm profile PIN, which the contract sends only in requests) are removed
+  from every result at any depth. The RTSPS stream URLs carry access tokens but use
+  generic names (`high`, `low` …), so the stream operations remove them themselves. The
+  deep removal moved to `@unifi-local-mcp/core` (`withoutFields`) and is shared with
+  Network.
+
 ## Consequences
 
 - Consoles with a Protect version older than the supported range will be refused with a

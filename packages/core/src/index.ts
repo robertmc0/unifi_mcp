@@ -35,6 +35,7 @@ export {
   type NewExecution,
 } from './executions.ts';
 export { displaySafe, displaySafeLine } from './display.ts';
+export { withoutFields } from './fields.ts';
 export { KeyedMutex } from './locks.ts';
 export { RateLimiter, type RateDecision, type RateLimit } from './rate-limit.ts';
 export {

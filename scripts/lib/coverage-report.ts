@@ -42,6 +42,14 @@ const EVIDENCE: Record<string, { all: string[]; read: string[]; write: string[] 
     read: ['tests/integration-mock/network-reads.test.ts'],
     write: ['tests/integration-mock/network-writes.test.ts'],
   },
+  protect: {
+    all: [
+      'tests/contract/protect-generated-schemas.test.ts',
+      'tests/contract/protect-security-review.test.ts',
+    ],
+    read: ['tests/integration-mock/protect-version-probe.test.ts'],
+    write: [],
+  },
 };
 
 /**

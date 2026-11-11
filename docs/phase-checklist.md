@@ -368,7 +368,11 @@ subscriptions, 42 writes), `api-specs/protect/7.4.96/`
    block outside the JSON. ADR 0019 §3. Tests: `tests/unit/core/`,
    `tests/unit/unifi-api/executor.test.ts`, `tests/integration-mock/mcp-http.test.ts`.
    The `camera_image` grant comes with the snapshot in step 5.
-4. **Adapter skeleton and version probe** (`GET /v1/meta/info`) and the supported range.
+4. ✅ **Adapter skeleton and version probe** (2026-11-11): `protectOperation`, the probe
+   on `GET /v1/meta/info`, supported range `>=7.4.96 <8`, credential removal (`url`,
+   `pin_code`), registered in `ADAPTERS`; [applications-protect.md](applications-protect.md)
+   started. ADR 0019 §4. Tests: `tests/integration-mock/protect-version-probe.test.ts`,
+   `tests/contract/protect-security-review.test.ts`, `tests/unit/unifi-protect/`.
 5. **Reads** with security review (users: `personal_identifier`; stream and talkback URLs
    grant access by themselves).
 6. **Writes** with risk review (arming, disarming, sirens, relays and alarm outputs high;
