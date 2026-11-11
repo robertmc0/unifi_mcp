@@ -56,11 +56,19 @@
    docker compose exec unifi-mcp unifi-mcp doctor
    docker compose exec unifi-mcp unifi-mcp console add --alias home --host 192.0.2.1
    docker compose exec unifi-mcp unifi-mcp console set-credential home --module network
+   docker compose exec unifi-mcp unifi-mcp console check home
+   docker compose exec unifi-mcp unifi-mcp console set-tls home --tls pinned --pin sha256/…
+   docker compose exec unifi-mcp unifi-mcp console enable-module home --module network --mode read_only
+   docker compose exec unifi-mcp unifi-mcp console probe home
    docker compose exec unifi-mcp unifi-mcp client create claude-code-laptop --console home --allow 'network.*.read'
    ```
 
    `set-credential` asks for the API key at a hidden prompt. To read it from a file
-   instead, mount the file into the container and pass `--key-file`.
+   instead, mount the file into the container and pass `--key-file`. `console check`
+   shows the certificate's `sha256/…` pin; pin it only if it is your console's
+   certificate. A console has no module enabled until you enable one, and `console probe`
+   shows whether its Network version is supported
+   ([quickstart.md](quickstart.md#3-add-your-console)).
 
 6. Connect an MCP client ([client-generic-mcp.md](client-generic-mcp.md)).
 
