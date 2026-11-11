@@ -101,10 +101,23 @@ export function discoverOperations(ctx: ToolContext): Discoverable[] {
 }
 
 function toToolResult(envelope: ExecutionEnvelope | Record<string, unknown>, isError = false) {
-  const status = (envelope as { status?: unknown }).status;
+  // Bytes of a binary read travel as image content only, never inside the JSON.
+  const { media, ...json } = envelope as ExecutionEnvelope;
+  const status = json.status as unknown;
   return {
-    content: [{ type: 'text' as const, text: JSON.stringify(envelope) }],
-    structuredContent: envelope as Record<string, unknown>,
+    content: [
+      { type: 'text' as const, text: JSON.stringify(json) },
+      ...(media === undefined
+        ? []
+        : [
+            {
+              type: 'image' as const,
+              data: Buffer.from(media.data).toString('base64'),
+              mimeType: media.mediaType,
+            },
+          ]),
+    ],
+    structuredContent: json as Record<string, unknown>,
     isError: isError || status === 'error' || status === 'denied',
   };
 }

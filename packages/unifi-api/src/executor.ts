@@ -19,6 +19,7 @@ import {
   type ExecutionCall,
   type ExecutorOutcome,
   type OperationExecutor,
+  type ResponseType,
   type UpstreamError,
 } from '@unifi-local-mcp/core';
 import type { Logger } from '@unifi-local-mcp/telemetry';
@@ -67,6 +68,21 @@ function retryAfterMs(header: string | undefined): number | undefined {
   if (Number.isFinite(seconds) && seconds >= 0) return Math.round(seconds * 1000);
   const date = Date.parse(header);
   return Number.isNaN(date) ? undefined : Math.max(0, date - Date.now());
+}
+
+/** Leading bytes of each binary media type an operation may return. */
+const SIGNATURES: Record<Exclude<ResponseType, 'json'>, readonly number[]> = {
+  'image/jpeg': [0xff, 0xd8, 0xff],
+};
+
+function isMedia(response: HttpResponse, responseType: Exclude<ResponseType, 'json'>): boolean {
+  const declared = (response.contentType ?? '').split(';')[0]?.trim().toLowerCase();
+  const signature = SIGNATURES[responseType];
+  return (
+    declared === responseType &&
+    response.body.length > signature.length &&
+    signature.every((byte, i) => response.body[i] === byte)
+  );
 }
 
 function parseJson(response: HttpResponse): { ok: true; value: unknown } | { ok: false } {
@@ -202,6 +218,9 @@ export class UnifiExecutor implements OperationExecutor {
             : `${connection.host}:${String(connection.port)}`,
         headers,
         ...(body === undefined ? {} : { body }),
+        ...(descriptor.responseType === undefined || descriptor.responseType === 'json'
+          ? {}
+          : { accept: descriptor.responseType }),
         maxResponseBytes: descriptor.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES,
         signal: call.signal,
       });
@@ -218,7 +237,7 @@ export class UnifiExecutor implements OperationExecutor {
         durationMs: Math.round(performance.now() - started),
       });
     }
-    return this.#interpret(response, isWrite);
+    return this.#interpret(response, isWrite, descriptor.responseType ?? 'json');
   }
 
   #transportFailure(error: unknown, isWrite: boolean, consoleId: string): UpstreamError {
@@ -260,8 +279,21 @@ export class UnifiExecutor implements OperationExecutor {
     };
   }
 
-  #interpret(response: HttpResponse, isWrite: boolean): ExecutorOutcome {
+  #interpret(
+    response: HttpResponse,
+    isWrite: boolean,
+    responseType: ResponseType,
+  ): ExecutorOutcome {
     const { status } = response;
+    if (status >= 200 && status < 300 && responseType !== 'json') {
+      // Binary reads (ADR 0019): the documented media type, and bytes that are one.
+      return isMedia(response, responseType)
+        ? { ok: true, data: new Uint8Array(response.body) }
+        : failure({
+            code: 'invalid_response',
+            message: `The console did not return the documented ${responseType} content.`,
+          });
+    }
     const parsed = parseJson(response);
     if (status >= 200 && status < 300) {
       if (!parsed.ok) {

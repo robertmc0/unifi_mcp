@@ -15,7 +15,14 @@ import {
 } from '@unifi-local-mcp/core';
 import { describe, expect, it, vi } from 'vitest';
 import * as z from 'zod';
-import { deferred, getInfo, inventory, listDevices, restartDevice } from './fixtures.ts';
+import {
+  deferred,
+  getInfo,
+  getPicture,
+  inventory,
+  listDevices,
+  restartDevice,
+} from './fixtures.ts';
 
 describe('OperationRegistry', () => {
   it('registers valid operations, rejects duplicates and seals', () => {
@@ -82,6 +89,17 @@ describe('OperationRegistry', () => {
       'high risk without approval',
       { ...restartDevice, risk: 'high' as const },
       /must require approval/,
+    ],
+    ['an undocumented binary type', { ...getInfo, responseType: 'image/png' }, /responseType/],
+    [
+      'a binary write',
+      { ...restartDevice, responseType: 'image/jpeg' as const },
+      /binary response is for GET reads only/,
+    ],
+    [
+      'a projected binary read',
+      { ...getPicture, project: (bytes: Uint8Array) => bytes.length },
+      /neither projected nor paged/,
     ],
   ])('rejects %s', (_name, descriptor, pattern) => {
     const registry = new OperationRegistry(() => true);

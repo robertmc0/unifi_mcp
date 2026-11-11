@@ -162,6 +162,8 @@ export interface HttpRequest {
   hostHeader: string;
   headers: Readonly<Record<string, string>>;
   body?: Buffer;
+  /** The documented response media type. Default `application/json`. */
+  accept?: string;
   maxResponseBytes: number;
   signal: AbortSignal;
 }
@@ -194,7 +196,7 @@ export function sendHttp(socket: TLSSocket, input: HttpRequest): Promise<HttpRes
       headers: {
         ...input.headers,
         host: input.hostHeader,
-        accept: 'application/json',
+        accept: input.accept ?? 'application/json',
         'accept-encoding': 'identity',
         ...(input.body === undefined ? {} : { 'content-length': String(input.body.length) }),
       },

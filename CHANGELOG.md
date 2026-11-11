@@ -16,6 +16,9 @@ All notable changes to this project are documented here. The format follows
   transport and response type, binary `image/jpeg` responses and more of JSON Schema
   (ADR 0019 §2).
 - Fixed: two numeric bounds in a narrowed primitive became `NaN` in generated schemas.
+- Binary reads: an operation can return documented `image/jpeg` content, checked by media
+  type and signature, delivered as an MCP `image` content block and never stored in the
+  audit trail (ADR 0019 §3).
 
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 

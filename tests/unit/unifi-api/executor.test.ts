@@ -7,7 +7,15 @@ import type { ExecutorOutcome, OperationDescriptor } from '@unifi-local-mcp/core
 import { describe, expect, it } from 'vitest';
 import { sendJson } from '../../fixtures/mock-console.ts';
 import { testPki } from '../../fixtures/test-pki.ts';
-import { getInfo, listDevices, restartDevice, RULE, updateFirewallRule } from '../core/fixtures.ts';
+import {
+  getInfo,
+  getPicture,
+  JPEG,
+  listDevices,
+  restartDevice,
+  RULE,
+  updateFirewallRule,
+} from '../core/fixtures.ts';
 import { useTempDirs } from '../storage/fixtures.ts';
 import { call, CLI, NETWORK_KEY, unifiHarness, type UnifiHarnessOptions } from './fixtures.ts';
 
@@ -315,6 +323,55 @@ describe('credential hygiene', () => {
     };
     expect(h.log.lines.join('\n')).not.toContain('SENTINEL');
     expect(JSON.stringify(h.audit.list({ limit: 500 }))).not.toContain('SENTINEL');
+    await h.close();
+  });
+});
+
+describe('binary responses (ADR 0019)', () => {
+  const picture = (h: Awaited<ReturnType<typeof setup>>) =>
+    h.executor.execute(call(getPicture, h.consoleId, { deviceId: RULE }));
+
+  it('return the documented media as bytes, asking for that media type', async () => {
+    const h = await setup();
+    h.mock.respond = (_req, res) => {
+      res.writeHead(200, { 'content-type': 'image/jpeg' });
+      res.end(Buffer.from(JPEG));
+    };
+    const outcome = await picture(h);
+    expect(outcome.ok && outcome.data).toEqual(JPEG);
+    expect(h.mock.requests[0]?.headers['accept']).toBe('image/jpeg');
+    expect(h.mock.requests[0]?.url).toBe(
+      `/proxy/network/integration/v1/sites/site-1/devices/${RULE}/picture`,
+    );
+    await h.close();
+  });
+
+  it.each([
+    ['another media type', 'image/png', Buffer.from(JPEG)],
+    ['JSON', 'application/json', Buffer.from('{"url":"x"}')],
+    ['bytes that are not a JPEG', 'image/jpeg', Buffer.from('<html>login</html>')],
+    ['an empty body', 'image/jpeg', Buffer.alloc(0)],
+  ])('reject %s', async (_name, contentType, body) => {
+    const h = await setup();
+    h.mock.respond = (_req, res) => {
+      res.writeHead(200, { 'content-type': contentType });
+      res.end(body);
+    };
+    expect(errorOf(await picture(h)).code).toBe('invalid_response');
+    await h.close();
+  });
+
+  it('keep the documented JSON errors and the size cap', async () => {
+    const h = await setup();
+    h.mock.respond = (_req, res) => {
+      sendJson(res, 404, { code: 'api.not-found' });
+    };
+    expect(errorOf(await picture(h)).code).toBe('upstream_not_found');
+    h.mock.respond = (_req, res) => {
+      res.writeHead(200, { 'content-type': 'image/jpeg' });
+      res.end(Buffer.concat([Buffer.from(JPEG), Buffer.alloc(2048)]));
+    };
+    expect(errorOf(await picture(h)).code).toBe('response_too_large');
     await h.close();
   });
 });

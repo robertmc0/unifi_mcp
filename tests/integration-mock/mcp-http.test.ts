@@ -6,7 +6,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { describe, expect, it } from 'vitest';
-import { RULE } from '../unit/core/fixtures.ts';
+import { JPEG, RULE } from '../unit/core/fixtures.ts';
 import { useTempDirs } from '../unit/storage/fixtures.ts';
 import { CLI, connect, INITIALIZE, rawRequest, startTestService, structured } from './fixtures.ts';
 
@@ -56,6 +56,42 @@ describe('protocol eras', () => {
   }
 });
 
+describe('binary reads (ADR 0019)', () => {
+  for (const mode of ['legacy', 'auto'] as const) {
+    it(`reach a ${mode === 'auto' ? '2026' : '2025'}-era client as image content, outside the JSON`, async () => {
+      const t = await startTestService({ dir: await tempDir() });
+      const client = await connect(t.mcpUrl, t.token('viewer', ['network.devices.read']), mode);
+      const result = (await client.callTool({
+        name: 'unifi_execute',
+        arguments: {
+          operationId: 'network.devices.get_picture',
+          consoleId: t.consoleId,
+          siteId: 'site-1',
+          arguments: { deviceId: RULE },
+        },
+      })) as {
+        content: { type: string; text?: string; data?: string; mimeType?: string }[];
+        structuredContent: Record<string, unknown>;
+        isError?: boolean;
+      };
+      expect(result.isError).toBe(false);
+      expect(result.content.map((c) => c.type)).toEqual(['text', 'image']);
+      expect(result.content[1]).toEqual({
+        type: 'image',
+        data: Buffer.from(JPEG).toString('base64'),
+        mimeType: 'image/jpeg',
+      });
+      expect(result.structuredContent).toMatchObject({
+        status: 'ok',
+        data: { mediaType: 'image/jpeg', bytes: JPEG.length },
+      });
+      expect(result.structuredContent).not.toHaveProperty('media');
+      expect(result.content[0]?.text).not.toContain(Buffer.from(JPEG).toString('base64'));
+      expect(JSON.parse(result.content[0]?.text ?? '{}')).toEqual(result.structuredContent);
+    });
+  }
+});
+
 describe('per-client discovery', () => {
   it('shows differently scoped tokens different tools; read-only clients see no write tools', async () => {
     const t = await startTestService({ dir: await tempDir() });
@@ -75,6 +111,7 @@ describe('per-client discovery', () => {
       await reader.callTool({ name: 'unifi_list_operations', arguments: {} }),
     );
     expect((listed['operations'] as { operationId: string }[]).map((o) => o.operationId)).toEqual([
+      'network.devices.get_picture',
       'network.devices.list',
       'network.info.get',
     ]);

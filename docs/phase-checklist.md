@@ -362,8 +362,12 @@ subscriptions, 42 writes), `api-specs/protect/7.4.96/`
    (82 operations). The multipart upload is a reviewed omission (its form field is not
    documented). ADR 0019 §2. Tests: `tests/unit/scripts/openapi-zod.test.ts`,
    `tests/contract/protect-generated-schemas.test.ts`.
-3. **Binary content**: documented binary responses in the executor (media type check,
-   size cap), MCP image content, `camera_image` sensitivity; never logged or audited.
+3. ✅ **Binary content** (2026-11-11): `responseType: 'image/jpeg'` on GET reads; the
+   executor checks the content type and the JPEG signature, the dispatcher returns the
+   bytes as `media` (audited by the fact only), and MCP sends them as an `image` content
+   block outside the JSON. ADR 0019 §3. Tests: `tests/unit/core/`,
+   `tests/unit/unifi-api/executor.test.ts`, `tests/integration-mock/mcp-http.test.ts`.
+   The `camera_image` grant comes with the snapshot in step 5.
 4. **Adapter skeleton and version probe** (`GET /v1/meta/info`) and the supported range.
 5. **Reads** with security review (users: `personal_identifier`; stream and talkback URLs
    grant access by themselves).

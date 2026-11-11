@@ -38,6 +38,7 @@ export { displaySafe, displaySafeLine } from './display.ts';
 export { KeyedMutex } from './locks.ts';
 export { RateLimiter, type RateDecision, type RateLimit } from './rate-limit.ts';
 export {
+  BINARY_RESPONSE_TYPES,
   defineOperation,
   HTTP_METHODS,
   OperationRegistry,
@@ -48,6 +49,7 @@ export {
   type ContractInventory,
   type HttpMethod,
   type OperationDescriptor,
+  type ResponseType,
   type RetryClass,
   type Target,
 } from './registry.ts';

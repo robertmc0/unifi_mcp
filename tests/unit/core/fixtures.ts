@@ -43,6 +43,7 @@ export const CLIENT: Principal = { clientId: 'client-1' };
 const DOCUMENTED = new Set([
   'network 1.0 GET /v1/sites/{siteId}/devices',
   'network 1.0 GET /v1/info',
+  'network 1.0 GET /v1/sites/{siteId}/devices/{deviceId}/picture',
   'network 1.0 POST /v1/sites/{siteId}/devices/{deviceId}/actions',
   'network 1.0 POST /v1/sites/{siteId}/gateway/reboot',
   'network 1.0 PUT /v1/sites/{siteId}/firewall/rules/{ruleId}',
@@ -97,6 +98,29 @@ export const getInfo = defineOperation({
   inputSchema: z.strictObject({}),
   outputSchema: z.object({ version: z.string() }),
 });
+
+/** A synthetic binary read (ADR 0019): JPEG bytes, returned as `media`. */
+export const getPicture = defineOperation({
+  ...common,
+  operationId: 'network.devices.get_picture',
+  category: 'devices',
+  effect: 'read',
+  permission: 'network.devices.read',
+  risk: 'low',
+  approvalRequired: false,
+  siteScoped: true,
+  description: 'A picture of a device.',
+  httpMethod: 'GET',
+  pathTemplate: '/v1/sites/{siteId}/devices/{deviceId}/picture',
+  responseType: 'image/jpeg',
+  maxResponseBytes: 1024,
+  retryClass: 'safe-read',
+  inputSchema: z.strictObject({ deviceId: z.string() }),
+  outputSchema: z.instanceof(Uint8Array),
+});
+
+/** The smallest JPEG-looking bytes: start-of-image marker and a few more. */
+export const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]);
 
 export const restartDevice = defineOperation({
   ...common,

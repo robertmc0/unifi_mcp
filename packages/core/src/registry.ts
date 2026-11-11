@@ -23,6 +23,10 @@ export interface Target {
   siteId?: string | undefined;
 }
 
+/** Binary media types an operation may return (ADR 0019). */
+export const BINARY_RESPONSE_TYPES = ['image/jpeg'] as const;
+export type ResponseType = 'json' | (typeof BINARY_RESPONSE_TYPES)[number];
+
 export interface OperationDescriptor<
   Input extends z.ZodObject = z.ZodObject,
   Output extends z.ZodType = z.ZodType,
@@ -43,6 +47,11 @@ export interface OperationDescriptor<
   requestBody?: 'json';
   /** Response size cap in bytes. Default 4 MiB, maximum 32 MiB. */
   maxResponseBytes?: number;
+  /**
+   * `json` (the default), or a documented binary media type: the bytes are returned in
+   * the envelope's `media`, never as JSON data (ADR 0019). GET reads only.
+   */
+  responseType?: ResponseType;
   /** Must be a strict object schema: unknown arguments are rejected, never passed on. */
   inputSchema: Input;
   outputSchema: Output;
@@ -136,6 +145,18 @@ export function validateDescriptor(
   }
   if (descriptor.requestBody === 'json' && descriptor.httpMethod === 'GET') {
     problems.push('a GET operation has no request body');
+  }
+  const responseType = descriptor.responseType ?? 'json';
+  if (responseType !== 'json') {
+    if (!(BINARY_RESPONSE_TYPES as readonly string[]).includes(responseType)) {
+      problems.push('responseType must be json or a documented binary media type');
+    }
+    if (descriptor.effect !== 'read' || descriptor.httpMethod !== 'GET') {
+      problems.push('a binary response is for GET reads only');
+    }
+    if (descriptor.project !== undefined || descriptor.pagination !== undefined) {
+      problems.push('a binary response is neither projected nor paged');
+    }
   }
   if (
     descriptor.maxResponseBytes !== undefined &&

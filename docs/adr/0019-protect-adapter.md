@@ -92,6 +92,28 @@ became `NaN`. It never reached Network's output; it made Protect's narrowed came
 `micVolume` (1–100) reject every value. The intersection is fixed, and a non-finite bound
 now fails generation.
 
+### 3. Binary responses (step 3)
+
+A descriptor may declare `responseType: 'image/jpeg'` (`BINARY_RESPONSE_TYPES` in
+`@unifi-local-mcp/core`). The registry allows it only on GET reads that are neither
+projected nor paged.
+
+- **Executor.** It sends `Accept: image/jpeg` and accepts a 2xx response only when the
+  content type is exactly the documented one and the bytes start with the JPEG signature
+  (`FF D8 FF`). Anything else, such as a login page or JSON, is `invalid_response`. Error
+  responses keep the documented JSON handling. The descriptor's `maxResponseBytes` caps
+  the size as before.
+- **Dispatcher.** The bytes are checked again (`Uint8Array`, whatever the adapter's
+  schema says) and returned in the envelope's `media` field. `data` only describes them
+  (`{ mediaType, bytes }`). The audit entry records that the read happened, never the
+  content. Nothing logs response bodies.
+- **MCP.** The tool result carries the bytes as one `image` content block (base64,
+  `mimeType`). The JSON text and `structuredContent` are the envelope without `media`.
+  Tested with real SDK clients of both protocol eras.
+
+Which client may read an image is a policy question: the snapshot carries the
+`camera_image` sensitivity tag (step 5), so it needs its own grant.
+
 ## Consequences
 
 - Consoles with a Protect version older than the supported range will be refused with a

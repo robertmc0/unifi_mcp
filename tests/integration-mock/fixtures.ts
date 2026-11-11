@@ -14,7 +14,9 @@ import { MockConsole, sendJson } from '../fixtures/mock-console.ts';
 import { testPki } from '../fixtures/test-pki.ts';
 import {
   getInfo,
+  getPicture,
   inventory,
+  JPEG,
   listDevices,
   rebootGateway,
   restartDevice,
@@ -30,6 +32,7 @@ export const OPERATIONS: OperationDescriptor[] = [
   defineOperation({ ...restartDevice, namedTool: 'network_restart_device' }),
   rebootGateway,
   updateFirewallRule,
+  getPicture,
 ];
 
 export interface TestService {
@@ -92,7 +95,10 @@ export async function startTestService(options: {
     },
   });
   mock.respond = (req, res) => {
-    if (req.url.includes('/devices')) {
+    if (req.url.endsWith('/picture')) {
+      res.writeHead(200, { 'content-type': 'image/jpeg' });
+      res.end(Buffer.from(JPEG));
+    } else if (req.url.includes('/devices')) {
       if (req.method === 'GET') {
         sendJson(res, 200, {
           data: [{ id: 'dev-1', name: 'Office AP', macAddress: '00:00:5e:00:53:01' }],

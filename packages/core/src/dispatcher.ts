@@ -84,6 +84,11 @@ export interface ExecutionEnvelope {
   executionId?: string;
   outcome?: ExecutionStatus;
   data?: unknown;
+  /**
+   * Bytes of a binary read (ADR 0019), described in `data` as `{ mediaType, bytes }`. Never
+   * serialised as JSON: the MCP layer sends them as image content.
+   */
+  media?: { mediaType: string; data: Uint8Array };
   pagination?: unknown;
   warnings?: string[];
   approvalId?: string;
@@ -704,6 +709,20 @@ export class Dispatcher {
           if (!outcome.ok) return this.#failure(context, outcome.error.code, {}, outcome.error);
           const output = context.descriptor.outputSchema.safeParse(outcome.data);
           if (!output.success) return this.#failure(context, 'upstream_contract_mismatch');
+          const responseType = context.descriptor.responseType ?? 'json';
+          if (responseType !== 'json') {
+            if (!(output.data instanceof Uint8Array)) {
+              return this.#failure(context, 'upstream_contract_mismatch');
+            }
+            // The bytes are audited by size only, never stored.
+            this.#audit(context, { outcome: 'success' });
+            return {
+              ...context.base,
+              status: 'ok',
+              data: { mediaType: responseType, bytes: output.data.byteLength },
+              media: { mediaType: responseType, data: output.data },
+            };
+          }
           const data =
             context.descriptor.project === undefined
               ? output.data

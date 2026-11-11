@@ -11,7 +11,10 @@ import {
   deferred,
   DEVICE_A,
   DEVICE_B,
+  getInfo,
+  getPicture,
   harness,
+  JPEG,
   listDevices,
   SITE,
   type HarnessOptions,
@@ -527,6 +530,53 @@ describe('page responses', () => {
       data: [{ id: 'a', name: 'A' }],
       pagination: { offset: 0, count: 1, totalCount: 3 },
     });
+    h.storage.close();
+  });
+});
+
+describe('binary reads (ADR 0019)', () => {
+  const PICTURE = {
+    operationId: 'network.devices.get_picture',
+    consoleId: CONSOLE,
+    siteId: SITE,
+    arguments: { deviceId: DEVICE_A },
+  };
+
+  it('return the bytes as media, describe them in data, and audit only that they were read', async () => {
+    const h = await setup({ descriptors: [listDevices, getInfo, getPicture] });
+    h.executor.handler = () => ({ ok: true, data: JPEG });
+    const envelope = await h.dispatcher.execute(CLIENT, PICTURE);
+    expect(envelope).toMatchObject({
+      status: 'ok',
+      data: { mediaType: 'image/jpeg', bytes: JPEG.length },
+      media: { mediaType: 'image/jpeg' },
+    });
+    expect(envelope.media?.data).toEqual(JPEG);
+    const entry = h.audit.list({ limit: 1 })[0];
+    expect(entry).toMatchObject({ operationId: 'network.devices.get_picture', outcome: 'success' });
+    const stored = JSON.stringify(h.audit.list({ limit: 10 }));
+    expect(stored).not.toContain(Buffer.from(JPEG).toString('base64'));
+    expect(stored).not.toMatch(/255,216,255|"0":255/);
+    h.storage.close();
+  });
+
+  it('withhold anything that is not bytes', async () => {
+    const h = await setup({ descriptors: [listDevices, getInfo, getPicture] });
+    h.executor.handler = () => ({ ok: true, data: { url: 'rtsps://h.invalid/stream' } });
+    const envelope = await h.dispatcher.execute(CLIENT, PICTURE);
+    expectError(envelope, 'upstream_contract_mismatch');
+    expect(envelope.media).toBeUndefined();
+    expect(JSON.stringify(envelope)).not.toContain('rtsps');
+    h.storage.close();
+  });
+
+  it('withhold anything that is not bytes even when an adapter declares a loose schema', async () => {
+    const loose = defineOperation({ ...getPicture, outputSchema: z.unknown() });
+    const h = await setup({ descriptors: [listDevices, getInfo, loose] });
+    h.executor.handler = () => ({ ok: true, data: { url: 'rtsps://h.invalid/stream' } });
+    const envelope = await h.dispatcher.execute(CLIENT, PICTURE);
+    expectError(envelope, 'upstream_contract_mismatch');
+    expect(envelope.media).toBeUndefined();
     h.storage.close();
   });
 });
