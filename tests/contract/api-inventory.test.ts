@@ -35,11 +35,15 @@ const coverage = await readJson<CoverageFile>(join(COVERAGE_DIR, 'api-coverage.j
 
 describe('API contract baseline', () => {
   it('covers exactly the roadmap modules with official local APIs', () => {
-    expect(revisions.map((r) => r.provenance.application).sort()).toEqual([
+    expect([...new Set(revisions.map((r) => r.provenance.application))].sort()).toEqual([
       'access',
       'network',
       'protect',
     ]);
+    // Protect keeps the current official release and the newest documented revision.
+    expect(
+      revisions.map((r) => `${r.provenance.application}/${r.provenance.revision}`).sort(),
+    ).toEqual(['access/2026-03-23', 'network/11.0.97', 'protect/7.3.74', 'protect/7.4.96']);
   });
 
   for (const { provenance: p, inventory } of revisions) {

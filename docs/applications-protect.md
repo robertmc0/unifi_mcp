@@ -1,23 +1,32 @@
 # UniFi Protect
 
-> **Status: Phase 3 in progress.** The Protect adapter targets the Protect integration API
-> 7.4.96 (83 documented operations). All 38 documented HTTP reads and 41 of the 42 writes
-> are available and tested against a synthetic console. Event subscriptions follow in the
-> next steps
+> **Status: Phase 3 in progress.** The Protect adapter supports the official release 7.3.74
+> and the newest documented revision 7.4.96 of the Protect integration API. All 38
+> documented HTTP reads and 41 of the 42 writes are available and tested against a
+> synthetic console. Event subscriptions follow in the next steps
 > ([phase-checklist.md](phase-checklist.md#phase-3--unifi-protect-in-progress)).
 
 The service uses the **official local** UniFi Protect integration API on each console,
 `https://<console>/proxy/protect/integration/v1/…`, with the API key you stored for the
 `protect` module. It never uses the cloud connector. Every operation is reviewed against
-the published contract, revision 7.4.96 ([ADR 0019](adr/0019-protect-adapter.md)).
+the published contract of the oldest supported revision that documents it
+([ADR 0019](adr/0019-protect-adapter.md)).
 
 ## Supported versions
 
-| Protect application version | Result                                                                        |
-| --------------------------- | ----------------------------------------------------------------------------- |
-| 7.4.96 and later 7.x        | Supported.                                                                    |
-| Earlier, or 8 and later     | Refused as `operation_unsupported`; the message names the version.            |
-| Not yet known               | Refused as `version_unknown`. The service checks the version within a minute. |
+| Protect application version | Result                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| 7.4.96 and later 7.x        | Supported: every implemented operation.                                              |
+| 7.3.74 up to 7.4.96         | Supported, except the operations 7.4.96 added (below), which are hidden and refused. |
+| Earlier, or 8 and later     | Refused as `operation_unsupported`; the message names the version.                   |
+| Not yet known               | Refused as `version_unknown`. The service checks the version within a minute.        |
+
+The operations 7.4.96 added are the external arm profiles (`protect.alarm.*_external_profile*`,
+`protect.alarm.arm_external_profile`, `protect.alarm.disarm_external_profile`) and
+`protect.speakers.stop_siren`. Everything else is built from the 7.3.74 contract, which
+newer 7.x consoles keep: the service checks that every later change is an addition. On a
+7.4.x console, the newest fields (an NVR's feature flags, whether a sensor is mounted
+incorrectly) are not returned, and the camera video mode `antiFlicker` cannot be set.
 
 The service learns each console's Protect version by itself (`GET /v1/meta/info`) and
 refreshes it every 6 hours. `unifi-mcp console probe <alias> --module protect` checks at

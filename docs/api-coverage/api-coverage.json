@@ -6387,6 +6387,2945 @@
     },
     {
       "application": "protect",
+      "revision": "7.3.74",
+      "vendorVersionLabel": "v7.3.74",
+      "contractKind": "openapi",
+      "contractSha256": "85caa3c70a5febd8ae2e4f90dbe31b8ad544fc9b74b6c02ca477c8af03d14dc6",
+      "localBaseUrlTemplate": "https://{consoleHost}/proxy/protect/integration",
+      "totals": {
+        "documented": 74,
+        "implemented": 71,
+        "unsupported": 0,
+        "notImplemented": 3
+      },
+      "operations": [
+        {
+          "key": "GET /v1/alarm-hubs",
+          "method": "GET",
+          "path": "/v1/alarm-hubs",
+          "category": "Alarm hub information & management",
+          "summary": "Get all alarm hubs",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1alarm-hubs",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm_hubs.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm_hubs.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/alarm-hubs/{id}",
+          "method": "GET",
+          "path": "/v1/alarm-hubs/{id}",
+          "category": "Alarm hub information & management",
+          "summary": "Get alarm hub details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1alarm-hubsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm_hubs.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm_hubs.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/alarm-hubs/{id}",
+          "method": "PATCH",
+          "path": "/v1/alarm-hubs/{id}",
+          "category": "Alarm hub information & management",
+          "summary": "Patch alarm hub settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1alarm-hubsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm_hubs.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm_hubs.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "POST /v1/alarm-hubs/{id}/outputs/{outputId}/trigger",
+          "method": "POST",
+          "path": "/v1/alarm-hubs/{id}/outputs/{outputId}/trigger",
+          "category": "Alarm hub information & management",
+          "summary": "Trigger alarm hub output",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1alarm-hubsidoutputsoutputidtrigger",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm_hubs.trigger_output",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm_hubs.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Physical alarm output."
+          }
+        },
+        {
+          "key": "POST /v1/alarm-manager/webhook/{id}",
+          "method": "POST",
+          "path": "/v1/alarm-manager/webhook/{id}",
+          "category": "Alarm manager integration",
+          "summary": "Send a webhook to the alarm manager",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1alarm-managerwebhookid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm.trigger_webhook",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Triggers Alarm Manager automations of unknown scope."
+          }
+        },
+        {
+          "key": "GET /v1/arm-profiles",
+          "method": "GET",
+          "path": "/v1/arm-profiles",
+          "category": "Arm profile management",
+          "summary": "Get all arm profiles",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1arm-profiles",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm.list_arm_profiles",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "POST /v1/arm-profiles",
+          "method": "POST",
+          "path": "/v1/arm-profiles",
+          "category": "Arm profile management",
+          "summary": "Create arm profile",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profiles",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm.create_arm_profile",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Arms/disarms or reconfigures alarm (security function)."
+          }
+        },
+        {
+          "key": "POST /v1/arm-profiles/disable",
+          "method": "POST",
+          "path": "/v1/arm-profiles/disable",
+          "category": "Arm profile management",
+          "summary": "Disable arm alarm",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profilesdisable",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm.disarm",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Arms/disarms or reconfigures alarm (security function)."
+          }
+        },
+        {
+          "key": "POST /v1/arm-profiles/enable",
+          "method": "POST",
+          "path": "/v1/arm-profiles/enable",
+          "category": "Arm profile management",
+          "summary": "Enable arm alarm",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profilesenable",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm.arm",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Arms/disarms or reconfigures alarm (security function)."
+          }
+        },
+        {
+          "key": "PATCH /v1/arm-profiles/settings",
+          "method": "PATCH",
+          "path": "/v1/arm-profiles/settings",
+          "category": "Arm profile management",
+          "summary": "Set current arm profile",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1arm-profilessettings",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm.update_settings",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Arms/disarms or reconfigures alarm (security function)."
+          }
+        },
+        {
+          "key": "PATCH /v1/arm-profiles/{id}",
+          "method": "PATCH",
+          "path": "/v1/arm-profiles/{id}",
+          "category": "Arm profile management",
+          "summary": "Update arm profile",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1arm-profilesid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm.update_arm_profile",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Arms/disarms or reconfigures alarm (security function)."
+          }
+        },
+        {
+          "key": "DELETE /v1/arm-profiles/{id}",
+          "method": "DELETE",
+          "path": "/v1/arm-profiles/{id}",
+          "category": "Arm profile management",
+          "summary": "Delete arm profile",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/delete-v1arm-profilesid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.alarm.delete_arm_profile",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.alarm.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Arms/disarms or reconfigures alarm (security function)."
+          }
+        },
+        {
+          "key": "GET /v1/bridges",
+          "method": "GET",
+          "path": "/v1/bridges",
+          "category": "Bridge information & management",
+          "summary": "Get all bridges",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1bridges",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.bridges.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.bridges.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/bridges/{id}",
+          "method": "GET",
+          "path": "/v1/bridges/{id}",
+          "category": "Bridge information & management",
+          "summary": "Get bridge details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1bridgesid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.bridges.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.bridges.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/bridges/{id}",
+          "method": "PATCH",
+          "path": "/v1/bridges/{id}",
+          "category": "Bridge information & management",
+          "summary": "Patch bridge settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1bridgesid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.bridges.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.bridges.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "GET /v1/cameras",
+          "method": "GET",
+          "path": "/v1/cameras",
+          "category": "Camera information & management",
+          "summary": "Get all cameras",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1cameras",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.list",
+          "exposure": {
+            "namedTool": "protect_list_cameras",
+            "generic": true
+          },
+          "permission": "protect.cameras.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/cameras/{id}",
+          "method": "GET",
+          "path": "/v1/cameras/{id}",
+          "category": "Camera information & management",
+          "summary": "Get camera details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.get",
+          "exposure": {
+            "namedTool": "protect_get_camera",
+            "generic": true
+          },
+          "permission": "protect.cameras.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/cameras/{id}",
+          "method": "PATCH",
+          "path": "/v1/cameras/{id}",
+          "category": "Camera information & management",
+          "summary": "Patch camera settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1camerasid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Camera settings can disable recording/detection (security function)."
+          }
+        },
+        {
+          "key": "POST /v1/cameras/{id}/disable-mic-permanently",
+          "method": "POST",
+          "path": "/v1/cameras/{id}/disable-mic-permanently",
+          "category": "Camera information & management",
+          "summary": "Permanently disable camera microphone",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasiddisable-mic-permanently",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.disable_microphone_permanently",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": true,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": true,
+            "rationale": "Irreversible (spec §6.3 example)."
+          }
+        },
+        {
+          "key": "POST /v1/cameras/{id}/ptz/goto/{slot}",
+          "method": "POST",
+          "path": "/v1/cameras/{id}/ptz/goto/{slot}",
+          "category": "Camera PTZ control & management",
+          "summary": "Move PTZ camera to preset",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzgotoslot",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.ptz_goto",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Moves camera field of view."
+          }
+        },
+        {
+          "key": "POST /v1/cameras/{id}/ptz/patrol/start/{slot}",
+          "method": "POST",
+          "path": "/v1/cameras/{id}/ptz/patrol/start/{slot}",
+          "category": "Camera PTZ control & management",
+          "summary": "Start a camera PTZ patrol",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzpatrolstartslot",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.ptz_start_patrol",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Moves camera field of view."
+          }
+        },
+        {
+          "key": "POST /v1/cameras/{id}/ptz/patrol/stop",
+          "method": "POST",
+          "path": "/v1/cameras/{id}/ptz/patrol/stop",
+          "category": "Camera PTZ control & management",
+          "summary": "Stop active camera PTZ patrol",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzpatrolstop",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.ptz_stop_patrol",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Moves camera field of view."
+          }
+        },
+        {
+          "key": "GET /v1/cameras/{id}/rtsps-stream",
+          "method": "GET",
+          "path": "/v1/cameras/{id}/rtsps-stream",
+          "category": "Camera information & management",
+          "summary": "Get RTSPS streams for camera",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasidrtsps-stream",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.get_rtsps_streams",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "credential",
+              "recording"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Returns live-stream URLs that grant video access."
+          }
+        },
+        {
+          "key": "POST /v1/cameras/{id}/rtsps-stream",
+          "method": "POST",
+          "path": "/v1/cameras/{id}/rtsps-stream",
+          "category": "Camera information & management",
+          "summary": "Create RTSPS streams for camera",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidrtsps-stream",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.create_rtsps_streams",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [
+              "credential",
+              "recording"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Creates live-video access streams."
+          }
+        },
+        {
+          "key": "DELETE /v1/cameras/{id}/rtsps-stream",
+          "method": "DELETE",
+          "path": "/v1/cameras/{id}/rtsps-stream",
+          "category": "Camera information & management",
+          "summary": "Delete camera RTSPS stream",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/delete-v1camerasidrtsps-stream",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.delete_rtsps_streams",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Breaks consumers of existing streams."
+          }
+        },
+        {
+          "key": "GET /v1/cameras/{id}/snapshot",
+          "method": "GET",
+          "path": "/v1/cameras/{id}/snapshot",
+          "category": "Camera information & management",
+          "summary": "Get camera snapshot",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasidsnapshot",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.get_snapshot",
+          "exposure": {
+            "namedTool": "protect_get_snapshot",
+            "generic": true
+          },
+          "permission": "protect.cameras.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [
+            "camera_image"
+          ],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "camera_image"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Returns a camera image."
+          }
+        },
+        {
+          "key": "POST /v1/cameras/{id}/talkback-session",
+          "method": "POST",
+          "path": "/v1/cameras/{id}/talkback-session",
+          "category": "Camera information & management",
+          "summary": "Create talkback session for camera",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidtalkback-session",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.start_talkback",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": true,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [
+              "credential"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Opens audio into premises; returns session URL."
+          }
+        },
+        {
+          "key": "GET /v1/chimes",
+          "method": "GET",
+          "path": "/v1/chimes",
+          "category": "Chime information & management",
+          "summary": "Get all chimes",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1chimes",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.chimes.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.chimes.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/chimes/{id}",
+          "method": "GET",
+          "path": "/v1/chimes/{id}",
+          "category": "Chime information & management",
+          "summary": "Get chime details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1chimesid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.chimes.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.chimes.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/chimes/{id}",
+          "method": "PATCH",
+          "path": "/v1/chimes/{id}",
+          "category": "Chime information & management",
+          "summary": "Patch chime settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1chimesid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.chimes.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.chimes.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "GET /v1/files/{fileType}",
+          "method": "GET",
+          "path": "/v1/files/{fileType}",
+          "category": "Device asset file management",
+          "summary": "Get device asset files",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1filesfiletype",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.files.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.files.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "POST /v1/files/{fileType}",
+          "method": "POST",
+          "path": "/v1/files/{fileType}",
+          "category": "Device asset file management",
+          "summary": "Upload device asset file",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1filesfiletype",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "not_implemented",
+          "statusReason": null,
+          "operationId": null,
+          "exposure": null,
+          "permission": null,
+          "risk": null,
+          "approvalRequired": null,
+          "defaultDisabled": null,
+          "sensitivity": null,
+          "schemaValidation": false,
+          "mockTests": false,
+          "liveReadValidation": false,
+          "evidence": [],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Uploads/ingests data into Protect."
+          }
+        },
+        {
+          "key": "GET /v1/fobs",
+          "method": "GET",
+          "path": "/v1/fobs",
+          "category": "Fob information & management",
+          "summary": "Get all fobs",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1fobs",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.fobs.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.fobs.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [
+            "location"
+          ],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/fobs/{id}",
+          "method": "GET",
+          "path": "/v1/fobs/{id}",
+          "category": "Fob information & management",
+          "summary": "Get fob details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1fobsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.fobs.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.fobs.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [
+            "location"
+          ],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/fobs/{id}",
+          "method": "PATCH",
+          "path": "/v1/fobs/{id}",
+          "category": "Fob information & management",
+          "summary": "Patch fob settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1fobsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.fobs.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.fobs.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "GET /v1/lights",
+          "method": "GET",
+          "path": "/v1/lights",
+          "category": "Light information & management",
+          "summary": "Get all lights",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1lights",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.lights.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.lights.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/lights/{id}",
+          "method": "GET",
+          "path": "/v1/lights/{id}",
+          "category": "Light information & management",
+          "summary": "Get light details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1lightsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.lights.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.lights.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/lights/{id}",
+          "method": "PATCH",
+          "path": "/v1/lights/{id}",
+          "category": "Light information & management",
+          "summary": "Patch light settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1lightsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.lights.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.lights.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "GET /v1/link-stations",
+          "method": "GET",
+          "path": "/v1/link-stations",
+          "category": "Link station information & management",
+          "summary": "Get all link stations",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1link-stations",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.link_stations.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.link_stations.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/link-stations/{id}",
+          "method": "GET",
+          "path": "/v1/link-stations/{id}",
+          "category": "Link station information & management",
+          "summary": "Get link station details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1link-stationsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.link_stations.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.link_stations.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/link-stations/{id}",
+          "method": "PATCH",
+          "path": "/v1/link-stations/{id}",
+          "category": "Link station information & management",
+          "summary": "Patch link station settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1link-stationsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.link_stations.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.link_stations.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "GET /v1/liveviews",
+          "method": "GET",
+          "path": "/v1/liveviews",
+          "category": "Live view management",
+          "summary": "Get all live views",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1liveviews",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.liveviews.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.liveviews.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "POST /v1/liveviews",
+          "method": "POST",
+          "path": "/v1/liveviews",
+          "category": "Live view management",
+          "summary": "Create live view",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1liveviews",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.liveviews.create",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.liveviews.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "low",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Viewer/live-view layout."
+          }
+        },
+        {
+          "key": "GET /v1/liveviews/{id}",
+          "method": "GET",
+          "path": "/v1/liveviews/{id}",
+          "category": "Live view management",
+          "summary": "Get live view details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1liveviewsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.liveviews.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.liveviews.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/liveviews/{id}",
+          "method": "PATCH",
+          "path": "/v1/liveviews/{id}",
+          "category": "Live view management",
+          "summary": "Patch live view configuration",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1liveviewsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.liveviews.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.liveviews.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "low",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Viewer/live-view layout."
+          }
+        },
+        {
+          "key": "GET /v1/meta/info",
+          "method": "GET",
+          "path": "/v1/meta/info",
+          "category": "Information about application",
+          "summary": "Get application information",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1metainfo",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.info.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.info.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/nvrs",
+          "method": "GET",
+          "path": "/v1/nvrs",
+          "category": "NVR information & management",
+          "summary": "Get NVR details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1nvrs",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.nvrs.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.nvrs.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "POST /v1/pos/cameras/{id}/transactions",
+          "method": "POST",
+          "path": "/v1/pos/cameras/{id}/transactions",
+          "category": "Point of sale event ingestion",
+          "summary": "Ingest a POS transaction",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1poscamerasidtransactions",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.cameras.add_pos_transaction",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.cameras.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Uploads/ingests data into Protect."
+          }
+        },
+        {
+          "key": "GET /v1/relays",
+          "method": "GET",
+          "path": "/v1/relays",
+          "category": "Relay information & management",
+          "summary": "Get all relays",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1relays",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.relays.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.relays.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/relays/{id}",
+          "method": "GET",
+          "path": "/v1/relays/{id}",
+          "category": "Relay information & management",
+          "summary": "Get relay details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1relaysid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.relays.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.relays.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/relays/{id}",
+          "method": "PATCH",
+          "path": "/v1/relays/{id}",
+          "category": "Relay information & management",
+          "summary": "Patch relay settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1relaysid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.relays.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.relays.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "POST /v1/relays/{id}/outputs/{outputId}/activate",
+          "method": "POST",
+          "path": "/v1/relays/{id}/outputs/{outputId}/activate",
+          "category": "Relay information & management",
+          "summary": "Activate relay output",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1relaysidoutputsoutputidactivate",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.relays.activate_output",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.relays.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Physical relay actuation (may drive doors/gates)."
+          }
+        },
+        {
+          "key": "GET /v1/sensors",
+          "method": "GET",
+          "path": "/v1/sensors",
+          "category": "Sensor information & management",
+          "summary": "Get all sensors",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sensors",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sensors.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sensors.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/sensors/{id}",
+          "method": "GET",
+          "path": "/v1/sensors/{id}",
+          "category": "Sensor information & management",
+          "summary": "Get sensor details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sensorsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sensors.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sensors.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/sensors/{id}",
+          "method": "PATCH",
+          "path": "/v1/sensors/{id}",
+          "category": "Sensor information & management",
+          "summary": "Patch sensor settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1sensorsid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sensors.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sensors.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "GET /v1/sirens",
+          "method": "GET",
+          "path": "/v1/sirens",
+          "category": "Siren information & management",
+          "summary": "Get all sirens",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sirens",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sirens.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sirens.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/sirens/{id}",
+          "method": "GET",
+          "path": "/v1/sirens/{id}",
+          "category": "Siren information & management",
+          "summary": "Get siren details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sirensid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sirens.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sirens.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/sirens/{id}",
+          "method": "PATCH",
+          "path": "/v1/sirens/{id}",
+          "category": "Siren information & management",
+          "summary": "Patch siren settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1sirensid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sirens.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sirens.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "POST /v1/sirens/{id}/play",
+          "method": "POST",
+          "path": "/v1/sirens/{id}/play",
+          "category": "Siren information & management",
+          "summary": "Play siren",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidplay",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sirens.play",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sirens.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "high",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Physical alarm actuation."
+          }
+        },
+        {
+          "key": "POST /v1/sirens/{id}/stop",
+          "method": "POST",
+          "path": "/v1/sirens/{id}/stop",
+          "category": "Siren information & management",
+          "summary": "Stop siren",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidstop",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sirens.stop",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sirens.write",
+          "risk": "high",
+          "approvalRequired": true,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Audible device action."
+          }
+        },
+        {
+          "key": "POST /v1/sirens/{id}/test-sound",
+          "method": "POST",
+          "path": "/v1/sirens/{id}/test-sound",
+          "category": "Siren information & management",
+          "summary": "Test siren sound",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidtest-sound",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.sirens.test_sound",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.sirens.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Audible device action."
+          }
+        },
+        {
+          "key": "GET /v1/speakers",
+          "method": "GET",
+          "path": "/v1/speakers",
+          "category": "Speaker information & management",
+          "summary": "Get all speakers",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1speakers",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.speakers.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.speakers.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/speakers/{id}",
+          "method": "GET",
+          "path": "/v1/speakers/{id}",
+          "category": "Speaker information & management",
+          "summary": "Get speaker details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1speakersid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.speakers.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.speakers.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/speakers/{id}",
+          "method": "PATCH",
+          "path": "/v1/speakers/{id}",
+          "category": "Speaker information & management",
+          "summary": "Patch speaker settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1speakersid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.speakers.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.speakers.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Device setting change."
+          }
+        },
+        {
+          "key": "POST /v1/speakers/{id}/test-sound",
+          "method": "POST",
+          "path": "/v1/speakers/{id}/test-sound",
+          "category": "Speaker information & management",
+          "summary": "Test speaker sound",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1speakersidtest-sound",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.speakers.test_sound",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.speakers.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "medium",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Audible device action."
+          }
+        },
+        {
+          "key": "GET /v1/subscribe/devices",
+          "method": "GET",
+          "path": "/v1/subscribe/devices",
+          "category": "WebSocket updates",
+          "summary": "Get update messages about devices",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1subscribedevices",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "websocket",
+          "status": "not_implemented",
+          "statusReason": null,
+          "operationId": null,
+          "exposure": null,
+          "permission": null,
+          "risk": null,
+          "approvalRequired": null,
+          "defaultDisabled": null,
+          "sensitivity": null,
+          "schemaValidation": false,
+          "mockTests": false,
+          "liveReadValidation": false,
+          "evidence": [],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/subscribe/events",
+          "method": "GET",
+          "path": "/v1/subscribe/events",
+          "category": "WebSocket updates",
+          "summary": "Get Protect event messages",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1subscribeevents",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "websocket",
+          "status": "not_implemented",
+          "statusReason": null,
+          "operationId": null,
+          "exposure": null,
+          "permission": null,
+          "risk": null,
+          "approvalRequired": null,
+          "defaultDisabled": null,
+          "sensitivity": null,
+          "schemaValidation": false,
+          "mockTests": false,
+          "liveReadValidation": false,
+          "evidence": [],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "personal_identifier"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Event stream (detections, doorbell, etc.)."
+          }
+        },
+        {
+          "key": "GET /v1/ulp-users",
+          "method": "GET",
+          "path": "/v1/ulp-users",
+          "category": "UniFi Identity User information",
+          "summary": "Get all identity users",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1ulp-users",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.users.list_ulp",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.users.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [
+            "personal_identifier"
+          ],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "personal_identifier"
+            ],
+            "defaultDisabled": false,
+            "rationale": "User identities and e-mail."
+          }
+        },
+        {
+          "key": "GET /v1/ulp-users/{id}",
+          "method": "GET",
+          "path": "/v1/ulp-users/{id}",
+          "category": "UniFi Identity User information",
+          "summary": "Get identity user details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1ulp-usersid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.users.get_ulp",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.users.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [
+            "personal_identifier"
+          ],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "personal_identifier"
+            ],
+            "defaultDisabled": false,
+            "rationale": "User identities and e-mail."
+          }
+        },
+        {
+          "key": "GET /v1/users",
+          "method": "GET",
+          "path": "/v1/users",
+          "category": "Protect User information",
+          "summary": "Get all users",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1users",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.users.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.users.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [
+            "personal_identifier"
+          ],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "personal_identifier"
+            ],
+            "defaultDisabled": false,
+            "rationale": "User identities and e-mail."
+          }
+        },
+        {
+          "key": "GET /v1/users/{id}",
+          "method": "GET",
+          "path": "/v1/users/{id}",
+          "category": "Protect User information",
+          "summary": "Get user details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1usersid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.users.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.users.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [
+            "personal_identifier"
+          ],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "personal_identifier"
+            ],
+            "defaultDisabled": false,
+            "rationale": "User identities and e-mail."
+          }
+        },
+        {
+          "key": "GET /v1/viewers",
+          "method": "GET",
+          "path": "/v1/viewers",
+          "category": "Viewer information & management",
+          "summary": "Get all viewers",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1viewers",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.viewers.list",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.viewers.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "GET /v1/viewers/{id}",
+          "method": "GET",
+          "path": "/v1/viewers/{id}",
+          "category": "Viewer information & management",
+          "summary": "Get viewer details",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1viewersid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.viewers.get",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.viewers.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-reads.test.ts",
+            "tests/integration-mock/protect-version-probe.test.ts"
+          ],
+          "provisional": {
+            "effect": "read",
+            "risk": "low",
+            "sensitivity": [
+              "network_identity"
+            ],
+            "defaultDisabled": false,
+            "rationale": "Device metadata incl. MAC/IP."
+          }
+        },
+        {
+          "key": "PATCH /v1/viewers/{id}",
+          "method": "PATCH",
+          "path": "/v1/viewers/{id}",
+          "category": "Viewer information & management",
+          "summary": "Patch viewer settings",
+          "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1viewersid",
+          "sourceRef": null,
+          "vendorPermission": null,
+          "transport": "http",
+          "status": "implemented",
+          "statusReason": null,
+          "operationId": "protect.viewers.update",
+          "exposure": {
+            "namedTool": null,
+            "generic": true
+          },
+          "permission": "protect.viewers.write",
+          "risk": "medium",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
+          "liveReadValidation": false,
+          "evidence": [
+            "tests/contract/protect-generated-schemas.test.ts",
+            "tests/contract/protect-security-review.test.ts",
+            "tests/integration-mock/protect-writes.test.ts"
+          ],
+          "provisional": {
+            "effect": "write",
+            "risk": "low",
+            "sensitivity": [],
+            "defaultDisabled": false,
+            "rationale": "Viewer/live-view layout."
+          }
+        }
+      ]
+    },
+    {
+      "application": "protect",
       "revision": "7.4.96",
       "vendorVersionLabel": "v7.4.96",
       "contractKind": "openapi",

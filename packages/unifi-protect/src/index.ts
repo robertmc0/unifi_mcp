@@ -2,9 +2,10 @@
  * @unifi-local-mcp/unifi-protect
  *
  * The official local UniFi Protect integration API adapter (ADR 0019): generated request
- * and response schemas for contract revision 7.4.96, and the hand-reviewed security
- * metadata of every implemented operation. Only operations recorded in
- * `api-specs/protect/7.4.96/` can be implemented here.
+ * and response schemas for contract revisions 7.3.74 (the current official release) and
+ * 7.4.96 (the newest documented), and the hand-reviewed security metadata of every
+ * implemented operation. Only operations recorded in `api-specs/protect/` can be
+ * implemented here.
  */
 import type { OperationDescriptor } from '@unifi-local-mcp/core';
 import {
@@ -97,9 +98,10 @@ export {
   consoleLock,
   deviceLock,
   documentationUrl,
-  PROTECT_CONTRACT_REVISION,
+  PROTECT_CONTRACT_REVISIONS,
   PROTECT_VERSION_RANGE,
   protectOperation,
+  type ProtectRevision,
   type VendorKey,
 } from './define.ts';
 export { streamQualities } from './operations/cameras.ts';

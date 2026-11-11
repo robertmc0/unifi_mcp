@@ -29,8 +29,9 @@ sections as each step lands:
 
 `api-specs/protect/7.4.96/` is the Protect baseline: OpenAPI 3.1.0, 83 operations (38 HTTP
 reads, 3 WebSocket subscriptions, 42 writes), recorded checksums, the same local base URL
-`https://{consoleHost}/proxy/protect/integration`. The 7.3.74 record is removed, because
-7.4.96 is a strict superset of it.
+`https://{consoleHost}/proxy/protect/integration`. ~~The 7.3.74 record is removed, because
+7.4.96 is a strict superset of it.~~ _Superseded by §7: 7.3.74 is the current official
+release and is kept._
 
 Compared with 7.3.74:
 
@@ -134,9 +135,8 @@ and path, and a contract test compares it with the inventory for every operation
 
 - **Version probe.** `GET /v1/meta/info` (`protect.info.get`) reports `applicationVersion`.
   The service probes it like Network's (ADR 0018 §3).
-- **Supported range: `>=7.4.96 <8`.** The contract was verified for 7.4.96; later 7.x
-  releases are accepted because they keep the `/v1` API. Earlier versions, including
-  7.3.x, are refused rather than served from a newer contract than they implement.
+- **Supported range: `>=7.4.96 <8`.** _Superseded by §7_ (now `>=7.3.74 <8`, narrowed per
+  operation).
 - **Credentials** (`credentials.ts`). `url` (the talkback session endpoint) and
   `pin_code` (an arm profile PIN, which the contract sends only in requests) are removed
   from every result at any depth. The RTSPS stream URLs carry access tokens but use
@@ -205,10 +205,43 @@ value.
 are routine, visible and undone by the next preset. Revisit if a deployment relies on PTZ
 cameras for coverage.
 
+### 7. Two revisions: the official release 7.3.74 and the newest documented 7.4.96
+
+The owner's live run (2026-11-11) showed a console on Protect **7.3.74**, which UniFi OS
+reported as the latest official release with no update offered. The developer portal
+documents 7.4.96 ahead of its rollout. With `>=7.4.96 <8`, every Protect operation would
+have been refused on current consoles, so both revisions are supported:
+
+- **Both records are kept**: `api-specs/protect/7.3.74/` (restored, with its checksums)
+  and `api-specs/protect/7.4.96/`, each with a generated schema module.
+- **Each operation is built from the oldest supported revision that documents it.** The
+  71 implemented operations that 7.3.74 documents use the 7.3.74 schemas and carry
+  `apiVersionRange: '>=7.3.74 <8'`; the 8 HTTP operations only 7.4.96 documents (external
+  arm profiles, `stop-siren`) use the 7.4.96 schemas and carry `'>=7.4.96 <8'`. A 7.3.74
+  console sees and runs the first group; the second is hidden and refused with
+  `operation_unsupported`, naming the version. The module-level range (probe, listing) is
+  `>=7.3.74 <8`.
+- **Forward compatibility is checked, not assumed.** A 7.3.74 schema is used on 7.4.x
+  consoles too, which is safe only when every difference in 7.4.96 is additive: in
+  responses, new properties (even required ones) and new enum values, which the older
+  schemas strip or accept; in requests, new optional properties and new enum values.
+  `api:reconcile` check 8 compares every registered operation with each later revision
+  its range includes, with every `$ref` resolved, and fails on anything else (removed or
+  retyped properties, requirements dropped from responses or added to requests, new request
+  constraints, changed union members). For 7.3.74 → 7.4.96 it finds no breaking change in
+  any of the 71 operations (`scripts/lib/revision-compat.ts`).
+- What a 7.4.x console loses by being served 7.3.74 schemas: the new response fields
+  (the NVR's `featureFlags`, a sensor's `isMountedIncorrectly`) are stripped, and the camera
+  PATCH does not accept the `antiFlicker` video mode. When a later official release is
+  the minimum, the shared operations move to it.
+- **Coverage** counts an operation as implemented for a revision when a registered
+  operation with the same method and path has a version range that includes it: 7.3.74
+  71/74, 7.4.96 79/83.
+
 ## Consequences
 
-- Consoles with a Protect version older than the supported range will be refused with a
-  message naming the version (the version gate of ADR 0018, applied to Protect in a later
-  step). The supported range is decided with the version probe.
+- Consoles with a Protect version older than 7.3.74, or 8 and later, are refused with a
+  message naming the version (ADR 0018 §3). On 7.3.x, the operations only 7.4.96 documents
+  are refused the same way (§7).
 - The open questions carried over in `provenance.json`: how the WebSocket subscriptions
   authenticate, the snapshot's size bounds, and rate limits.

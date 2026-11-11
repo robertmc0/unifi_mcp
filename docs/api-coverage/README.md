@@ -8,7 +8,8 @@ measured against the vendor contract, not by counting hand-written tools.
 | Module  | Revision         | Documented | Implemented | Page                                         |
 | ------- | ---------------- | ---------: | ----------: | -------------------------------------------- |
 | Network | 11.0.97          |         73 |          73 | [network/11.0.97.md](network/11.0.97.md)     |
-| Protect | 7.4.96           |         83 |           0 | [protect/7.4.96.md](protect/7.4.96.md)       |
+| Protect | 7.3.74           |         74 |          71 | [protect/7.3.74.md](protect/7.3.74.md)       |
+| Protect | 7.4.96           |         83 |          79 | [protect/7.4.96.md](protect/7.4.96.md)       |
 | Access  | 2026-03-23 (PDF) |        107 |           0 | [access/2026-03-23.md](access/2026-03-23.md) |
 
 Machine-readable: [`api-coverage.json`](api-coverage.json).

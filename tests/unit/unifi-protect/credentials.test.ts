@@ -31,11 +31,11 @@ describe('Protect credential removal', () => {
   });
 
   it('builds the vendor documentation URL from method and path', () => {
-    expect(documentationUrl('GET', '/v1/cameras/{id}/snapshot')).toBe(
+    expect(documentationUrl('GET', '/v1/cameras/{id}/snapshot', '7.4.96')).toBe(
       'https://developer.ui.com/protect/v7.4.96/get-v1camerasidsnapshot',
     );
-    expect(documentationUrl('POST', '/v1/alarm-manager/webhook/{id}')).toBe(
-      'https://developer.ui.com/protect/v7.4.96/post-v1alarm-managerwebhookid',
+    expect(documentationUrl('POST', '/v1/alarm-manager/webhook/{id}', '7.3.74')).toBe(
+      'https://developer.ui.com/protect/v7.3.74/post-v1alarm-managerwebhookid',
     );
   });
 });

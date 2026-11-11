@@ -14,7 +14,9 @@
  *   5. every inventory operation appears in docs/api-coverage/api-coverage.json and vice versa;
  *   6. the generated adapter schemas equal a fresh generation from the vendor cache;
  *   7. the coverage matrix equals a fresh build from the inventories and the registered
- *      adapters (status, reviewed metadata, test evidence).
+ *      adapters (status, reviewed metadata, test evidence);
+ *   8. an operation built from one revision whose version range includes a later revision
+ *      differs from it only additively (ADR 0019 §7).
  * PDF-sourced contracts (Access) are hand-transcribed; only checks 1 and 5 apply.
  */
 import { readFile } from 'node:fs/promises';
@@ -32,7 +34,10 @@ import {
   type SpecRevision,
 } from './lib/api-specs.ts';
 import { generateAdapterSchemas } from './generate-adapter-schemas.ts';
+import { satisfies } from '@unifi-local-mcp/core';
+import { ADAPTERS } from '@unifi-local-mcp/mcp-server';
 import { buildCoverageFiles } from './lib/coverage-report.ts';
+import { operationBreaks } from './lib/revision-compat.ts';
 import {
   inventoryFromOpenApi,
   openApiServers,
@@ -197,6 +202,54 @@ if (!write) {
     if (current !== content) problems.push(`${path} is stale: run npm run api:coverage-report`);
   }
   console.log('checked docs/api-coverage/ against the registered adapters');
+}
+
+// 8. Operations built from an older revision stay valid on every later revision their version
+//    range includes: every difference is additive (ADR 0019 §7).
+if (!write) {
+  const revisions = await listSpecRevisions();
+  const documents = new Map<string, object | undefined>();
+  const documentOf = async (rev: SpecRevision): Promise<object | undefined> => {
+    const id = `${rev.provenance.application}/${rev.provenance.revision}`;
+    if (!documents.has(id)) {
+      const text = await verifiedVendorText(rev, 'openapi.json');
+      documents.set(id, text === undefined ? undefined : parseOpenApi(text));
+    }
+    return documents.get(id);
+  };
+  let compared = 0;
+  for (const descriptor of ADAPTERS.flatMap((adapter) => adapter.operations)) {
+    const own = revisions.find(
+      (r) =>
+        r.provenance.application === descriptor.moduleId &&
+        r.provenance.revision === descriptor.contractRevision,
+    );
+    const later = revisions.filter(
+      (r) =>
+        r.provenance.application === descriptor.moduleId &&
+        r.provenance.revision !== descriptor.contractRevision &&
+        r.provenance.contractKind === 'openapi' &&
+        satisfies(r.provenance.revision, descriptor.apiVersionRange),
+    );
+    if (own === undefined || later.length === 0) continue;
+    const older = await documentOf(own);
+    for (const rev of later) {
+      const newer = await documentOf(rev);
+      if (older === undefined || newer === undefined) continue;
+      compared++;
+      for (const line of operationBreaks(
+        older,
+        newer,
+        `${descriptor.httpMethod} ${descriptor.pathTemplate}`,
+      )) {
+        report(
+          rev,
+          `${descriptor.operationId} (built from ${descriptor.contractRevision}): ${line}`,
+        );
+      }
+    }
+  }
+  console.log(`checked ${String(compared)} operations against later revisions they claim`);
 }
 
 // 6. Generated adapter schemas are current (ADR 0018).

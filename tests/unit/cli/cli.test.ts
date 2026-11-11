@@ -1,7 +1,7 @@
 /**
  * The `unifi-mcp` CLI (spec §13.2; ADR 0015).
  */
-import { readFile, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { X509Certificate } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
@@ -421,16 +421,40 @@ describe('doctor and api coverage', () => {
     expect(noKey.code).toBe(1);
   });
 
+  it('counts an operation for a revision only within its verified version range', async () => {
+    // A made-up Network 12.0.0 that documents exactly the 11.0.97 operations: the Network
+    // operations are verified for >=11.0.97 <12, so none counts as implemented for it.
+    const specs = join(await tempDir(), 'api-specs');
+    for (const revision of ['11.0.97', '12.0.0']) {
+      await mkdir(join(specs, 'network', revision), { recursive: true });
+      await copyFile(
+        join(import.meta.dirname, '../../../api-specs/network/11.0.97/operations.json'),
+        join(specs, 'network', revision, 'operations.json'),
+      );
+    }
+    const h = await setup({ UNIFI_MCP_API_SPECS_DIR: specs });
+    const rows = await h.json<{ revision: string; implemented: number }[]>(['api', 'coverage']);
+    expect(Object.fromEntries(rows.map((r) => [r.revision, r.implemented]))).toEqual({
+      '11.0.97': 73,
+      '12.0.0': 0,
+    });
+  });
+
   it('lists the documented official operations', async () => {
     const h = await setup();
-    const rows = await h.json<{ module: string; documented: number; implemented: number }[]>([
-      'api',
-      'coverage',
-    ]);
-    expect(Object.fromEntries(rows.map((r) => [r.module, [r.documented, r.implemented]]))).toEqual({
-      access: [107, 0],
-      network: [73, 73],
-      protect: [83, 79],
+    const rows = await h.json<
+      { module: string; revision: string; documented: number; implemented: number }[]
+    >(['api', 'coverage']);
+    expect(
+      Object.fromEntries(
+        rows.map((r) => [`${r.module}/${r.revision}`, [r.documented, r.implemented]]),
+      ),
+    ).toEqual({
+      'access/2026-03-23': [107, 0],
+      'network/11.0.97': [73, 73],
+      // Operations of the official release also cover the newer revision (ADR 0019 §7).
+      'protect/7.3.74': [74, 71],
+      'protect/7.4.96': [83, 79],
     });
   });
 });

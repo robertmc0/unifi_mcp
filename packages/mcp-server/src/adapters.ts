@@ -10,15 +10,15 @@ import {
   NETWORK_VERSION_PROBE,
 } from '@unifi-local-mcp/unifi-network';
 import {
-  PROTECT_CONTRACT_REVISION,
+  PROTECT_CONTRACT_REVISIONS,
   PROTECT_OPERATIONS,
   PROTECT_VERSION_PROBE,
 } from '@unifi-local-mcp/unifi-protect';
 
 export interface ModuleAdapter {
   moduleId: ModuleId;
-  /** The vendor contract revision the operations were reviewed against (api-specs/). */
-  contractRevision: string;
+  /** The vendor contract revisions the operations were reviewed against (api-specs/). */
+  contractRevisions: readonly string[];
   operations: readonly OperationDescriptor[];
   probe: VersionProbeSpec;
 }
@@ -26,13 +26,13 @@ export interface ModuleAdapter {
 export const ADAPTERS: readonly ModuleAdapter[] = [
   {
     moduleId: 'network',
-    contractRevision: NETWORK_CONTRACT_REVISION,
+    contractRevisions: [NETWORK_CONTRACT_REVISION],
     operations: NETWORK_OPERATIONS,
     probe: NETWORK_VERSION_PROBE,
   },
   {
     moduleId: 'protect',
-    contractRevision: PROTECT_CONTRACT_REVISION,
+    contractRevisions: PROTECT_CONTRACT_REVISIONS,
     operations: PROTECT_OPERATIONS,
     probe: PROTECT_VERSION_PROBE,
   },

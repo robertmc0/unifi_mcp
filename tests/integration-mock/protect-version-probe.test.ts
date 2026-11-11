@@ -91,12 +91,47 @@ describe('Protect version probing in the service', () => {
     expect(s.mock.requests.at(-1)?.headers['x-api-key']).toBe('synthetic-protect-key-SENTINEL-42');
   });
 
-  it('hides and refuses operations for an older or newer major Protect version', async () => {
+  it('on the official release 7.3.74, serves its operations and refuses those 7.4.96 added', async () => {
+    const s = await start();
+    s.reported.version = '7.3.74';
+    await vi.waitFor(
+      () => {
+        expect(s.service.consoles.observedVersion(s.consoleId, 'protect')).toBe('7.3.74');
+      },
+      { timeout: 3000 },
+    );
+    const client = await connect(new URL('/mcp', s.service.url), s.token);
+    const listed = await operations(client);
+    expect(listed).toContain('protect.info.get');
+    expect(listed).toContain('protect.cameras.list');
+    expect(listed).not.toContain('protect.alarm.list_external_profiles');
+    const info = structured(
+      await client.callTool({
+        name: 'unifi_execute',
+        arguments: { operationId: 'protect.info.get', consoleId: s.consoleId },
+      }),
+    );
+    expect(info).toMatchObject({ status: 'ok', data: { applicationVersion: '7.3.74' } });
+    const before = s.mock.requests.length;
+    const newer = structured(
+      await client.callTool({
+        name: 'unifi_execute',
+        arguments: { operationId: 'protect.alarm.list_external_profiles', consoleId: s.consoleId },
+      }),
+    );
+    expect(newer).toMatchObject({ status: 'denied', error: { code: 'operation_unsupported' } });
+    expect((newer['error'] as { message: string }).message).toContain(
+      'The console reports protect 7.3.74; this operation is verified for >=7.4.96 <8.',
+    );
+    expect(s.mock.requests.slice(before).every((r) => r.url === INFO)).toBe(true);
+  });
+
+  it('hides and refuses every operation for an older or newer major Protect version', async () => {
     const s = await start();
     await vi.waitFor(() => {
       expect(s.service.consoles.observedVersion(s.consoleId, 'protect')).toBe('7.4.96');
     });
-    for (const version of ['7.3.74', '8.0.1']) {
+    for (const version of ['7.2.95', '8.0.1']) {
       s.reported.version = version;
       await vi.waitFor(
         () => {
@@ -115,7 +150,7 @@ describe('Protect version probing in the service', () => {
       );
       expect(result).toMatchObject({ status: 'denied', error: { code: 'operation_unsupported' } });
       expect((result['error'] as { message: string }).message).toContain(
-        `The console reports protect ${version}; this operation is verified for >=7.4.96 <8.`,
+        `The console reports protect ${version}; this operation is verified for >=7.3.74 <8.`,
       );
       expect(s.mock.requests.slice(before).every((r) => r.url === INFO)).toBe(true);
     }

@@ -18,7 +18,7 @@
 
 - [API sources, provenance and terms](../api-specs/README.md)
 - [API coverage matrix](api-coverage/README.md): [Network 11.0.97](api-coverage/network/11.0.97.md),
-  [Protect 7.4.96](api-coverage/protect/7.4.96.md), [Access 2026-03-23](api-coverage/access/2026-03-23.md)
+  [Protect 7.3.74](api-coverage/protect/7.3.74.md), [Protect 7.4.96](api-coverage/protect/7.4.96.md), [Access 2026-03-23](api-coverage/access/2026-03-23.md)
 
 ## Operator manual (written with each phase)
 

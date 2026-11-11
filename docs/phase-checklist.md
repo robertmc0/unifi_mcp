@@ -347,9 +347,9 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
 
 ## Phase 3 — UniFi Protect (in progress)
 
-Baseline: Protect integration API v7.4.96 (83 operations: 38 HTTP reads, 3 WebSocket
-subscriptions, 42 writes), `api-specs/protect/7.4.96/`
-([ADR 0019](adr/0019-protect-adapter.md)).
+Baselines: Protect integration API v7.3.74, the current official release (74 operations),
+and v7.4.96, the newest documented (83 operations: 38 HTTP reads, 3 WebSocket
+subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-adapter.md)).
 
 ### Implementation order (plan)
 
@@ -377,6 +377,11 @@ subscriptions, 42 writes), `api-specs/protect/7.4.96/`
    `location` (fobs), `personal_identifier` (users); RTSPS stream URLs reduced to which
    qualities exist. ADR 0019 §5. Tests: `tests/integration-mock/protect-reads.test.ts`,
    `tests/contract/protect-security-review.test.ts`.
+   6b. ✅ **Official release 7.3.74** (2026-11-11): the owner's console runs 7.3.74 and no
+   update is offered. Both revisions kept; each operation built from the oldest revision
+   that documents it (71 from 7.3.74, 8 from 7.4.96); `api:reconcile` check 8 proves the
+   later differences additive. ADR 0019 §7. Tests: `tests/unit/scripts/revision-compat.test.ts`,
+   `tests/integration-mock/protect-version-probe.test.ts`.
 6. ✅ **Writes** (2026-11-11): 41 of 42 (the upload is the reviewed omission); 25 high
    with approval (alarm manager, anything that silences alarms or monitoring, physical
    actions), 16 medium; the permanent microphone disable and talkback off by default; PINs

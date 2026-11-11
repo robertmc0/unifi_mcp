@@ -1,0 +1,55 @@
+{
+  "application": "protect",
+  "revision": "7.3.74",
+  "vendorVersionLabel": "v7.3.74",
+  "contractKind": "openapi",
+  "retrievedAt": "2026-11-10",
+  "localBaseUrlTemplate": "https://{consoleHost}/proxy/protect/integration",
+  "forbiddenBaseUrlTemplates": [
+    "https://api.ui.com/v1/connector/consoles/{consoleId}/proxy/protect/integration"
+  ],
+  "authentication": {
+    "scheme": "api-key-header",
+    "header": "X-API-KEY",
+    "valueFormat": "<api-key>",
+    "credentialCreation": "Sign in to the local UniFi application, open Integrations, select \"Create New API Key\"; the key is displayed once (developer.ui.com Getting Started, \"Local\" connection type).",
+    "sources": [
+      "https://developer.ui.com/protect/v7.3.74/gettingstarted",
+      "https://developer.ui.com/llms.txt"
+    ]
+  },
+  "minimumApplicationVersion": null,
+  "artifacts": [
+    {
+      "name": "openapi.json",
+      "url": "https://developer.ui.com/protect/v7.3.74/openapi.json",
+      "sha256": "85caa3c70a5febd8ae2e4f90dbe31b8ad544fc9b74b6c02ca477c8af03d14dc6",
+      "bytes": 440739,
+      "mediaType": "application/json",
+      "role": "contract"
+    },
+    {
+      "name": "llms.txt",
+      "url": "https://developer.ui.com/protect/v7.3.74/llms.txt",
+      "sha256": "5ee56a5109a0024e1386a45d9bc351ed7b27183074f634d17b0dbde5ccf219b3",
+      "bytes": 10178,
+      "mediaType": "text/plain",
+      "role": "index"
+    }
+  ],
+  "notes": [
+    "OpenAPI 3.1.0 with 74 operations and 302 component schemas. info.version is \"0.0.0\"; the portal labels this document v7.3.74. The portal label is the revision of record.",
+    "OpenAPI operations carry no operationId; inventory keys are \"<METHOD> <path>\".",
+    "Servers: \"UniFi API Cloud Connector\" (forbidden by design) and \"Local Console\" https://{consoleIP}/proxy/protect/integration.",
+    "Documented WebSocket update surfaces: GET /v1/subscribe/devices and GET /v1/subscribe/events (spec §11 native events, Phase 3).",
+    "Required Ports Reference lists TCP 7443 \"REST API (HTTPS)\" for Protect. That is an application service port, not the documented integration base URL above (spec §4.1: do not confuse service ports with the integration API).",
+    "Sensitive surfaces: camera snapshot (image), RTSPS stream URLs, talkback session URL, user/identity-user e-mail, permanent microphone disable (irreversible).",
+    "Observed 2026-11-11 (see network/11.0.97; not stated by the vendor): a key created under Integrations in UniFi Network also authorises this API on the same console.",
+    "The current official release on 2026-11-11: the owner's console runs 7.3.74 and UniFi OS offers no newer release, while the developer portal documents 7.4.96. Operations this revision documents are built from it and also serve later 7.x consoles; api:reconcile checks that every later difference is additive (ADR 0019 §7)."
+  ],
+  "unverified": [
+    "How the WebSocket subscriptions authenticate (X-API-KEY on the upgrade request is expected but must be confirmed against the endpoint documentation in Phase 3).",
+    "Size bounds for GET /v1/cameras/{id}/snapshot (documented media type: image/jpeg).",
+    "Local API rate limits are not documented."
+  ]
+}

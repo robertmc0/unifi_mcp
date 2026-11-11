@@ -3,6 +3,7 @@
  */
 import { readdir, readFile, statfs } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { satisfies } from '@unifi-local-mcp/core';
 import {
   defaultApiSpecsDir,
   isLoopbackBind,
@@ -274,15 +275,25 @@ export const apiCoverageCommand: Command = {
         const inventory = JSON.parse(
           await readFile(join(dir, app.name, revision.name, 'operations.json'), 'utf8'),
         ) as {
-          operations: unknown[];
+          operations: { method: string; path: string }[];
         };
+        // Implemented for this revision: a registered operation with the same method and
+        // path whose verified version range includes the revision (ADR 0019 §7).
+        const registered = ADAPTERS.filter((a) => a.moduleId === app.name).flatMap(
+          (a) => a.operations,
+        );
         rows.push({
           module: app.name,
           revision: revision.name,
           documented: inventory.operations.length,
-          implemented:
-            ADAPTERS.find((a) => a.moduleId === app.name && a.contractRevision === revision.name)
-              ?.operations.length ?? 0,
+          implemented: inventory.operations.filter((op) =>
+            registered.some(
+              (d) =>
+                d.httpMethod === op.method &&
+                d.pathTemplate === op.path &&
+                satisfies(revision.name, d.apiVersionRange),
+            ),
+          ).length,
         });
       }
     }

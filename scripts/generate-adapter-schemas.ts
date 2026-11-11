@@ -31,6 +31,20 @@ export const GENERATED_MODULES = [
   },
   {
     application: 'protect',
+    revision: '7.3.74',
+    output: 'packages/unifi-protect/src/generated/protect-7.3.74.ts',
+    // The current official release; operations it documents are built from it (ADR 0019 §7).
+    naming: 'path',
+    targetParameters: [],
+    omittedParameters: {},
+    omittedOperations: {
+      'POST /v1/files/{fileType}':
+        'a multipart upload whose form field is not documented (the body is only a binary ' +
+        'string); not implemented until the contract names it (ADR 0019)',
+    },
+  },
+  {
+    application: 'protect',
     revision: '7.4.96',
     output: 'packages/unifi-protect/src/generated/protect-7.4.96.ts',
     // No vendor operationIds: names come from method and path.

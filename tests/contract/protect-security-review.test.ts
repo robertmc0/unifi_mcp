@@ -118,13 +118,17 @@ interface InventoryOperation {
   documentationUrl: string;
 }
 
-const inventory = JSON.parse(
-  await readFile(
-    join(import.meta.dirname, '../../api-specs/protect/7.4.96/operations.json'),
-    'utf8',
-  ),
-) as { operations: InventoryOperation[] };
+const load = async (revision: string) =>
+  JSON.parse(
+    await readFile(
+      join(import.meta.dirname, `../../api-specs/protect/${revision}/operations.json`),
+      'utf8',
+    ),
+  ) as { operations: InventoryOperation[] };
+const official = await load('7.3.74');
+const inventory = await load('7.4.96');
 const byKey = new Map(inventory.operations.map((op) => [op.key, op]));
+const officialKeys = new Map(official.operations.map((op) => [op.key, op]));
 
 describe('Protect security review', () => {
   it('covers every documented operation except the subscriptions and the omitted upload', () => {
@@ -133,6 +137,25 @@ describe('Protect security review', () => {
     );
     expect(http).toHaveLength(79);
     expect(Object.keys(REVIEW).sort()).toEqual(http.map((op) => op.key).sort());
+  });
+
+  it('builds 71 operations from the official release and only the 8 new ones from 7.4.96', () => {
+    const revisions = PROTECT_OPERATIONS.map((d) => d.contractRevision);
+    expect(revisions.filter((r) => r === '7.3.74')).toHaveLength(71);
+    expect(
+      PROTECT_OPERATIONS.filter((d) => d.contractRevision === '7.4.96')
+        .map((d) => d.operationId)
+        .sort(),
+    ).toEqual([
+      'protect.alarm.arm_external_profile',
+      'protect.alarm.create_external_profile',
+      'protect.alarm.delete_external_profile',
+      'protect.alarm.disarm_external_profile',
+      'protect.alarm.get_external_profile',
+      'protect.alarm.list_external_profiles',
+      'protect.alarm.update_external_profile',
+      'protect.speakers.stop_siren',
+    ]);
   });
 
   it('records every implemented operation, and only those', () => {
@@ -165,6 +188,8 @@ describe('Protect security review', () => {
           permission: descriptor.permission,
           siteScoped: descriptor.siteScoped,
           documentationUrl: descriptor.documentationUrl,
+          contractRevision: descriptor.contractRevision,
+          apiVersionRange: descriptor.apiVersionRange,
         },
         key,
       ).toEqual({
@@ -178,7 +203,18 @@ describe('Protect security review', () => {
         namedTool,
         permission: `protect.${descriptor.category}.${effect}`,
         siteScoped: false,
-        documentationUrl: op.documentationUrl,
+        // Built from the oldest supported revision that documents it (ADR 0019 §7).
+        ...(officialKeys.has(key)
+          ? {
+              documentationUrl: officialKeys.get(key)?.documentationUrl,
+              contractRevision: '7.3.74',
+              apiVersionRange: '>=7.3.74 <8',
+            }
+          : {
+              documentationUrl: op.documentationUrl,
+              contractRevision: '7.4.96',
+              apiVersionRange: '>=7.4.96 <8',
+            }),
       });
     }
   });

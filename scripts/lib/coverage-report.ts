@@ -12,7 +12,7 @@
  */
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { OperationDescriptor } from '@unifi-local-mcp/core';
+import { satisfies, type OperationDescriptor } from '@unifi-local-mcp/core';
 import { ADAPTERS } from '@unifi-local-mcp/mcp-server';
 import {
   COVERAGE_DIR,
@@ -246,13 +246,22 @@ export async function buildCoverageFiles(
   const liveDir = options.liveDir ?? join(COVERAGE_DIR, 'live');
   const files = new Map<string, string>();
   const modules = [];
-  const registered = new Map<string, OperationDescriptor>();
-  for (const adapter of ADAPTERS) {
-    for (const d of adapter.operations) {
-      registered.set(`${d.moduleId} ${d.contractRevision} ${d.httpMethod} ${d.pathTemplate}`, d);
-    }
-  }
-  const matched = new Set<string>();
+  const registered = ADAPTERS.flatMap((adapter) => adapter.operations);
+  /**
+   * The registered operation implementing a documented one in a revision: same module,
+   * method and path, and a verified version range that includes the revision (an
+   * operation built from an older revision covers later ones it stays valid for,
+   * ADR 0019 §7).
+   */
+  const implementing = (application: string, revision: string, method: string, path: string) =>
+    registered.find(
+      (d) =>
+        d.moduleId === application &&
+        d.httpMethod === method &&
+        d.pathTemplate === path &&
+        satisfies(revision, d.apiVersionRange),
+    );
+  const matched = new Set<OperationDescriptor>();
   for (const rev of await listSpecRevisions()) {
     const p = rev.provenance;
     const inventory = await readJson<Inventory>(join(rev.dir, 'operations.json'));
@@ -269,9 +278,8 @@ export async function buildCoverageFiles(
       });
     }
     const ops: CoverageOperation[] = inventory.operations.map((op) => {
-      const id = `${p.application} ${p.revision} ${op.method} ${op.path}`;
-      const d = registered.get(id);
-      if (d !== undefined) matched.add(id);
+      const d = implementing(p.application, p.revision, op.method, op.path);
+      if (d !== undefined) matched.add(d);
       return {
         key: op.key,
         method: op.method,
@@ -318,7 +326,9 @@ export async function buildCoverageFiles(
       operations: ops,
     });
   }
-  const unmatched = [...registered.keys()].filter((key) => !matched.has(key));
+  const unmatched = registered
+    .filter((d) => !matched.has(d))
+    .map((d) => `${d.moduleId} ${d.contractRevision} ${d.httpMethod} ${d.pathTemplate}`);
   if (unmatched.length > 0) {
     throw new Error(`Registered operations missing from api-specs/: ${unmatched.join(', ')}`);
   }

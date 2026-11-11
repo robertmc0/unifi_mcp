@@ -2,8 +2,10 @@
  * Builds a Protect operation descriptor from two separate sources (spec §4.3, ADR 0019):
  *
  * - the **generated contract facts** of one vendor operation, by its inventory key
- *   `"<METHOD> <path>"` (the contract has no operationIds), from
- *   `generated/protect-7.4.96.ts`;
+ *   `"<METHOD> <path>"` (the contract has no operationIds), from the oldest supported
+ *   revision that documents it (ADR 0019 §7): `generated/protect-7.3.74.ts` for the
+ *   operations of the current official release, `generated/protect-7.4.96.ts` for those
+ *   only the newer revision documents;
  * - the **hand-reviewed security metadata** passed in `review`.
  *
  * Nothing in `review` is derived from the vendor document, and regenerating the schemas
@@ -13,34 +15,54 @@ import { defineOperation, type OperationDescriptor, type Target } from '@unifi-l
 import type { Risk, SensitivityTag } from '@unifi-local-mcp/policy';
 import type * as z from 'zod';
 import { withoutCredentials } from './credentials.ts';
-import { OPERATIONS } from './generated/protect-7.4.96.ts';
-
-/** The vendor contract revision every Protect operation was reviewed against. */
-export const PROTECT_CONTRACT_REVISION = '7.4.96';
+import { OPERATIONS as OFFICIAL } from './generated/protect-7.3.74.ts';
+import { OPERATIONS as NEWEST } from './generated/protect-7.4.96.ts';
 
 /**
- * Protect application versions the adapter accepts (ADR 0019 §4). The contract was
- * verified for 7.4.96. Later 7.x releases are accepted as compatible, because they keep
- * the `/v1` integration API. Anything else is refused with `operation_unsupported`.
+ * The contract revisions Protect operations are reviewed against (ADR 0019 §7): 7.3.74,
+ * the current official release, and 7.4.96, the newest documented revision.
  */
-export const PROTECT_VERSION_RANGE = '>=7.4.96 <8';
+export const PROTECT_CONTRACT_REVISIONS = ['7.3.74', '7.4.96'] as const;
+export type ProtectRevision = (typeof PROTECT_CONTRACT_REVISIONS)[number];
 
-type Generated = typeof OPERATIONS;
-/** `"<METHOD> <path>"` of a documented HTTP operation. */
+/**
+ * Protect application versions the adapter accepts (ADR 0019 §7): 7.3.74 and later 7.x.
+ * Each operation narrows it to the revision it is built from: operations that 7.3.74
+ * documents run on `>=7.3.74 <8` (every later difference is additive, checked by
+ * `api:reconcile`); the ones only 7.4.96 documents need `>=7.4.96 <8`. Anything else is
+ * refused with `operation_unsupported`.
+ */
+export const PROTECT_VERSION_RANGE = '>=7.3.74 <8';
+
+type Official = typeof OFFICIAL;
+type Newest = typeof NEWEST;
+/** `"<METHOD> <path>"` of a documented HTTP operation (any supported revision). */
 export type VendorKey = {
-  [K in keyof Generated]: Generated[K]['transport'] extends 'http' ? K : never;
-}[keyof Generated];
-type In<K extends VendorKey> = Generated[K]['input'] extends z.ZodObject
-  ? Generated[K]['input']
+  [K in keyof Newest]: Newest[K]['transport'] extends 'http' ? K : never;
+}[keyof Newest];
+/** The generated facts the operation is built from: the oldest revision documenting it. */
+type Contract<K extends VendorKey> = K extends keyof Official ? Official[K] : Newest[K];
+type In<K extends VendorKey> = Contract<K>['input'] extends z.ZodObject
+  ? Contract<K>['input']
   : never;
-type Out<K extends VendorKey> = Generated[K]['output'] extends z.ZodType
-  ? Generated[K]['output']
+type Out<K extends VendorKey> = Contract<K>['output'] extends z.ZodType
+  ? Contract<K>['output']
   : never;
+
+/** The oldest supported revision that documents an operation, and its generated facts. */
+function contractOf<K extends VendorKey>(
+  key: K,
+): { revision: ProtectRevision; contract: Contract<K> } {
+  const official = (OFFICIAL as Record<string, unknown>)[key];
+  return official === undefined
+    ? { revision: '7.4.96', contract: NEWEST[key] as Contract<K> }
+    : { revision: '7.3.74', contract: official as Contract<K> };
+}
 
 /** The vendor's documentation page of an operation (checked against the inventory). */
-export function documentationUrl(method: string, path: string): string {
+export function documentationUrl(method: string, path: string, revision: ProtectRevision): string {
   const slug = `${method.toLowerCase()}-${path.replace(/[/{}]/g, '').toLowerCase()}`;
-  return `https://developer.ui.com/protect/v${PROTECT_CONTRACT_REVISION}/${slug}`;
+  return `https://developer.ui.com/protect/v${revision}/${slug}`;
 }
 
 interface ReviewCommon<K extends VendorKey> {
@@ -88,7 +110,7 @@ export function protectOperation<K extends VendorKey>(
   key: K,
   review: ReadReview<K> | WriteReview<K>,
 ): OperationDescriptor<In<K>, Out<K>> {
-  const contract = OPERATIONS[key];
+  const { revision, contract } = contractOf(key);
   const write = review.effect === 'write' ? review : undefined;
   const binary = contract.responseType === 'image/jpeg';
   return defineOperation<In<K>, Out<K>>({
@@ -103,9 +125,9 @@ export function protectOperation<K extends VendorKey>(
     siteScoped: false,
     ...(write?.defaultDisabled === undefined ? {} : { defaultDisabled: write.defaultDisabled }),
     description: review.description,
-    documentationUrl: documentationUrl(contract.method, contract.path),
-    contractRevision: PROTECT_CONTRACT_REVISION,
-    apiVersionRange: PROTECT_VERSION_RANGE,
+    documentationUrl: documentationUrl(contract.method, contract.path, revision),
+    contractRevision: revision,
+    apiVersionRange: `>=${revision} <8`,
     httpMethod: contract.method,
     pathTemplate: contract.path,
     queryParameters: contract.queryParameters,
