@@ -355,8 +355,13 @@ subscriptions, 42 writes), `api-specs/protect/7.4.96/`
 
 1. ✅ **Contract baseline** (2026-11-11): 7.4.96 replaces the Phase 0 record of 7.3.74 (a
    strict superset: 9 added, none removed, one documented 409 added). ADR 0019 §1.
-2. **Schemas**: extend the generator for Protect (binary `image/jpeg` response, multipart
-   request, WebSocket message schemas) → `packages/unifi-protect/src/generated/`.
+2. ✅ **Schemas** (2026-11-11): the generator names operations from method and path,
+   records transport and response type, returns `image/jpeg` as bytes, and translates
+   `oneOf`/`anyOf`, `const`, nullable types, typed maps, `pattern` and the other
+   constructs Protect uses → `packages/unifi-protect/src/generated/protect-7.4.96.ts`
+   (82 operations). The multipart upload is a reviewed omission (its form field is not
+   documented). ADR 0019 §2. Tests: `tests/unit/scripts/openapi-zod.test.ts`,
+   `tests/contract/protect-generated-schemas.test.ts`.
 3. **Binary content**: documented binary responses in the executor (media type check,
    size cap), MCP image content, `camera_image` sensitivity; never logged or audited.
 4. **Adapter skeleton and version probe** (`GET /v1/meta/info`) and the supported range.

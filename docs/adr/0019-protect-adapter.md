@@ -47,6 +47,51 @@ the console's Integrations key authorises it ([ADR 0005](0005-official-local-uni
 `scripts/reconcile-api-coverage.ts --write` now derives the inventory of a new OpenAPI
 revision that has no `operations.json` yet, as `api-specs/README.md` describes.
 
+### 2. Generated schemas (step 2)
+
+The ADR 0018 generator produces `packages/unifi-protect/src/generated/protect-7.4.96.ts`
+from the cached, checksum-verified document. What Protect needed:
+
+- **Names without vendor operationIds.** With `naming: 'path'`, an operation is named from
+  its method and path (`GET /v1/cameras/{id}/snapshot` → `getV1CamerasByIdSnapshot`), and
+  `OPERATIONS` is keyed by the inventory key `"<METHOD> <path>"`. Two operations that would
+  get the same name fail generation.
+- **Transport and response type** on every generated operation: `transport` is
+  `websocket` for `/v1/subscribe/*` (the inventory's rule) and `http` otherwise;
+  `responseType` is `json`, `none` or a binary media type. Only `image/jpeg` is accepted as
+  binary, and only when documented as a binary string; its output is a `Uint8Array`. The
+  Network module gained the same two fields and nothing else.
+- **More of JSON Schema**, in the same spirit as ADR 0018: requests strict and bounded,
+  responses tolerant of new values but never passing undocumented data on.
+  - `oneOf`/`anyOf` are unions. A `null` member makes the rest nullable, as does
+    `type: [T, "null"]`. Request unions accept a value that matches any member; the members
+    are strict objects or distinct primitives, so `oneOf` and `anyOf` do not differ in
+    practice.
+  - `const` is a literal. A union of string constants is an enum, relaxed to a string in
+    responses like other enums.
+  - A discriminated `oneOf` with an explicit mapping (inline or as a component, without
+    `allOf` inheritance) selects the variant by its literal. In responses, an unknown
+    discriminator value is accepted and keeps only the discriminator.
+  - `pattern`, `exclusiveMinimum`/`exclusiveMaximum` and `minProperties` bind requests;
+    responses ignore them. `format: uri` is a URL in requests and a string in responses.
+  - Typed maps (`additionalProperties` with a schema) are accepted in responses only (the
+    alarm hub's terminal status). `additionalProperties: true` next to properties changes
+    nothing: requests forward only documented properties, and responses strip the rest.
+    An object without properties that is open to anything is refused.
+  - `allOf` with one primitive reference and constraints beside it narrows the primitive.
+    An enum without a type whose values are all strings is a string enum.
+- **Reviewed omission.** `POST /v1/files/{fileType}` (upload a device asset) is a
+  multipart request whose body is documented only as a binary string: the form field that
+  carries the file is not named. Sending it would mean guessing, so it is not generated
+  and not implemented. Generation fails if the operation disappears, so the decision is
+  revisited with each revision.
+
+While adding tests, a bug in the existing primitive intersection came to light:
+`values.reduce(Math.max)` passes the index and the array too, so two numeric bounds
+became `NaN`. It never reached Network's output; it made Protect's narrowed camera
+`micVolume` (1–100) reject every value. The intersection is fixed, and a non-finite bound
+now fails generation.
+
 ## Consequences
 
 - Consoles with a Protect version older than the supported range will be refused with a

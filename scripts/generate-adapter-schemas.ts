@@ -29,6 +29,20 @@ export const GENERATED_MODULES = [
       },
     },
   },
+  {
+    application: 'protect',
+    revision: '7.4.96',
+    output: 'packages/unifi-protect/src/generated/protect-7.4.96.ts',
+    // No vendor operationIds: names come from method and path.
+    naming: 'path',
+    targetParameters: [],
+    omittedParameters: {},
+    omittedOperations: {
+      'POST /v1/files/{fileType}':
+        'a multipart upload whose form field is not documented (the body is only a binary ' +
+        'string); not implemented until the contract names it (ADR 0019)',
+    },
+  },
 ] as const;
 
 export interface GenerationResult {
@@ -55,6 +69,8 @@ async function render(module: (typeof GENERATED_MODULES)[number]): Promise<strin
     generator: 'scripts/generate-adapter-schemas.ts',
     targetParameters: module.targetParameters,
     omittedParameters: module.omittedParameters,
+    ...('naming' in module ? { naming: module.naming } : {}),
+    ...('omittedOperations' in module ? { omittedOperations: module.omittedOperations } : {}),
   });
   const outputPath = join(REPO_ROOT, module.output);
   const config = (await prettier.resolveConfig(outputPath)) ?? {};

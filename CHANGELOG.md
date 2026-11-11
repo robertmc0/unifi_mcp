@@ -11,6 +11,11 @@ All notable changes to this project are documented here. The format follows
 - Protect contract baseline moved to v7.4.96 (83 operations; ADR 0019). The live
   read-only test also records the Protect version the console reports.
 - `api:reconcile --write` derives the inventory of a new OpenAPI revision.
+- Generated Protect 7.4.96 schemas (82 of 83 operations; the multipart upload with an
+  undocumented form field is a reviewed omission). The generator gained path-based names,
+  transport and response type, binary `image/jpeg` responses and more of JSON Schema
+  (ADR 0019 §2).
+- Fixed: two numeric bounds in a narrowed primitive became `NaN` in generated schemas.
 
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 

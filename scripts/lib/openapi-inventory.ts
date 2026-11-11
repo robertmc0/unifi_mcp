@@ -24,7 +24,7 @@ interface OpenApiDocument {
 }
 
 /** Endpoints whose vendor documentation declares a WebSocket upgrade rather than plain HTTP. */
-const WEBSOCKET_PATH = /^\/v1\/subscribe\//;
+export const WEBSOCKET_PATH = /^\/v1\/subscribe\//;
 
 export function parseOpenApi(text: string): OpenApiDocument {
   const doc = JSON.parse(text) as OpenApiDocument;

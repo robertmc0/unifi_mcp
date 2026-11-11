@@ -3551,168 +3551,210 @@ const WifiBroadcastDetailsOut = z.union([
 export const adoptDevice = {
   method: 'POST',
   path: '/v1/sites/{siteId}/devices',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: IntegrationDeviceAdoptionRequestDtoIn }),
   output: AdoptedDeviceDetailsOut,
 } as const;
 export const createAclRule = {
   method: 'POST',
   path: '/v1/sites/{siteId}/acl-rules',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: ACLRuleUpdateIn }),
   output: ACLRuleOut,
 } as const;
 export const createDnsPolicy = {
   method: 'POST',
   path: '/v1/sites/{siteId}/dns/policies',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: CreateOrUpdateDNSPolicyIn }),
   output: DNSPolicyOut,
 } as const;
 export const createFirewallPolicy = {
   method: 'POST',
   path: '/v1/sites/{siteId}/firewall/policies',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: CreateOrUpdateFirewallPolicyIn }),
   output: FirewallPolicyOut,
 } as const;
 export const createFirewallZone = {
   method: 'POST',
   path: '/v1/sites/{siteId}/firewall/zones',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: CreateOrUpdateFirewallZoneIn }),
   output: FirewallZoneOut,
 } as const;
 export const createNetwork = {
   method: 'POST',
   path: '/v1/sites/{siteId}/networks',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: CreateOrUpdateNetworkIn }),
   output: NetworkDetailsOut,
 } as const;
 export const createTrafficMatchingList = {
   method: 'POST',
   path: '/v1/sites/{siteId}/traffic-matching-lists',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: CreateOrUpdateTrafficMatchingListIn }),
   output: TrafficMatchingListOut,
 } as const;
 export const createVouchers = {
   method: 'POST',
   path: '/v1/sites/{siteId}/hotspot/vouchers',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: HotspotVoucherCreationRequestIn }),
   output: IntegrationVoucherCreationResultDtoOut,
 } as const;
 export const createWifiBroadcast = {
   method: 'POST',
   path: '/v1/sites/{siteId}/wifi/broadcasts',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: WifiBroadcastCreateOrUpdateIn }),
   output: WifiBroadcastDetailsOut,
 } as const;
 export const deleteAclRule = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/acl-rules/{aclRuleId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'none',
   input: z.strictObject({ aclRuleId: z.guid() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const deleteDnsPolicy = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/dns/policies/{dnsPolicyId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'none',
   input: z.strictObject({ dnsPolicyId: z.guid() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const deleteFirewallPolicy = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/firewall/policies/{firewallPolicyId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'none',
   input: z.strictObject({ firewallPolicyId: z.guid() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const deleteFirewallZone = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/firewall/zones/{firewallZoneId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'none',
   input: z.strictObject({ firewallZoneId: z.guid() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const deleteNetwork = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/networks/{networkId}',
+  transport: 'http',
   queryParameters: ['force'],
   hasBody: false,
+  responseType: 'none',
   input: z.strictObject({ networkId: z.guid(), force: z.boolean().optional() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const deleteTrafficMatchingList = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'none',
   input: z.strictObject({ trafficMatchingListId: z.guid() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const deleteVoucher = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/hotspot/vouchers/{voucherId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ voucherId: z.guid() }),
   output: VoucherDeletionResultsOut,
 } as const;
 export const deleteVouchers = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/hotspot/vouchers',
+  transport: 'http',
   queryParameters: ['filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ filter: z.string().max(4096) }),
   output: VoucherDeletionResultsOut,
 } as const;
 export const deleteWifiBroadcast = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}',
+  transport: 'http',
   queryParameters: ['force'],
   hasBody: false,
+  responseType: 'none',
   input: z.strictObject({ wifiBroadcastId: z.guid(), force: z.boolean().optional() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const executeAdoptedDeviceAction = {
   method: 'POST',
   path: '/v1/sites/{siteId}/devices/{deviceId}/actions',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'none',
   input: z.strictObject({ deviceId: z.guid(), body: DeviceActionRequestIn }),
   output: z.unknown().transform(() => null),
 } as const;
 export const executeConnectedClientAction = {
   method: 'POST',
   path: '/v1/sites/{siteId}/clients/{clientId}/actions',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ clientId: z.guid(), body: ClientActionRequestIn }),
   output: ClientActionResponseOut,
 } as const;
 export const executePortAction = {
   method: 'POST',
   path: '/v1/sites/{siteId}/devices/{deviceId}/interfaces/ports/{portIdx}/actions',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'none',
   input: z.strictObject({
     portIdx: z.int().min(-2147483648).max(2147483647),
     deviceId: z.guid(),
@@ -3723,24 +3765,30 @@ export const executePortAction = {
 export const getAclRule = {
   method: 'GET',
   path: '/v1/sites/{siteId}/acl-rules/{aclRuleId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ aclRuleId: z.guid() }),
   output: ACLRuleOut,
 } as const;
 export const getAclRuleOrdering = {
   method: 'GET',
   path: '/v1/sites/{siteId}/acl-rules/ordering',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({}),
   output: ACLRuleOrderingOut,
 } as const;
 export const getAclRulePage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/acl-rules',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3751,24 +3799,30 @@ export const getAclRulePage = {
 export const getAdoptedDeviceDetails = {
   method: 'GET',
   path: '/v1/sites/{siteId}/devices/{deviceId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ deviceId: z.guid() }),
   output: AdoptedDeviceDetailsOut,
 } as const;
 export const getAdoptedDeviceLatestStatistics = {
   method: 'GET',
   path: '/v1/sites/{siteId}/devices/{deviceId}/statistics/latest',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ deviceId: z.guid() }),
   output: LatestStatisticsForADeviceOut,
 } as const;
 export const getAdoptedDeviceOverviewPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/devices',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3779,16 +3833,20 @@ export const getAdoptedDeviceOverviewPage = {
 export const getConnectedClientDetails = {
   method: 'GET',
   path: '/v1/sites/{siteId}/clients/{clientId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ clientId: z.guid() }),
   output: ClientDetailsOut,
 } as const;
 export const getConnectedClientOverviewPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/clients',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3799,8 +3857,10 @@ export const getConnectedClientOverviewPage = {
 export const getCountries = {
   method: 'GET',
   path: '/v1/countries',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3812,8 +3872,10 @@ export const getCountries = {
 export const getDeviceTagPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/device-tags',
+  transport: 'http',
   queryParameters: ['offset', 'limit'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3823,16 +3885,20 @@ export const getDeviceTagPage = {
 export const getDnsPolicy = {
   method: 'GET',
   path: '/v1/sites/{siteId}/dns/policies/{dnsPolicyId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ dnsPolicyId: z.guid() }),
   output: DNSPolicyOut,
 } as const;
 export const getDnsPolicyPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/dns/policies',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3843,8 +3909,10 @@ export const getDnsPolicyPage = {
 export const getDpiApplicationCategories = {
   method: 'GET',
   path: '/v1/dpi/categories',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3855,8 +3923,10 @@ export const getDpiApplicationCategories = {
 export const getDpiApplications = {
   method: 'GET',
   path: '/v1/dpi/applications',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3867,8 +3937,10 @@ export const getDpiApplications = {
 export const getFirewallPolicies = {
   method: 'GET',
   path: '/v1/sites/{siteId}/firewall/policies',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3879,32 +3951,40 @@ export const getFirewallPolicies = {
 export const getFirewallPolicy = {
   method: 'GET',
   path: '/v1/sites/{siteId}/firewall/policies/{firewallPolicyId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ firewallPolicyId: z.guid() }),
   output: FirewallPolicyOut,
 } as const;
 export const getFirewallPolicyOrdering = {
   method: 'GET',
   path: '/v1/sites/{siteId}/firewall/policies/ordering',
+  transport: 'http',
   queryParameters: ['sourceFirewallZoneId', 'destinationFirewallZoneId'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ sourceFirewallZoneId: z.guid(), destinationFirewallZoneId: z.guid() }),
   output: IntegrationFirewallPolicyOrderingDtoOut,
 } as const;
 export const getFirewallZone = {
   method: 'GET',
   path: '/v1/sites/{siteId}/firewall/zones/{firewallZoneId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ firewallZoneId: z.guid() }),
   output: FirewallZoneOut,
 } as const;
 export const getFirewallZones = {
   method: 'GET',
   path: '/v1/sites/{siteId}/firewall/zones',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3915,24 +3995,30 @@ export const getFirewallZones = {
 export const getInfo = {
   method: 'GET',
   path: '/v1/info',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({}),
   output: ApplicationInfoOut,
 } as const;
 export const getLag = {
   method: 'GET',
   path: '/v1/sites/{siteId}/switching/lags/{lagId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ lagId: z.guid() }),
   output: LAGDetailsOut,
 } as const;
 export const getLagPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/switching/lags',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3943,16 +4029,20 @@ export const getLagPage = {
 export const getMcLagDomain = {
   method: 'GET',
   path: '/v1/sites/{siteId}/switching/mc-lag-domains/{mcLagDomainId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ mcLagDomainId: z.guid() }),
   output: IntegrationMcLagDomainDtoOut,
 } as const;
 export const getMcLagDomainPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/switching/mc-lag-domains',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3963,24 +4053,30 @@ export const getMcLagDomainPage = {
 export const getNetworkDetails = {
   method: 'GET',
   path: '/v1/sites/{siteId}/networks/{networkId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ networkId: z.guid() }),
   output: NetworkDetailsOut,
 } as const;
 export const getNetworkReferences = {
   method: 'GET',
   path: '/v1/sites/{siteId}/networks/{networkId}/references',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ networkId: z.guid() }),
   output: NetworkReferencesOut,
 } as const;
 export const getNetworksOverviewPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/networks',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -3991,8 +4087,10 @@ export const getNetworksOverviewPage = {
 export const getPendingDevicePage = {
   method: 'GET',
   path: '/v1/pending-devices',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4003,8 +4101,10 @@ export const getPendingDevicePage = {
 export const getRadiusProfileOverviewPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/radius/profiles',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4015,8 +4115,10 @@ export const getRadiusProfileOverviewPage = {
 export const getSiteOverviewPage = {
   method: 'GET',
   path: '/v1/sites',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4027,8 +4129,10 @@ export const getSiteOverviewPage = {
 export const getSiteToSiteVpnTunnelPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/vpn/site-to-site-tunnels',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4039,16 +4143,20 @@ export const getSiteToSiteVpnTunnelPage = {
 export const getSwitchStack = {
   method: 'GET',
   path: '/v1/sites/{siteId}/switching/switch-stacks/{switchStackId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ switchStackId: z.guid() }),
   output: IntegrationSwitchStackDtoOut,
 } as const;
 export const getSwitchStackPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/switching/switch-stacks',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4059,16 +4167,20 @@ export const getSwitchStackPage = {
 export const getTrafficMatchingList = {
   method: 'GET',
   path: '/v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ trafficMatchingListId: z.guid() }),
   output: TrafficMatchingListOut,
 } as const;
 export const getTrafficMatchingLists = {
   method: 'GET',
   path: '/v1/sites/{siteId}/traffic-matching-lists',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4079,16 +4191,20 @@ export const getTrafficMatchingLists = {
 export const getVoucher = {
   method: 'GET',
   path: '/v1/sites/{siteId}/hotspot/vouchers/{voucherId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ voucherId: z.guid() }),
   output: HotspotVoucherDetailsOut,
 } as const;
 export const getVouchers = {
   method: 'GET',
   path: '/v1/sites/{siteId}/hotspot/vouchers',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(1000).optional(),
@@ -4099,8 +4215,10 @@ export const getVouchers = {
 export const getVpnServerPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/vpn/servers',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4111,8 +4229,10 @@ export const getVpnServerPage = {
 export const getWansOverviewPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/wans',
+  transport: 'http',
   queryParameters: ['offset', 'limit'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4122,16 +4242,20 @@ export const getWansOverviewPage = {
 export const getWifiBroadcastDetails = {
   method: 'GET',
   path: '/v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({ wifiBroadcastId: z.guid() }),
   output: WifiBroadcastDetailsOut,
 } as const;
 export const getWifiBroadcastPage = {
   method: 'GET',
   path: '/v1/sites/{siteId}/wifi/broadcasts',
+  transport: 'http',
   queryParameters: ['offset', 'limit', 'filter'],
   hasBody: false,
+  responseType: 'json',
   input: z.strictObject({
     offset: z.int().min(0).max(2147483647).optional(),
     limit: z.int().min(0).max(200).optional(),
@@ -4142,56 +4266,70 @@ export const getWifiBroadcastPage = {
 export const patchFirewallPolicy = {
   method: 'PATCH',
   path: '/v1/sites/{siteId}/firewall/policies/{firewallPolicyId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ firewallPolicyId: z.guid(), body: PatchFirewallPolicyIn }),
   output: FirewallPolicyOut,
 } as const;
 export const removeDevice = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/devices/{deviceId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: false,
+  responseType: 'none',
   input: z.strictObject({ deviceId: z.guid() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const updateAclRule = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/acl-rules/{aclRuleId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ aclRuleId: z.guid(), body: ACLRuleUpdateIn }),
   output: ACLRuleOut,
 } as const;
 export const updateAclRuleOrdering = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/acl-rules/ordering',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ body: ACLRuleOrderingIn }),
   output: ACLRuleOrderingOut,
 } as const;
 export const updateDnsPolicy = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/dns/policies/{dnsPolicyId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ dnsPolicyId: z.guid(), body: CreateOrUpdateDNSPolicyIn }),
   output: DNSPolicyOut,
 } as const;
 export const updateFirewallPolicy = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/firewall/policies/{firewallPolicyId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ firewallPolicyId: z.guid(), body: CreateOrUpdateFirewallPolicyIn }),
   output: FirewallPolicyOut,
 } as const;
 export const updateFirewallPolicyOrdering = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/firewall/policies/ordering',
+  transport: 'http',
   queryParameters: ['sourceFirewallZoneId', 'destinationFirewallZoneId'],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({
     sourceFirewallZoneId: z.guid(),
     destinationFirewallZoneId: z.guid(),
@@ -4202,24 +4340,30 @@ export const updateFirewallPolicyOrdering = {
 export const updateFirewallZone = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/firewall/zones/{firewallZoneId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ firewallZoneId: z.guid(), body: CreateOrUpdateFirewallZoneIn }),
   output: FirewallZoneOut,
 } as const;
 export const updateNetwork = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/networks/{networkId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ networkId: z.guid(), body: CreateOrUpdateNetworkIn }),
   output: NetworkDetailsOut,
 } as const;
 export const updateTrafficMatchingList = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/traffic-matching-lists/{trafficMatchingListId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({
     trafficMatchingListId: z.guid(),
     body: CreateOrUpdateTrafficMatchingListIn,
@@ -4229,13 +4373,15 @@ export const updateTrafficMatchingList = {
 export const updateWifiBroadcast = {
   method: 'PUT',
   path: '/v1/sites/{siteId}/wifi/broadcasts/{wifiBroadcastId}',
+  transport: 'http',
   queryParameters: [],
   hasBody: true,
+  responseType: 'json',
   input: z.strictObject({ wifiBroadcastId: z.guid(), body: WifiBroadcastCreateOrUpdateIn }),
   output: WifiBroadcastDetailsOut,
 } as const;
 
-/** Every documented operation, by vendor operationId. */
+/** Every documented operation that is generated, by vendor operationId. */
 export const OPERATIONS = {
   adoptDevice,
   createAclRule,

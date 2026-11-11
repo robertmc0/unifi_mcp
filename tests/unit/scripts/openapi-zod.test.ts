@@ -9,6 +9,7 @@ import {
   DEFAULT_MAX_STRING,
   generateZodModule,
   identifierFor,
+  operationName,
   type GeneratorOptions,
 } from '../../../scripts/lib/openapi-zod.ts';
 
@@ -54,8 +55,10 @@ function post(bodyRef: string, extra: Record<string, unknown> = {}): Record<stri
 interface GeneratedOperation {
   method: string;
   path: string;
+  transport: string;
   queryParameters: readonly string[];
   hasBody: boolean;
+  responseType: string;
   input: z.ZodType;
   output: z.ZodType;
 }
@@ -369,12 +372,53 @@ describe('the translator fails loudly', () => {
     T: { type: 'object', properties },
   });
   it.each([
-    ['an unsupported keyword', object({ s: { type: 'string', pattern: '^a' } }), /"pattern"/],
-    ['oneOf', object({ s: { oneOf: [{ type: 'string' }] } }), /"oneOf"/],
+    ['an unsupported keyword', object({ s: { type: 'string', not: { const: 'a' } } }), /"not"/],
     [
-      'additionalProperties',
+      'an open object without properties',
       object({ m: { type: 'object', additionalProperties: {} } }),
-      /additionalProperties/,
+      /open object without properties/,
+    ],
+    [
+      'an open object (additionalProperties: true)',
+      object({ m: { type: 'object', additionalProperties: true } }),
+      /open object without properties/,
+    ],
+    [
+      'a typed map in a request',
+      object({ m: { type: 'object', additionalProperties: { type: 'string' } } }),
+      /typed maps in requests/,
+    ],
+    [
+      'oneOf next to other structure',
+      object({ u: { type: 'object', properties: {}, oneOf: [{ type: 'string' }] } }),
+      /oneOf\/anyOf next to/,
+    ],
+    ['an object const', object({ c: { const: { a: 1 } } }), /unsupported const/],
+    [
+      'a type list other than [T, "null"]',
+      object({ t: { type: ['string', 'number'] } }),
+      /unsupported type/,
+    ],
+    [
+      'an invalid pattern',
+      object({ s: { type: 'string', pattern: '(' } }),
+      /not a valid regular expression/,
+    ],
+    [
+      'a discriminator that maps to a non-member',
+      {
+        A: { type: 'object', properties: { kind: { const: 'a' } } },
+        T: {
+          type: 'object',
+          properties: {
+            u: {
+              oneOf: [{ $ref: '#/components/schemas/A' }],
+              discriminator: { propertyName: 'kind', mapping: { b: '#/components/schemas/B' } },
+            },
+          },
+        },
+      },
+      /not a member/,
     ],
     ['an unknown string format', object({ s: { type: 'string', format: 'ipv4' } }), /format/],
     ['an unknown integer format', object({ n: { type: 'integer', format: 'int8' } }), /format/],
@@ -438,6 +482,16 @@ describe('the translator fails loudly', () => {
         }),
       ),
     ).toThrow(/exactly one documented 2xx/);
+    const media = (type: string, schema: unknown) =>
+      generate(
+        doc(T, {
+          '/v1/t': get('#/components/schemas/T', {
+            responses: { '200': { content: { [type]: { schema } } } },
+          }),
+        }),
+      );
+    expect(() => media('text/plain', { type: 'string' })).toThrow(/unsupported response media/);
+    expect(() => media('image/jpeg', { type: 'object' })).toThrow(/binary string/);
   });
 });
 
@@ -489,5 +543,292 @@ describe('identifiers', () => {
     );
     expect(source).toContain('const IPAddressSelectorOut =');
     expect(source).toContain('const IPAddressSelector2Out =');
+  });
+});
+
+describe('contracts without operationIds (naming: path)', () => {
+  const bare = (op: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(op).filter(([name]) => name !== 'operationId'));
+  const T = { T: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] } };
+  const document = doc(T, {
+    '/v1/things/{id}': {
+      get: bare(get('#/components/schemas/T')['get'] as Record<string, unknown>),
+      parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+    },
+    '/v1/subscribe/things': {
+      get: bare(get('#/components/schemas/T')['get'] as Record<string, unknown>),
+    },
+    '/v1/files/{fileType}': {
+      post: {
+        parameters: [{ in: 'path', name: 'fileType', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          content: { 'multipart/form-data': { schema: { type: 'string', format: 'binary' } } },
+        },
+        responses: {
+          '200': {
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/T' } } },
+          },
+        },
+      },
+    },
+    '/v1/things/{id}/picture': {
+      get: {
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { content: { 'image/jpeg': { schema: { type: 'string', format: 'binary' } } } },
+        },
+      },
+    },
+  });
+  const options = {
+    naming: 'path' as const,
+    omittedOperations: { 'POST /v1/files/{fileType}': 'the form field is not documented' },
+  };
+
+  it('derive names from method and path, and key OPERATIONS by the inventory key', () => {
+    expect(operationName('GET', '/v1/cameras/{id}/snapshot')).toBe('getV1CamerasByIdSnapshot');
+    expect(operationName('PATCH', '/v1/arm-profiles/settings')).toBe('patchV1ArmProfilesSettings');
+    const source = generate(document, options);
+    const ops = load(source);
+    expect(Object.keys(ops).sort()).toEqual([
+      'OPERATIONS',
+      'getV1SubscribeThings',
+      'getV1ThingsById',
+      'getV1ThingsByIdPicture',
+    ]);
+    expect(source).toContain(`'GET /v1/things/{id}': getV1ThingsById`.replace(/'/g, '"'));
+  });
+
+  it('mark WebSocket subscriptions and record the response type', () => {
+    const ops = load(generate(document, options));
+    expect(ops['getV1SubscribeThings']).toMatchObject({
+      transport: 'websocket',
+      responseType: 'json',
+    });
+    expect(ops['getV1ThingsById']).toMatchObject({ transport: 'http', responseType: 'json' });
+  });
+
+  it('return a documented binary response as bytes', () => {
+    const picture = load(generate(document, options))['getV1ThingsByIdPicture'];
+    expect(picture?.responseType).toBe('image/jpeg');
+    expect(picture?.output.safeParse(new Uint8Array([0xff, 0xd8])).success).toBe(true);
+    expect(picture?.output.safeParse('not bytes').success).toBe(false);
+  });
+
+  it('leave a reviewed omission out, say why, and fail when it no longer exists', () => {
+    const source = generate(document, options);
+    expect(source).toContain('// Operation "POST /v1/files/{fileType}" omitted: the form field');
+    expect(() => generate(document, { naming: 'path' })).toThrow(/multipart|request bodies/);
+    expect(() =>
+      generate(document, {
+        ...options,
+        omittedOperations: { ...options.omittedOperations, 'DELETE /v1/gone': 'x' },
+      }),
+    ).toThrow(/omitted operation must exist/);
+  });
+
+  it('refuse two operations that would get the same name', () => {
+    const twins = doc(T, {
+      '/v1/a-b': bare(get('#/components/schemas/T')['get'] as Record<string, unknown>),
+      '/v1/a_b': bare(get('#/components/schemas/T')['get'] as Record<string, unknown>),
+    });
+    const asGet = (d: Doc) => {
+      const paths = d['paths'] as Record<string, unknown>;
+      for (const key of Object.keys(paths)) paths[key] = { get: paths[key] };
+      return d;
+    };
+    expect(() => generate(asGet(twins), { naming: 'path' })).toThrow(/two operations are named/);
+  });
+});
+
+describe('JSON Schema constructs of the Protect contract', () => {
+  const ops = (schemas: Record<string, unknown>) =>
+    load(generate(doc(schemas, { '/v1/t': post('#/components/schemas/T') })))['createThing'];
+  const accepts = (schema: z.ZodType | undefined, value: unknown) =>
+    schema?.safeParse(value).success;
+  const body = (op: GeneratedOperation | undefined) =>
+    (op?.input as z.ZodObject | undefined)?.shape['body'] as z.ZodType | undefined;
+  const object = (properties: Record<string, unknown>, required: string[] = []) => ({
+    T: { type: 'object', properties, required },
+  });
+
+  it('nullable types: [T, "null"], anyOf with null, and null itself', () => {
+    const op = ops(
+      object({
+        a: { type: ['string', 'null'] },
+        b: { anyOf: [{ type: 'integer' }, { type: 'null' }] },
+        c: { type: 'null' },
+      }),
+    );
+    for (const schema of [body(op), op?.output]) {
+      expect(accepts(schema, { a: null, b: null, c: null })).toBe(true);
+      expect(accepts(schema, { a: 'x', b: 1 })).toBe(true);
+      expect(accepts(schema, { c: 'x' })).toBe(false);
+    }
+    expect(accepts(body(op), { b: 'x' })).toBe(false);
+  });
+
+  it('const is a literal in both flavours; a union of string consts is an enum', () => {
+    const op = ops(
+      object({
+        k: { type: 'string', const: 'fixed' },
+        e: {
+          anyOf: [
+            { type: 'string', const: 'on' },
+            { type: 'string', const: 'off' },
+          ],
+        },
+      }),
+    );
+    expect(accepts(body(op), { k: 'fixed', e: 'on' })).toBe(true);
+    expect(accepts(body(op), { k: 'other' })).toBe(false);
+    expect(accepts(body(op), { e: 'dim' })).toBe(false);
+    expect(accepts(op?.output, { k: 'other' })).toBe(false);
+    expect(accepts(op?.output, { e: 'dim' })).toBe(true); // like enums: new values pass
+  });
+
+  it('oneOf unions accept exactly the documented members', () => {
+    const op = ops(
+      object({
+        v: {
+          oneOf: [
+            { type: 'string', maxLength: 3 },
+            { type: 'object', properties: { n: { type: 'integer' } }, required: ['n'] },
+          ],
+        },
+      }),
+    );
+    expect(accepts(body(op), { v: 'abc' })).toBe(true);
+    expect(accepts(body(op), { v: { n: 1 } })).toBe(true);
+    expect(accepts(body(op), { v: 'abcd' })).toBe(false);
+    expect(accepts(body(op), { v: { n: 1, extra: true } })).toBe(false);
+    expect(op?.output.parse({ v: { n: 1, extra: true } })).toEqual({ v: { n: 1 } });
+  });
+
+  const variants = {
+    Add: {
+      type: 'object',
+      properties: { type: { type: 'string', const: 'add' }, item: { type: 'string' } },
+      required: ['type', 'item'],
+    },
+    Remove: {
+      type: 'object',
+      properties: { type: { type: 'string', const: 'remove' }, id: { type: 'integer' } },
+      required: ['type', 'id'],
+    },
+  };
+
+  it('inline discriminated oneOf: an unknown value keeps only the discriminator in responses', () => {
+    const op = ops({
+      ...variants,
+      T: {
+        type: 'object',
+        properties: {
+          m: {
+            oneOf: [{ $ref: '#/components/schemas/Add' }, { $ref: '#/components/schemas/Remove' }],
+            discriminator: {
+              propertyName: 'type',
+              mapping: { add: '#/components/schemas/Add', remove: '#/components/schemas/Remove' },
+            },
+          },
+        },
+      },
+    });
+    expect(accepts(body(op), { m: { type: 'add', item: 'x' } })).toBe(true);
+    expect(accepts(body(op), { m: { type: 'move', item: 'x' } })).toBe(false);
+    expect(op?.output.parse({ m: { type: 'add', item: 'x', secret: 's' } })).toEqual({
+      m: { type: 'add', item: 'x' },
+    });
+    expect(op?.output.parse({ m: { type: 'move', secret: 's' } })).toEqual({
+      m: { type: 'move' },
+    });
+  });
+
+  it('component oneOf with a discriminator mapping (no allOf inheritance)', () => {
+    const op = ops({
+      ...variants,
+      T: {
+        oneOf: [{ $ref: '#/components/schemas/Add' }, { $ref: '#/components/schemas/Remove' }],
+        discriminator: {
+          propertyName: 'type',
+          mapping: { add: '#/components/schemas/Add', remove: '#/components/schemas/Remove' },
+        },
+      },
+    });
+    expect(accepts(body(op), { type: 'remove', id: 1 })).toBe(true);
+    expect(accepts(body(op), { type: 'remove', item: 'x' })).toBe(false);
+    expect(op?.output.parse({ type: 'later', extra: 1 })).toEqual({ type: 'later' });
+  });
+
+  it('pattern, exclusiveMinimum and minProperties bind requests only', () => {
+    const op = ops({
+      T: {
+        type: 'object',
+        minProperties: 1,
+        properties: {
+          pin: { type: 'string', pattern: '^\\d{4,6}$' },
+          gap: { type: 'number', exclusiveMinimum: 0 },
+        },
+      },
+    });
+    expect(accepts(body(op), { pin: '1234', gap: 0.5 })).toBe(true);
+    expect(accepts(body(op), { pin: '12a4' })).toBe(false);
+    expect(accepts(body(op), { gap: 0 })).toBe(false);
+    expect(accepts(body(op), {})).toBe(false);
+    expect(accepts(op?.output, { pin: '12a4', gap: 0 })).toBe(true);
+    expect(accepts(op?.output, {})).toBe(true);
+  });
+
+  it('typed maps in responses validate values and strip their undocumented fields', () => {
+    const op = load(
+      generate(
+        doc(
+          {
+            T: {
+              type: 'object',
+              properties: {
+                pins: {
+                  type: 'object',
+                  additionalProperties: {
+                    type: 'object',
+                    properties: { state: { type: 'string', enum: ['on', 'off'] } },
+                    required: ['state'],
+                  },
+                },
+              },
+            },
+          },
+          { '/v1/t': get('#/components/schemas/T') },
+        ),
+      ),
+    )['getThing'];
+    expect(op?.output.parse({ pins: { '1': { state: 'on', x: 1 } } })).toEqual({
+      pins: { '1': { state: 'on' } },
+    });
+    expect(accepts(op?.output, { pins: { '1': { x: 1 } } })).toBe(false);
+  });
+
+  it('format uri is a URL in requests and a string in responses', () => {
+    const op = ops(object({ u: { type: 'string', format: 'uri' } }));
+    expect(accepts(body(op), { u: 'rtsps://h.invalid:7441/x' })).toBe(true);
+    expect(accepts(body(op), { u: 'not a url' })).toBe(false);
+    expect(accepts(op?.output, { u: 'not a url' })).toBe(true);
+  });
+
+  it('allOf with one primitive reference and constraints narrows it; typeless string enums', () => {
+    const op = ops({
+      Volume: { type: 'number', minimum: 0, maximum: 100 },
+      T: {
+        type: 'object',
+        properties: {
+          v: { allOf: [{ $ref: '#/components/schemas/Volume' }], minimum: 1 },
+          s: { enum: ['a', 'b'] },
+        },
+      },
+    });
+    expect(accepts(body(op), { v: 1, s: 'a' })).toBe(true);
+    expect(accepts(body(op), { v: 0 })).toBe(false);
+    expect(accepts(body(op), { v: 101 })).toBe(false);
+    expect(accepts(body(op), { s: 'c' })).toBe(false);
   });
 });

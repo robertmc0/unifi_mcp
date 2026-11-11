@@ -17,6 +17,8 @@
  * Anything the translator does not understand throws, so nothing is translated silently
  * wrong. The vendor document must not contain cycles.
  */
+import { WEBSOCKET_PATH } from './openapi-inventory.ts';
+
 /** A parsed OpenAPI document; its structure is checked while translating. */
 type OpenApiDocument = object;
 
@@ -35,6 +37,8 @@ const ANNOTATIONS = new Set([
   'deprecated',
   'title',
   'x-tags',
+  'x-enum-descriptions',
+  'x-enum-varnames',
 ]);
 const STRUCTURAL = new Set([
   'type',
@@ -53,12 +57,24 @@ const STRUCTURAL = new Set([
   'minLength',
   'maxLength',
   'uniqueItems',
+  'oneOf',
+  'anyOf',
+  'const',
+  'additionalProperties',
+  'exclusiveMinimum',
+  'exclusiveMaximum',
+  'pattern',
+  'minProperties',
 ]);
-const STRING_FORMATS = new Set(['uuid', 'date-time', 'date']);
+const STRING_FORMATS = new Set(['uuid', 'date-time', 'date', 'uri']);
+/** Keywords that may sit next to `oneOf`/`anyOf` without changing what they mean. */
+const UNION_SIBLINGS = new Set(['oneOf', 'anyOf', 'discriminator']);
 const INT32 = { min: -2147483648, max: 2147483647 };
 const SUCCESS = /^2\d\d$/;
 const COMPONENT_REF = /^#\/components\/schemas\/(.+)$/;
 const OPERATION_ID = /^[a-z][A-Za-z0-9]*$/;
+/** Documented binary response media types, returned as bytes (ADR 0019). */
+const BINARY_MEDIA = new Set(['image/jpeg']);
 
 export interface GeneratorOptions {
   /** Shown in the header, e.g. `api-specs/network/11.0.97/vendor/openapi.json`. */
@@ -73,10 +89,25 @@ export interface GeneratorOptions {
    * is no longer anomalous, so the decision is revisited.
    */
   omittedParameters?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * How generated operations are named. `operationId` (the default) uses the vendor's
+   * operationId. `path` derives the name from the method and path, for contracts without
+   * operationIds (`GET /v1/cameras/{id}` → `getV1CamerasById`); `OPERATIONS` is then keyed
+   * by `"<METHOD> <path>"`, the inventory key.
+   */
+  naming?: 'operationId' | 'path';
+  /**
+   * Operations left out on purpose, by `"<METHOD> <path>"`, with the reason (a reviewed
+   * deviation). Generation fails if one no longer exists, so the decision is revisited.
+   */
+  omittedOperations?: Readonly<Record<string, string>>;
 }
 
 interface OperationInfo {
+  /** The export name. */
   operationId: string;
+  /** `"<METHOD> <path>"`. */
+  key: string;
   method: string;
   path: string;
   pathParameters: string[];
@@ -146,7 +177,12 @@ export function intersectPrimitive(a: Schema, b: Schema, where: string): Schema 
   if (format !== undefined) result['format'] = format;
   const pick = (keyword: string, choose: (x: number, y: number) => number): void => {
     const values = [a[keyword], b[keyword]].filter((v): v is number => typeof v === 'number');
-    if (values.length > 0) result[keyword] = values.reduce(choose);
+    // Not `reduce(choose)`: reduce also passes the index and the array, and Math.max of an
+    // array is NaN.
+    if (values.length > 0) result[keyword] = values.reduce((x, y) => choose(x, y));
+    if (typeof result[keyword] === 'number' && !Number.isFinite(result[keyword])) {
+      fail(where, `${keyword} is not a finite number`);
+    }
   };
   pick('minLength', Math.max);
   pick('maxLength', Math.min);
@@ -161,6 +197,17 @@ export function intersectPrimitive(a: Schema, b: Schema, where: string): Schema 
   }
   if (Array.isArray(result['enum']) && result['enum'].length === 0) fail(where, 'empty enum');
   return result;
+}
+
+/** `GET /v1/cameras/{id}/snapshot` → `getV1CamerasByIdSnapshot`. */
+export function operationName(method: string, path: string): string {
+  const words = [method.toLowerCase()];
+  for (const segment of path.split('/').filter((part) => part !== '')) {
+    const parameter = /^\{(.+)\}$/.exec(segment);
+    if (parameter !== null) words.push('by');
+    words.push(...(parameter?.[1] ?? segment).split(/[^A-Za-z0-9]+/).filter((w) => w !== ''));
+  }
+  return words.map((w, i) => (i === 0 ? w : `${w[0]?.toUpperCase() ?? ''}${w.slice(1)}`)).join('');
 }
 
 function key(name: string): string {
@@ -181,6 +228,8 @@ export class OpenApiZodGenerator {
   readonly #emitted = new Map<string, string>();
   readonly #inProgress = new Set<string>();
   readonly #definitions: string[] = [];
+  /** Whether a schema uses the `unique` helper (emitted only then, for the linter). */
+  usesUnique = false;
 
   constructor(doc: OpenApiDocument) {
     const components = (doc as { components?: { schemas?: unknown } }).components?.schemas;
@@ -277,8 +326,14 @@ export class OpenApiZodGenerator {
     ];
     const ids = variants.map((variant) => this.ref(variant, flavour, `${name}→${variant}`));
     if (flavour === 'in') return `z.discriminatedUnion(${literal(property)}, [${ids.join(', ')}])`;
-    // Responses: an unknown discriminator value still yields the documented base fields.
-    const base = this.#objectCode(this.#ownParts(name), flavour, `${name} (base)`);
+    // Responses: an unknown discriminator value still yields the documented base fields,
+    // and at least the discriminator (a oneOf-style base has no fields of its own).
+    const parts = this.#ownParts(name);
+    if (!parts.props.has(property)) {
+      parts.props.set(property, { type: 'string' });
+      parts.required.add(property);
+    }
+    const base = this.#objectCode(parts, flavour, `${name} (base)`);
     return `z.union([${[...ids, base].join(', ')}])`;
   }
 
@@ -404,7 +459,10 @@ export class OpenApiZodGenerator {
       return this.ref(refName(schema['$ref'], where), flavour, where);
     }
     if (this.#isUnconstrained(schema)) fail(where, 'unconstrained schema');
-    if (schema['discriminator'] !== undefined) fail(where, 'inline discriminators');
+    if (schema['oneOf'] !== undefined || schema['anyOf'] !== undefined) {
+      return this.#unionOf(schema, flavour, where);
+    }
+    if (schema['discriminator'] !== undefined) fail(where, 'a discriminator without oneOf');
     const allOf = schema['allOf'];
     if (allOf !== undefined) {
       if (!Array.isArray(allOf)) fail(where, 'allOf is not an array');
@@ -413,12 +471,67 @@ export class OpenApiZodGenerator {
       if (allOf.length === 1 && structural.length === 0 && isObject(allOf[0])) {
         return this.#code(allOf[0], flavour, where);
       }
-      return this.#objectCode(this.#partsOf(schema, where), flavour, where);
+      // `allOf: [{ $ref: <primitive> }]` with constraints beside it narrows the primitive
+      // (`minimum: 1` on a 0–100 volume, an enum on a string): both must hold.
+      const member = allOf.length === 1 && isObject(allOf[0]) ? allOf[0] : undefined;
+      if (member?.['$ref'] !== undefined && structural.every((k) => PRIMITIVE_KEYWORDS.has(k))) {
+        const target = this.#component(refName(member['$ref'], where), where);
+        const type = target['type'];
+        if (type === 'string' || type === 'number' || type === 'integer') {
+          const siblings = Object.fromEntries(structural.map((k) => [k, schema[k]]));
+          return this.#code(
+            intersectPrimitive(target, { ...siblings, type }, where),
+            flavour,
+            where,
+          );
+        }
+      }
+      return this.#withMinProperties(
+        this.#objectCode(this.#partsOf(schema, where), flavour, where),
+        schema,
+        flavour,
+        where,
+      );
     }
+    if (schema['const'] !== undefined) return this.#constCode(schema, where);
     const type = schema['type'];
+    // An enum without a type whose values are all strings is a string enum.
+    const values = schema['enum'];
+    if (type === undefined && Array.isArray(values) && values.every((v) => typeof v === 'string')) {
+      return this.#stringCode(schema, flavour, where);
+    }
+    if (Array.isArray(type)) {
+      // `type: [T, "null"]`: T or null.
+      const others = type.filter((t) => t !== 'null');
+      if (type.length !== 2 || others.length !== 1 || typeof others[0] !== 'string') {
+        fail(where, `unsupported type ${JSON.stringify(type)}`);
+      }
+      return `${this.#code({ ...schema, type: others[0] }, flavour, where)}.nullable()`;
+    }
     switch (type) {
-      case 'object':
-        return this.#objectCode(this.#partsOf(schema, where), flavour, where);
+      case 'null':
+        return 'z.null()';
+      case 'object': {
+        const open = schema['additionalProperties'];
+        if (
+          schema['properties'] === undefined &&
+          (open === true || (isObject(open) && this.#isUnconstrained(open)))
+        ) {
+          // Any object at all: nothing to forward to a console or pass to a client.
+          fail(where, 'an open object without properties');
+        }
+        const map = this.#mapValues(schema, where);
+        if (map !== undefined) {
+          if (flavour === 'in') fail(where, 'typed maps in requests are not supported');
+          return `z.record(z.string(), ${this.#code(map, flavour, `${where}{}`)})`;
+        }
+        return this.#withMinProperties(
+          this.#objectCode(this.#partsOf(schema, where), flavour, where),
+          schema,
+          flavour,
+          where,
+        );
+      }
       case 'string':
         return this.#stringCode(schema, flavour, where);
       case 'integer':
@@ -436,12 +549,106 @@ export class OpenApiZodGenerator {
         const max = schema['maxItems'];
         if (typeof min === 'number' && min > 0) code += `.min(${String(min)})`;
         code += `.max(${String(typeof max === 'number' ? max : DEFAULT_MAX_ITEMS)})`;
-        if (schema['uniqueItems'] === true) code += '.refine(unique, { message: UNIQUE })';
+        if (schema['uniqueItems'] === true) {
+          code += '.refine(unique, { message: UNIQUE })';
+          this.usesUnique = true;
+        }
         return code;
       }
       default:
         return fail(where, `unsupported type ${JSON.stringify(type)}`);
     }
+  }
+
+  /**
+   * `oneOf`/`anyOf`. A `{ type: "null" }` member makes the rest nullable. A union of string
+   * constants is an enum (relaxed to a string in responses, like enums). With an inline
+   * discriminator, responses also accept an unknown discriminator value, keeping only the
+   * discriminator. Request unions accept a value that matches any member: members are
+   * strict objects or distinct primitives, so `oneOf` and `anyOf` do not differ in practice.
+   */
+  #unionOf(schema: Schema, flavour: Flavour, where: string): string {
+    if (schema['oneOf'] !== undefined && schema['anyOf'] !== undefined) {
+      fail(where, 'oneOf and anyOf together');
+    }
+    const extra = Object.keys(schema).filter((k) => STRUCTURAL.has(k) && !UNION_SIBLINGS.has(k));
+    if (extra.length > 0) fail(where, `oneOf/anyOf next to ${extra.join(', ')}`);
+    const members = schema['oneOf'] ?? schema['anyOf'];
+    if (!Array.isArray(members) || members.length === 0 || !members.every(isObject)) {
+      fail(where, 'oneOf/anyOf must be a non-empty list of schemas');
+    }
+    const isNull = (m: Schema) =>
+      m['type'] === 'null' && Object.keys(m).every((k) => k === 'type' || ANNOTATIONS.has(k));
+    const nullable = members.some(isNull);
+    const others = members.filter((m) => !isNull(m));
+    if (others.length === 0) fail(where, 'a union of null only');
+    const suffix = nullable ? '.nullable()' : '';
+    const constants = others.map((m) =>
+      typeof m['const'] === 'string' &&
+      (m['type'] === undefined || m['type'] === 'string') &&
+      Object.keys(m).every((k) => k === 'const' || k === 'type' || ANNOTATIONS.has(k))
+        ? m['const']
+        : undefined,
+    );
+    if (others.length > 1 && constants.every((c) => c !== undefined)) {
+      if (flavour === 'out') return `z.string()${suffix}`;
+      return `z.enum([${constants.map((c) => literal(c)).join(', ')}])${suffix}`;
+    }
+    const codes = others.map((m, i) => this.#code(m, flavour, `${where}|${String(i)}`));
+    const discriminator = schema['discriminator'];
+    if (discriminator !== undefined) {
+      if (!isObject(discriminator) || typeof discriminator['propertyName'] !== 'string') {
+        fail(where, 'discriminator without propertyName');
+      }
+      if (!isObject(discriminator['mapping']))
+        fail(where, 'a discriminator needs an explicit mapping');
+      const refs = new Set(others.map((m) => m['$ref']));
+      for (const ref of Object.values(discriminator['mapping'])) {
+        if (!refs.has(ref)) fail(where, `the discriminator maps to ${String(ref)}, not a member`);
+      }
+      if (flavour === 'out') {
+        codes.push(`z.object({ ${key(discriminator['propertyName'])}: z.string() })`);
+      }
+    }
+    return `${codes.length === 1 ? (codes[0] ?? '') : `z.union([${codes.join(', ')}])`}${suffix}`;
+  }
+
+  #constCode(schema: Schema, where: string): string {
+    const value = schema['const'];
+    const type = schema['type'];
+    if (value === null) return 'z.null()';
+    if (typeof value === 'string' && (type === undefined || type === 'string')) {
+      return `z.literal(${literal(value)})`;
+    }
+    if (
+      typeof value === 'number' &&
+      (type === undefined || type === 'number' || type === 'integer')
+    ) {
+      return `z.literal(${String(value)})`;
+    }
+    if (typeof value === 'boolean' && (type === undefined || type === 'boolean')) {
+      return `z.literal(${String(value)})`;
+    }
+    return fail(where, `unsupported const ${JSON.stringify(value)}`);
+  }
+
+  /** The value schema of a typed map (`additionalProperties` with a schema, no properties). */
+  #mapValues(schema: Schema, where: string): Schema | undefined {
+    const values = schema['additionalProperties'];
+    if (!isObject(values) || this.#isUnconstrained(values)) return undefined;
+    if (schema['properties'] !== undefined || schema['allOf'] !== undefined) {
+      fail(where, 'properties together with typed additionalProperties');
+    }
+    return values;
+  }
+
+  #withMinProperties(code: string, schema: Schema, flavour: Flavour, where: string): string {
+    const min = schema['minProperties'];
+    if (min === undefined || flavour === 'out') return code;
+    if (typeof min !== 'number' || !Number.isInteger(min) || min < 0) {
+      fail(where, 'minProperties must be a non-negative integer');
+    }
+    return `${code}.refine((value) => Object.keys(value).length >= ${String(min)}, { message: ${literal(`At least ${String(min)} properties.`)} })`;
   }
 
   #stringCode(schema: Schema, flavour: Flavour, where: string): string {
@@ -465,6 +672,9 @@ export class OpenApiZodGenerator {
         return 'z.iso.datetime({ offset: true })';
       case 'date':
         return 'z.iso.date()';
+      case 'uri':
+        code = 'z.url()';
+        break;
       default:
         code = 'z.string()';
     }
@@ -472,6 +682,16 @@ export class OpenApiZodGenerator {
     const max = schema['maxLength'];
     if (typeof min === 'number' && min > 0) code += `.min(${String(min)})`;
     code += `.max(${String(typeof max === 'number' ? max : DEFAULT_MAX_STRING)})`;
+    const pattern = schema['pattern'];
+    if (pattern !== undefined) {
+      if (typeof pattern !== 'string') fail(where, 'pattern is not a string');
+      try {
+        new RegExp(pattern, 'u');
+      } catch {
+        fail(where, `pattern ${JSON.stringify(pattern)} is not a valid regular expression`);
+      }
+      code += `.regex(new RegExp(${literal(pattern)}, 'u'))`;
+    }
     return code;
   }
 
@@ -508,6 +728,15 @@ export class OpenApiZodGenerator {
     let code = type === 'integer' ? 'z.int()' : 'z.number()';
     if (typeof min === 'number') code += `.min(${String(min)})`;
     if (typeof max === 'number') code += `.max(${String(max)})`;
+    for (const [keyword, method] of [
+      ['exclusiveMinimum', 'gt'],
+      ['exclusiveMaximum', 'lt'],
+    ] as const) {
+      const bound = schema[keyword];
+      if (bound === undefined) continue;
+      if (typeof bound !== 'number') fail(where, `${keyword} must be a number`);
+      code += `.${method}(${String(bound)})`;
+    }
     return code;
   }
 
@@ -519,8 +748,9 @@ export class OpenApiZodGenerator {
     op: Schema,
     targets: ReadonlySet<string>,
     omitted: Readonly<Record<string, string>> = {},
+    name?: string,
   ): { info: OperationInfo; code: string } {
-    const operationId = op['operationId'];
+    const operationId = name ?? op['operationId'];
     if (typeof operationId !== 'string' || !OPERATION_ID.test(operationId)) {
       fail(`${method} ${pathTemplate}`, 'missing or unusable operationId');
     }
@@ -596,20 +826,37 @@ export class OpenApiZodGenerator {
     const response = success[0]?.[1];
     if (!isObject(response)) fail(where, 'malformed response');
     let output: string;
+    let responseType: string;
     if (response['content'] === undefined) {
       // Nothing documented: whatever the console sends is discarded.
       output = 'z.unknown().transform(() => null)';
+      responseType = 'none';
     } else {
       const content = response['content'];
       if (!isObject(content)) fail(where, 'malformed response content');
-      const media = (content as Record<string, Schema | undefined>)['application/json'];
-      if (Object.keys(content).length !== 1 || !isObject(media) || !isObject(media['schema'])) {
-        fail(where, 'only application/json responses are supported');
+      const types = Object.keys(content);
+      const mediaType = types[0] ?? '';
+      const media = (content as Record<string, Schema | undefined>)[mediaType];
+      if (types.length !== 1 || !isObject(media) || !isObject(media['schema'])) {
+        fail(where, 'exactly one documented response media type with a schema is supported');
       }
-      output = this.#code(media['schema'], 'out', `${where} (response)`);
+      if (mediaType === 'application/json') {
+        output = this.#code(media['schema'], 'out', `${where} (response)`);
+        responseType = 'json';
+      } else if (BINARY_MEDIA.has(mediaType)) {
+        const schema = media['schema'];
+        if (schema['type'] !== 'string' || schema['format'] !== 'binary') {
+          fail(where, `a ${mediaType} response must be documented as a binary string`);
+        }
+        output = 'z.instanceof(Uint8Array)';
+        responseType = mediaType;
+      } else {
+        fail(where, `unsupported response media type ${mediaType}`);
+      }
     }
     const info: OperationInfo = {
       operationId,
+      key: `${method.toUpperCase()} ${pathTemplate}`,
       method: method.toUpperCase(),
       path: pathTemplate,
       pathParameters,
@@ -621,8 +868,10 @@ export class OpenApiZodGenerator {
       `export const ${operationId} = {`,
       `  method: ${literal(info.method)},`,
       `  path: ${literal(pathTemplate)},`,
+      `  transport: ${literal(WEBSOCKET_PATH.test(pathTemplate) ? 'websocket' : 'http')},`,
       `  queryParameters: [${queryParameters.map(literal).join(', ')}],`,
       `  hasBody: ${String(hasBody)},`,
+      `  responseType: ${literal(responseType)},`,
       `  input: z.strictObject({ ${fields.join(', ')} }),`,
       `  output: ${output},`,
       `} as const;`,
@@ -641,6 +890,9 @@ export function generateZodModule(doc: OpenApiDocument, options: GeneratorOption
   const targets = new Set(options.targetParameters ?? []);
   const paths = (doc as { paths?: unknown }).paths;
   if (!isObject(paths)) throw new Error('The document has no paths.');
+  const byPath = options.naming === 'path';
+  const omittedOperations = new Map(Object.entries(options.omittedOperations ?? {}));
+  const notes: string[] = [];
   const operations: { info: OperationInfo; code: string }[] = [];
   for (const pathTemplate of Object.keys(paths).sort()) {
     const item = paths[pathTemplate];
@@ -648,7 +900,15 @@ export function generateZodModule(doc: OpenApiDocument, options: GeneratorOption
     for (const method of HTTP_METHODS) {
       const op = item[method];
       if (!isObject(op)) continue;
-      const id = typeof op['operationId'] === 'string' ? op['operationId'] : '';
+      const opKey = `${method.toUpperCase()} ${pathTemplate}`;
+      const reason = omittedOperations.get(opKey);
+      if (reason !== undefined) {
+        notes.push(`// Operation "${opKey}" omitted: ${reason}`);
+        omittedOperations.delete(opKey);
+        continue;
+      }
+      const name = byPath ? operationName(method, pathTemplate) : undefined;
+      const id = name ?? (typeof op['operationId'] === 'string' ? op['operationId'] : '');
       operations.push(
         generator.operation(
           pathTemplate,
@@ -657,11 +917,24 @@ export function generateZodModule(doc: OpenApiDocument, options: GeneratorOption
           op,
           targets,
           options.omittedParameters?.[id],
+          name,
         ),
       );
     }
   }
-  operations.sort((a, b) => a.info.operationId.localeCompare(b.info.operationId));
+  for (const opKey of omittedOperations.keys()) {
+    throw new Error(`OpenAPI translation failed at ${opKey}: an omitted operation must exist`);
+  }
+  const names = operations.map((o) => o.info.operationId);
+  const duplicate = names.find((name, i) => names.indexOf(name) !== i);
+  if (duplicate !== undefined) {
+    throw new Error(`OpenAPI translation failed: two operations are named ${duplicate}`);
+  }
+  operations.sort((a, b) =>
+    byPath
+      ? a.info.key.localeCompare(b.info.key)
+      : a.info.operationId.localeCompare(b.info.operationId),
+  );
   return [
     `/**`,
     ` * GENERATED by ${options.generator}. Do not edit; regenerate instead.`,
@@ -675,17 +948,26 @@ export function generateZodModule(doc: OpenApiDocument, options: GeneratorOption
     ` */`,
     `import * as z from 'zod';`,
     ``,
-    `const UNIQUE = 'Items must be unique.';`,
-    `function unique(items: readonly unknown[]): boolean {`,
-    `  return new Set(items.map((item) => JSON.stringify(item))).size === items.length;`,
-    `}`,
-    ``,
+    ...(generator.usesUnique
+      ? [
+          `const UNIQUE = 'Items must be unique.';`,
+          `function unique(items: readonly unknown[]): boolean {`,
+          `  return new Set(items.map((item) => JSON.stringify(item))).size === items.length;`,
+          `}`,
+          ``,
+        ]
+      : []),
     ...generator.definitions(),
     ``,
     ...operations.map((operation) => operation.code),
+    ...notes,
     ``,
-    `/** Every documented operation, by vendor operationId. */`,
-    `export const OPERATIONS = { ${operations.map((o) => o.info.operationId).join(', ')} } as const;`,
+    byPath
+      ? `/** Every documented operation that is generated, by "<METHOD> <path>". */`
+      : `/** Every documented operation that is generated, by vendor operationId. */`,
+    byPath
+      ? `export const OPERATIONS = { ${operations.map((o) => `${literal(o.info.key)}: ${o.info.operationId}`).join(', ')} } as const;`
+      : `export const OPERATIONS = { ${operations.map((o) => o.info.operationId).join(', ')} } as const;`,
     ``,
   ].join('\n');
 }
