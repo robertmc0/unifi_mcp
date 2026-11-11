@@ -1,6 +1,6 @@
 # Administration with the `unifi-mcp` CLI
 
-> **Status: Phase 1 in progress.** The CLI ([ADR 0015](adr/0015-host-administration-cli.md))
+> **Status: Phase 1 complete.** The CLI ([ADR 0015](adr/0015-host-administration-cli.md))
 > and the admin web interface's sign-in, dashboard, approvals and audit pages
 > ([ADR 0016](adr/0016-admin-listener-sessions-and-ui.md)) are implemented and tested.
 > Editing consoles, clients and policy in the browser, and MFA, are Phase 5. The container

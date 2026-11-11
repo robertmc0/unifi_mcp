@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
   `packages/unifi-network/src/generated/`; `api:reconcile` fails when they are stale.
 - Opt-in live read-only test (`npm run test:live`, never in CI) and a manual write runbook
   (ADR 0018 §7).
+- Manual pages updated for Phase 2: status notes, Claude Code guide (named tools,
+  client-data grants), approval workflow (the Network contract has no concurrency
+  precondition), troubleshooting.
 - Coverage matrix from the registered adapters (ADR 0018 §6): status, reviewed metadata
   and test evidence per operation; reconciliation and an offline test fail on drift;
   `unifi-mcp api coverage` counts implemented operations.

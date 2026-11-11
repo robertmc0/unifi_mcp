@@ -4,8 +4,9 @@
 > service, in a separate Claude Code configuration. Both ways below reached `✔ Connected`
 > in `claude mcp list`. Claude Code negotiated the `2026-07-28` protocol revision, and
 > its health check fetched the tool list. Using the tools in a Claude Code session was
-> not part of that check. No UniFi operations exist until Phase 2, so for now Claude can
-> list your consoles and modules but cannot query them.
+> not part of that check. Since then the Network operations were added
+> ([applications-network.md](applications-network.md)); they appear in the same tool list
+> and were not part of that check either.
 
 Claude Code needs a **client token** for this service. It never gets a UniFi API key:
 those stay inside the service.
@@ -18,6 +19,9 @@ those stay inside the service.
    ```sh
    docker compose exec unifi-mcp unifi-mcp client create claude-code-laptop --console home --allow 'network.*.read'
    ```
+
+   Add `--sensitive personal_identifier --sensitive network_identity` only if Claude should
+   see connected clients (their names and addresses).
 
 2. On the machine where Claude Code runs, save the token in a file only you can read.
    `cat` reads the pasted token, so it stays out of your shell history:
@@ -113,8 +117,10 @@ In a Claude Code session, `/mcp` shows the server. Ask Claude to list your UniFi
 and it calls `unifi_list_consoles`. A read-only client sees five tools:
 `unifi_list_consoles`, `unifi_list_modules`, `unifi_list_operations`,
 `unifi_describe_operation` and `unifi_execute`. Clients with write permissions also see
-`unifi_get_operation_status` and `unifi_resume_approved`. Named tools such as
-`network_list_devices` arrive with the Network adapter (Phase 2). When you change a
+`unifi_get_operation_status` and `unifi_resume_approved`. Once a console's Network
+version is known, the named tools a client may use are listed too (`network_list_sites`,
+`network_list_devices`, `network_get_device`, `network_list_networks`, and
+`network_list_clients` with the client-data grants). When you change a
 client's permissions, Claude Code (2026 revision) sees the new tool list on its next
 request ([client-generic-mcp.md](client-generic-mcp.md)).
 

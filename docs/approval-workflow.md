@@ -77,7 +77,9 @@ Every request, decision, resumption, refusal and expiry is recorded in the audit
 
 ## Limitations
 
-- The summary shows the requested call, not yet a comparison with the console's current
-  state (planned with the Network adapter, Phase 2).
-- Some UniFi APIs offer no way to detect that the target changed between the request and
-  the approval. Operation descriptions will say so where that applies.
+- The summary shows the requested call, not a comparison with the console's current
+  state. The UniFi Network contract offers no version or ETag for any write, so the
+  service cannot detect that the target changed between the request and the approval: an
+  approved write applies the approved arguments to whatever the console holds when it
+  runs. Read the current state before approving
+  ([applications-network.md](applications-network.md#writes)).

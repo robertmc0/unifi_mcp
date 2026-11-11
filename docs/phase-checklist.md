@@ -305,7 +305,12 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
    (opt-in, never in CI), dry-run against the synthetic console; reviewed reports feed
    `liveReadValidation`; [runbook-network-writes.md](runbook-network-writes.md)
    (ADR 0018 §7). **Open: a run against a real console (the owner's).**
-8. **Docs**: `applications-network.md`, ADR 0018, client and security updates.
+8. ✅ **Docs** (2026-11-11): [applications-network.md](applications-network.md),
+   [runbook-network-writes.md](runbook-network-writes.md), ADR 0018 §1–§7; updates to the
+   client guides (body argument, paging, named tools, client-data grants), security,
+   approval workflow (no concurrency precondition in the Network contract),
+   administration, monitoring, troubleshooting, quickstart, index, README and the status
+   notes.
 
 ### Gate (spec §16)
 
@@ -316,9 +321,20 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
 - [x] All documented reads mock-tested with sanitised output; writes tested for authz, approval and duplicates
       (`tests/integration-mock/network-reads.test.ts`, `tests/integration-mock/network-writes.test.ts`)
 - [ ] Optional live read-only test (console, site, device, client, network); no state-changing request
+      Built and dry-run against the synthetic console (45 requests, all GET;
+      `tests/contract/live-tests.test.ts` keeps it opt-in and read-only). **Waiting for a
+      run against a real console** (`npm run test:live`, see applications-network.md).
 - [ ] Field shapes, pagination, filtering and errors compared against official docs
+      Field shapes come from the official contract (generated schemas, strict requests,
+      documented required fields enforced on responses); errors pass on only the HTTP
+      status and the documented `code`. Paging and filtering against a real console are
+      checked by the live test. **Waiting for the real-console run.**
 - [x] Manual human-approved write runbook (not CI) ([runbook-network-writes.md](runbook-network-writes.md))
 - [ ] Resolve flagged unknowns: key scope across apps, read-only keys, filtering/pagination
+      Key scope across apps and paging/filtering are measured by the live test (report
+      fields `networkKeyAuthorisesProtect`, `pagination`, `filter`). Read-only keys cannot
+      be tested without a write; they stay unverified, and keys are treated as
+      administrator credentials (ADR 0005). **Waiting for the real-console run.**
 
 ## Phase 3 — UniFi Protect
 

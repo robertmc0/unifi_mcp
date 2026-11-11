@@ -1,6 +1,6 @@
 # Backup, restore and key rotation
 
-> **Status: Phase 1 in progress.** The storage behaviour and the operator commands
+> **Status: Phase 1 complete.** The storage behaviour and the operator commands
 > (`unifi-mcp db …`, `unifi-mcp crypto …`) described here are implemented and tested
 > (`packages/storage`, ADR 0007; `packages/cli`, ADR 0015). With Docker, run the commands
 > as shown in [installation.md](installation.md#maintenance-with-the-service-stopped):

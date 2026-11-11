@@ -1,6 +1,6 @@
 # Connecting an MCP client
 
-> **Status: Phase 1 in progress.** The MCP endpoint and tools are implemented and tested
+> **Status: Phase 1 complete.** The MCP endpoint and tools are implemented and tested
 > with the official MCP TypeScript SDK v2 clients (2025-era and 2026-era protocols). Client
 > tokens are issued with the CLI (`unifi-mcp client create`, see
 > [administration.md](administration.md)). For Claude Code, see

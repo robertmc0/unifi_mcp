@@ -1,6 +1,6 @@
 # Configuration
 
-> **Status: Phase 1 in progress.** This page covers the settings implemented so far: the
+> **Status: Phase 1 complete.** This page covers the settings implemented so far: the
 > hard lock, the MCP listener, audit retention, the egress allowlist, the data directory,
 > logging and the master encryption key. The bootstrap YAML file, policy and runtime mode
 > are managed with the CLI ([administration.md](administration.md)).

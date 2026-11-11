@@ -1,6 +1,6 @@
 # Logs, audit trail and health checks
 
-> **Status: Phase 1 in progress.** Logging, the audit trail and the health checks are
+> **Status: Phase 1 complete.** Logging, the audit trail and the health checks are
 > implemented (ADR 0008) and served by the MCP listener (ADR 0013). The CLI reads and
 > verifies the audit trail (`unifi-mcp audit list|verify`, ADR 0015). Prometheus metrics
 > are Phase 5.

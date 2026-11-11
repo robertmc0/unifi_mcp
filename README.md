@@ -7,8 +7,9 @@ server, never to UniFi. UniFi credentials never leave the server.
 
 > **Status: Phase 1 (secure platform core) is complete and Phase 2 (UniFi Network) is in
 > progress. The service serves MCP over Streamable HTTP and, through the stdio bridge, over
-> stdio, is administered with the host-only `unifi-mcp` CLI, and learns each console's
-> Network version; the Network operations are being added.** See [docs/phase-checklist.md](docs/phase-checklist.md),
+> stdio, is administered with the host-only `unifi-mcp` CLI, and implements all 73
+> documented UniFi Network operations ([docs/applications-network.md](docs/applications-network.md));
+> they are tested against a synthetic console, and a real-console run is pending.** See [docs/phase-checklist.md](docs/phase-checklist.md),
 > [docs/installation.md](docs/installation.md) and [docs/administration.md](docs/administration.md).
 
 ## Design principles

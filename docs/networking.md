@@ -1,6 +1,6 @@
 # Networking
 
-> **Status: Phase 1 in progress.** This page covers the MCP listener, the admin listener
+> **Status: Phase 1 complete.** This page covers the MCP listener, the admin listener
 > and egress to consoles, as implemented (ADR 0012, ADR 0013, ADR 0016), and the
 > single-host Docker example (`deploy/compose.single.yml`, ADR 0017). Dual-interface and
 > TLS examples are Phase 5.

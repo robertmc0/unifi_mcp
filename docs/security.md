@@ -1,11 +1,12 @@
 # Security model
 
-> **Status: Phase 1 in progress.** This page currently covers the permission model
+> **Status: Phase 1 complete.** This page currently covers the permission model
 > (`packages/policy`, ADR 0009), write safety (`packages/core`, ADR 0010), client tokens
 > (`packages/mcp-server`, ADR 0013) and connections to consoles (`packages/unifi-api`,
 > ADR 0012). The approval workflow is in [approval-workflow.md](approval-workflow.md) and
-> host administration in [administration.md](administration.md) (ADR 0015). TLS and
-> network isolation are added as they are implemented.
+> host administration in [administration.md](administration.md) (ADR 0015). How the
+> Network adapter applies it is in [applications-network.md](applications-network.md)
+> (ADR 0018). Network isolation examples are Phase 5.
 
 ## Principles
 
