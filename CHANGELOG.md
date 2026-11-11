@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows
   `packages/unifi-network/src/generated/`; `api:reconcile` fails when they are stale.
 - Opt-in live read-only test (`npm run test:live`, never in CI) and a manual write runbook
   (ADR 0018 §7).
+- The live test names why a read failed and, for a contract mismatch, which fields
+  (never their values). It creates the report folder.
 - Manual pages updated for Phase 2: status notes, Claude Code guide (named tools,
   client-data grants), approval workflow (the Network contract has no concurrency
   precondition), troubleshooting.

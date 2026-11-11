@@ -5,7 +5,9 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import * as z from 'zod';
 import defaultConfig from '../../vitest.config.ts';
+import { mismatchSummary } from '../fixtures/schema-mismatch.ts';
 
 const ROOT = join(import.meta.dirname, '../..');
 const read = (path: string) => readFile(join(ROOT, path), 'utf8');
@@ -33,5 +35,67 @@ describe('live tests', () => {
     );
     expect(source).toContain('deployment: { forceReadOnly: true }');
     expect(source).toContain("allow: ['network.*.read']");
+  });
+});
+
+describe('live report mismatch summaries', () => {
+  const issues = (schema: z.ZodType, value: unknown) => {
+    const result = schema.safeParse(value);
+    if (result.success) throw new Error('expected a mismatch');
+    return result.error.issues;
+  };
+
+  it('name the field and the kind of mismatch, with list positions removed', () => {
+    const schema = z.object({ data: z.array(z.object({ state: z.string(), port: z.int() })) });
+    expect(
+      mismatchSummary(issues(schema, { data: [{ state: 'ok', port: 1 }, { port: 'x' }] })),
+    ).toEqual([
+      'data[].state: invalid_type (expected string)',
+      'data[].port: invalid_type (expected number)',
+    ]);
+  });
+
+  it('never repeat a received value or a key that is not a property name', () => {
+    const secret = 'Office AP 192.0.2.7 aa:bb:cc:dd:ee:ff';
+    const schema = z.object({
+      name: z.literal('x'),
+      kind: z.enum(['a', 'b']),
+      size: z.string().max(3),
+      byMac: z.record(z.string(), z.int()),
+    });
+    const lines = mismatchSummary(
+      issues(schema, { name: secret, kind: secret, size: secret, byMac: { [secret]: secret } }),
+    );
+    expect(lines).toEqual([
+      'name: invalid_value',
+      'kind: invalid_value',
+      'size: too_big',
+      'byMac.?: invalid_type (expected number)',
+    ]);
+    expect(JSON.stringify(lines)).not.toMatch(/Office|192\.0\.2|aa:bb/);
+  });
+
+  it('follow the closest branch of a union, below the union', () => {
+    const schema = z.object({
+      data: z.array(
+        z.union([
+          z.object({ c: z.string(), d: z.string() }),
+          z.object({ a: z.string(), b: z.string() }),
+        ]),
+      ),
+    });
+    expect(mismatchSummary(issues(schema, { data: [{ a: 1, b: 'y' }] }))).toEqual([
+      'data[].a: invalid_type (expected string)',
+    ]);
+  });
+
+  it('mark the root and keep at most 20 lines', () => {
+    expect(mismatchSummary(issues(z.object({}), 'x'))).toEqual([
+      '(root): invalid_type (expected object)',
+    ]);
+    const wide = z.object(
+      Object.fromEntries([...Array(30).keys()].map((i) => [`f${String(i)}`, z.string()])),
+    );
+    expect(mismatchSummary(issues(wide, {}))).toHaveLength(20);
   });
 });

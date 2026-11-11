@@ -158,7 +158,11 @@ Instead of `UNIFI_LIVE_TLS_PIN` you can give `UNIFI_LIVE_CA_FILE` (a PEM file). 
 `UNIFI_LIVE_PORT` if the console does not use 443.
 
 The test fails on any read that does not match the contract. Reads with nothing to read
-(for example, no vouchers) are reported as skipped.
+(for example, no vouchers) are reported as skipped. A failure names its cause, for example
+`tls_pin_mismatch` or `upstream_unauthorized`. For a response that does not match the
+contract, the output and the report name the fields and the kind of mismatch
+(`data[].name: invalid_type (expected string)`), never their values. The report folder is
+created if it does not exist. Read the report before you commit it.
 
 The report records only these facts:
 

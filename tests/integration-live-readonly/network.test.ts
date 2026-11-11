@@ -14,14 +14,16 @@
  *   every request is recorded and checked.
  * - The hard lock is on, and the client has read grants only.
  * - Nothing the console returns is printed or written: the report holds operation ids,
- *   outcomes and the application version, never names, addresses, ids or data.
+ *   outcomes and the application version, never names, addresses, ids or data. Where a
+ *   response does not match the contract, it names the fields (paths with list positions
+ *   removed) and the kind of mismatch, never their values.
  */
 import { randomBytes } from 'node:crypto';
 import { lookup } from 'node:dns/promises';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { isIP } from 'node:net';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import {
   defineOperation,
   Dispatcher,
@@ -30,6 +32,7 @@ import {
   satisfies,
   type ExecutionCall,
   type ExecutorOutcome,
+  type OperationDescriptor,
   type OperationExecutor,
 } from '@unifi-local-mcp/core';
 import { ClientPolicySchema, PolicyStore } from '@unifi-local-mcp/policy';
@@ -49,6 +52,7 @@ import {
 } from '@unifi-local-mcp/unifi-network';
 import { afterAll, describe, expect, it } from 'vitest';
 import * as z from 'zod';
+import { mismatchSummary } from '../fixtures/schema-mismatch.ts';
 
 const env = process.env;
 const HOST = env['UNIFI_LIVE_HOST']?.trim() ?? '';
@@ -81,6 +85,7 @@ class ReadOnlyGuard implements OperationExecutor {
 interface Outcome {
   operationId: string;
   outcome: string;
+  mismatches?: string[];
 }
 
 describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
@@ -91,9 +96,12 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
     date: new Date().toISOString().slice(0, 10),
   };
   let dir = '';
+  let close: (() => void) | undefined;
 
   afterAll(async () => {
+    close?.();
     if (REPORT !== '') {
+      await mkdir(dirname(REPORT), { recursive: true });
       await writeFile(REPORT, `${JSON.stringify({ ...report, results: outcomes }, null, 2)}\n`);
     }
     if (dir !== '') await rm(dir, { recursive: true, force: true });
@@ -105,6 +113,10 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
       databasePath: databasePathFor(join(dir, 'data')),
       masterKey: MasterKey.fromBytes(randomBytes(32)),
     });
+    close = () => {
+      storage.close();
+      close = undefined;
+    };
     const logger = createLogger({ level: 'error', sink: { write: () => undefined } });
     const audit = new AuditLog(storage.db, { logger });
     const policyStore = new PolicyStore(storage.db, audit);
@@ -143,6 +155,34 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
     for (const descriptor of NETWORK_READS) registry.register(descriptor);
     registry.seal();
 
+    /** Asks again for a response that missed its schema, and says where it missed. */
+    const diagnose = async (
+      descriptor: OperationDescriptor,
+      args: Record<string, unknown>,
+      siteId?: string,
+    ): Promise<string[]> => {
+      const input = descriptor.inputSchema.safeParse(args);
+      if (!input.success) return ['(the test sent arguments outside the contract)'];
+      const outcome = await guard.execute({
+        descriptor,
+        arguments: input.data,
+        target: { consoleId: view.id, ...(siteId === undefined ? {} : { siteId }) },
+        signal: AbortSignal.timeout(descriptor.timeoutMs),
+        correlationId: 'live-diagnose',
+        attempt: 1,
+      });
+      if (!outcome.ok) return [`(the second request failed: ${outcome.error.code})`];
+      const output = descriptor.outputSchema.safeParse(outcome.data);
+      return output.success
+        ? ['(the second response matched)']
+        : mismatchSummary(output.error.issues);
+    };
+    const descriptorOf = (operationId: string): OperationDescriptor => {
+      const descriptor = registry.get(operationId);
+      if (descriptor === undefined) throw new Error(`${operationId} is not registered.`);
+      return descriptor;
+    };
+
     // 1. Version.
     const probe = await new VersionProber({
       consoles,
@@ -150,8 +190,23 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
       registry,
       specs: [NETWORK_VERSION_PROBE],
     }).probe(view.id, 'network');
-    expect(probe, 'version probe').toMatchObject({ ok: true });
-    const version = probe.ok ? probe.version : '';
+    if (!probe.ok) {
+      report['probe'] = probe.code;
+      const mismatches =
+        probe.code === 'upstream_contract_mismatch'
+          ? await diagnose(descriptorOf(NETWORK_VERSION_PROBE.operationId), {})
+          : [];
+      outcomes.push({
+        operationId: NETWORK_VERSION_PROBE.operationId,
+        outcome: probe.code,
+        ...(mismatches.length === 0 ? {} : { mismatches }),
+      });
+      expect.fail(
+        `The version probe failed: ${probe.code}: ${probe.message}` +
+          mismatches.map((line) => `\n  ${line}`).join(''),
+      );
+    }
+    const version = probe.version;
     report['applicationVersion'] = version;
     report['supported'] = satisfies(version, NETWORK_VERSION_RANGE);
     expect(report['supported'], `Network ${version} is outside ${NETWORK_VERSION_RANGE}`).toBe(
@@ -198,10 +253,12 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
         const wait = (envelope.error as { retryAfterMs?: number }).retryAfterMs ?? 1000;
         await new Promise((resolve) => setTimeout(resolve, Math.min(wait + 50, 5000)));
       }
-      outcomes.push({
-        operationId,
-        outcome: envelope.status === 'ok' ? 'ok' : (envelope.error?.code ?? envelope.status),
-      });
+      const outcome = envelope.status === 'ok' ? 'ok' : (envelope.error?.code ?? envelope.status);
+      const mismatches =
+        outcome === 'upstream_contract_mismatch'
+          ? await diagnose(descriptorOf(operationId), args, siteId)
+          : [];
+      outcomes.push({ operationId, outcome, ...(mismatches.length === 0 ? {} : { mismatches }) });
       return envelope.status === 'ok' ? envelope : undefined;
     };
     const firstId = (envelope: unknown, key = 'id'): string | undefined => {
@@ -228,8 +285,15 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
     }
     const sites = await run('network.sites.list', { limit: 5 });
     const siteId = firstId(sites);
-    expect(siteId, 'the console has at least one site').toBeDefined();
-    if (siteId === undefined) return;
+    if (siteId === undefined) {
+      const last = outcomes.at(-1);
+      expect.fail(
+        sites === undefined
+          ? `network.sites.list failed: ${last?.outcome ?? 'unknown'}` +
+              (last?.mismatches ?? []).map((line) => `\n  ${line}`).join('')
+          : 'The console reports no site.',
+      );
+    }
 
     // 3. Site lists, each followed by a get of the first item where there is one.
     const pairs: [list: string, get: string | null, argument: string][] = [
@@ -352,7 +416,7 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
         ? 'no'
         : `inconclusive (${protect.error.code})`;
 
-    storage.close();
+    close();
 
     // 7. Only GETs were sent, and every read either worked or had nothing to read.
     expect(guard.sent.every((request) => request.startsWith('GET '))).toBe(true);
