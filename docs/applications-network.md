@@ -173,7 +173,8 @@ The report records only these facts:
 - the outcome of each operation;
 - the console's Network version;
 - whether paging across two pages and a filter worked;
-- whether the key also worked for Protect, with a random key as the control;
+- whether the key also worked for Protect, with a random key as the control, and the
+  Protect version it reported;
 - for up to five networks, the result of the references read and the network's kind
   (management, default, origin).
 

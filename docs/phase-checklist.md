@@ -345,7 +345,33 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
       (Network 11.0.99). Filtering/pagination: checked live (above). Keys stay treated as
       console-wide administrator credentials (ADR 0005).
 
-## Phase 3 — UniFi Protect
+## Phase 3 — UniFi Protect (in progress)
+
+Baseline: Protect integration API v7.4.96 (83 operations: 38 HTTP reads, 3 WebSocket
+subscriptions, 42 writes), `api-specs/protect/7.4.96/`
+([ADR 0019](adr/0019-protect-adapter.md)).
+
+### Implementation order (plan)
+
+1. ✅ **Contract baseline** (2026-11-11): 7.4.96 replaces the Phase 0 record of 7.3.74 (a
+   strict superset: 9 added, none removed, one documented 409 added). ADR 0019 §1.
+2. **Schemas**: extend the generator for Protect (binary `image/jpeg` response, multipart
+   request, WebSocket message schemas) → `packages/unifi-protect/src/generated/`.
+3. **Binary content**: documented binary responses in the executor (media type check,
+   size cap), MCP image content, `camera_image` sensitivity; never logged or audited.
+4. **Adapter skeleton and version probe** (`GET /v1/meta/info`) and the supported range.
+5. **Reads** with security review (users: `personal_identifier`; stream and talkback URLs
+   grant access by themselves).
+6. **Writes** with risk review (arming, disarming, sirens, relays and alarm outputs high;
+   permanent microphone disable high and off by default; the multipart upload).
+7. **Events**: WebSocket subscriptions over the same TLS and egress controls, a connection
+   manager, MCP resources with `subscriptions/listen`, per-client filtering; tests for
+   expiry, revocation, client and upstream disconnects, reconnect storms and slow
+   consumers.
+8. **Coverage, live read-only test and write runbook.**
+9. **Docs**: `applications-protect.md` and updates to the manual.
+
+### Gate (spec §16)
 
 - [ ] Same coverage and tests as Network
 - [ ] Permission-filtered image/event content; documented WebSocket subscriptions; reconnect, disconnect and revocation

@@ -430,7 +430,7 @@ describe('doctor and api coverage', () => {
     expect(Object.fromEntries(rows.map((r) => [r.module, [r.documented, r.implemented]]))).toEqual({
       access: [107, 0],
       network: [73, 73],
-      protect: [74, 0],
+      protect: [83, 0],
     });
   });
 });

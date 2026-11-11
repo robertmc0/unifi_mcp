@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added — Phase 3 (in progress): UniFi Protect
+
+- Protect contract baseline moved to v7.4.96 (83 operations; ADR 0019). The live
+  read-only test also records the Protect version the console reports.
+- `api:reconcile --write` derives the inventory of a new OpenAPI revision.
+
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 
 - OpenAPI → zod schema generator (`scripts/generate-adapter-schemas.ts`, ADR 0018): strict

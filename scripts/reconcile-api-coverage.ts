@@ -101,7 +101,13 @@ const coverage = await readJson<CoverageFile>(join(COVERAGE_DIR, 'api-coverage.j
 for (const rev of await listSpecRevisions()) {
   const { application, revision, contractKind } = rev.provenance;
   const inventoryPath = join(rev.dir, 'operations.json');
-  let inventory = await readJson<Inventory>(inventoryPath);
+  // A new OpenAPI revision has no inventory until --write derives it (api-specs/README.md).
+  let inventory = await readJson<Inventory>(inventoryPath).catch((error: unknown) => {
+    if (write && contractKind === 'openapi' && (error as { code?: unknown }).code === 'ENOENT') {
+      return { application, revision, derivedFrom: '', operationCount: 0, operations: [] };
+    }
+    throw error;
+  });
 
   if (contractKind === 'openapi') {
     const specText = await verifiedVendorText(rev, 'openapi.json');

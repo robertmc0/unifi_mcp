@@ -18,7 +18,7 @@ unverified assumptions.
 | Application                  | Official local API                    | Contract                                   | Local base URL                                          | Auth                            | Roadmap                                                                                  |
 | ---------------------------- | ------------------------------------- | ------------------------------------------ | ------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
 | Network                      | **Yes**                               | OpenAPI 3.1, v11.0.97, 73 ops              | `https://{consoleHost}/proxy/network/integration`       | `X-API-KEY: <key>`              | Phase 2                                                                                  |
-| Protect                      | **Yes**                               | OpenAPI 3.1, v7.3.74, 74 ops (2 WebSocket) | `https://{consoleHost}/proxy/protect/integration`       | `X-API-KEY: <key>`              | Phase 3                                                                                  |
+| Protect                      | **Yes**                               | OpenAPI 3.1, v7.4.96, 83 ops (3 WebSocket) | `https://{consoleHost}/proxy/protect/integration`       | `X-API-KEY: <key>`              | Phase 3                                                                                  |
 | Access                       | **Yes** (distinct listener)           | PDF API reference (2026-03-23), 107 ops    | `https://{consoleHost}:12445` + `/api/v1/developer/...` | `Authorization: Bearer <token>` | Phase 4                                                                                  |
 | InnerSpace                   | Yes (local server listed)             | OpenAPI, v1.3.23, 6 read ops               | `https://{consoleIP}/proxy/innerspace/integration`      | `X-API-KEY`                     | **Not in the spec roadmap.** Recorded as an eligible future plugin slot; no work planned |
 | Site Manager                 | No: cloud only (`https://api.ui.com`) | —                                          | —                                                       | —                               | Excluded (spec §1.2 non-goal)                                                            |
@@ -53,6 +53,9 @@ against in `tests/contract/api-inventory.test.ts`.
   `code`, `message`, `timestamp`, `requestPath`, `requestId`). Access always wraps
   responses as `{code, msg, data}`, and success is `code == "SUCCESS"`, never HTTP 200
   alone (spec §4.4).
+
+The Protect row was moved from v7.3.74 (74 operations, 2 WebSocket) to v7.4.96 on
+2026-11-11 ([ADR 0019](0019-protect-adapter.md)).
 
 ## Discrepancy recorded: Access OpenAPI port
 

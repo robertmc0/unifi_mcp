@@ -1,8 +1,8 @@
 {
   "application": "protect",
-  "revision": "7.3.74",
+  "revision": "7.4.96",
   "derivedFrom": "vendor/openapi.json + vendor/llms.txt (scripts/reconcile-api-coverage.ts --write)",
-  "operationCount": 74,
+  "operationCount": 83,
   "operations": [
     {
       "key": "GET /v1/alarm-hubs",
@@ -11,7 +11,7 @@
       "vendorOperationId": null,
       "category": "Alarm hub information & management",
       "summary": "Get all alarm hubs",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1alarm-hubs",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1alarm-hubs",
       "transport": "http"
     },
     {
@@ -21,7 +21,7 @@
       "vendorOperationId": null,
       "category": "Alarm hub information & management",
       "summary": "Get alarm hub details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1alarm-hubsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1alarm-hubsid",
       "transport": "http"
     },
     {
@@ -31,7 +31,7 @@
       "vendorOperationId": null,
       "category": "Alarm hub information & management",
       "summary": "Patch alarm hub settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1alarm-hubsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1alarm-hubsid",
       "transport": "http"
     },
     {
@@ -41,7 +41,7 @@
       "vendorOperationId": null,
       "category": "Alarm hub information & management",
       "summary": "Trigger alarm hub output",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1alarm-hubsidoutputsoutputidtrigger",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1alarm-hubsidoutputsoutputidtrigger",
       "transport": "http"
     },
     {
@@ -51,7 +51,7 @@
       "vendorOperationId": null,
       "category": "Alarm manager integration",
       "summary": "Send a webhook to the alarm manager",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1alarm-managerwebhookid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1alarm-managerwebhookid",
       "transport": "http"
     },
     {
@@ -61,7 +61,7 @@
       "vendorOperationId": null,
       "category": "Arm profile management",
       "summary": "Get all arm profiles",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1arm-profiles",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1arm-profiles",
       "transport": "http"
     },
     {
@@ -71,7 +71,7 @@
       "vendorOperationId": null,
       "category": "Arm profile management",
       "summary": "Create arm profile",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profiles",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1arm-profiles",
       "transport": "http"
     },
     {
@@ -81,7 +81,7 @@
       "vendorOperationId": null,
       "category": "Arm profile management",
       "summary": "Disable arm alarm",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profilesdisable",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1arm-profilesdisable",
       "transport": "http"
     },
     {
@@ -91,7 +91,7 @@
       "vendorOperationId": null,
       "category": "Arm profile management",
       "summary": "Enable arm alarm",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1arm-profilesenable",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1arm-profilesenable",
       "transport": "http"
     },
     {
@@ -101,7 +101,7 @@
       "vendorOperationId": null,
       "category": "Arm profile management",
       "summary": "Set current arm profile",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1arm-profilessettings",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1arm-profilessettings",
       "transport": "http"
     },
     {
@@ -111,7 +111,7 @@
       "vendorOperationId": null,
       "category": "Arm profile management",
       "summary": "Update arm profile",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1arm-profilesid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1arm-profilesid",
       "transport": "http"
     },
     {
@@ -121,7 +121,7 @@
       "vendorOperationId": null,
       "category": "Arm profile management",
       "summary": "Delete arm profile",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/delete-v1arm-profilesid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/delete-v1arm-profilesid",
       "transport": "http"
     },
     {
@@ -131,7 +131,7 @@
       "vendorOperationId": null,
       "category": "Bridge information & management",
       "summary": "Get all bridges",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1bridges",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1bridges",
       "transport": "http"
     },
     {
@@ -141,7 +141,7 @@
       "vendorOperationId": null,
       "category": "Bridge information & management",
       "summary": "Get bridge details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1bridgesid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1bridgesid",
       "transport": "http"
     },
     {
@@ -151,7 +151,7 @@
       "vendorOperationId": null,
       "category": "Bridge information & management",
       "summary": "Patch bridge settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1bridgesid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1bridgesid",
       "transport": "http"
     },
     {
@@ -161,7 +161,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Get all cameras",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1cameras",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1cameras",
       "transport": "http"
     },
     {
@@ -171,7 +171,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Get camera details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1camerasid",
       "transport": "http"
     },
     {
@@ -181,7 +181,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Patch camera settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1camerasid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1camerasid",
       "transport": "http"
     },
     {
@@ -191,7 +191,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Permanently disable camera microphone",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasiddisable-mic-permanently",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1camerasiddisable-mic-permanently",
       "transport": "http"
     },
     {
@@ -201,7 +201,7 @@
       "vendorOperationId": null,
       "category": "Camera PTZ control & management",
       "summary": "Move PTZ camera to preset",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzgotoslot",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1camerasidptzgotoslot",
       "transport": "http"
     },
     {
@@ -211,7 +211,7 @@
       "vendorOperationId": null,
       "category": "Camera PTZ control & management",
       "summary": "Start a camera PTZ patrol",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzpatrolstartslot",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1camerasidptzpatrolstartslot",
       "transport": "http"
     },
     {
@@ -221,7 +221,7 @@
       "vendorOperationId": null,
       "category": "Camera PTZ control & management",
       "summary": "Stop active camera PTZ patrol",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidptzpatrolstop",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1camerasidptzpatrolstop",
       "transport": "http"
     },
     {
@@ -231,7 +231,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Get RTSPS streams for camera",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasidrtsps-stream",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1camerasidrtsps-stream",
       "transport": "http"
     },
     {
@@ -241,7 +241,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Create RTSPS streams for camera",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidrtsps-stream",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1camerasidrtsps-stream",
       "transport": "http"
     },
     {
@@ -251,7 +251,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Delete camera RTSPS stream",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/delete-v1camerasidrtsps-stream",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/delete-v1camerasidrtsps-stream",
       "transport": "http"
     },
     {
@@ -261,7 +261,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Get camera snapshot",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1camerasidsnapshot",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1camerasidsnapshot",
       "transport": "http"
     },
     {
@@ -271,7 +271,7 @@
       "vendorOperationId": null,
       "category": "Camera information & management",
       "summary": "Create talkback session for camera",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1camerasidtalkback-session",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1camerasidtalkback-session",
       "transport": "http"
     },
     {
@@ -281,7 +281,7 @@
       "vendorOperationId": null,
       "category": "Chime information & management",
       "summary": "Get all chimes",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1chimes",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1chimes",
       "transport": "http"
     },
     {
@@ -291,7 +291,7 @@
       "vendorOperationId": null,
       "category": "Chime information & management",
       "summary": "Get chime details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1chimesid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1chimesid",
       "transport": "http"
     },
     {
@@ -301,7 +301,77 @@
       "vendorOperationId": null,
       "category": "Chime information & management",
       "summary": "Patch chime settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1chimesid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1chimesid",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/external/arm-profiles",
+      "method": "GET",
+      "path": "/v1/external/arm-profiles",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Get external arm profiles",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1externalarm-profiles",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/external/arm-profiles",
+      "method": "POST",
+      "path": "/v1/external/arm-profiles",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Create an external arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1externalarm-profiles",
+      "transport": "http"
+    },
+    {
+      "key": "GET /v1/external/arm-profiles/{id}",
+      "method": "GET",
+      "path": "/v1/external/arm-profiles/{id}",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Get an external arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1externalarm-profilesid",
+      "transport": "http"
+    },
+    {
+      "key": "PATCH /v1/external/arm-profiles/{id}",
+      "method": "PATCH",
+      "path": "/v1/external/arm-profiles/{id}",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Update an external arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1externalarm-profilesid",
+      "transport": "http"
+    },
+    {
+      "key": "DELETE /v1/external/arm-profiles/{id}",
+      "method": "DELETE",
+      "path": "/v1/external/arm-profiles/{id}",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Delete an external arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/delete-v1externalarm-profilesid",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/external/arm-profiles/{id}/actions/arm",
+      "method": "POST",
+      "path": "/v1/external/arm-profiles/{id}/actions/arm",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Arm an external arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1externalarm-profilesidactionsarm",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/external/arm-profiles/{id}/actions/disarm",
+      "method": "POST",
+      "path": "/v1/external/arm-profiles/{id}/actions/disarm",
+      "vendorOperationId": null,
+      "category": "Arm profile management",
+      "summary": "Disarm an external arm profile",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1externalarm-profilesidactionsdisarm",
       "transport": "http"
     },
     {
@@ -311,7 +381,7 @@
       "vendorOperationId": null,
       "category": "Device asset file management",
       "summary": "Get device asset files",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1filesfiletype",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1filesfiletype",
       "transport": "http"
     },
     {
@@ -321,7 +391,7 @@
       "vendorOperationId": null,
       "category": "Device asset file management",
       "summary": "Upload device asset file",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1filesfiletype",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1filesfiletype",
       "transport": "http"
     },
     {
@@ -331,7 +401,7 @@
       "vendorOperationId": null,
       "category": "Fob information & management",
       "summary": "Get all fobs",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1fobs",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1fobs",
       "transport": "http"
     },
     {
@@ -341,7 +411,7 @@
       "vendorOperationId": null,
       "category": "Fob information & management",
       "summary": "Get fob details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1fobsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1fobsid",
       "transport": "http"
     },
     {
@@ -351,7 +421,7 @@
       "vendorOperationId": null,
       "category": "Fob information & management",
       "summary": "Patch fob settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1fobsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1fobsid",
       "transport": "http"
     },
     {
@@ -361,7 +431,7 @@
       "vendorOperationId": null,
       "category": "Light information & management",
       "summary": "Get all lights",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1lights",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1lights",
       "transport": "http"
     },
     {
@@ -371,7 +441,7 @@
       "vendorOperationId": null,
       "category": "Light information & management",
       "summary": "Get light details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1lightsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1lightsid",
       "transport": "http"
     },
     {
@@ -381,7 +451,7 @@
       "vendorOperationId": null,
       "category": "Light information & management",
       "summary": "Patch light settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1lightsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1lightsid",
       "transport": "http"
     },
     {
@@ -391,7 +461,7 @@
       "vendorOperationId": null,
       "category": "Link station information & management",
       "summary": "Get all link stations",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1link-stations",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1link-stations",
       "transport": "http"
     },
     {
@@ -401,7 +471,7 @@
       "vendorOperationId": null,
       "category": "Link station information & management",
       "summary": "Get link station details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1link-stationsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1link-stationsid",
       "transport": "http"
     },
     {
@@ -411,7 +481,7 @@
       "vendorOperationId": null,
       "category": "Link station information & management",
       "summary": "Patch link station settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1link-stationsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1link-stationsid",
       "transport": "http"
     },
     {
@@ -421,7 +491,7 @@
       "vendorOperationId": null,
       "category": "Live view management",
       "summary": "Get all live views",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1liveviews",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1liveviews",
       "transport": "http"
     },
     {
@@ -431,7 +501,7 @@
       "vendorOperationId": null,
       "category": "Live view management",
       "summary": "Create live view",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1liveviews",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1liveviews",
       "transport": "http"
     },
     {
@@ -441,7 +511,7 @@
       "vendorOperationId": null,
       "category": "Live view management",
       "summary": "Get live view details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1liveviewsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1liveviewsid",
       "transport": "http"
     },
     {
@@ -451,7 +521,7 @@
       "vendorOperationId": null,
       "category": "Live view management",
       "summary": "Patch live view configuration",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1liveviewsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1liveviewsid",
       "transport": "http"
     },
     {
@@ -461,7 +531,7 @@
       "vendorOperationId": null,
       "category": "Information about application",
       "summary": "Get application information",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1metainfo",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1metainfo",
       "transport": "http"
     },
     {
@@ -471,7 +541,7 @@
       "vendorOperationId": null,
       "category": "NVR information & management",
       "summary": "Get NVR details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1nvrs",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1nvrs",
       "transport": "http"
     },
     {
@@ -481,7 +551,7 @@
       "vendorOperationId": null,
       "category": "Point of sale event ingestion",
       "summary": "Ingest a POS transaction",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1poscamerasidtransactions",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1poscamerasidtransactions",
       "transport": "http"
     },
     {
@@ -491,7 +561,7 @@
       "vendorOperationId": null,
       "category": "Relay information & management",
       "summary": "Get all relays",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1relays",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1relays",
       "transport": "http"
     },
     {
@@ -501,7 +571,7 @@
       "vendorOperationId": null,
       "category": "Relay information & management",
       "summary": "Get relay details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1relaysid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1relaysid",
       "transport": "http"
     },
     {
@@ -511,7 +581,7 @@
       "vendorOperationId": null,
       "category": "Relay information & management",
       "summary": "Patch relay settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1relaysid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1relaysid",
       "transport": "http"
     },
     {
@@ -521,7 +591,7 @@
       "vendorOperationId": null,
       "category": "Relay information & management",
       "summary": "Activate relay output",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1relaysidoutputsoutputidactivate",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1relaysidoutputsoutputidactivate",
       "transport": "http"
     },
     {
@@ -531,7 +601,7 @@
       "vendorOperationId": null,
       "category": "Sensor information & management",
       "summary": "Get all sensors",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sensors",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1sensors",
       "transport": "http"
     },
     {
@@ -541,7 +611,7 @@
       "vendorOperationId": null,
       "category": "Sensor information & management",
       "summary": "Get sensor details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sensorsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1sensorsid",
       "transport": "http"
     },
     {
@@ -551,7 +621,7 @@
       "vendorOperationId": null,
       "category": "Sensor information & management",
       "summary": "Patch sensor settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1sensorsid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1sensorsid",
       "transport": "http"
     },
     {
@@ -561,7 +631,7 @@
       "vendorOperationId": null,
       "category": "Siren information & management",
       "summary": "Get all sirens",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sirens",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1sirens",
       "transport": "http"
     },
     {
@@ -571,7 +641,7 @@
       "vendorOperationId": null,
       "category": "Siren information & management",
       "summary": "Get siren details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1sirensid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1sirensid",
       "transport": "http"
     },
     {
@@ -581,7 +651,7 @@
       "vendorOperationId": null,
       "category": "Siren information & management",
       "summary": "Patch siren settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1sirensid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1sirensid",
       "transport": "http"
     },
     {
@@ -591,7 +661,7 @@
       "vendorOperationId": null,
       "category": "Siren information & management",
       "summary": "Play siren",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidplay",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1sirensidplay",
       "transport": "http"
     },
     {
@@ -601,7 +671,7 @@
       "vendorOperationId": null,
       "category": "Siren information & management",
       "summary": "Stop siren",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidstop",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1sirensidstop",
       "transport": "http"
     },
     {
@@ -611,7 +681,7 @@
       "vendorOperationId": null,
       "category": "Siren information & management",
       "summary": "Test siren sound",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1sirensidtest-sound",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1sirensidtest-sound",
       "transport": "http"
     },
     {
@@ -621,7 +691,7 @@
       "vendorOperationId": null,
       "category": "Speaker information & management",
       "summary": "Get all speakers",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1speakers",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1speakers",
       "transport": "http"
     },
     {
@@ -631,7 +701,7 @@
       "vendorOperationId": null,
       "category": "Speaker information & management",
       "summary": "Get speaker details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1speakersid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1speakersid",
       "transport": "http"
     },
     {
@@ -641,7 +711,17 @@
       "vendorOperationId": null,
       "category": "Speaker information & management",
       "summary": "Patch speaker settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1speakersid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1speakersid",
+      "transport": "http"
+    },
+    {
+      "key": "POST /v1/speakers/{id}/stop-siren",
+      "method": "POST",
+      "path": "/v1/speakers/{id}/stop-siren",
+      "vendorOperationId": null,
+      "category": "Speaker information & management",
+      "summary": "Stop speaker siren",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1speakersidstop-siren",
       "transport": "http"
     },
     {
@@ -651,7 +731,7 @@
       "vendorOperationId": null,
       "category": "Speaker information & management",
       "summary": "Test speaker sound",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/post-v1speakersidtest-sound",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/post-v1speakersidtest-sound",
       "transport": "http"
     },
     {
@@ -661,7 +741,7 @@
       "vendorOperationId": null,
       "category": "WebSocket updates",
       "summary": "Get update messages about devices",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1subscribedevices",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1subscribedevices",
       "transport": "websocket"
     },
     {
@@ -671,7 +751,17 @@
       "vendorOperationId": null,
       "category": "WebSocket updates",
       "summary": "Get Protect event messages",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1subscribeevents",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1subscribeevents",
+      "transport": "websocket"
+    },
+    {
+      "key": "GET /v1/subscribe/updates",
+      "method": "GET",
+      "path": "/v1/subscribe/updates",
+      "vendorOperationId": null,
+      "category": "WebSocket updates",
+      "summary": "Get update messages for selected models",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1subscribeupdates",
       "transport": "websocket"
     },
     {
@@ -681,7 +771,7 @@
       "vendorOperationId": null,
       "category": "UniFi Identity User information",
       "summary": "Get all identity users",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1ulp-users",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1ulp-users",
       "transport": "http"
     },
     {
@@ -691,7 +781,7 @@
       "vendorOperationId": null,
       "category": "UniFi Identity User information",
       "summary": "Get identity user details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1ulp-usersid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1ulp-usersid",
       "transport": "http"
     },
     {
@@ -701,7 +791,7 @@
       "vendorOperationId": null,
       "category": "Protect User information",
       "summary": "Get all users",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1users",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1users",
       "transport": "http"
     },
     {
@@ -711,7 +801,7 @@
       "vendorOperationId": null,
       "category": "Protect User information",
       "summary": "Get user details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1usersid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1usersid",
       "transport": "http"
     },
     {
@@ -721,7 +811,7 @@
       "vendorOperationId": null,
       "category": "Viewer information & management",
       "summary": "Get all viewers",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1viewers",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1viewers",
       "transport": "http"
     },
     {
@@ -731,7 +821,7 @@
       "vendorOperationId": null,
       "category": "Viewer information & management",
       "summary": "Get viewer details",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/get-v1viewersid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/get-v1viewersid",
       "transport": "http"
     },
     {
@@ -741,7 +831,7 @@
       "vendorOperationId": null,
       "category": "Viewer information & management",
       "summary": "Patch viewer settings",
-      "documentationUrl": "https://developer.ui.com/protect/v7.3.74/patch-v1viewersid",
+      "documentationUrl": "https://developer.ui.com/protect/v7.4.96/patch-v1viewersid",
       "transport": "http"
     }
   ]

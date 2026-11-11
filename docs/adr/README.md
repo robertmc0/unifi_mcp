@@ -24,6 +24,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0016](0016-admin-listener-sessions-and-ui.md)              | Admin web listener, sessions and a server-rendered interface                     | Accepted                                 |
 | [0017](0017-container-image-and-compose.md)                 | Container image, Compose example and basic CI                                    | Accepted                                 |
 | [0018](0018-network-adapter.md)                             | UniFi Network adapter: generated schemas, reviewed metadata, version probe       | Accepted (extended in Phase 2)           |
+| [0019](0019-protect-adapter.md)                             | UniFi Protect adapter                                                            | Accepted (extended in Phase 3)           |
 
 ## Template
 

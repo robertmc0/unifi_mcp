@@ -23,14 +23,18 @@ contain them. It records where they are published and how to verify them, and ke
 the minimal interoperability facts needed to reconcile coverage (ADR 0006). UniFi is a
 trademark of Ubiquiti Inc. This project is not affiliated with Ubiquiti.
 
-## Baseline inventory (retrieved 2026-11-10)
+## Baseline inventory (retrieved 2026-11-10; Protect 7.4.96 on 2026-11-11)
+
+Protect 7.4.96 replaced the Phase 0 record of 7.3.74, of which it is a superset
+([ADR 0019](../docs/adr/0019-protect-adapter.md)). Reads include the 3 WebSocket
+subscriptions.
 
 | Application | Revision   | Contract artefact                                                                                           | SHA-256                                                            | Operations               |
 | ----------- | ---------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------ |
 | Network     | 11.0.97    | [openapi.json](https://developer.ui.com/network/v11.0.97/openapi.json) (412,138 B)                          | `0828aa9f017cce92cd035429c7e19c933d0b3387c561aac17c468b4c2ca8be66` | 73 (41 read / 32 write)  |
 | Network     | 11.0.97    | [llms.txt](https://developer.ui.com/network/v11.0.97/llms.txt) index (11,175 B)                             | `511cdf651a5b6864b5412765ccd6ef199ef44fd161ed1fa9e35e161628172575` | identical set            |
-| Protect     | 7.3.74     | [openapi.json](https://developer.ui.com/protect/v7.3.74/openapi.json) (440,739 B)                           | `85caa3c70a5febd8ae2e4f90dbe31b8ad544fc9b74b6c02ca477c8af03d14dc6` | 74 (38 read / 36 write)  |
-| Protect     | 7.3.74     | [llms.txt](https://developer.ui.com/protect/v7.3.74/llms.txt) index (10,178 B)                              | `5ee56a5109a0024e1386a45d9bc351ed7b27183074f634d17b0dbde5ccf219b3` | identical set            |
+| Protect     | 7.4.96     | [openapi.json](https://developer.ui.com/protect/v7.4.96/openapi.json) (558,984 B)                           | `21e24ef35a13616accb6978d5b99af7ee139fee80b8f738c364a310f5821d96d` | 83 (41 read / 42 write)  |
+| Protect     | 7.4.96     | [llms.txt](https://developer.ui.com/protect/v7.4.96/llms.txt) index (11,504 B)                              | `da7fb3dabca8fae71b99eefdbb0c49b070109ead7c62813b8873e04b069c7339` | identical set            |
 | Access      | 2026-03-23 | [api_reference.pdf](https://assets.identity.ui.com/unifi-access/api_reference.pdf) (2,150,514 B, 194 pages) | `6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e` | 107 (43 read / 64 write) |
 
 Supporting sources consulted (not artefacts of record):

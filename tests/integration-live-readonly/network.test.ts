@@ -42,6 +42,7 @@ import {
   ConsoleRegistry,
   EgressGuard,
   loadContractInventory,
+  PLAUSIBLE_VERSION,
   UnifiExecutor,
   VersionProber,
 } from '@unifi-local-mcp/unifi-api';
@@ -452,8 +453,8 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
       approvalRequired: false,
       siteScoped: false,
       description: 'Live test only: Protect application information.',
-      documentationUrl: 'https://developer.ui.com/protect/v7.3.74/get-v1metainfo',
-      contractRevision: '7.3.74',
+      documentationUrl: 'https://developer.ui.com/protect/v7.4.96/get-v1metainfo',
+      contractRevision: '7.4.96',
       apiVersionRange: '>=0',
       httpMethod: 'GET',
       pathTemplate: '/v1/meta/info',
@@ -483,6 +484,12 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
     // endpoint answers anyone. Control: the same request with a random key nobody issued.
     consoles.setCredential(view.id, 'protect', randomBytes(24).toString('base64url'), CLI);
     const control = await askProtect();
+    const protectVersion = protect.ok
+      ? (protect.data as { applicationVersion?: unknown } | null)?.applicationVersion
+      : undefined;
+    if (typeof protectVersion === 'string' && PLAUSIBLE_VERSION.test(protectVersion)) {
+      report['protectApplicationVersion'] = protectVersion;
+    }
     report['protectKeyCheck'] = {
       withNetworkKey: protect.ok ? 'ok' : protect.error.code,
       withRandomKey: control.ok ? 'ok' : control.error.code,
