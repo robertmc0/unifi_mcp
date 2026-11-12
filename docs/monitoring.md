@@ -59,10 +59,15 @@ shortly after start, within a minute of a module being enabled, and every 6 hour
 | `console version probe failed` | warn  | The probe failed (`code`, `retryInMs`). Logged when it starts failing or the error changes.    |
 | `console reachable again`      | info  | A failing probe succeeded again.                                                               |
 
+### Event messages
+
+Connections to console event streams and closed subscriptions are logged as described in
+[events.md](events.md#logs-and-audit). Event content is never logged.
+
 ## Audit trail
 
 The audit trail is stored in the database (`audit_entries`) and records every MCP read
-and write, every permission denial, admin logins and security changes, approval
+and write, every event subscription and event resource read, every permission denial, admin logins and security changes, approval
 decisions, CLI changes (as `cli:<operating-system user>`), and system events such as
 service start and stop, backups, master key rotation, restores, audit pruning and audit
 recovery.

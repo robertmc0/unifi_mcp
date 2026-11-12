@@ -42,7 +42,8 @@ If clients reach the service as `mcp.example.lan`, add that name to
 
 A proxy must pass the original `Host` header (or one listed in
 `UNIFI_MCP_HTTP_ALLOWED_HOSTS`) and the `Authorization` header, must not buffer
-`text/event-stream` responses, and should allow long-lived responses. The service never
+`text/event-stream` responses, and should allow long-lived responses: an event
+subscription stays open for up to an hour ([events.md](events.md)). The service never
 trusts `X-Forwarded-*` headers. Behind a proxy, the failed-authentication throttle sees
 the proxy's address for every client.
 
@@ -77,6 +78,7 @@ variables ([configuration.md](configuration.md#admin-listener)). In addition:
 The service connects only to configured consoles, on addresses inside the egress
 allowlist (`UNIFI_MCP_EGRESS_ALLOW_CIDRS`; private networks, carrier-grade NAT and IPv6
 unique-local by default). See [security.md](security.md#connections-to-consoles) for TLS
-verification and pinning. Consoles reached over a VPN must be reachable from the service's
+verification and pinning. Event subscriptions follow the same rules: a WebSocket to the
+module's address and port, opened only while a client subscribes ([events.md](events.md)). Consoles reached over a VPN must be reachable from the service's
 host, and their addresses must be in the allowlist; the service does not route or forward
 traffic.

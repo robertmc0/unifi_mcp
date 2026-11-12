@@ -9,9 +9,11 @@ server, never to UniFi. UniFi credentials never leave the server.
 > Phase 3 (UniFi Protect) is in progress. The service serves MCP over Streamable HTTP and,
 > through the stdio bridge, over stdio, is administered with the host-only `unifi-mcp`
 > CLI, and implements all 73 documented UniFi Network operations
-> ([docs/applications-network.md](docs/applications-network.md)); they are tested against
-> a synthetic console, and 23 of the 41 reads returned data from a real console and
-> matched the contract (Network 11.0.99).** See [docs/phase-checklist.md](docs/phase-checklist.md),
+> ([docs/applications-network.md](docs/applications-network.md)) and 73 of the 74 UniFi
+> Protect 7.3.74 operations, including its event subscriptions
+> ([docs/applications-protect.md](docs/applications-protect.md),
+> [docs/events.md](docs/events.md)). All are tested against synthetic consoles; reads
+> were also checked on a real console (Network 11.0.99, Protect 7.3.74).** See [docs/phase-checklist.md](docs/phase-checklist.md),
 > [docs/installation.md](docs/installation.md) and [docs/administration.md](docs/administration.md).
 
 ## Design principles

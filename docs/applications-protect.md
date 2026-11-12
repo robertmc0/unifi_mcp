@@ -5,7 +5,8 @@
 > documented HTTP reads, 41 of the 42 writes and both 7.3.74 event subscriptions
 > ([Events](#events)) are available and tested against a synthetic console. The reads
 > passed a live read-only test on a 7.3.74 console without devices, with one reviewed
-> exception ([Limitations](#limitations)). The remaining steps
+> exception ([Limitations](#limitations)). Writes can be checked on a real console with
+> a manual runbook. Next: the Phase 3 gate review
 > ([phase-checklist.md](phase-checklist.md#phase-3--unifi-protect-in-progress)).
 
 The service uses the **official local** UniFi Protect integration API on each console,
@@ -95,9 +96,9 @@ For example:
 
 ## Events
 
-Protect documents two event subscriptions, and the service offers both as MCP resources
-([client-generic-mcp.md](client-generic-mcp.md#events-resources-and-subscriptions),
-[ADR 0020](adr/0020-event-subscriptions.md)):
+Protect documents two event subscriptions, and the service offers both as MCP resources.
+[events.md](events.md) explains how clients subscribe and read them, what is and is not
+guaranteed, reconnects, limits and troubleshooting ([ADR 0020](adr/0020-event-subscriptions.md)).
 
 | Resource                                       | Grant                  | What it carries                                                                             |
 | ---------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------- |

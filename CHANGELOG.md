@@ -38,6 +38,10 @@ All notable changes to this project are documented here. The format follows
   live list that returns no items is recorded as `ok (empty)` and not counted as
   validated. Mismatch reports name the received type (`received undefined`).
 - Fixed: the coverage page of every module named its live record "Network".
+- Manual page for events (`docs/events.md`): available streams and grants, client
+  protocol eras, the read format, guarantees, reconnects, limits, states and codes, logs
+  and troubleshooting; linked across the manual. A contract test checks every
+  `unifi-mcp` command and option shown in the manual against the CLI.
 - Manual Protect write runbook (`docs/runbook-protect-writes.md`): an arm profile
   created, renamed, refused and deleted with approvals (no devices needed), then device
   renames and RTSPS streams. A contract test keeps both runbooks in line with the

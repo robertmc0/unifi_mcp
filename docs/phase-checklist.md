@@ -430,7 +430,17 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
    without devices; device renames and RTSPS streams with devices).
    `tests/contract/runbooks.test.ts` checks that both runbooks name registered operations
    with their reviewed risk and only existing CLI commands and options.
-9. **Docs**: `applications-protect.md` and updates to the manual.
+9. ✅ **Docs** (2026-11-12): [events.md](events.md), the manual page for events (spec §18
+   item 10): what is available and which grants each event needs, how 2026- and 2025-era
+   clients get events, the read format and cursors, what is and is not guaranteed,
+   reconnects and console changes, subscription limits, states and codes, logs and audit,
+   troubleshooting. Linked from the Protect page, the client guides, networking (proxies
+   must keep subscription streams open for an hour), monitoring, troubleshooting, the
+   index and the README. Event resources with Claude Code are not verified yet (noted in
+   `client-claude-code.md`). There is no operator status view of event connections yet
+   (logs and resource reads only; metrics are Phase 5).
+   `tests/contract/doc-commands.test.ts` checks every `unifi-mcp` command and option shown
+   in the manual against the CLI (mutation-checked).
 
 ### Gate (spec §16)
 

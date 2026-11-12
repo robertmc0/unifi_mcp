@@ -118,8 +118,8 @@ untrusted content, never as instructions.
 ## Events (resources and subscriptions)
 
 Where a console's application documents event subscriptions (Protect), the service offers
-them as MCP resources. `resources/list` shows the ones you may read, for example
-`unifi://consoles/<consoleId>/protect/events`.
+them as MCP resources ([events.md](events.md)). `resources/list` shows the ones you may
+read, for example `unifi://consoles/<consoleId>/protect/events`.
 
 - **2026-era clients** subscribe with `subscriptions/listen` and the resource URIs. The
   acknowledgement lists the URIs you were given; others are left out without saying why.

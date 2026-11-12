@@ -1,9 +1,9 @@
 # Troubleshooting
 
-> **Status: Phase 2 complete.** Covers the service, the CLI, the admin interface,
-> client connections and UniFi Network operations
-> ([applications-network.md](applications-network.md)). Protect and Access follow with
-> their adapters; metrics arrive in Phase 5.
+> **Status: Phase 3 in progress.** Covers the service, the CLI, the admin interface,
+> client connections, UniFi Network and Protect operations and Protect events
+> ([events.md](events.md#troubleshooting)). Access follows with its adapter; metrics
+> arrive in Phase 5.
 
 ## Start here
 
@@ -119,6 +119,14 @@ tests reachability and TLS trust without sending a request or credential.
 | `upstream_unauthorized`                     | The console rejected the API key (HTTP 401 or 403). A key created at unifi.ui.com (Site Manager) is always rejected; create one on the console ([quickstart.md](quickstart.md#3-add-your-console)). The key may also have been deleted in UniFi. Store a new one.                          |
 | `upstream_rate_limited`, `upstream_timeout` | The console is busy or slow. Reads are retried with backoff. A write is retried only if it was never sent.                                                                                                                                                                                 |
 | `outcome_unknown` (as `outcome` of a write) | The connection broke after the request was sent. The console may have applied the change. Check the console before trying again; it is never retried automatically.                                                                                                                        |
+
+## Events
+
+Event resources report their connection in `state` and `detail`. Both are explained, with
+fixes, in [events.md](events.md#states-and-codes); common problems (no resources listed,
+`state: inactive`, events missing for one client, notifications that stop or never arrive)
+are in [events.md](events.md#troubleshooting). The log messages of event connections are
+listed in [events.md](events.md#logs-and-audit).
 
 ## Administration
 

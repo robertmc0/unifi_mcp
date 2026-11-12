@@ -42,7 +42,7 @@
 | [runbook-network-writes.md](runbook-network-writes.md) (optional manual write validation on a real console)    | 2               |
 | [applications-protect.md](applications-protect.md) (versions, reads, events, writes, credentials, limitations) | 3 (in progress) |
 | [runbook-protect-writes.md](runbook-protect-writes.md) (optional manual write validation on a real console)    | 3               |
-| events.md                                                                                                      | 3               |
+| [events.md](events.md) (Protect events: subscriptions, reads, guarantees, reconnects, limits, troubleshooting) | 3               |
 | applications-access.md                                                                                         | 4               |
 | release.md, development.md                                                                                     | 5               |
 
