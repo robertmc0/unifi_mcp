@@ -6,7 +6,7 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
-### Added — Phase 3 (in progress): UniFi Protect
+### Added — Phase 3: UniFi Protect (gate passed 2026-11-12)
 
 - Protect contract baseline moved to v7.4.96 (83 operations; ADR 0019). The live
   read-only test also records the Protect version the console reports.

@@ -1,6 +1,6 @@
 # Troubleshooting
 
-> **Status: Phase 3 in progress.** Covers the service, the CLI, the admin interface,
+> **Status: Phase 3 complete.** Covers the service, the CLI, the admin interface,
 > client connections, UniFi Network and Protect operations and Protect events
 > ([events.md](events.md#troubleshooting)). Access follows with its adapter; metrics
 > arrive in Phase 5.

@@ -1,13 +1,13 @@
 # UniFi Protect
 
-> **Status: Phase 3 in progress.** The Protect adapter supports the official release 7.3.74
+> **Status: Phase 3 complete.** The Protect adapter supports the official release 7.3.74
 > and the newest documented revision 7.4.96 of the Protect integration API. All 38
 > documented HTTP reads, 41 of the 42 writes and both 7.3.74 event subscriptions
 > ([Events](#events)) are available and tested against a synthetic console. The reads
 > passed a live read-only test on a 7.3.74 console without devices, with one reviewed
 > exception ([Limitations](#limitations)). Writes can be checked on a real console with
-> a manual runbook. Next: the Phase 3 gate review
-> ([phase-checklist.md](phase-checklist.md#phase-3--unifi-protect-in-progress)).
+> a manual runbook. What is carried forward:
+> [phase-checklist.md](phase-checklist.md#phase-3--unifi-protect--gate-passed-2026-11-12).
 
 The service uses the **official local** UniFi Protect integration API on each console,
 `https://<console>/proxy/protect/integration/v1/…`, with the API key you stored for the

@@ -349,7 +349,15 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
       (Network 11.0.99). Filtering/pagination: checked live (above). Keys stay treated as
       console-wide administrator credentials (ADR 0005).
 
-## Phase 3 — UniFi Protect (in progress)
+## Phase 3 — UniFi Protect ✅ (gate passed 2026-11-12)
+
+All gate items below are met. Carried forward: device reads, the snapshot and device
+events are not live-validated (the test console has no Protect devices); event resources
+are not yet verified with Claude Code, and the Codex guide is still open (spec §17 client
+versions); there is no operator status view of event connections (logs and resource
+reads only; the admin interface and metrics, Phase 5); the 7.4.96 model update
+subscription waits for an official release that documents it; the optional manual write
+runbook on a real console (owner's choice); the Phase 1 and 2 carry-forwards.
 
 Baselines: Protect integration API v7.3.74, the current official release (74 operations),
 and v7.4.96, the newest documented (83 operations: 38 HTTP reads, 3 WebSocket
@@ -444,9 +452,58 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
 
 ### Gate (spec §16)
 
-- [ ] Same coverage and tests as Network
-- [ ] Permission-filtered image/event content; documented WebSocket subscriptions; reconnect, disconnect and revocation
-- [ ] No undocumented video or stream endpoints; high-consequence operations need approval
+Reviewed 2026-11-12 with `npm run check` (73 files, 1013 tests), `npm run api:reconcile`,
+and the image smoke test of the CI job run locally (healthy with a read-only root and no
+capabilities, `doctor` passes, `api coverage` lists Protect 73/74 and 81/83 from the image,
+clean stop).
+
+- [x] Same coverage and tests as Network
+      Every operation of both revisions in the coverage report with status, reviewed
+      metadata and test evidence ([protect/7.3.74.md](api-coverage/protect/7.3.74.md): 73 of
+      74; [protect/7.4.96.md](api-coverage/protect/7.4.96.md): 81 of 83, the omissions
+      reviewed). Version probe and supported range
+      (`tests/integration-mock/protect-version-probe.test.ts`); all reads and writes
+      mock-tested (`protect-reads.test.ts`, `protect-writes.test.ts`: authz, approval,
+      idempotency, uncertain outcomes); field shapes from the official contract with one
+      reviewed exception (ADR 0019 §8); optional live read-only test
+      ([record](api-coverage/live/protect-7.3.74.json): 20 of 20 matched); manual write
+      runbook ([runbook-protect-writes.md](runbook-protect-writes.md)). Flagged unknowns:
+      how subscriptions authenticate was answered live (the API key, ADR 0019 §8); snapshot
+      size and rate limits are undocumented and bounded by the service (a snapshot size
+      limit, the request rate limits).
+- [x] Permission-filtered image and event content
+      Snapshots only with `camera_image`; people only with `personal_identifier`; fob
+      presence only with `location` (`protect-reads.test.ts`, refused without sending
+      anything). Each event is decided like a read: NFC and fingerprint events need the
+      identity grants, device changes the grants of that device's read, decided again at
+      subscription, notification and read; notifications reach only their own client
+      (`tests/integration-mock/protect-events.test.ts`, `events.test.ts`,
+      `tests/unit/core/event-hub.test.ts`; mutation-checked, ADR 0020).
+- [x] Documented WebSocket subscriptions with event reconnection, disconnect and revocation
+      Both 7.3.74 subscriptions, over the same egress and TLS controls as requests
+      (`tests/unit/unifi-api/websocket.test.ts`, `events.test.ts`). Reconnect with backoff
+      and gap markers, a global attempt limit against reconnect storms, reconnect on
+      changed settings or keys, upstream drop; closing on client disconnect (upstream
+      closed after the last client), revocation, withdrawn grants, lifetime and slow
+      consumers (`tests/integration-mock/events.test.ts`, `event-hub.test.ts`). 2025-era
+      clients get the documented degraded mode; the stdio bridge relays subscriptions.
+- [x] Privacy and redaction
+      Credentials removed from every result and event at any depth (talkback URLs, PINs,
+      RTSPS URLs, which only report which qualities exist); arm-profile PINs never logged,
+      audited, shown to approvers or returned; undocumented fields dropped; event content
+      never logged (credential sentinels in every synthetic message,
+      `protect-reads.test.ts`, `protect-writes.test.ts`, `protect-events.test.ts`). Live
+      reports hold no names, ids or data (`tests/contract/api-coverage-matrix.test.ts`).
+- [x] No undocumented video or stream endpoints
+      Only inventoried operations can be registered (`tests/contract/module-endpoints.test.ts`,
+      `protect-security-review.test.ts`); the contract documents no video download. RTSPS
+      stream URLs and the talkback endpoint are never returned, and talkback is off by
+      default. The 7.4.96 update subscription is not implemented (ADR 0020 §6).
+- [x] High-consequence operations need independent approval
+      25 high-risk writes with human approval (alarm manager, anything that silences
+      alarms or monitoring, sirens, relays, alarm outputs); the permanent microphone
+      disable and talkback off by default (`protect-writes.test.ts`, ADR 0019 §6). No MCP
+      tool can approve (Phase 1).
 
 ## Phase 4 — Access and other documented modules
 

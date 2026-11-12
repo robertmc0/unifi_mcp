@@ -5,8 +5,8 @@ MCP clients such as Claude Code and Codex controlled access to the **official lo
 APIs** of UniFi applications (Network, Protect, Access). AI clients connect to this
 server, never to UniFi. UniFi credentials never leave the server.
 
-> **Status: Phase 1 (secure platform core) and Phase 2 (UniFi Network) are complete;
-> Phase 3 (UniFi Protect) is in progress. The service serves MCP over Streamable HTTP and,
+> **Status: Phase 1 (secure platform core), Phase 2 (UniFi Network) and Phase 3 (UniFi
+> Protect) are complete; Phase 4 (UniFi Access) is next. The service serves MCP over Streamable HTTP and,
 > through the stdio bridge, over stdio, is administered with the host-only `unifi-mcp`
 > CLI, and implements all 73 documented UniFi Network operations
 > ([docs/applications-network.md](docs/applications-network.md)) and 73 of the 74 UniFi

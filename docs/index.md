@@ -1,7 +1,7 @@
 # unifi-local-mcp documentation
 
-> **Project status: Phase 1 (secure platform core) and Phase 2 (UniFi Network) complete;
-> Phase 3 (UniFi Protect) in progress. The service serves MCP over HTTP and stdio, is
+> **Project status: Phase 1 (secure platform core), Phase 2 (UniFi Network) and Phase 3
+> (UniFi Protect) complete; Phase 4 (UniFi Access) next. The service serves MCP over HTTP and stdio, is
 > administered with the host-only `unifi-mcp` CLI, and implements all 73 documented UniFi
 > Network operations and 73 of the 74 Protect 7.3.74 operations, including both event
 > subscriptions, tested against synthetic consoles. Reads were also checked on a real
@@ -40,7 +40,7 @@
 | [troubleshooting.md](troubleshooting.md) (startup, connections, refusals, consoles, admin)                     | 1 / 5           |
 | [applications-network.md](applications-network.md) (versions, reads, sensitive data, limitations)              | 2 (started)     |
 | [runbook-network-writes.md](runbook-network-writes.md) (optional manual write validation on a real console)    | 2               |
-| [applications-protect.md](applications-protect.md) (versions, reads, events, writes, credentials, limitations) | 3 (in progress) |
+| [applications-protect.md](applications-protect.md) (versions, reads, events, writes, credentials, limitations) | 3               |
 | [runbook-protect-writes.md](runbook-protect-writes.md) (optional manual write validation on a real console)    | 3               |
 | [events.md](events.md) (Protect events: subscriptions, reads, guarantees, reconnects, limits, troubleshooting) | 3               |
 | applications-access.md                                                                                         | 4               |
