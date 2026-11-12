@@ -204,10 +204,11 @@ Validating writes on a real console is a manual runbook, approved step by step b
 - **Network references fail for networks in use.** On a console running Network 11.0.99,
   `network.networks.get_references` returned HTTP 500 (`api.unexpected-error`) for 5 of
   10 networks, with requests of the same documented form. It failed for every network
-  with clients or devices on it (including the default network and the one carrying the
-  access points), and for one network with nothing on it. It worked for networks whose
-  only reference was a Wi-Fi broadcast, and for empty ones. The console reports an
-  internal error; the cause is not known. The service reports it as
+  used by clients or devices: networks with clients, the one carrying the access points,
+  and one with no clients that is assigned to switch ports. It worked for every network
+  used only by a Wi-Fi broadcast, or by nothing. So the console fails exactly when its
+  answer would list clients or devices. Its error says only "Unexpected error", and its
+  logs show nothing; the cause is not known. The service reports it as
   `upstream_unavailable`, and retrying does not help. Before you change or delete a
   network, check what uses it in UniFi Network.
 - **API key scope.** UniFi documents no way to limit what an API key can do, and a Network
