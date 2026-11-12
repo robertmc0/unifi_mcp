@@ -277,11 +277,13 @@ export const apiCoverageCommand: Command = {
         ) as {
           operations: { method: string; path: string }[];
         };
-        // Implemented for this revision: a registered operation with the same method and
-        // path whose verified version range includes the revision (ADR 0019 §7).
-        const registered = ADAPTERS.filter((a) => a.moduleId === app.name).flatMap(
-          (a) => a.operations,
-        );
+        // Implemented for this revision: a registered operation or event stream (ADR 0020)
+        // with the same method and path whose verified version range includes the revision
+        // (ADR 0019 §7).
+        const registered = ADAPTERS.filter((a) => a.moduleId === app.name).flatMap((a) => [
+          ...a.operations,
+          ...a.eventStreams.map((stream) => ({ ...stream, httpMethod: 'GET' })),
+        ]);
         rows.push({
           module: app.name,
           revision: revision.name,

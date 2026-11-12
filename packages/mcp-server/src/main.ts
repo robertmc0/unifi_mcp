@@ -2,10 +2,10 @@
  * Service entry point: `node packages/mcp-server/src/main.ts`, from a checkout or in the
  * container (Node.js runs the sources directly, ADR 0002). Exits non-zero when startup
  * fails, never starting in a partially configured state. Registers the reviewed module
- * adapters (Phase 2: Network).
+ * adapters (Network, Protect) and their event streams.
  */
 import { createLogger, parseLogLevel } from '@unifi-local-mcp/telemetry';
-import { ADAPTER_OPERATIONS, ADAPTER_PROBES } from './adapters.ts';
+import { ADAPTER_EVENT_STREAMS, ADAPTER_OPERATIONS, ADAPTER_PROBES } from './adapters.ts';
 import { loadServiceConfig } from './config.ts';
 import { startService } from './service.ts';
 
@@ -25,6 +25,7 @@ try {
   const service = await startService({
     config: loadServiceConfig(process.env),
     operations: ADAPTER_OPERATIONS,
+    eventStreams: ADAPTER_EVENT_STREAMS,
     probes: ADAPTER_PROBES,
   });
   let stopping = false;

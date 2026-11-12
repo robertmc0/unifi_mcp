@@ -12,7 +12,7 @@
  */
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { satisfies, type OperationDescriptor } from '@unifi-local-mcp/core';
+import { satisfies } from '@unifi-local-mcp/core';
 import { ADAPTERS } from '@unifi-local-mcp/mcp-server';
 import {
   COVERAGE_DIR,
@@ -33,7 +33,10 @@ type Status = 'implemented' | 'not_implemented' | 'unsupported';
  * Tests that exercise every implemented operation of a module, by effect. Each listed test
  * iterates the adapter's own operation list, so a new operation is covered automatically.
  */
-const EVIDENCE: Record<string, { all: string[]; read: string[]; write: string[] }> = {
+const EVIDENCE: Record<
+  string,
+  { all: string[]; read: string[]; write: string[]; stream?: string[] }
+> = {
   network: {
     all: [
       'tests/contract/network-generated-schemas.test.ts',
@@ -52,8 +55,33 @@ const EVIDENCE: Record<string, { all: string[]; read: string[]; write: string[] 
       'tests/integration-mock/protect-version-probe.test.ts',
     ],
     write: ['tests/integration-mock/protect-writes.test.ts'],
+    stream: [
+      'tests/unit/core/event-hub.test.ts',
+      'tests/integration-mock/events.test.ts',
+      'tests/integration-mock/protect-events.test.ts',
+    ],
   },
 };
+
+/** What the matrix needs of a registered operation or event stream. */
+interface Implementation {
+  moduleId: string;
+  operationId: string;
+  httpMethod: string;
+  pathTemplate: string;
+  apiVersionRange: string;
+  contractRevision: string;
+  effect: 'read' | 'write';
+  permission: string;
+  risk: string;
+  approvalRequired: boolean;
+  defaultDisabled?: boolean | undefined;
+  sensitivityTags: readonly string[];
+  namedTool?: string | undefined;
+  /** Event streams are MCP resources, not operations (ADR 0020). */
+  stream: boolean;
+  streamId?: string;
+}
 
 /**
  * A reviewed result of the opt-in live read-only test (`UNIFI_LIVE_REPORT`), committed as
@@ -114,7 +142,7 @@ interface CoverageOperation {
   status: Status;
   statusReason: string | null;
   operationId: string | null;
-  exposure: { namedTool: string | null; generic: boolean } | null;
+  exposure: { namedTool: string | null; generic: boolean; resource?: string } | null;
   permission: string | null;
   risk: string | null;
   approvalRequired: boolean | null;
@@ -247,7 +275,15 @@ export async function buildCoverageFiles(
   const liveDir = options.liveDir ?? join(COVERAGE_DIR, 'live');
   const files = new Map<string, string>();
   const modules = [];
-  const registered = ADAPTERS.flatMap((adapter) => adapter.operations);
+  const registered: Implementation[] = ADAPTERS.flatMap((adapter) => [
+    ...adapter.operations.map((d) => ({ ...d, stream: false })),
+    ...adapter.eventStreams.map((s) => ({
+      ...s,
+      httpMethod: 'GET',
+      namedTool: undefined,
+      stream: true,
+    })),
+  ]);
   /**
    * The registered operation implementing a documented one in a revision: same module,
    * method and path, and a verified version range that includes the revision (an
@@ -262,7 +298,7 @@ export async function buildCoverageFiles(
         d.pathTemplate === path &&
         satisfies(revision, d.apiVersionRange),
     );
-  const matched = new Set<OperationDescriptor>();
+  const matched = new Set<Implementation>();
   for (const rev of await listSpecRevisions()) {
     const p = rev.provenance;
     const inventory = await readJson<Inventory>(join(rev.dir, 'operations.json'));
@@ -273,7 +309,7 @@ export async function buildCoverageFiles(
     );
     for (const file of evidence === undefined
       ? []
-      : [...evidence.all, ...evidence.read, ...evidence.write]) {
+      : [...evidence.all, ...evidence.read, ...evidence.write, ...(evidence.stream ?? [])]) {
       await access(join(REPO_ROOT, file)).catch(() => {
         throw new Error(`Coverage evidence ${file} does not exist.`);
       });
@@ -294,7 +330,16 @@ export async function buildCoverageFiles(
         status: d === undefined ? 'not_implemented' : 'implemented',
         statusReason: null,
         operationId: d?.operationId ?? null,
-        exposure: d === undefined ? null : { namedTool: d.namedTool ?? null, generic: true },
+        exposure:
+          d === undefined
+            ? null
+            : d.stream
+              ? {
+                  namedTool: null,
+                  generic: false,
+                  resource: `unifi://consoles/{consoleId}/${d.moduleId}/${d.streamId ?? ''}`,
+                }
+              : { namedTool: d.namedTool ?? null, generic: true },
         permission: d?.permission ?? null,
         risk: d?.risk ?? null,
         approvalRequired: d?.approvalRequired ?? null,
@@ -306,7 +351,9 @@ export async function buildCoverageFiles(
         evidence:
           d === undefined || evidence === undefined
             ? []
-            : [...evidence.all, ...(d.effect === 'read' ? evidence.read : evidence.write)],
+            : d.stream
+              ? [...evidence.all, ...(evidence.stream ?? [])]
+              : [...evidence.all, ...(d.effect === 'read' ? evidence.read : evidence.write)],
         provisional: classifyProvisionally(p.application, op),
       };
     });

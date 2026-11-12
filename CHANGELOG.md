@@ -48,6 +48,10 @@ All notable changes to this project are documented here. The format follows
   SDK handler per client so notifications reach only their own client; subscriptions
   closed on revocation, withdrawn grants, after one hour and for slow consumers; works
   through the stdio bridge.
+- Protect event streams: `unifi://consoles/<id>/protect/events` (identity events need
+  `personal_identifier` and `biometric_or_access_identity`) and `…/protect/devices`
+  (each change needs the grants of the read for that device). Bulk device messages keep
+  their ids and fields. Coverage: 73 of 74 (7.3.74), 81 of 83 (7.4.96).
 
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 

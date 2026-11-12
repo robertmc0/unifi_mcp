@@ -2,10 +2,10 @@
 
 > **Status: Phase 3 in progress.** The Protect adapter supports the official release 7.3.74
 > and the newest documented revision 7.4.96 of the Protect integration API. All 38
-> documented HTTP reads and 41 of the 42 writes are available and tested against a
-> synthetic console. The reads passed a live read-only test on a 7.3.74 console without
-> devices, with one reviewed exception ([Limitations](#limitations)). Event subscriptions
-> follow in the next steps
+> documented HTTP reads, 41 of the 42 writes and both 7.3.74 event subscriptions
+> ([Events](#events)) are available and tested against a synthetic console. The reads
+> passed a live read-only test on a 7.3.74 console without devices, with one reviewed
+> exception ([Limitations](#limitations)). The remaining steps
 > ([phase-checklist.md](phase-checklist.md#phase-3--unifi-protect-in-progress)).
 
 The service uses the **official local** UniFi Protect integration API on each console,
@@ -92,6 +92,36 @@ Three kinds of data need a grant of their own besides the read permission
 
 For example:
 `unifi-mcp client create <id> --console <alias> --allow 'protect.*.read' --sensitive camera_image`.
+
+## Events
+
+Protect documents two event subscriptions, and the service offers both as MCP resources
+([client-generic-mcp.md](client-generic-mcp.md#events-resources-and-subscriptions),
+[ADR 0020](adr/0020-event-subscriptions.md)):
+
+| Resource                                       | Grant                  | What it carries                                                                             |
+| ---------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------- |
+| `unifi://consoles/<consoleId>/protect/events`  | `protect.events.read`  | Rings, motion and smart detections, sensor and alarm hub events, NFC and fingerprint scans. |
+| `unifi://consoles/<consoleId>/protect/devices` | `protect.devices.read` | Devices added, updated (the changed fields) or removed.                                     |
+
+Who sees which event is decided like a read:
+
+- **NFC card and fingerprint scans** name the UniFi Identity user, so they also need
+  `personal_identifier` and `biometric_or_access_identity`. Without both, a client does
+  not see them at all.
+- **A device change** carries the same data as reading that device, so it also needs that
+  read's permission and grants: a camera change needs `protect.cameras.read`, a fob change
+  `protect.fobs.read` and `location`. AI processors and AI ports have no documented read, so
+  their changes are never shown.
+- Event types or device kinds that a newer Protect adds are not shown until they are
+  reviewed.
+
+The service connects to the console only while a client subscribes, and keeps the most
+recent events briefly in memory. There is no history and no replay: events that happen
+while nobody subscribes are not seen. 2026-era clients subscribe with
+`subscriptions/listen`; 2025-era clients can only read the resources.
+
+For example: `unifi-mcp client create <id> --console <alias> --allow 'protect.events.read'`.
 
 ## Writes
 
@@ -195,6 +225,11 @@ result, at any depth:
   operations).
 
 ## Limitations
+
+- **The 7.4.96 model update subscription** (`GET /v1/subscribe/updates`) is not offered
+  yet. It takes a list of model kinds, and its documented message forms overlap so that a
+  tolerant schema would drop data; it will be reviewed when an official release documents
+  it ([ADR 0020 §6](adr/0020-event-subscriptions.md)).
 
 - **The NVR's selected arm profile may be missing.** The contract requires
   `armMode.armProfileId` (a profile id or `null`) in `protect.nvrs.list`, but a 7.3.74

@@ -453,8 +453,8 @@ describe('doctor and api coverage', () => {
       'access/2026-03-23': [107, 0],
       'network/11.0.97': [73, 73],
       // Operations of the official release also cover the newer revision (ADR 0019 §7).
-      'protect/7.3.74': [74, 71],
-      'protect/7.4.96': [83, 79],
+      'protect/7.3.74': [74, 73],
+      'protect/7.4.96': [83, 81],
     });
   });
 });

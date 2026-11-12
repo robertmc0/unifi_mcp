@@ -218,7 +218,11 @@ if (!write) {
     return documents.get(id);
   };
   let compared = 0;
-  for (const descriptor of ADAPTERS.flatMap((adapter) => adapter.operations)) {
+  const implementations = ADAPTERS.flatMap((adapter) => [
+    ...adapter.operations,
+    ...adapter.eventStreams.map((stream) => ({ ...stream, httpMethod: 'GET' as const })),
+  ]);
+  for (const descriptor of implementations) {
     const own = revisions.find(
       (r) =>
         r.provenance.application === descriptor.moduleId &&

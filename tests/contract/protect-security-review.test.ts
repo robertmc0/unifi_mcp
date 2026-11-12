@@ -131,7 +131,7 @@ const byKey = new Map(inventory.operations.map((op) => [op.key, op]));
 const officialKeys = new Map(official.operations.map((op) => [op.key, op]));
 
 describe('Protect security review', () => {
-  it('covers every documented operation except the subscriptions and the omitted upload', () => {
+  it('covers every documented HTTP operation except the omitted upload (subscriptions: protect-streams.test.ts)', () => {
     const http = inventory.operations.filter(
       (op) => !op.path.startsWith('/v1/subscribe/') && op.key !== 'POST /v1/files/{fileType}',
     );

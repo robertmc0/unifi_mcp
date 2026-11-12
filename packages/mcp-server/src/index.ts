@@ -5,7 +5,13 @@
  * of the MCP SDK v2 handler, the per-client tool set, service configuration and lifecycle
  * (ADR 0003, ADR 0013).
  */
-export { ADAPTER_OPERATIONS, ADAPTER_PROBES, ADAPTERS, type ModuleAdapter } from './adapters.ts';
+export {
+  ADAPTER_EVENT_STREAMS,
+  ADAPTER_OPERATIONS,
+  ADAPTER_PROBES,
+  ADAPTERS,
+  type ModuleAdapter,
+} from './adapters.ts';
 export {
   ClientError,
   ClientStore,

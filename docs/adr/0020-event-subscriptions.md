@@ -1,6 +1,6 @@
 # 0020. Event subscriptions
 
-- Status: Accepted (extended as Phase 3 step 7 proceeds)
+- Status: Accepted
 - Date: 2026-11-12
 - Phase: 3
 - Spec references: §2 decisions 14, 25, 26; §5; §6.4; §10; §11; §12; §16 Phase 3; §17
@@ -139,6 +139,48 @@ more, events[], note}`, filtered for the reading client at read time and audited
   2026-era client subscribes. This is the documented degraded mode of spec §11.
 - **stdio.** The bridge relays the listen stream unchanged; a 2026-era client subscribes
   through it like over HTTP.
+
+### 6. The Protect streams (step 7c)
+
+`packages/unifi-protect/src/streams.ts`, reviewed 2026-11-12 against 7.3.74 and 7.4.96,
+which document the same 38 event types and 14 device kinds. The message schemas come from
+the 7.3.74 module and the streams serve `>=7.3.74 <8`, like the operations (ADR 0019 §7);
+`api:reconcile` check 8 now compares the two streams with 7.4.96 too (additive).
+
+- **`protect.events.subscribe`** (`GET /v1/subscribe/events`, `protect.events.read`).
+  Every documented event type is reviewed. NFC card scans and fingerprint matches carry
+  the UniFi Identity user id (`ulpId`), so they need `personal_identifier` and
+  `biometric_or_access_identity`; the other events carry ids, times and detection labels
+  only. Event removals are not documented and not delivered.
+- **`protect.devices.subscribe`** (`GET /v1/subscribe/devices`, `protect.devices.read`).
+  Each device kind maps to the reviewed read returning the same data (`camera` →
+  `protect.cameras.get`, `fob` → `protect.fobs.get` with `location`, `nvr` →
+  `protect.nvrs.list`, …), whose decision the message also needs. AI processors and AI
+  ports have no documented read, so their messages are never delivered.
+- Unknown event types and device kinds (a newer console) have no reviewed class and are
+  dropped. Messages are minimised with the same credential removal as reads (`url`,
+  `pin_code`, at any depth); the schemas drop undocumented fields.
+- **Device message forms.** The contract documents device messages as `anyOf` a single
+  form (`id` a string) and a bulk form (`id` a string or a list). The generated union tries
+  the single forms first, and their tolerant fallback for unknown device kinds accepts a
+  bulk message while dropping its ids and fields. In both revisions the bulk forms have
+  exactly the single forms' fields and required fields, so the adapter tries them first
+  (`DEVICE_MESSAGE`). `tests/contract/protect-streams.test.ts` checks that property from
+  the vendor documents, and scans every generated union for an earlier branch that
+  accepts a later branch's documented value with less data: the only cases are this
+  message (handled) and the 7.4.96 update subscription (below).
+- **`GET /v1/subscribe/updates`** (7.4.96 only) is not implemented: it takes a `modelKeys`
+  query parameter, which this stream model does not have, and its message forms overlap
+  in the same way. No official release documents it yet.
+
+Coverage: 7.3.74 73 of 74 implemented (the upload is the reviewed omission); 7.4.96 81 of
+83 (also the update subscription). Event streams appear in the matrix as resources
+(`exposure.resource`), not as tools.
+
+Tests: `tests/contract/protect-streams.test.ts`,
+`tests/integration-mock/protect-events.test.ts` (every documented event type and device
+kind over WebSocket to clients with different grants; credential sentinels and an
+undocumented field never reach a client; bulk messages keep their ids).
 
 ## Consequences
 

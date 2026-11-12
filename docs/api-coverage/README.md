@@ -23,7 +23,9 @@ Machine-readable: [`api-coverage.json`](api-coverage.json).
   method and path in that revision. The entry then carries the reviewed `operationId`,
   `permission`, `risk`, `approvalRequired`, `defaultDisabled`, `sensitivity`, `exposure`
   (named tool, and always the generic `unifi_execute`), `schemaValidation` (generated
-  schemas), `mockTests` and `evidence` (the test files that run it end to end).
+  schemas), `mockTests` and `evidence` (the test files that run it end to end). A
+  documented subscription is implemented by an event stream (ADR 0020): its `exposure` is
+  a `resource` URI template instead of a tool, and `generic` is `false`.
   `liveReadValidation` stays `false` until an opt-in live read-only run is recorded.
   Operations deliberately left unsupported carry a `statusReason`.
 - `npm run api:reconcile` fails when the vendor contract, the committed inventory, the

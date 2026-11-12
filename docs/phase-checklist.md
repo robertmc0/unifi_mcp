@@ -386,7 +386,7 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
    with approval (alarm manager, anything that silences alarms or monitoring, physical
    actions), 16 medium; the permanent microphone disable and talkback off by default; PINs
    redacted. ADR 0019 §6. Tests: `tests/integration-mock/protect-writes.test.ts`.
-7. **Events**: WebSocket subscriptions over the same TLS and egress controls, a connection
+7. ✅ **Events** (2026-11-12): WebSocket subscriptions over the same TLS and egress controls, a connection
    manager, MCP resources with `subscriptions/listen`, per-client filtering; tests for
    expiry, revocation, client and upstream disconnects, reconnect storms and slow
    consumers. ADR 0020.
@@ -401,7 +401,12 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
      per-client limit and slow-consumer closing; service wiring; works through the stdio
      bridge; 2025-era clients read only. ADR 0020 §5. Tests:
      `tests/integration-mock/events.test.ts`, `tests/unit/mcp-server/event-uris.test.ts`.
-   - 7c: the Protect streams with their security review; coverage.
+   - 7c ✅ (2026-11-12): the Protect event and device streams with their security review
+     (identity events need `personal_identifier` and `biometric_or_access_identity`; device
+     changes need the grants of the read for that device); bulk device messages tried first
+     (the contract makes them a superset); a scan of every generated union for shadowed
+     branches; coverage 73/74 (7.3.74) and 81/83 (7.4.96). ADR 0020 §6. Tests:
+     `tests/contract/protect-streams.test.ts`, `tests/integration-mock/protect-events.test.ts`.
 8. **Coverage, live read-only test and write runbook.** Live test started (2026-11-12):
    `tests/integration-live-readonly/protect.test.ts` runs every Protect read the console's
    version supports, an optional snapshot, and a WebSocket upgrade probe (key and random
