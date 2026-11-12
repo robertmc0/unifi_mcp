@@ -38,7 +38,10 @@ Requests that miss a window expire. The client then has to make the request agai
 
 The summary shows the operation, the target console and site, the risk and the requested
 arguments, with sensitive values such as passwords or pre-shared keys shown as
-`[REDACTED]`. The full arguments are stored encrypted with the master key and deleted as
+`[REDACTED]`. Some operations add a reviewed `caution`, the same for every request: for
+example, changing or deleting a Network network asks you to check in UniFi Network what
+uses it, because the console cannot list that for networks in use
+([applications-network.md](applications-network.md#limitations)). The full arguments are stored encrypted with the master key and deleted as
 soon as the request is approved and used, rejected, expired or invalidated.
 
 Administrators must have signed in within the last 5 minutes to approve. A deployment can

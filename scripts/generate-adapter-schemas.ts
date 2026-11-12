@@ -27,6 +27,12 @@ export const GENERATED_MODULES = [
           'documented as an object schema (FilterExpression), unlike the string filter of ' +
           'every other list operation; not sent until the contract is unambiguous (ADR 0018)',
       },
+      deleteNetwork: {
+        force:
+          'undescribed in the contract; by its name it overrides a check of the console, ' +
+          'and the references read cannot show what uses a network in use (Network ' +
+          '11.0.99); a high-risk delete is offered without it (ADR 0018)',
+      },
     },
   },
   {

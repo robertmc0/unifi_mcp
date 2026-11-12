@@ -310,3 +310,60 @@ describe('write authorisation', () => {
     await h.close();
   });
 });
+
+describe('networks in use (ADR 0018)', () => {
+  const write = (operationId: string) => {
+    const d = NETWORK_WRITES.find((w) => w.operationId === operationId);
+    if (d === undefined) throw new Error(operationId);
+    return d;
+  };
+  const NETWORK = '00000000-0000-4000-8000-000000000050';
+
+  it('offers no forced network delete: `force` is refused before anything is sent', async () => {
+    const { h, dispatcher } = await stack();
+    const descriptor = write('network.networks.delete');
+    expect(descriptor.queryParameters).toEqual([]);
+    for (const force of [true, false]) {
+      const envelope = await dispatcher.execute(
+        PRINCIPAL,
+        request(descriptor, h.consoleId, { networkId: NETWORK, force }),
+      );
+      expect(envelope, String(force)).toMatchObject({
+        status: 'error',
+        error: { code: 'invalid_arguments' },
+      });
+    }
+    expect(h.mock.requests).toEqual([]);
+    await h.close();
+  });
+
+  it('asks the approver to check what uses a network before it is changed or deleted', async () => {
+    const { h, dispatcher, approvals } = await stack();
+    const caution = /cannot reliably list what uses a network.*Check in UniFi Network/u;
+    for (const [operationId, cautioned] of [
+      ['network.networks.update', true],
+      ['network.networks.delete', true],
+      ['network.networks.create', false],
+    ] as const) {
+      const descriptor = write(operationId);
+      const envelope = await dispatcher.execute(
+        PRINCIPAL,
+        request(descriptor, h.consoleId, argumentsFor(descriptor)),
+      );
+      expect(envelope.status, operationId).toBe('approval_required');
+      // The client sees it, and so does the approver (CLI and admin interface).
+      const shown = (envelope.data as { summary: { caution?: string } }).summary.caution;
+      const stored = (approvals.get(envelope.approvalId ?? '')?.summary as { caution?: string })
+        .caution;
+      if (cautioned) {
+        expect(shown, operationId).toMatch(caution);
+        expect(stored, operationId).toBe(shown);
+      } else {
+        expect(shown, operationId).toBeUndefined();
+        expect(stored, operationId).toBeUndefined();
+      }
+    }
+    expect(h.mock.requests).toEqual([]);
+    await h.close();
+  });
+});

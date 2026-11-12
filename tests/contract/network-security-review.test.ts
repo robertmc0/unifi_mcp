@@ -170,6 +170,31 @@ describe('Network security review', () => {
     }
   });
 
+  it('records which operations explain a known console failure or caution their approvers', () => {
+    // Reviewed 2026-11-12 (ADR 0018 §4): the references read fails for networks in use.
+    const known = NETWORK_OPERATIONS.filter((d) => d.knownUpstreamFailures !== undefined);
+    expect(known.map((d) => [d.operationId, d.knownUpstreamFailures])).toEqual([
+      [
+        'network.networks.get_references',
+        [
+          {
+            status: 500,
+            upstreamCode: 'api.unexpected-error',
+            meaning: expect.any(String) as unknown,
+          },
+        ],
+      ],
+    ]);
+    const cautioned = NETWORK_OPERATIONS.filter((d) => d.approvalCaution !== undefined);
+    expect(cautioned.map((d) => d.operationId).sort()).toEqual([
+      'network.networks.delete',
+      'network.networks.update',
+    ]);
+    // A reviewed deviation: the network delete is offered without `force`.
+    const del = NETWORK_OPERATIONS.find((d) => d.operationId === 'network.networks.delete');
+    expect(Object.keys(del?.inputSchema.shape ?? {})).toEqual(['networkId']);
+  });
+
   it('documents every implemented operation in docs/applications-network.md', async () => {
     const manual = await readFile(
       join(import.meta.dirname, '../../docs/applications-network.md'),

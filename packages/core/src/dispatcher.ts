@@ -46,7 +46,12 @@ import { requestDigest } from './digest.ts';
 import type { ExecutionRecord, ExecutionStatus, ExecutionStore } from './executions.ts';
 import { KeyedMutex } from './locks.ts';
 import { RateLimiter, type RateLimit } from './rate-limit.ts';
-import type { OperationDescriptor, OperationRegistry, Target } from './registry.ts';
+import type {
+  KnownUpstreamFailure,
+  OperationDescriptor,
+  OperationRegistry,
+  Target,
+} from './registry.ts';
 import { Scheduler, SchedulerError, type SchedulerLimits } from './scheduler.ts';
 import { mismatchSummary } from './schema-mismatch.ts';
 
@@ -119,6 +124,20 @@ export interface UpstreamError {
   /** For writes: the console may have applied the change (for example HTTP 5xx). */
   outcomeUncertain?: boolean;
   retryAfterMs?: number;
+  /** The HTTP status, when the console answered with an error. */
+  status?: number;
+  /** The console's documented error code, when it sent a well-formed one. */
+  upstreamCode?: string;
+}
+
+/** The reviewed meaning of a console error, if the operation declares it (ADR 0018 §4). */
+function knownFailure(
+  descriptor: OperationDescriptor,
+  error: UpstreamError,
+): KnownUpstreamFailure | undefined {
+  return descriptor.knownUpstreamFailures?.find(
+    (known) => known.status === error.status && known.upstreamCode === error.upstreamCode,
+  );
 }
 
 export type ExecutorOutcome =
@@ -929,7 +948,7 @@ export class Dispatcher {
       executionId: execution.id,
       status: 'error',
       outcome: to,
-      error: this.#upstreamOrOwnError(code, upstream),
+      error: this.#upstreamOrOwnError(context, code, upstream),
       ...(audited ? {} : { warnings: [message('audit_after_write')] }),
     };
   }
@@ -991,13 +1010,24 @@ export class Dispatcher {
     return {
       ...context.base,
       status: 'error',
-      error: { ...this.#upstreamOrOwnError(code, upstream), ...extra },
+      error: { ...this.#upstreamOrOwnError(context, code, upstream), ...extra },
     };
   }
 
-  #upstreamOrOwnError(code: string, upstream: UpstreamError | undefined): EnvelopeError {
+  #upstreamOrOwnError(
+    context: Context,
+    code: string,
+    upstream: UpstreamError | undefined,
+  ): EnvelopeError {
     if (upstream === undefined || code in MESSAGES) return this.#error(code);
-    return { code: redactString(upstream.code, 64), message: redactString(upstream.message, 300) };
+    const known = knownFailure(context.descriptor, upstream);
+    return {
+      code: redactString(upstream.code, 64),
+      message:
+        known === undefined
+          ? redactString(upstream.message, 300)
+          : `${redactString(upstream.message, 300)} ${known.meaning}`,
+    };
   }
 
   #error(code: string): EnvelopeError {
@@ -1050,7 +1080,10 @@ export class Dispatcher {
       const outcome = await this.#callOnce(context, attempt);
       if (outcome.ok) return outcome;
       const { error } = outcome;
-      const retryable = error.requestNotSent === true || (isRead && error.transient === true);
+      // A known failure recurs on every attempt: retrying only adds load and delay.
+      const retryable =
+        knownFailure(context.descriptor, error) === undefined &&
+        (error.requestNotSent === true || (isRead && error.transient === true));
       if (!retryable || attempt > this.#limits.readRetries) return outcome;
       const backoff = Math.min(
         this.#limits.retryMaxDelayMs,

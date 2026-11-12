@@ -21,8 +21,11 @@ import {
   getPicture,
   inventory,
   listDevices,
+  rebootGateway,
   restartDevice,
 } from './fixtures.ts';
+
+const KNOWN = { status: 500, upstreamCode: 'api.unexpected-error', meaning: 'It means this.' };
 
 describe('OperationRegistry', () => {
   it('registers valid operations, rejects duplicates and seals', () => {
@@ -101,11 +104,54 @@ describe('OperationRegistry', () => {
       { ...getPicture, project: (bytes: Uint8Array) => bytes.length },
       /neither projected nor paged/,
     ],
+    [
+      'a known failure on a write',
+      { ...restartDevice, knownUpstreamFailures: [KNOWN] },
+      /knownUpstreamFailures are for reads only/,
+    ],
+    [
+      'a known failure that is not an HTTP error',
+      { ...listDevices, knownUpstreamFailures: [{ ...KNOWN, status: 200 }] },
+      /HTTP error status/,
+    ],
+    [
+      'a known failure without a documented code',
+      { ...listDevices, knownUpstreamFailures: [{ ...KNOWN, upstreamCode: 'two words' }] },
+      /documented error code/,
+    ],
+    [
+      'a known failure whose meaning spans lines',
+      { ...listDevices, knownUpstreamFailures: [{ ...KNOWN, meaning: 'one\nforged line' }] },
+      /one-line meaning/,
+    ],
+    [
+      'an approval caution on a write without approval',
+      { ...restartDevice, approvalCaution: 'Check first.' },
+      /writes that need approval/,
+    ],
+    [
+      'an approval caution on a read',
+      { ...listDevices, approvalCaution: 'Check first.' },
+      /writes that need approval/,
+    ],
+    [
+      'a long approval caution',
+      { ...rebootGateway, approvalCaution: 'x'.repeat(301) },
+      /one line of 1–300 characters/,
+    ],
   ])('rejects %s', (_name, descriptor, pattern) => {
     const registry = new OperationRegistry(() => true);
     expect(() => {
       registry.register(descriptor as never);
     }).toThrow(pattern);
+  });
+
+  it('accepts a known failure on a read and a caution on a write needing approval', () => {
+    const registry = new OperationRegistry(() => true);
+    registry.register({ ...listDevices, knownUpstreamFailures: [KNOWN] });
+    registry.register({ ...rebootGateway, approvalCaution: 'Check first.' });
+    expect(registry.get('network.devices.list')?.knownUpstreamFailures).toEqual([KNOWN]);
+    expect(registry.get('network.gateway.reboot')?.approvalCaution).toBe('Check first.');
   });
 
   it('lists template placeholders', () => {

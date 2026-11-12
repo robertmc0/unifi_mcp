@@ -335,14 +335,18 @@ export class UnifiExecutor implements OperationExecutor {
       ...(requestId === undefined ? {} : { upstreamRequestId: requestId }),
     });
     const suffix = code === undefined ? '' : `, code ${code}`;
+    // Structured, for operations that declare a known failure (ADR 0018 §4).
+    const http = { status, ...(code === undefined ? {} : { upstreamCode: code }) };
     if (status === 401 || status === 403) {
       return failure({
+        ...http,
         code: 'upstream_unauthorized',
         message: `The console rejected the credential (HTTP ${String(status)}${suffix}).`,
       });
     }
     if (status === 404) {
       return failure({
+        ...http,
         code: 'upstream_not_found',
         message: `The console reports that the resource does not exist (HTTP 404${suffix}).`,
       });
@@ -350,6 +354,7 @@ export class UnifiExecutor implements OperationExecutor {
     if (status === 429) {
       const delay = retryAfterMs(response.retryAfter);
       return failure({
+        ...http,
         code: 'upstream_rate_limited',
         message: 'The console is rate limiting requests.',
         transient: true,
@@ -358,6 +363,7 @@ export class UnifiExecutor implements OperationExecutor {
     }
     if (status >= 500) {
       return failure({
+        ...http,
         code: 'upstream_unavailable',
         message: `The console reported an internal error (HTTP ${String(status)}${suffix}).`,
         transient: true,
@@ -365,6 +371,7 @@ export class UnifiExecutor implements OperationExecutor {
       });
     }
     return failure({
+      ...http,
       code: 'upstream_rejected',
       message: `The console rejected the request (HTTP ${String(status)}${suffix}).`,
     });

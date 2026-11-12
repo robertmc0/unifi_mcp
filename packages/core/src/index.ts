@@ -77,6 +77,7 @@ export {
   validateDescriptor,
   type ContractInventory,
   type HttpMethod,
+  type KnownUpstreamFailure,
   type OperationDescriptor,
   type ResponseType,
   type RetryClass,

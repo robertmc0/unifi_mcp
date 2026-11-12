@@ -3929,14 +3929,15 @@ export const deleteFirewallZone = {
   input: z.strictObject({ firewallZoneId: z.guid() }),
   output: z.unknown().transform(() => null),
 } as const;
+// Query parameter "force" omitted: undescribed in the contract; by its name it overrides a check of the console, and the references read cannot show what uses a network in use (Network 11.0.99); a high-risk delete is offered without it (ADR 0018)
 export const deleteNetwork = {
   method: 'DELETE',
   path: '/v1/sites/{siteId}/networks/{networkId}',
   transport: 'http',
-  queryParameters: ['force'],
+  queryParameters: [],
   hasBody: false,
   responseType: 'none',
-  input: z.strictObject({ networkId: z.guid(), force: z.boolean().optional() }),
+  input: z.strictObject({ networkId: z.guid() }),
   output: z.unknown().transform(() => null),
 } as const;
 export const deleteTrafficMatchingList = {

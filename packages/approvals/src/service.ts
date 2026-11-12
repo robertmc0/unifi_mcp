@@ -257,17 +257,17 @@ export class ApprovalService implements ApprovalGate {
     const id = randomUUID();
     const now = this.#now();
     const expiresAt = new Date(now.getTime() + this.#ttl.pendingMs).toISOString();
+    // A reviewed caution of the operation (ADR 0011) goes with every request for it.
+    const { description, approvalCaution } = context.descriptor;
+    const reviewed = {
+      description,
+      ...(approvalCaution === undefined ? {} : { caution: approvalCaution }),
+    };
     let summaryJson = JSON.stringify(
-      redact(
-        { description: context.descriptor.description, arguments: context.arguments },
-        SUMMARY_LIMITS,
-      ),
+      redact({ ...reviewed, arguments: context.arguments }, SUMMARY_LIMITS),
     );
     if (Buffer.byteLength(summaryJson, 'utf8') > MAX_SUMMARY_BYTES) {
-      summaryJson = JSON.stringify({
-        description: context.descriptor.description,
-        arguments: '[too large to summarise]',
-      });
+      summaryJson = JSON.stringify({ ...reviewed, arguments: '[too large to summarise]' });
     }
     this.#db.transaction(() => {
       const secretId = this.#secrets.create(ARGUMENTS_KIND, canonicalJson(context.arguments));

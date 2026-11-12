@@ -74,6 +74,19 @@ unaffected. The omission is declared, with its reason, in the generator configur
 in the generated file. Generation fails if the vendor removes or changes the parameter, so
 the decision is revisited.
 
+### Reviewed deviation: no forced network delete
+
+`DELETE /v1/sites/{siteId}/networks/{networkId}` has a `force` query parameter (a boolean,
+default `false`) that the contract does not describe. By its name it overrides a check of
+the console. On Network 11.0.99 the references read fails for every network used by
+clients or devices (see Limitations in `docs/applications-network.md`), so neither the
+agent nor the approver can see through the service what a forced delete would cut off.
+Least privilege: the parameter is left out (2026-11-12), declared with its reason in the
+generator configuration and the generated file, like the device-tag filter. A network in
+use is deleted in UniFi Network by a person. Not verified on a real console: that a delete
+without `force` is refused for a network in use (it would need a write test, which only
+the owner runs).
+
 ### 2. Core contract additions (step 2)
 
 - **A JSON body is one `body` argument.** Twelve Network request bodies are discriminated
@@ -82,6 +95,14 @@ the decision is revisited.
   exactly its value as the request body, with nothing added. `body` cannot also be a path or
   query parameter. This replaces the Phase 1 rule ("fields not used in the path or query
   form the body"), which no adapter used yet.
+- **Known console failures and approval cautions (2026-11-12).** A read may declare
+  reviewed `knownUpstreamFailures`: an HTTP status and documented error code, and what
+  they mean. Such a failure is not retried, and its meaning follows the console's error in
+  the message. The executor passes the status and the code on as fields for this. A write
+  that needs approval may declare an `approvalCaution`, which every approval request for it
+  carries in its summary (`caution`). Both are one line of our own words, validated at
+  registration and pinned in `tests/contract/network-security-review.test.ts`. Used for
+  the references read (in use, never unused) and for network updates and deletes.
 - **Pagination.** An optional descriptor hook, `pagination(output)`, returns the paging
   facts of a validated page response. The dispatcher returns them as the envelope's
   `pagination`, next to the projected `data`.

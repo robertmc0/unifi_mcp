@@ -9,7 +9,12 @@
  * Nothing in `review` is derived from the vendor document, and regenerating the schemas
  * cannot change it.
  */
-import { defineOperation, type OperationDescriptor, type Target } from '@unifi-local-mcp/core';
+import {
+  defineOperation,
+  type KnownUpstreamFailure,
+  type OperationDescriptor,
+  type Target,
+} from '@unifi-local-mcp/core';
 import type { Risk, SensitivityTag } from '@unifi-local-mcp/policy';
 import type * as z from 'zod';
 import { withoutCredentials } from './credentials.ts';
@@ -78,6 +83,8 @@ export const PAGED = {
 
 export interface ReadReview<K extends VendorOperationId> extends ReviewCommon<K> {
   effect: 'read';
+  /** Console errors this read is known to return, and what they mean (not retried). */
+  knownUpstreamFailures?: readonly KnownUpstreamFailure[];
 }
 
 export interface WriteReview<K extends VendorOperationId> extends ReviewCommon<K> {
@@ -87,6 +94,8 @@ export interface WriteReview<K extends VendorOperationId> extends ReviewCommon<K
   retryClass: 'idempotent' | 'non-idempotent';
   resourceLockKey: (args: z.output<In<K>>, target: Target) => string;
   defaultDisabled?: boolean;
+  /** A warning every approval request for this write carries. */
+  approvalCaution?: string;
 }
 
 const READ_TIMEOUT_MS = 15_000;
@@ -98,6 +107,7 @@ export function networkOperation<K extends VendorOperationId>(
 ): OperationDescriptor<In<K>, Out<K>> {
   const contract = OPERATIONS[vendorOperationId];
   const write = review.effect === 'write' ? review : undefined;
+  const read = review.effect === 'read' ? review : undefined;
   return defineOperation<In<K>, Out<K>>({
     operationId: review.operationId,
     moduleId: 'network',
@@ -131,5 +141,9 @@ export function networkOperation<K extends VendorOperationId>(
       ),
     ...(review.pagination === undefined ? {} : { pagination: review.pagination }),
     ...(review.namedTool === undefined ? {} : { namedTool: review.namedTool }),
+    ...(read?.knownUpstreamFailures === undefined
+      ? {}
+      : { knownUpstreamFailures: read.knownUpstreamFailures }),
+    ...(write?.approvalCaution === undefined ? {} : { approvalCaution: write.approvalCaution }),
   });
 }

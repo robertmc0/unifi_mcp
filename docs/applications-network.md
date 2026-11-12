@@ -112,7 +112,7 @@ the hard lock is off, the runtime mode is `read_write`, the console's `network` 
 | `network.firewall.create_policy`, `network.firewall.update_policy`, `network.firewall.delete_policy`, `network.firewall.update_policy_ordering` | high                     | Firewall policies and their order between two zones.                                                         |
 | `network.firewall.patch_policy`                                                                                                                 | medium                   | Turns a policy's logging or flow reporting on or off; does not change what is allowed.                       |
 | `network.firewall.create_zone`, `network.firewall.update_zone`, `network.firewall.delete_zone`                                                  | high                     | Firewall zones and their networks.                                                                           |
-| `network.networks.create`, `network.networks.update`, `network.networks.delete`                                                                 | high                     | Networks and VLANs. `delete` with `force` deletes even while referenced.                                     |
+| `network.networks.create`, `network.networks.update`, `network.networks.delete`                                                                 | high                     | Networks and VLANs. `delete` is offered without `force` (see Limitations).                                   |
 | `network.wifi.create`, `network.wifi.update`, `network.wifi.delete`                                                                             | high                     | Wi-Fi broadcasts and their security settings.                                                                |
 | `network.dns.create`, `network.dns.update`, `network.dns.delete`                                                                                | high                     | DNS policies. Local records can redirect any name for every client.                                          |
 | `network.traffic_lists.create`                                                                                                                  | medium                   | A new traffic matching list; it changes nothing until a policy uses it.                                      |
@@ -218,8 +218,17 @@ Validating writes on a real console is a manual runbook, approved step by step b
   `network.networks.list` returned all 10 networks and `network.networks.get` answered for
   each of them, those in use included (2026-11-12). Reading a network sends only that one
   request, so a failing references read never affects it. The service reports the
-  references failure as `upstream_unavailable`, and retrying does not help. Before you
-  change or delete a network, check what uses it in UniFi Network.
+  references failure as `upstream_unavailable`, with a message telling the client to treat
+  the network as in use, never as unused, and it does not retry it (retrying does not
+  help). Every approval request to change or delete a network carries the same warning as
+  its `caution`. Before you approve one, check in UniFi Network which devices, switch
+  ports and clients use the network.
+- **No forced network delete.** The contract lists a `force` flag for
+  `network.networks.delete` but does not say what it does; by its name it overrides a
+  check of the console. Since the service cannot show what uses a network in use, it does
+  not offer the flag: a request with `force` is refused before anything is sent. To delete
+  a network that is still in use, do it in UniFi Network. Whether the console refuses a
+  delete without `force` for a network in use has not been verified on a real console.
 - **API key scope.** UniFi documents no way to limit what an API key can do, and a Network
   key also works for Protect on the same console (observed on Network 11.0.99,
   [ADR 0005](adr/0005-official-local-unifi-api-contracts.md#live-evidence-phase-2-2026-11-11)).

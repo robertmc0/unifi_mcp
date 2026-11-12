@@ -18,6 +18,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Networks in use: the references read's known failure (HTTP 500, `api.unexpected-error`)
+  is no longer retried, and its message tells the client to treat the network as in use,
+  never as unused. Approval requests to update or delete a network carry a `caution` to
+  check in UniFi Network what uses it. `network.networks.delete` is offered without
+  `force` (a reviewed deviation, ADR 0018), so a request with it is refused. New reviewed
+  descriptor fields: `knownUpstreamFailures` (reads) and `approvalCaution` (writes needing
+  approval).
 - Diagnostics: the service log records the HTTP status of each console request, a
   `console returned an error` record with the documented error code and request id, and,
   for a contract mismatch, the fields and kinds of mismatch (never values). The manual

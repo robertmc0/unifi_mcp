@@ -519,6 +519,11 @@ clean stop).
   without that variant's fields; Network and Protect schemas regenerated (ADR 0018 §1).
   Contract mismatches and console errors are logged with field paths, HTTP status, the
   documented error code and request id (`docs/monitoring.md`, `docs/troubleshooting.md`).
+- Networks in use (the owner's choice of recommendations 1–3): the references read's known
+  failure is explained and not retried; network update and delete approvals carry a
+  caution; the network delete is offered without `force` (ADR 0018, reviewed deviation).
+  Open, owner's choice: a runbook check that the console refuses a delete without `force`
+  of a network in use.
 - **Next:** the owner reruns `npm run test:live` (Network, then Protect). The stricter
   schemas may now refuse a real response that used to pass without its variant's fields;
   the report names any such field. The Network run now reads the details and references

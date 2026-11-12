@@ -269,15 +269,49 @@ describe('Network networks reads (shapes seen on Network 11.0.99)', () => {
     expect(h.mock.requests.some((r) => r.url.endsWith('/references'))).toBe(false);
 
     const references = await read('network.networks.get_references', args);
-    expect(references).toMatchObject({
-      status: 'error',
-      error: {
-        code: 'upstream_unavailable',
-        message: 'The console reported an internal error (HTTP 500, code api.unexpected-error).',
-      },
-    });
-    // Only the network reads and the references read: list and get were not retried.
-    expect(h.mock.requests.filter((r) => !r.url.endsWith('/references'))).toHaveLength(2);
+    expect(references).toMatchObject({ status: 'error', error: { code: 'upstream_unavailable' } });
+    // The reviewed meaning follows the console's error: in use, never unused.
+    expect(references.error?.message).toBe(
+      'The console reported an internal error (HTTP 500, code api.unexpected-error). The ' +
+        'console could not list what uses this network. On Network 11.0.99 this happens for ' +
+        'networks used by clients or devices: treat the network as in use, never as unused, ' +
+        'and check in UniFi Network. Retrying does not help.',
+    );
+    // One request each: list and get succeeded, and the known failure was not retried.
+    expect(h.mock.requests.map((r) => r.url.split('/').at(-1))).toEqual([
+      'networks',
+      networkId(80),
+      'references',
+    ]);
+    await h.close();
+  });
+
+  it('still retries and plainly reports any other console error of the references read', async () => {
+    const { h, read } = await stack();
+    for (const body of [
+      { ...UNEXPECTED_ERROR, code: 'api.other-error' },
+      { message: 'no documented code' },
+    ]) {
+      h.mock.requests.length = 0;
+      h.mock.respond = (_req, res) => {
+        sendJson(res, 500, body);
+      };
+      const envelope = await read('network.networks.get_references', {
+        networkId: networkId(80),
+      });
+      expect(envelope.error?.code).toBe('upstream_unavailable');
+      expect(envelope.error?.message).toMatch(
+        /^The console reported an internal error \(HTTP 500[^)]*\)\.$/u,
+      );
+      expect(h.mock.requests).toHaveLength(1 + TEST_LIMITS.readRetries);
+    }
+    // A 502 with the same code is not the known failure either.
+    h.mock.requests.length = 0;
+    h.mock.respond = (_req, res) => {
+      sendJson(res, 502, UNEXPECTED_ERROR);
+    };
+    await read('network.networks.get_references', { networkId: networkId(80) });
+    expect(h.mock.requests).toHaveLength(1 + TEST_LIMITS.readRetries);
     await h.close();
   });
 

@@ -23,6 +23,18 @@ export interface Target {
   siteId?: string | undefined;
 }
 
+/**
+ * A reviewed, recurring console error of one read (ADR 0018 §4): the HTTP status and the
+ * documented error code it comes with, and what it means for the caller. It is not
+ * retried, and its meaning is added to the error message.
+ */
+export interface KnownUpstreamFailure {
+  status: number;
+  upstreamCode: string;
+  /** What the failure means and what to do instead; our own words, 1–300 characters. */
+  meaning: string;
+}
+
 /** Binary media types an operation may return (ADR 0019). */
 export const BINARY_RESPONSE_TYPES = ['image/jpeg'] as const;
 export type ResponseType = 'json' | (typeof BINARY_RESPONSE_TYPES)[number];
@@ -69,6 +81,13 @@ export interface OperationDescriptor<
   /** Paging facts of a validated page response, returned as the envelope's `pagination`. */
   pagination?(output: z.output<Output>): Readonly<Record<string, number>> | undefined;
   namedTool?: string;
+  /** Reads only: reviewed recurring console errors, not retried and explained. */
+  knownUpstreamFailures?: readonly KnownUpstreamFailure[];
+  /**
+   * Writes needing approval only: a reviewed warning that every approval request for this
+   * operation carries, in the summary the approver and the client see (ADR 0011).
+   */
+  approvalCaution?: string;
 }
 
 /**
@@ -91,6 +110,17 @@ export type ContractInventory = (
 
 const PLACEHOLDER = /\{([A-Za-z][A-Za-z0-9_]*)\}/g;
 const TOOL_NAME = /^[a-z][a-z0-9_]{0,63}$/;
+const UPSTREAM_CODE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
+
+/** Reviewed text for a client or an approver: one line, 1–300 characters. */
+function reviewedText(value: unknown): boolean {
+  return (
+    typeof value === 'string' &&
+    value.trim() !== '' &&
+    value.length <= 300 &&
+    !/\p{Cc}/u.test(value)
+  );
+}
 
 export function templatePlaceholders(template: string): string[] {
   return [...template.matchAll(PLACEHOLDER)].map((match) => match[1] ?? '');
@@ -139,6 +169,28 @@ export function validateDescriptor(
   }
   if (descriptor.namedTool !== undefined && !TOOL_NAME.test(descriptor.namedTool)) {
     problems.push('invalid namedTool');
+  }
+  if (descriptor.knownUpstreamFailures !== undefined) {
+    if (descriptor.effect !== 'read') problems.push('knownUpstreamFailures are for reads only');
+    for (const failure of descriptor.knownUpstreamFailures) {
+      if (!Number.isInteger(failure.status) || failure.status < 400 || failure.status > 599) {
+        problems.push('a known upstream failure needs an HTTP error status (400–599)');
+      }
+      if (!UPSTREAM_CODE.test(failure.upstreamCode)) {
+        problems.push('a known upstream failure needs a documented error code');
+      }
+      if (!reviewedText(failure.meaning)) {
+        problems.push('a known upstream failure needs a one-line meaning of 1–300 characters');
+      }
+    }
+  }
+  if (descriptor.approvalCaution !== undefined) {
+    if (descriptor.effect !== 'write' || !descriptor.approvalRequired) {
+      problems.push('approvalCaution is for writes that need approval');
+    }
+    if (!reviewedText(descriptor.approvalCaution)) {
+      problems.push('approvalCaution must be one line of 1–300 characters');
+    }
   }
   if (parseRange(descriptor.apiVersionRange) === undefined) {
     problems.push('apiVersionRange must be comparators such as ">=10.1 <12"');
