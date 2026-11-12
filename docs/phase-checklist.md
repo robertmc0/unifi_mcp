@@ -536,11 +536,22 @@ clean stop).
   401 with a random key. No new contract mismatch was recorded. The reviewed Network
   record is refreshed; the Protect record is unchanged. Device reads, snapshots and
   device events remain unvalidated on this console without Protect devices.
-- **Next:** Phase 4. Verify the installed UniFi Access version and its official local
-  API contract, including authentication, base path and port, before implementing the
-  adapter.
+- **Next:** Phase 4 contract review. Review the official Access PDF and determine what
+  evidence is needed to bind its operations to an application version before implementing
+  the adapter; installed-version checks cannot be performed on the current test console.
 
 ## Phase 4 — Access and other documented modules
+
+Test-console constraint (owner confirmed 2026-11-12): only Network and Protect are
+installed; Access is not installed. The owner therefore cannot supply an installed Access
+version or download its documentation from this console, verify its token-scope UI, or
+run live Access reads and event checks. Official-contract research and synthetic mock
+preparation can proceed without installing Access. The cached Access PDF has no version
+label ([provenance](../api-specs/access/2026-03-23/provenance.json), ADR 0005); binding it
+to a supported application version remains unresolved. Do not infer a compatibility range
+from the PDF date or its API minimum version, or mark the Phase 4 gate complete without
+verified contract evidence. Access remains in scope, not silently deferred or declared
+unsupported because it is absent from the test console.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests
