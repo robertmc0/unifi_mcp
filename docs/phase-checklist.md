@@ -264,7 +264,7 @@ backups, and the Phase 5 items listed under the steps.
 All gate items below are met. Carried forward: the optional manual write runbook on a real
 console (owner's choice, never required); the 17 reads that had nothing to read or
 returned empty lists on the test console, and `network.networks.get_references`, which
-fails in the console (documented limitation), are not live-validated; the Phase 1 carry-forwards (Codex guide, arm64
+the console fails for networks in use (documented limitation), are not live-validated; the Phase 1 carry-forwards (Codex guide, arm64
 hardware, Phase 5 items).
 
 Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
@@ -332,7 +332,9 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
       had nothing to read, and `network.networks.get_references` fails in the console
       (HTTP 500 for four of five networks; a documented limitation). Refreshed 2026-11-12:
       23 reads returned data and matched, 10 returned empty lists (no longer counted as
-      validated), 7 had nothing to read.
+      validated), 7 had nothing to read. The owner then checked the references of all 10
+      networks by hand: HTTP 500 for every network with clients or devices and for one
+      empty network; it worked for the empty ones and those with only a Wi-Fi broadcast.
       `tests/contract/live-tests.test.ts` keeps the test opt-in and read-only.
 - [x] Field shapes, pagination, filtering and errors compared against official docs
       Field shapes come from the official contract (generated schemas, strict requests,

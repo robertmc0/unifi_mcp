@@ -46,6 +46,8 @@ All notable changes to this project are documented here. The format follows
   matched (5 with data, 15 empty lists); Network 11.0.99, 23 reads with data matched, 10
   empty lists are no longer counted as validated, and `get_references` still fails in the
   console.
+- Network limitation narrowed: the console fails `network.networks.get_references` (HTTP 500) for every network with clients or devices and for one empty network, and answers
+  for empty networks and those with only a Wi-Fi broadcast; the cause is not known.
 - Event subscriptions, part 1 (ADR 0020): a bounded, read-only WebSocket client over the
   verified TLS socket, the event connector, event streams as reviewed registry entries,
   one authorisation point for streams and each message, and an on-demand event hub with a
