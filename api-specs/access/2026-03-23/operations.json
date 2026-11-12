@@ -14,7 +14,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=79",
       "vendorPermission": "view:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.6 p.79"
+      "sourceRef": "PDF §5.6 p.79",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/access_policies",
@@ -26,7 +28,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=73",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.2 p.73"
+      "sourceRef": "PDF §5.2 p.73",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/access_policies/{id}",
@@ -39,7 +43,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=78",
       "vendorPermission": "view:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.5 p.78"
+      "sourceRef": "PDF §5.5 p.78",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/access_policies/{id}",
@@ -52,7 +58,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=75",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.3 p.75"
+      "sourceRef": "PDF §5.3 p.75",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/access_policies/{id}",
@@ -65,7 +73,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=77",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.4 p.77"
+      "sourceRef": "PDF §5.4 p.77",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/access_policies/holiday_groups",
@@ -77,7 +87,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=88",
       "vendorPermission": "view:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.12 p.88"
+      "sourceRef": "PDF §5.12 p.88",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/access_policies/holiday_groups",
@@ -89,7 +101,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=81",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.8 p.81"
+      "sourceRef": "PDF §5.8 p.81",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/access_policies/holiday_groups/{id}",
@@ -102,7 +116,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=87",
       "vendorPermission": "view:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.11 p.87"
+      "sourceRef": "PDF §5.11 p.87",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/access_policies/holiday_groups/{id}",
@@ -115,7 +131,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=84",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.9 p.84"
+      "sourceRef": "PDF §5.9 p.84",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/access_policies/holiday_groups/{id}",
@@ -128,7 +146,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=86",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.10 p.86"
+      "sourceRef": "PDF §5.10 p.86",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/access_policies/schedules",
@@ -140,7 +160,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=100",
       "vendorPermission": "view:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.17 p.100"
+      "sourceRef": "PDF §5.17 p.100",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/access_policies/schedules",
@@ -152,7 +174,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=91",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.14 p.91"
+      "sourceRef": "PDF §5.14 p.91",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/access_policies/schedules/{id}",
@@ -165,7 +189,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=97",
       "vendorPermission": "view:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.16 p.97"
+      "sourceRef": "PDF §5.16 p.97",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/access_policies/schedules/{id}",
@@ -178,7 +204,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=95",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.15 p.95"
+      "sourceRef": "PDF §5.15 p.95",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/access_policies/schedules/{id}",
@@ -191,7 +219,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=101",
       "vendorPermission": "edit:policy",
       "transport": "http",
-      "sourceRef": "PDF §5.18 p.101"
+      "sourceRef": "PDF §5.18 p.101",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/api_server/certificates",
@@ -203,7 +233,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=191",
       "vendorPermission": "edit:api_server",
       "transport": "http",
-      "sourceRef": "PDF §12.1 p.191"
+      "sourceRef": "PDF §12.1 p.191",
+      "minimumApplicationVersion": "2.2.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.10"
+      ]
     },
     {
       "key": "DELETE /api/v1/developer/api_server/certificates",
@@ -215,7 +250,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=192",
       "vendorPermission": "edit:api_server",
       "transport": "http",
-      "sourceRef": "PDF §12.2 p.192"
+      "sourceRef": "PDF §12.2 p.192",
+      "minimumApplicationVersion": "2.2.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.10"
+      ]
     },
     {
       "key": "POST /api/v1/developer/credentials/nfc_cards/import",
@@ -227,7 +267,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=124",
       "vendorPermission": "edit:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.19 p.124"
+      "sourceRef": "PDF §6.19 p.124",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "POST /api/v1/developer/credentials/nfc_cards/sessions",
@@ -239,7 +284,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=103",
       "vendorPermission": "edit:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.2 p.103"
+      "sourceRef": "PDF §6.2 p.103",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/credentials/nfc_cards/sessions/{id}",
@@ -252,7 +299,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=104",
       "vendorPermission": "edit:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.3 p.104"
+      "sourceRef": "PDF §6.3 p.104",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/credentials/nfc_cards/sessions/{id}",
@@ -265,7 +314,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=105",
       "vendorPermission": "edit:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.4 p.105"
+      "sourceRef": "PDF §6.4 p.105",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/credentials/nfc_cards/tokens",
@@ -277,7 +328,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=108",
       "vendorPermission": "view:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.8 p.108"
+      "sourceRef": "PDF §6.8 p.108",
+      "minimumApplicationVersion": "1.22.16",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "GET /api/v1/developer/credentials/nfc_cards/tokens/{token}",
@@ -290,7 +343,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=106",
       "vendorPermission": "view:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.7 p.106"
+      "sourceRef": "PDF §6.7 p.106",
+      "minimumApplicationVersion": "1.22.16",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "PUT /api/v1/developer/credentials/nfc_cards/tokens/{token}",
@@ -303,7 +358,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=110",
       "vendorPermission": "edit:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.10 p.110"
+      "sourceRef": "PDF §6.10 p.110",
+      "minimumApplicationVersion": "3.1.30",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.1.30"
+      ]
     },
     {
       "key": "DELETE /api/v1/developer/credentials/nfc_cards/tokens/{token}",
@@ -316,7 +376,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=110",
       "vendorPermission": "edit:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.9 p.110"
+      "sourceRef": "PDF §6.9 p.110",
+      "minimumApplicationVersion": "1.22.16",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "POST /api/v1/developer/credentials/pin_codes",
@@ -328,7 +390,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=102",
       "vendorPermission": "view:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.1 p.102"
+      "sourceRef": "PDF §6.1 p.102",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/credentials/qr_codes/download/{visitor_id}",
@@ -341,7 +405,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=123",
       "vendorPermission": "view:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.18 p.123"
+      "sourceRef": "PDF §6.18 p.123",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "GET /api/v1/developer/credentials/touch_passes",
@@ -353,7 +422,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=112",
       "vendorPermission": "view:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.12 p.112"
+      "sourceRef": "PDF §6.12 p.112",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "POST /api/v1/developer/credentials/touch_passes",
@@ -365,7 +439,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=121",
       "vendorPermission": "edit:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.17 p.121"
+      "sourceRef": "PDF §6.17 p.121",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "GET /api/v1/developer/credentials/touch_passes/{id}",
@@ -378,7 +457,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=120",
       "vendorPermission": "view:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.16 p.120"
+      "sourceRef": "PDF §6.16 p.120",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/credentials/touch_passes/{id}",
@@ -391,7 +475,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=117",
       "vendorPermission": "edit:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.15 p.117"
+      "sourceRef": "PDF §6.15 p.117",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "GET /api/v1/developer/credentials/touch_passes/assignable",
@@ -403,7 +492,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=116",
       "vendorPermission": "view:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.14 p.116"
+      "sourceRef": "PDF §6.14 p.116",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "GET /api/v1/developer/credentials/touch_passes/search",
@@ -415,7 +509,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=114",
       "vendorPermission": "view:credential",
       "transport": "http",
-      "sourceRef": "PDF §6.13 p.114"
+      "sourceRef": "PDF §6.13 p.114",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "GET /api/v1/developer/devices",
@@ -427,7 +526,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=147",
       "vendorPermission": "view:device",
       "transport": "http",
-      "sourceRef": "PDF §8.1 p.147"
+      "sourceRef": "PDF §8.1 p.147",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/devices/{device_id}/doorbell",
@@ -440,7 +541,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=153",
       "vendorPermission": "edit:device",
       "transport": "http",
-      "sourceRef": "PDF §8.4 p.153"
+      "sourceRef": "PDF §8.4 p.153",
+      "minimumApplicationVersion": "4.0.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "4.0.10"
+      ]
     },
     {
       "key": "GET /api/v1/developer/devices/{device_id}/settings",
@@ -453,7 +559,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=148",
       "vendorPermission": "view:device",
       "transport": "http",
-      "sourceRef": "PDF §8.2 p.148"
+      "sourceRef": "PDF §8.2 p.148",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/devices/{device_id}/settings",
@@ -466,7 +577,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=150",
       "vendorPermission": "edit:device",
       "transport": "http",
-      "sourceRef": "PDF §8.3 p.150"
+      "sourceRef": "PDF §8.3 p.150",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "GET /api/v1/developer/devices/notifications",
@@ -478,7 +594,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=170",
       "vendorPermission": "view:device",
       "transport": "websocket",
-      "sourceRef": "PDF §11.1 p.170"
+      "sourceRef": "PDF §11.1 p.170",
+      "minimumApplicationVersion": "1.20.11",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "GET /api/v1/developer/door_groups",
@@ -490,7 +608,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=133",
       "vendorPermission": "view:space",
       "transport": "http",
-      "sourceRef": "PDF §7.5 p.133"
+      "sourceRef": "PDF §7.5 p.133",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/door_groups",
@@ -502,7 +622,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=127",
       "vendorPermission": "edit:space",
       "transport": "http",
-      "sourceRef": "PDF §7.2 p.127"
+      "sourceRef": "PDF §7.2 p.127",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/door_groups/{id}",
@@ -515,7 +637,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=129",
       "vendorPermission": "view:space",
       "transport": "http",
-      "sourceRef": "PDF §7.3 p.129"
+      "sourceRef": "PDF §7.3 p.129",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/door_groups/{id}",
@@ -528,7 +652,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=131",
       "vendorPermission": "edit:space",
       "transport": "http",
-      "sourceRef": "PDF §7.4 p.131"
+      "sourceRef": "PDF §7.4 p.131",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/door_groups/{id}",
@@ -541,7 +667,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=134",
       "vendorPermission": "edit:space",
       "transport": "http",
-      "sourceRef": "PDF §7.6 p.134"
+      "sourceRef": "PDF §7.6 p.134",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/door_groups/topology",
@@ -553,7 +681,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=125",
       "vendorPermission": "view:space",
       "transport": "http",
-      "sourceRef": "PDF §7.1 p.125"
+      "sourceRef": "PDF §7.1 p.125",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/doors",
@@ -565,7 +695,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=137",
       "vendorPermission": "view:space",
       "transport": "http",
-      "sourceRef": "PDF §7.8 p.137"
+      "sourceRef": "PDF §7.8 p.137",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/doors/{id}",
@@ -578,7 +710,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=135",
       "vendorPermission": "view:space",
       "transport": "http",
-      "sourceRef": "PDF §7.7 p.135"
+      "sourceRef": "PDF §7.7 p.135",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/doors/{id}/lock_rule",
@@ -591,7 +725,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=142",
       "vendorPermission": "view:space",
       "transport": "http",
-      "sourceRef": "PDF §7.11 p.142"
+      "sourceRef": "PDF §7.11 p.142",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.1.30"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/doors/{id}/lock_rule",
@@ -604,7 +743,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=140",
       "vendorPermission": "edit:space",
       "transport": "http",
-      "sourceRef": "PDF §7.10 p.140"
+      "sourceRef": "PDF §7.10 p.140",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.1.30"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/doors/{id}/unlock",
@@ -617,7 +761,14 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=138",
       "vendorPermission": "edit:space",
       "transport": "http",
-      "sourceRef": "PDF §7.9 p.138"
+      "sourceRef": "PDF §7.9 p.138",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general",
+      "changelogVersions": [
+        "2.2.6",
+        "3.3.21",
+        "4.2.16"
+      ]
     },
     {
       "key": "GET /api/v1/developer/doors/settings/emergency",
@@ -629,7 +780,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=145",
       "vendorPermission": "view:space",
       "transport": "http",
-      "sourceRef": "PDF §7.13 p.145"
+      "sourceRef": "PDF §7.13 p.145",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "PUT /api/v1/developer/doors/settings/emergency",
@@ -641,7 +794,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=144",
       "vendorPermission": "edit:space",
       "transport": "http",
-      "sourceRef": "PDF §7.12 p.144"
+      "sourceRef": "PDF §7.12 p.144",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "POST /api/v1/developer/system/logs",
@@ -653,7 +808,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=156",
       "vendorPermission": "view:system_log",
       "transport": "http",
-      "sourceRef": "PDF §9.2 p.156"
+      "sourceRef": "PDF §9.2 p.156",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/system/logs/export",
@@ -665,7 +822,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=158",
       "vendorPermission": "view:system_log",
       "transport": "http",
-      "sourceRef": "PDF §9.3 p.158"
+      "sourceRef": "PDF §9.3 p.158",
+      "minimumApplicationVersion": "1.20.11",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "GET /api/v1/developer/system/logs/resource/{id}",
@@ -678,7 +837,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=159",
       "vendorPermission": "view:system_log",
       "transport": "http",
-      "sourceRef": "PDF §9.4 p.159"
+      "sourceRef": "PDF §9.4 p.159",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "GET /api/v1/developer/system/static/{path}",
@@ -691,7 +852,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=160",
       "vendorPermission": "view:system_log",
       "transport": "http",
-      "sourceRef": "PDF §9.5 p.160"
+      "sourceRef": "PDF §9.5 p.160",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "GET /api/v1/developer/user_groups",
@@ -703,7 +866,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=28",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.12 p.28"
+      "sourceRef": "PDF §3.12 p.28",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "POST /api/v1/developer/user_groups",
@@ -715,7 +883,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=27",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.11 p.27"
+      "sourceRef": "PDF §3.11 p.27",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "GET /api/v1/developer/user_groups/{id}",
@@ -728,7 +901,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=29",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.13 p.29"
+      "sourceRef": "PDF §3.13 p.29",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/user_groups/{id}",
@@ -741,7 +919,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=30",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.14 p.30"
+      "sourceRef": "PDF §3.14 p.30",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "DELETE /api/v1/developer/user_groups/{id}",
@@ -754,7 +937,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=31",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.15 p.31"
+      "sourceRef": "PDF §3.15 p.31",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "GET /api/v1/developer/user_groups/{id}/access_policies",
@@ -767,7 +955,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=40",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.22 p.40"
+      "sourceRef": "PDF §3.22 p.40",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/user_groups/{id}/access_policies",
@@ -780,7 +973,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=39",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.21 p.39"
+      "sourceRef": "PDF §3.21 p.39",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "GET /api/v1/developer/user_groups/{id}/identity/assignments",
@@ -793,7 +991,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=168",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §10.6 p.168"
+      "sourceRef": "PDF §10.6 p.168",
+      "minimumApplicationVersion": "2.2.0",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "POST /api/v1/developer/user_groups/{id}/identity/assignments",
@@ -806,7 +1009,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=167",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §10.5 p.167"
+      "sourceRef": "PDF §10.5 p.167",
+      "minimumApplicationVersion": "2.2.0",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "GET /api/v1/developer/user_groups/{id}/users",
@@ -819,7 +1027,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=34",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.18 p.34"
+      "sourceRef": "PDF §3.18 p.34",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "POST /api/v1/developer/user_groups/{id}/users",
@@ -832,7 +1045,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=32",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.16 p.32"
+      "sourceRef": "PDF §3.16 p.32",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "GET /api/v1/developer/user_groups/{id}/users/all",
@@ -845,7 +1063,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=36",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.19 p.36"
+      "sourceRef": "PDF §3.19 p.36",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "POST /api/v1/developer/user_groups/{id}/users/delete",
@@ -858,7 +1081,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=33",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.17 p.33"
+      "sourceRef": "PDF §3.17 p.33",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "GET /api/v1/developer/users",
@@ -870,7 +1098,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=19",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.5 p.19"
+      "sourceRef": "PDF §3.5 p.19",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "POST /api/v1/developer/users",
@@ -882,7 +1115,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=13",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.2 p.13"
+      "sourceRef": "PDF §3.2 p.13",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/users/{id}",
@@ -895,7 +1130,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=16",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.4 p.16"
+      "sourceRef": "PDF §3.4 p.16",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/users/{id}",
@@ -908,7 +1148,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=15",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.3 p.15"
+      "sourceRef": "PDF §3.3 p.15",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/users/{id}",
@@ -921,7 +1163,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=41",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.23 p.41"
+      "sourceRef": "PDF §3.23 p.41",
+      "minimumApplicationVersion": "3.1.30",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.1.30"
+      ]
     },
     {
       "key": "GET /api/v1/developer/users/{id}/access_policies",
@@ -934,7 +1181,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=37",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.20 p.37"
+      "sourceRef": "PDF §3.20 p.37",
+      "minimumApplicationVersion": "2.2.6",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.6"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/users/{id}/access_policies",
@@ -947,7 +1199,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=22",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.6 p.22"
+      "sourceRef": "PDF §3.6 p.22",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/users/{id}/avatar",
@@ -960,7 +1214,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=51",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.30 p.51"
+      "sourceRef": "PDF §3.30 p.51",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "GET /api/v1/developer/users/{id}/identity/assignments",
@@ -973,7 +1232,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=166",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §10.4 p.166"
+      "sourceRef": "PDF §10.4 p.166",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "POST /api/v1/developer/users/{id}/identity/assignments",
@@ -986,7 +1247,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=164",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §10.3 p.164"
+      "sourceRef": "PDF §10.3 p.164",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "PUT /api/v1/developer/users/{id}/license_plates",
@@ -999,7 +1262,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=49",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.28 p.49"
+      "sourceRef": "PDF §3.28 p.49",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/users/{id}/nfc_cards",
@@ -1012,7 +1280,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=23",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.7 p.23"
+      "sourceRef": "PDF §3.7 p.23",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/users/{id}/nfc_cards/delete",
@@ -1025,7 +1295,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=24",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.8 p.24"
+      "sourceRef": "PDF §3.8 p.24",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/users/{id}/pin_codes",
@@ -1038,7 +1310,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=25",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.9 p.25"
+      "sourceRef": "PDF §3.9 p.25",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/users/{id}/pin_codes",
@@ -1051,7 +1325,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=26",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.10 p.26"
+      "sourceRef": "PDF §3.10 p.26",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/users/{user_id}/license_plates/{license_plate_id}",
@@ -1064,7 +1340,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=50",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.29 p.50"
+      "sourceRef": "PDF §3.29 p.50",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/users/{user_id}/touch_passes/{touch_pass_id}",
@@ -1077,7 +1358,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=44",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.25 p.44"
+      "sourceRef": "PDF §3.25 p.44",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "DELETE /api/v1/developer/users/{user_id}/touch_passes/{touch_pass_id}",
@@ -1090,7 +1376,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=45",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.26 p.45"
+      "sourceRef": "PDF §3.26 p.45",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "GET /api/v1/developer/users/identity/assignments",
@@ -1102,7 +1393,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=163",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §10.2 p.163"
+      "sourceRef": "PDF §10.2 p.163",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "POST /api/v1/developer/users/identity/invitations",
@@ -1114,7 +1407,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=162",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §10.1 p.162"
+      "sourceRef": "PDF §10.1 p.162",
+      "minimumApplicationVersion": "1.24.6",
+      "minimumVersionSource": "operation"
     },
     {
       "key": "GET /api/v1/developer/users/search",
@@ -1126,7 +1421,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=42",
       "vendorPermission": "view:user",
       "transport": "http",
-      "sourceRef": "PDF §3.24 p.42"
+      "sourceRef": "PDF §3.24 p.42",
+      "minimumApplicationVersion": "3.1.30",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.1.30"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/users/touch_passes/assign",
@@ -1138,7 +1438,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=47",
       "vendorPermission": "edit:user",
       "transport": "http",
-      "sourceRef": "PDF §3.27 p.47"
+      "sourceRef": "PDF §3.27 p.47",
+      "minimumApplicationVersion": "3.2.20",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.2.20"
+      ]
     },
     {
       "key": "GET /api/v1/developer/visitors",
@@ -1150,7 +1455,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=59",
       "vendorPermission": "view:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.4 p.59"
+      "sourceRef": "PDF §4.4 p.59",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "POST /api/v1/developer/visitors",
@@ -1162,7 +1469,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=53",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.2 p.53"
+      "sourceRef": "PDF §4.2 p.53",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "GET /api/v1/developer/visitors/{id}",
@@ -1175,7 +1484,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=57",
       "vendorPermission": "view:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.3 p.57"
+      "sourceRef": "PDF §4.3 p.57",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/visitors/{id}",
@@ -1188,7 +1499,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=60",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.5 p.60"
+      "sourceRef": "PDF §4.5 p.60",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/visitors/{id}",
@@ -1201,7 +1514,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=64",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.6 p.64"
+      "sourceRef": "PDF §4.6 p.64",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/visitors/{id}/license_plates",
@@ -1214,7 +1529,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=71",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.13 p.71"
+      "sourceRef": "PDF §4.13 p.71",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/visitors/{id}/nfc_cards",
@@ -1227,7 +1547,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=65",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.7 p.65"
+      "sourceRef": "PDF §4.7 p.65",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/visitors/{id}/nfc_cards/delete",
@@ -1240,7 +1562,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=66",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.8 p.66"
+      "sourceRef": "PDF §4.8 p.66",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/visitors/{id}/pin_codes",
@@ -1253,7 +1577,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=67",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.9 p.67"
+      "sourceRef": "PDF §4.9 p.67",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "DELETE /api/v1/developer/visitors/{id}/pin_codes",
@@ -1266,7 +1592,9 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=68",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.10 p.68"
+      "sourceRef": "PDF §4.10 p.68",
+      "minimumApplicationVersion": "1.9.1",
+      "minimumVersionSource": "general"
     },
     {
       "key": "PUT /api/v1/developer/visitors/{id}/qr_codes",
@@ -1279,7 +1607,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=69",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.11 p.69"
+      "sourceRef": "PDF §4.11 p.69",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "DELETE /api/v1/developer/visitors/{id}/qr_codes",
@@ -1292,7 +1625,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=70",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.12 p.70"
+      "sourceRef": "PDF §4.12 p.70",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "DELETE /api/v1/developer/visitors/{visitor_id}/license_plates/{license_plate_id}",
@@ -1305,7 +1643,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=72",
       "vendorPermission": "edit:visitor",
       "transport": "http",
-      "sourceRef": "PDF §4.14 p.72"
+      "sourceRef": "PDF §4.14 p.72",
+      "minimumApplicationVersion": "3.3.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "3.3.10"
+      ]
     },
     {
       "key": "GET /api/v1/developer/webhooks/endpoints",
@@ -1317,7 +1660,13 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=173",
       "vendorPermission": "view:webhook",
       "transport": "http",
-      "sourceRef": "PDF §11.3 p.173"
+      "sourceRef": "PDF §11.3 p.173",
+      "minimumApplicationVersion": "2.2.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.10",
+        "3.1.30"
+      ]
     },
     {
       "key": "POST /api/v1/developer/webhooks/endpoints",
@@ -1329,7 +1678,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=174",
       "vendorPermission": "edit:webhook",
       "transport": "http",
-      "sourceRef": "PDF §11.4 p.174"
+      "sourceRef": "PDF §11.4 p.174",
+      "minimumApplicationVersion": "2.2.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.10"
+      ]
     },
     {
       "key": "PUT /api/v1/developer/webhooks/endpoints/{id}",
@@ -1342,7 +1696,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=176",
       "vendorPermission": "edit:webhook",
       "transport": "http",
-      "sourceRef": "PDF §11.5 p.176"
+      "sourceRef": "PDF §11.5 p.176",
+      "minimumApplicationVersion": "2.2.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.10"
+      ]
     },
     {
       "key": "DELETE /api/v1/developer/webhooks/endpoints/{id}",
@@ -1355,7 +1714,12 @@
       "documentationUrl": "https://assets.identity.ui.com/unifi-access/api_reference.pdf#page=178",
       "vendorPermission": "edit:webhook",
       "transport": "http",
-      "sourceRef": "PDF §11.6 p.178"
+      "sourceRef": "PDF §11.6 p.178",
+      "minimumApplicationVersion": "2.2.10",
+      "minimumVersionSource": "operation",
+      "changelogVersions": [
+        "2.2.10"
+      ]
     }
   ]
 }

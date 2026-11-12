@@ -137,6 +137,8 @@ interface CoverageOperation {
   summary: string;
   documentationUrl: string | null;
   sourceRef: string | null;
+  /** Vendor-stated lower bound for this operation, when the source gives one per operation. */
+  minimumApplicationVersion: string | null;
   vendorPermission: string | null;
   transport: 'http' | 'websocket';
   status: Status;
@@ -247,6 +249,7 @@ function markdown(p: Provenance, ops: CoverageOperation[], live?: LiveRecord): s
         o.transport === 'websocket' ? 'WebSocket' : '',
         o.vendorPermission ? `perm \`${o.vendorPermission}\`` : '',
         o.sourceRef ?? '',
+        o.minimumApplicationVersion === null ? '' : `vendor min ${o.minimumApplicationVersion}`,
         o.provisional.defaultDisabled ? '**off**' : '',
         o.provisional.rationale,
       ]
@@ -325,6 +328,7 @@ export async function buildCoverageFiles(
         summary: op.summary,
         documentationUrl: op.documentationUrl,
         sourceRef: op.sourceRef ?? null,
+        minimumApplicationVersion: op.minimumApplicationVersion ?? null,
         vendorPermission: op.vendorPermission ?? null,
         transport: op.transport,
         status: d === undefined ? 'not_implemented' : 'implemented',

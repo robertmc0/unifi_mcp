@@ -12,7 +12,10 @@ with the same permissions, sensitive-data scopes, redaction and audit as ordinar
 and without polling, a message broker or an always-on history store. Protect documents
 two WebSocket subscriptions in 7.3.74 (`GET /v1/subscribe/devices`,
 `GET /v1/subscribe/events`) and a third in 7.4.96 (`GET /v1/subscribe/updates`). Network
-and Access document none.
+documents none. Access documents one, a WebSocket at
+`GET /api/v1/developer/devices/notifications` (PDF §11.1); it waits for the Access adapter
+(Phase 4). _Corrected 2026-11-12: this ADR first said Access documents none
+([ADR 0021](0021-access-contract-version-evidence.md))._
 
 The owner's live run (ADR 0019 §8) showed that the subscriptions authenticate with the
 same `X-API-KEY` as every other Protect request: 101 with the key, 401 with a random one.
@@ -219,4 +222,4 @@ undocumented field never reach a client; bulk messages keep their ids).
 
 - The SDK adds per-subscription authorisation or per-client buses.
 - Protect documents event replay or a recent-events read.
-- Network or Access document a local subscription.
+- Network documents a local subscription, or the Access adapter (Phase 4) is implemented.

@@ -536,9 +536,8 @@ clean stop).
   401 with a random key. No new contract mismatch was recorded. The reviewed Network
   record is refreshed; the Protect record is unchanged. Device reads, snapshots and
   device events remain unvalidated on this console without Protect devices.
-- **Next:** Phase 4 contract review. Review the official Access PDF and determine what
-  evidence is needed to bind its operations to an application version before implementing
-  the adapter; installed-version checks cannot be performed on the current test console.
+- ✅ **Phase 4 contract review** (2026-11-12): see Phase 4 below and
+  [ADR 0021](adr/0021-access-contract-version-evidence.md).
 
 ## Phase 4 — Access and other documented modules
 
@@ -552,6 +551,36 @@ to a supported application version remains unresolved. Do not infer a compatibil
 from the PDF date or its API minimum version, or mark the Phase 4 gate complete without
 verified contract evidence. Access remains in scope, not silently deferred or declared
 unsupported because it is absent from the test console.
+
+### Contract review (2026-11-12, [ADR 0021](adr/0021-access-contract-version-evidence.md), Proposed)
+
+- The hosted PDF is unchanged since Phase 0, and is still the vendor's only Access
+  contract: developer.ui.com lists no Access API. The PDF states **lower bounds only**.
+  59 operations print their own minimum (1.20.11 to 4.0.10), and the other 48 have only
+  the §1.5 minimum 1.9.1. §13 Change Logs runs from V2.2.6 to v4.2.16. These values are
+  now in `operations.json` and on the coverage page. Phase 0's "up to 3.1.30" was wrong
+  and is corrected.
+- Release timing suggests the PDF was published for Access 4.2.16 (inference, not
+  vendor-stated). Releases 4.2.27 to 4.3.24 followed without a PDF update.
+- **No documented Access operation reports the application version**, so the version
+  probe the platform relies on cannot exist for Access. Every Access operation fails
+  closed (`version_unknown`) until the owner decides ADR 0021 §5.
+- Corrected: `docs/events.md` and ADR 0020 said Access documents no event subscription.
+  §11.1 documents a local WebSocket.
+
+**Evidence still needed for the gate:**
+
+- (A) A version-labelled contract, e.g. the in-app "Download API documentation" from an
+  installed version, compared with the hosted PDF by SHA-256.
+- (B) A way to learn the installed version.
+- (C) A live read-only run on that version.
+
+A and C need an installed Access. B needs a vendor change or the owner's choice of
+operator-declared versions (ADR 0021 §5, B2 with bound U1 or U2).
+
+**Next:** owner decision on ADR 0021 §5 (B1/B2, U1/U2). Mock-based adapter work does not
+depend on that decision: transcribe schemas, the `{code, msg, data}` envelope, the §2.4
+error codes, and reviewed security metadata with physical-access writes high risk.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests

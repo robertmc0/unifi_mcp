@@ -6,6 +6,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { satisfies } from '@unifi-local-mcp/core';
 import {
   COVERAGE_DIR,
   HTTP_METHODS,
@@ -99,6 +100,53 @@ describe('API contract baseline', () => {
         expect(module?.operations.map((o) => o.key).sort()).toEqual(
           inventory.operations.map((o) => o.key).sort(),
         );
+      });
+    });
+  }
+
+  // ADR 0021: the Access PDF states only lower bounds, per operation or document-wide (§1.5),
+  // and a change log (§13) that cites section numbers.
+  for (const { provenance: p, inventory } of revisions.filter(
+    (r) => r.provenance.contractKind === 'pdf-manual',
+  )) {
+    describe(`${p.application}/${p.revision} vendor version statements`, () => {
+      const general = p.minimumApplicationVersion ?? '';
+
+      it('records the stated minimum version of every operation', () => {
+        expect(general).toMatch(/^\d+\.\d+\.\d+$/);
+        for (const op of inventory.operations) {
+          const min = op.minimumApplicationVersion ?? '';
+          expect(min, op.key).toMatch(/^\d+\.\d+\.\d+$/);
+          expect(satisfies(min, `>=${general}`), op.key).toBe(true);
+          if (op.minimumVersionSource === 'general') expect(min, op.key).toBe(general);
+          else expect(op.minimumVersionSource, op.key).toBe('operation');
+          // No change-log entry for an operation predates the minimum it states.
+          for (const version of op.changelogVersions ?? []) {
+            expect(satisfies(version, `>=${min}`), `${op.key} ${version}`).toBe(true);
+          }
+        }
+      });
+
+      it('lists exactly the reviewed change-log citations above a stated minimum', () => {
+        // ADR 0021 §1: six extend an existing operation; two conflict with it (§10.5, §10.6).
+        const above = inventory.operations
+          .filter((op) =>
+            (op.changelogVersions ?? []).some(
+              (v) => !satisfies(v, `<=${op.minimumApplicationVersion ?? ''}`),
+            ),
+          )
+          .map((op) => `${op.key} ${op.minimumApplicationVersion ?? ''}`)
+          .sort();
+        expect(above).toEqual([
+          'GET /api/v1/developer/doors/{id}/lock_rule 1.24.6',
+          'GET /api/v1/developer/user_groups/{id}/identity/assignments 2.2.0',
+          'GET /api/v1/developer/users 1.9.1',
+          'GET /api/v1/developer/users/{id} 1.9.1',
+          'GET /api/v1/developer/webhooks/endpoints 2.2.10',
+          'POST /api/v1/developer/user_groups/{id}/identity/assignments 2.2.0',
+          'PUT /api/v1/developer/doors/{id}/lock_rule 1.24.6',
+          'PUT /api/v1/developer/doors/{id}/unlock 1.9.1',
+        ]);
       });
     });
   }

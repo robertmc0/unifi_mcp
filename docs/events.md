@@ -1,8 +1,10 @@
 # Events
 
-> **Status: Phase 3.** UniFi Protect event subscriptions are available. Network and
-> Access document no local event subscription, so none is offered for them. Design and
-> evidence: [ADR 0020](adr/0020-event-subscriptions.md).
+> **Status: Phase 3.** UniFi Protect event subscriptions are available. Network documents
+> no local event subscription, so none is offered for it. Access documents one (WebSocket
+> `GET /api/v1/developer/devices/notifications`), but the Access adapter does not exist
+> yet (Phase 4, [ADR 0021](adr/0021-access-contract-version-evidence.md)), so none is
+> offered. Design and evidence: [ADR 0020](adr/0020-event-subscriptions.md).
 
 The service offers a console's events only where its application documents a local
 subscription. It never polls to imitate events, keeps no history, and needs no message

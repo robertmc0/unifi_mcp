@@ -28,7 +28,9 @@
     }
   ],
   "notes": [
-    "Revision label is the PDF creation date (2026-03-23; HTTP Last-Modified 2026-03-26). The document states no version number. It documents features up to UniFi Access 3.1.30, with per-operation minimum versions from 1.20.11 to 3.1.30.",
+    "Revision label is the PDF creation date (2026-03-23; HTTP Last-Modified 2026-03-26 06:08 GMT, unchanged on 2026-11-12). The document states no version number of its own.",
+    "Versions (ADR 0021): 59 operations state a minimum (\"UniFi Access Requirement\") from 1.20.11 to 4.0.10; the other 48 have only the §1.5 minimum 1.9.1. §13 Change Logs lists V2.2.6, V2.2.10, V3.1.30, V3.2.20, V3.3.10, v3.3.21, v4.0.10 and v4.2.16. Nothing states an upper bound. Corrected 2026-11-12: Phase 0 recorded both ranges as ending at 3.1.30.",
+    "Access 4.2.16 was published three hours before the PDF's Last-Modified time and is its newest change-log entry. This suggests, but the vendor does not state, that the PDF describes 4.2.16 (ADR 0021).",
     "Port 12445 per API reference §1.2 and §2.6 and the Required Ports Reference (help.ui.com article 218506997, updated 2026-11-06). The \"Getting Started with UniFi Access\" FAQ (article 17452334269975) lists 12455 for \"OpenAPI access\". This is treated as a vendor documentation discrepancy: the port stays configurable per console, with default 12445.",
     "§2.6: \"The server certificate is self-generated and untrusted.\" Consoles therefore need certificate pinning or a custom CA (spec §4.4). §12.1 lets an administrator upload a custom HTTPS certificate.",
     "Response envelope {code, msg, data}; success only when code == \"SUCCESS\". HTTP status alone is not success (spec §4.4). Error codes are listed in §2.4.",
@@ -39,8 +41,9 @@
     "Transcription normalisations: \":param\" becomes \"{param}\"; §8.3 method printed as \"PUT\\\" is read as PUT; §9.4 and §9.5 paths printed without a leading slash were given one (documentedPath keeps the original)."
   ],
   "unverified": [
-    "No machine-readable OpenAPI is published. The Access UI offers \"Download API documentation\" next to API Token; Phase 4 must check whether the installed version provides a versioned machine-readable contract.",
-    "The PDF has no version. Phase 4 must pin the adapter to the installed Access version and re-verify every operation.",
+    "No machine-readable or version-labelled Access contract is published (developer.ui.com lists none, checked 2026-11-12). The Access UI offers \"Download API documentation\" next to API Token (§1.1). Its format, its version label and whether it equals this PDF are unknown until checked on an installed Access version (ADR 0021).",
+    "Which Access versions this PDF covers is not stated. No documented Access operation reports the application version, so the service cannot observe the installed version (ADR 0021 §5).",
+    "No installed Access version has been tested live (the project's test console has no Access).",
     "Pagination and limit parameters for list endpoints are not yet transcribed (Phase 4).",
     "Token permission-scope names in the UI are expected to match the per-operation permission keys; to be confirmed in Phase 4."
   ]

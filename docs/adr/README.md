@@ -26,6 +26,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0018](0018-network-adapter.md)                             | UniFi Network adapter: generated schemas, reviewed metadata, version probe       | Accepted (extended in Phase 2)           |
 | [0019](0019-protect-adapter.md)                             | UniFi Protect adapter                                                            | Accepted (extended in Phase 3)           |
 | [0020](0020-event-subscriptions.md)                         | Event subscriptions: WebSocket client, event hub, per-client filtering           | Accepted (extended in Phase 3)           |
+| [0021](0021-access-contract-version-evidence.md)            | UniFi Access contract: version evidence and binding                              | Proposed (owner decision pending)        |
 
 ## Template
 

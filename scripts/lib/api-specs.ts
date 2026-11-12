@@ -71,6 +71,18 @@ export interface InventoryOperation {
   transport: 'http' | 'websocket';
   /** Location in a non-machine-readable source (e.g. "PDF §7.9 p.138"). */
   sourceRef?: string;
+  /**
+   * Lowest application version the vendor source states for this operation (Access PDF
+   * only). A lower bound: no vendor source states an upper bound (ADR 0021).
+   */
+  minimumApplicationVersion?: string;
+  /**
+   * `operation`: the operation's own "UniFi Access Requirement" line. `general`: none is
+   * printed, so the document-wide minimum applies (Access PDF §1.5).
+   */
+  minimumVersionSource?: 'operation' | 'general';
+  /** Versions whose vendor change-log entry cites this operation's section (Access PDF §13). */
+  changelogVersions?: string[];
 }
 
 export interface Inventory {
