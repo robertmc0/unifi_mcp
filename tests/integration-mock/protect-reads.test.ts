@@ -259,4 +259,48 @@ describe('every documented Protect read', () => {
     expect(JSON.stringify(envelope)).not.toContain('Front door');
     await h.close();
   });
+
+  it('accepts an NVR without armMode.armProfileId, as a 7.3.74 console sends it (ADR 0019 §8)', async () => {
+    const { h, dispatcher } = await stack();
+    const nvrs = PROTECT_READS.find((d) => d.operationId === 'protect.nvrs.list');
+    if (nvrs === undefined) throw new Error('protect.nvrs.list is not registered');
+    const read = async (armProfileId: unknown) => {
+      const nvr = sample(nvrs.outputSchema) as { armMode: Record<string, unknown> };
+      if (armProfileId === undefined) delete nvr.armMode['armProfileId'];
+      else nvr.armMode['armProfileId'] = armProfileId;
+      h.mock.respond = (_req, res) => {
+        sendJson(res, 200, nvr);
+      };
+      return dispatcher.execute(PRINCIPAL, {
+        operationId: nvrs.operationId,
+        consoleId: h.consoleId,
+      });
+    };
+    const absent = await read(undefined);
+    expect(absent.status, JSON.stringify(absent.error)).toBe('ok');
+    expect((absent.data as { armMode: object }).armMode).not.toHaveProperty('armProfileId');
+    expect(await read(null)).toMatchObject({
+      status: 'ok',
+      data: { armMode: { armProfileId: null } },
+    });
+    expect(await read('profile-1')).toMatchObject({
+      status: 'ok',
+      data: { armMode: { armProfileId: 'profile-1' } },
+    });
+    // Only absence is tolerated: a value of another type is still a contract mismatch, and
+    // every other required field stays required.
+    expect(await read(42)).toMatchObject({ error: { code: 'upstream_contract_mismatch' } });
+    const withoutStatus = sample(nvrs.outputSchema) as { armMode: Record<string, unknown> };
+    delete withoutStatus.armMode['status'];
+    h.mock.respond = (_req, res) => {
+      sendJson(res, 200, withoutStatus);
+    };
+    expect(
+      await dispatcher.execute(PRINCIPAL, {
+        operationId: nvrs.operationId,
+        consoleId: h.consoleId,
+      }),
+    ).toMatchObject({ error: { code: 'upstream_contract_mismatch' } });
+    await h.close();
+  });
 });

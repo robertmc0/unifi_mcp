@@ -238,10 +238,56 @@ have been refused on current consoles, so both revisions are supported:
   operation with the same method and path has a version range that includes it: 7.3.74
   71/74, 7.4.96 79/83.
 
+### 8. Live evidence (2026-11-12) and a reviewed response exception
+
+The owner ran the opt-in live read-only test against a console with Protect 7.3.74. The
+record is [api-coverage/live/protect-7.3.74.json](../api-coverage/live/protect-7.3.74.json).
+
+- **Events authenticate with the API key.** A WebSocket upgrade of the documented
+  `/v1/subscribe/events` with the stored key in `X-API-KEY` was accepted (HTTP 101); the
+  same upgrade with a random key was refused (HTTP 401). Subscriptions therefore use the
+  same credential, header, egress check and pinned TLS as every other request. This closes
+  the open question carried in `provenance.json` and ADR 0005.
+- **Reads.** 20 reads ran and 19 matched the contract. Users and ULP users returned data,
+  so their item reads ran too. Every device list (cameras, lights, sensors, sirens,
+  speakers, chimes, relays, bridges, link stations, alarm hubs, fobs, viewers, live views)
+  came back empty, so the 13 device reads, the stream read and the snapshot were skipped,
+  and no device schema met real data. The two reads only 7.4.96 documents were skipped as
+  designed. An empty list matches any item schema, so from now on the live tests record
+  it as `ok (empty)`, and the coverage matrix does not count it as live validation.
+- **One deviation.** `GET /v1/nvrs` returned an NVR whose `armMode` left out
+  `armProfileId`. The contract (`nvrArmMode`, in 7.3.74 and 7.4.96) requires it as a
+  string or `null`. Every other `armMode` field was present and valid.
+
+**Decision.** `nvrArmMode.armProfileId` is accepted when absent, in responses only. It is
+a reviewed deviation in the generator configuration (`optionalResponseProperties` in
+`scripts/generate-adapter-schemas.ts`), with its reason in the generated module:
+
+- Only absence is tolerated. A value of any type other than string or `null` is still
+  `upstream_contract_mismatch`, and every other required field stays required. An absent
+  field is passed on as absent, not invented as `null`: the console did not say that no
+  profile is selected.
+- The field is an identifier of a profile, not a credential or personal data; the read's
+  risk and sensitivity do not change.
+- It applies to the 7.3.74 schemas, which every console from 7.3.74 to 7.x uses for this
+  read (§7). The 7.4.96 module is unchanged and unused for it.
+- Generation fails if the property disappears from the schema, is no longer required, or
+  is no longer used in a response, so the exception is revisited when the vendor changes
+  the contract. Tests: `tests/unit/scripts/openapi-zod.test.ts` (the option),
+  `tests/integration-mock/protect-reads.test.ts` (absent, `null` and a string pass; a
+  number and a missing `status` fail).
+
+Alternatives rejected: making every `armMode` field optional (wider than the evidence),
+filling in `null` (states something the console did not), and editing the generated
+module by hand (lost on the next generation, and unreviewable).
+
 ## Consequences
 
 - Consoles with a Protect version older than 7.3.74, or 8 and later, are refused with a
   message naming the version (ADR 0018 §3). On 7.3.x, the operations only 7.4.96 documents
   are refused the same way (§7).
-- The open questions carried over in `provenance.json`: how the WebSocket subscriptions
-  authenticate, the snapshot's size bounds, and rate limits.
+- The open questions carried over in `provenance.json`: the snapshot's size bounds and
+  rate limits. How subscriptions authenticate was answered live (§8).
+- Device reads have not met real data yet: the console tested had no Protect devices.
+- A console that leaves out further required fields fails that read until the evidence is
+  reviewed the same way (§8).

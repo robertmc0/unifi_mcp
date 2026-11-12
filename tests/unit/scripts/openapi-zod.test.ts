@@ -522,6 +522,69 @@ describe('reviewed parameter omissions', () => {
   });
 });
 
+describe('reviewed response properties that may be absent', () => {
+  const mode = {
+    type: 'object',
+    properties: { status: { type: 'string' }, profileId: { type: ['string', 'null'] } },
+    required: ['status', 'profileId'],
+  };
+  const reviewed = { Mode: { profileId: 'a console was observed to leave it out' } };
+  const both = doc({ Mode: mode }, { '/v1/mode': post('#/components/schemas/Mode') });
+
+  it('are optional in responses only, and the reason is recorded', () => {
+    const source = generate(both, { optionalResponseProperties: reviewed });
+    expect(source).toContain(
+      'Response property "Mode.profileId" accepted when absent: a console was observed',
+    );
+    const op = load(source)['createThing'];
+    expect(op?.output.safeParse({ status: 'on' }).success).toBe(true);
+    expect(op?.output.safeParse({ status: 'on', profileId: null }).success).toBe(true);
+    expect(op?.output.safeParse({ status: 'on', profileId: 7 }).success).toBe(false);
+    expect(op?.output.safeParse({ profileId: 'p' }).success).toBe(false);
+    // The request schema keeps the contract: the property is still required.
+    expect(op?.input.safeParse({ body: { status: 'on' } }).success).toBe(false);
+    expect(load(generate(both))['createThing']?.output.safeParse({ status: 'on' }).success).toBe(
+      false,
+    );
+  });
+
+  it('fail when the property is gone, no longer required, or never in a response', () => {
+    const generateWith = (
+      document: Doc,
+      options: GeneratorOptions['optionalResponseProperties'] = reviewed,
+    ) => generate(document, { optionalResponseProperties: options });
+    expect(() => generateWith(both, { Mode: { gone: 'x' } })).toThrow(
+      /Mode\.gone: a property accepted when absent must exist in a response schema/,
+    );
+    expect(() => generateWith(both, { Other: { profileId: 'x' } })).toThrow(/must exist/);
+    const optional = doc(
+      { Mode: { ...mode, required: ['status'] } },
+      { '/v1/mode': get('#/components/schemas/Mode') },
+    );
+    expect(() => generateWith(optional)).toThrow(/Mode\.profileId: is no longer required/);
+    const requestOnly = doc(
+      { Mode: mode, Ok: { type: 'object', properties: { ok: { type: 'boolean' } } } },
+      {
+        '/v1/mode': {
+          post: {
+            operationId: 'setMode',
+            requestBody: {
+              required: true,
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/Mode' } } },
+            },
+            responses: {
+              '200': {
+                content: { 'application/json': { schema: { $ref: '#/components/schemas/Ok' } } },
+              },
+            },
+          },
+        },
+      },
+    );
+    expect(() => generateWith(requestOnly)).toThrow(/must exist in a response schema/);
+  });
+});
+
 describe('identifiers', () => {
   it('are PascalCase and disambiguated deterministically', () => {
     expect(identifierFor('Site overview page')).toBe('SiteOverviewPage');

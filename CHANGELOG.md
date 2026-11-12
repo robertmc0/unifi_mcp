@@ -32,6 +32,12 @@ All notable changes to this project are documented here. The format follows
 - 41 Protect writes: 25 high risk with human approval (alarm manager, anything that
   silences alarms or monitoring, sirens, relays, alarm outputs), 16 medium; the permanent
   microphone disable and talkback are off by default (ADR 0019 §6).
+- Live evidence from a Protect 7.3.74 console (ADR 0019 §8): event subscriptions accept
+  the API key; `protect.nvrs.list` accepts an NVR whose `armMode` leaves out
+  `armProfileId`, a reviewed exception (`optionalResponseProperties` in the generator). A
+  live list that returns no items is recorded as `ok (empty)` and not counted as
+  validated. Mismatch reports name the received type (`received undefined`).
+- Fixed: the coverage page of every module named its live record "Network".
 
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 

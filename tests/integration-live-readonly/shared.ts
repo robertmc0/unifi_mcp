@@ -8,9 +8,12 @@
  *   HTTP status: the socket is closed as soon as the status line arrives, and nothing the
  *   console sends after it is read.
  * - Reports keep categories and outcomes only; `category` and `httpDetail` let no free text
- *   through.
+ *   through, and `okOutcome` tells an empty list from a validated one.
  */
 import { randomBytes } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import * as prettier from 'prettier';
 import type { ExecutionCall, ExecutorOutcome, OperationExecutor } from '@unifi-local-mcp/core';
 import { connectTls, type ConsoleConnection, type EgressGuard } from '@unifi-local-mcp/unifi-api';
 
@@ -40,6 +43,26 @@ export const httpDetail = (message: string): string => {
   if (match === null) return '';
   return ` (HTTP ${match[1] ?? ''}${match[2] === undefined ? '' : `, code ${match[2]}`})`;
 };
+
+/**
+ * `ok`, or `ok (empty)` for a list that returned no items. An empty list matches any item
+ * schema, so the coverage matrix does not count it as live validation of the read.
+ */
+export const okOutcome = (data: unknown): string =>
+  Array.isArray(data) && data.length === 0 ? 'ok (empty)' : 'ok';
+
+/**
+ * Writes a report as the repository formats JSON, so a committed record passes
+ * `npm run check` as written. The folder is created if needed.
+ */
+export async function writeReport(path: string, report: object): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  const config = (await prettier.resolveConfig(path)) ?? {};
+  await writeFile(
+    path,
+    await prettier.format(JSON.stringify(report), { ...config, filepath: path }),
+  );
+}
 
 export interface Outcome {
   operationId: string;

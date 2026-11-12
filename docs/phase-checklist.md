@@ -395,7 +395,12 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
    version supports, an optional snapshot, and a WebSocket upgrade probe (key and random
    key) of `/v1/subscribe/events`; the guard and helpers are shared with Network
    (`shared.ts`). Dry-run against the synthetic console (now Network and Protect).
-   **Waiting for the owner's run.**
+   Owner's run (2026-11-12, Protect 7.3.74, no devices): 19 of 20 reads matched; events
+   authenticate with the API key (101 with it, 401 with a random key); `GET /v1/nvrs` left
+   out the required `armMode.armProfileId`, now a reviewed exception in the generator
+   (`optionalResponseProperties`). Empty lists are recorded as `ok (empty)` and no longer
+   count as validated. ADR 0019 §8. **Next:** the owner's rerun to refresh the record;
+   coverage and the write runbook.
 9. **Docs**: `applications-protect.md` and updates to the manual.
 
 ### Gate (spec §16)

@@ -163,7 +163,9 @@ Instead of `UNIFI_LIVE_TLS_PIN` you can give `UNIFI_LIVE_CA_FILE` (a PEM file). 
 `UNIFI_LIVE_PORT` if the console does not use 443.
 
 The test fails on any read that does not match the contract. Reads with nothing to read
-(for example, no vouchers) are reported as skipped. A failure names its cause, for example
+(for example, no vouchers) are reported as skipped. A list that returns no items is
+reported as `ok (empty)`: it matches the contract but checks no item, so the coverage
+matrix does not count it as validated. A failure names its cause, for example
 `tls_pin_mismatch` or `upstream_unauthorized`. For a response that does not match the
 contract, the output and the report name the fields and the kind of mismatch
 (`data[].name: invalid_type (expected string)`), never their values. The report folder is
@@ -171,7 +173,7 @@ created if it does not exist. Read the report before you commit it.
 
 The report records only these facts:
 
-- the outcome of each operation;
+- the outcome of each operation (`ok`, `ok (empty)`, skipped or the error code);
 - the console's Network version;
 - whether paging across two pages and a filter worked;
 - whether the key also worked for Protect, with a random key as the control, and the

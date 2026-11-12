@@ -127,13 +127,14 @@ interface CoverageOperation {
   provisional: ProvisionalClassification;
 }
 
+const APPLICATION_NAMES = {
+  network: 'UniFi Network',
+  protect: 'UniFi Protect',
+  access: 'UniFi Access',
+} as const;
+
 function moduleTitle(p: Provenance): string {
-  const names = {
-    network: 'UniFi Network',
-    protect: 'UniFi Protect',
-    access: 'UniFi Access',
-  } as const;
-  return `${names[p.application]} — ${p.vendorVersionLabel ?? `document revision ${p.revision}`}`;
+  return `${APPLICATION_NAMES[p.application]} — ${p.vendorVersionLabel ?? `document revision ${p.revision}`}`;
 }
 
 function escapeCell(text: string): string {
@@ -169,7 +170,7 @@ function markdown(p: Provenance, ops: CoverageOperation[], live?: LiveRecord): s
     lines.push(
       `| Reviewed risk | ${risk('high')} high (human approval), ${risk('medium')} medium, ${risk('low')} low |`,
       `| Off by default | ${reviewed.filter((o) => o.defaultDisabled === true).length} |`,
-      `| Live read-only validation | ${count((o) => o.liveReadValidation)}${live === undefined ? ' (opt-in, never in CI; not yet recorded)' : ` (${live.date}, Network ${live.applicationVersion}; opt-in, never in CI)`} |`,
+      `| Live read-only validation | ${count((o) => o.liveReadValidation)}${live === undefined ? ' (opt-in, never in CI; not yet recorded)' : ` (${live.date}, ${APPLICATION_NAMES[p.application]} ${live.applicationVersion}; opt-in, never in CI)`} |`,
       '',
       '## Evidence',
       '',

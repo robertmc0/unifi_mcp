@@ -22,10 +22,10 @@
  */
 import { randomBytes } from 'node:crypto';
 import { lookup } from 'node:dns/promises';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { isIP } from 'node:net';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import {
   Dispatcher,
   ExecutionStore,
@@ -51,7 +51,7 @@ import {
 } from '@unifi-local-mcp/unifi-protect';
 import { afterAll, describe, expect, it } from 'vitest';
 import { mismatchSummary } from '../fixtures/schema-mismatch.ts';
-import { ReadOnlyGuard, upgradeStatus, type Outcome } from './shared.ts';
+import { okOutcome, type Outcome, ReadOnlyGuard, upgradeStatus, writeReport } from './shared.ts';
 
 const env = process.env;
 const HOST = env['UNIFI_LIVE_HOST']?.trim() ?? '';
@@ -99,10 +99,7 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Protect', () => {
 
   afterAll(async () => {
     close?.();
-    if (REPORT !== '') {
-      await mkdir(dirname(REPORT), { recursive: true });
-      await writeFile(REPORT, `${JSON.stringify({ ...report, results: outcomes }, null, 2)}\n`);
-    }
+    if (REPORT !== '') await writeReport(REPORT, { ...report, results: outcomes });
     if (dir !== '') await rm(dir, { recursive: true, force: true });
   });
 
@@ -238,7 +235,10 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Protect', () => {
         const wait = (envelope.error as { retryAfterMs?: number }).retryAfterMs ?? 1000;
         await new Promise((resolve) => setTimeout(resolve, Math.min(wait + 50, 5000)));
       }
-      const outcome = envelope.status === 'ok' ? 'ok' : (envelope.error?.code ?? envelope.status);
+      const outcome =
+        envelope.status === 'ok'
+          ? okOutcome(envelope.data)
+          : (envelope.error?.code ?? envelope.status);
       const mismatches =
         outcome === 'upstream_contract_mismatch' ? await diagnose(descriptor, args) : [];
       outcomes.push({ operationId, outcome, ...(mismatches.length === 0 ? {} : { mismatches }) });
@@ -311,7 +311,9 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Protect', () => {
     //    and every read either worked or was skipped.
     expect(JSON.stringify({ ...report, results: outcomes })).not.toMatch(/:\/\/|@/);
     expect(guard.sent.every((request) => request.startsWith('GET '))).toBe(true);
-    const failed = outcomes.filter((o) => o.outcome !== 'ok' && !o.outcome.startsWith('skipped'));
+    const failed = outcomes.filter(
+      (o) => !o.outcome.startsWith('ok') && !o.outcome.startsWith('skipped'),
+    );
     expect(failed, 'reads that failed against the live console').toEqual([]);
   }, 120_000);
 });

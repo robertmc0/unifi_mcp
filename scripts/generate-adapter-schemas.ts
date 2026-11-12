@@ -42,6 +42,14 @@ export const GENERATED_MODULES = [
         'a multipart upload whose form field is not documented (the body is only a binary ' +
         'string); not implemented until the contract names it (ADR 0019)',
     },
+    optionalResponseProperties: {
+      nvrArmMode: {
+        armProfileId:
+          'documented as required (string or null), but a 7.3.74 console left it out of ' +
+          'GET /v1/nvrs on 2026-11-12 (live read-only test); absent means not reported ' +
+          '(ADR 0019 §8)',
+      },
+    },
   },
   {
     application: 'protect',
@@ -85,6 +93,9 @@ async function render(module: (typeof GENERATED_MODULES)[number]): Promise<strin
     omittedParameters: module.omittedParameters,
     ...('naming' in module ? { naming: module.naming } : {}),
     ...('omittedOperations' in module ? { omittedOperations: module.omittedOperations } : {}),
+    ...('optionalResponseProperties' in module
+      ? { optionalResponseProperties: module.optionalResponseProperties }
+      : {}),
   });
   const outputPath = join(REPO_ROOT, module.output);
   const config = (await prettier.resolveConfig(outputPath)) ?? {};

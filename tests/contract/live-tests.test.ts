@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import * as z from 'zod';
 import defaultConfig from '../../vitest.config.ts';
 import { mismatchSummary } from '../fixtures/schema-mismatch.ts';
+import { okOutcome } from '../integration-live-readonly/shared.ts';
 
 const ROOT = join(import.meta.dirname, '../..');
 const read = (path: string) => readFile(join(ROOT, path), 'utf8');
@@ -49,6 +50,15 @@ describe('live tests', () => {
       expect(source).toContain(`allow: ['${module}.*.read']`);
     },
   );
+});
+
+describe('live report outcomes', () => {
+  it('tell an empty list, which validates no item schema, from a read that returned data', () => {
+    expect(okOutcome([])).toBe('ok (empty)');
+    expect(okOutcome([{ id: 'x' }])).toBe('ok');
+    expect(okOutcome({ id: 'x' })).toBe('ok');
+    expect(okOutcome(null)).toBe('ok');
+  });
 });
 
 describe('live report mismatch summaries', () => {

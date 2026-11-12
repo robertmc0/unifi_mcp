@@ -556,7 +556,7 @@ const DoorbellSettingsOut = z.object({
 });
 const NvrArmModeOut = z.object({
   status: z.string(),
-  armProfileId: z.string().nullable(),
+  armProfileId: z.string().nullable().optional(),
   armedAt: z.number().nullable(),
   willBeArmedAt: z.number().nullable(),
   breachDetectedAt: z.number().nullable(),
@@ -2996,6 +2996,7 @@ export const postV1SpeakersByIdTestSound = {
   output: z.unknown().transform(() => null),
 } as const;
 // Operation "POST /v1/files/{fileType}" omitted: a multipart upload whose form field is not documented (the body is only a binary string); not implemented until the contract names it (ADR 0019)
+// Response property "nvrArmMode.armProfileId" accepted when absent: documented as required (string or null), but a 7.3.74 console left it out of GET /v1/nvrs on 2026-11-12 (live read-only test); absent means not reported (ADR 0019 §8)
 
 /** Every documented operation that is generated, by "<METHOD> <path>". */
 export const OPERATIONS = {

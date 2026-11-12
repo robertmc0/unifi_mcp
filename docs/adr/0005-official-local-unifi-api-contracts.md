@@ -99,13 +99,24 @@ UniFi Protect installed. The record is
 - **Paging and filtering** behaved as documented: one item per page, a next page with a
   different item, and an accepted filter expression.
 
+## Live evidence (Phase 3, 2026-11-12)
+
+The live read-only test ran against the same console with UniFi Protect 7.3.74. The record
+is [api-coverage/live/protect-7.3.74.json](../api-coverage/live/protect-7.3.74.json).
+
+- **Protect subscriptions authenticate with the same key.** A WebSocket upgrade of the
+  documented `/v1/subscribe/events` with the key in `X-API-KEY` was accepted (HTTP 101);
+  with a random key it was refused (HTTP 401).
+- **One documented required field was missing** from a Protect response; it is a reviewed
+  deviation ([ADR 0019 §8](0019-protect-adapter.md#8-live-evidence-2026-11-12-and-a-reviewed-response-exception)).
+
 ## Unverified assumptions (flagged; must be resolved before the named phase)
 
 | Assumption                                                                                   | Resolve by                                             |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | ~~One Integrations API key may or may not cover both Network and Protect~~                   | **Resolved:** it covers both (live evidence above)     |
 | ~~No read-only API key type exists for Network/Protect~~                                     | **Resolved:** none in the UI (live evidence above)     |
-| WebSocket subscription authentication for Protect                                            | Phase 3                                                |
+| ~~WebSocket subscription authentication for Protect~~                                        | **Resolved:** the API key (live evidence above)        |
 | Installed Access version may ship a machine-readable contract ("Download API documentation") | Phase 4                                                |
 | Local API rate limits (not documented for any application)                                   | Phase 2–4. Conservative defaults until then (spec §10) |
 | ~~Network filtering/pagination rules not yet transcribed~~                                   | **Resolved:** checked live (above)                     |

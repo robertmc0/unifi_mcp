@@ -3,7 +3,9 @@
 > **Status: Phase 3 in progress.** The Protect adapter supports the official release 7.3.74
 > and the newest documented revision 7.4.96 of the Protect integration API. All 38
 > documented HTTP reads and 41 of the 42 writes are available and tested against a
-> synthetic console. Event subscriptions follow in the next steps
+> synthetic console. The reads passed a live read-only test on a 7.3.74 console without
+> devices, with one reviewed exception ([Limitations](#limitations)). Event subscriptions
+> follow in the next steps
 > ([phase-checklist.md](phase-checklist.md#phase-3--unifi-protect-in-progress)).
 
 The service uses the **official local** UniFi Protect integration API on each console,
@@ -157,10 +159,12 @@ with the same settings. It is never part of `npm run check` or CI.
 UNIFI_LIVE_HOST=<console address> \
 UNIFI_LIVE_NETWORK_KEY_FILE=<file with the API key> \
 UNIFI_LIVE_TLS_PIN=sha256/… \
-UNIFI_LIVE_REPORT=docs/api-coverage/live/network-11.0.97.json \
 UNIFI_LIVE_PROTECT_REPORT=docs/api-coverage/live/protect-7.3.74.json \
 npm run test:live
 ```
+
+Add `UNIFI_LIVE_REPORT=docs/api-coverage/live/network-11.0.97.json` to refresh the Network
+record as well.
 
 - Only the Protect reads are registered, a guard refuses anything that is not a GET, the
   hard lock is on and the client can only read. `UNIFI_LIVE_PROTECT_KEY_FILE` sets a
@@ -168,6 +172,9 @@ npm run test:live
 - Reads that need a newer Protect than the console runs are skipped. Name the report after
   the revision the console reaches: `protect-7.3.74.json` for 7.3.x, `protect-7.4.96.json`
   for 7.4.x.
+- Each list is followed by a read of its first item. Without devices of a kind, the item
+  read is skipped, and the list is reported as `ok (empty)`: it matches the contract but
+  checks no item, so the coverage matrix does not count it as validated.
 - A camera snapshot is fetched only with `UNIFI_LIVE_PROTECT_SNAPSHOT=1`. It stays in
   memory and is discarded.
 - To learn how event subscriptions authenticate, it asks the documented
@@ -188,6 +195,16 @@ result, at any depth:
   operations).
 
 ## Limitations
+
+- **The NVR's selected arm profile may be missing.** The contract requires
+  `armMode.armProfileId` (a profile id or `null`) in `protect.nvrs.list`, but a 7.3.74
+  console was seen leaving it out. The service accepts the NVR without it and returns it
+  without the field; it does not fill in `null`. Any other missing or mistyped field still
+  fails the read with `upstream_contract_mismatch`
+  ([ADR 0019 §8](adr/0019-protect-adapter.md#8-live-evidence-2026-11-12-and-a-reviewed-response-exception)).
+- **Device reads have not been checked against a real console yet.** The console tested so
+  far had no Protect devices. The schemas come from the contract and pass the synthetic
+  tests.
 
 - **Device asset upload** (`POST /v1/files/{fileType}`) is not implemented. The contract
   documents its multipart body only as a binary string, without the name of the form

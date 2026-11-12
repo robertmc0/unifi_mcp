@@ -12,7 +12,8 @@
  * - **Response (`…Out`)**: tolerant of additions but never permissive. Undocumented
  *   properties are stripped, so they cannot reach a client; unknown enum values and unknown
  *   discriminator values are accepted (as strings, or as the base object) so that a newer
- *   console does not break reads. Documented required properties stay required.
+ *   console does not break reads. Documented required properties stay required, except
+ *   reviewed ones a console was observed to leave out (`optionalResponseProperties`).
  *
  * Anything the translator does not understand throws, so nothing is translated silently
  * wrong. The vendor document must not contain cycles.
@@ -101,6 +102,14 @@ export interface GeneratorOptions {
    * deviation). Generation fails if one no longer exists, so the decision is revisited.
    */
   omittedOperations?: Readonly<Record<string, string>>;
+  /**
+   * Response properties a console was observed to leave out although the contract requires
+   * them, by component schema and property, with the reason (a reviewed deviation, ADR 0019
+   * §8). They are accepted when absent in responses only; requests are unchanged. Generation
+   * fails if one no longer exists, is no longer required, or is not used in a response, so
+   * the decision is revisited.
+   */
+  optionalResponseProperties?: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 interface OperationInfo {
@@ -230,8 +239,20 @@ export class OpenApiZodGenerator {
   readonly #definitions: string[] = [];
   /** Whether a schema uses the `unique` helper (emitted only then, for the linter). */
   usesUnique = false;
+  /** Reviewed response properties that may be absent: `"<schema>.<property>"` → reason. */
+  readonly #absentAllowed: ReadonlyMap<string, string>;
+  /** Those of them that were applied to a response schema. */
+  readonly absentApplied = new Set<string>();
 
-  constructor(doc: OpenApiDocument) {
+  constructor(
+    doc: OpenApiDocument,
+    optionalResponseProperties: GeneratorOptions['optionalResponseProperties'] = {},
+  ) {
+    this.#absentAllowed = new Map(
+      Object.entries(optionalResponseProperties).flatMap(([schema, properties]) =>
+        Object.entries(properties).map(([property, reason]) => [`${schema}.${property}`, reason]),
+      ),
+    );
     const components = (doc as { components?: { schemas?: unknown } }).components?.schemas;
     if (!isObject(components)) throw new Error('The document has no components.schemas.');
     this.#components = components as Record<string, Schema>;
@@ -445,7 +466,15 @@ export class OpenApiZodGenerator {
           : values.length === 1
             ? `z.literal(${literal(values[0] ?? '')})`
             : `z.enum([${values.map(literal).join(', ')}])`;
-      if (!parts.required.has(name)) code += '.optional()';
+      // `where` is the component name for a component's own object (ADR 0019 §8).
+      const reviewed = `${where}.${name}`;
+      if (flavour === 'out' && this.#absentAllowed.has(reviewed)) {
+        if (!parts.required.has(name)) fail(reviewed, 'is no longer required: revisit its review');
+        this.absentApplied.add(reviewed);
+        code += '.optional()';
+      } else if (!parts.required.has(name)) {
+        code += '.optional()';
+      }
       fields.push(`${key(name)}: ${code}`);
     }
     return `${flavour === 'in' ? 'z.strictObject' : 'z.object'}({ ${fields.join(', ')} })`;
@@ -886,7 +915,7 @@ export class OpenApiZodGenerator {
 
 /** Generates the complete module source (unformatted). */
 export function generateZodModule(doc: OpenApiDocument, options: GeneratorOptions): string {
-  const generator = new OpenApiZodGenerator(doc);
+  const generator = new OpenApiZodGenerator(doc, options.optionalResponseProperties);
   const targets = new Set(options.targetParameters ?? []);
   const paths = (doc as { paths?: unknown }).paths;
   if (!isObject(paths)) throw new Error('The document has no paths.');
@@ -924,6 +953,18 @@ export function generateZodModule(doc: OpenApiDocument, options: GeneratorOption
   }
   for (const opKey of omittedOperations.keys()) {
     throw new Error(`OpenAPI translation failed at ${opKey}: an omitted operation must exist`);
+  }
+  for (const [schema, properties] of Object.entries(options.optionalResponseProperties ?? {})) {
+    for (const [property, reason] of Object.entries(properties)) {
+      const reviewed = `${schema}.${property}`;
+      if (!generator.absentApplied.has(reviewed)) {
+        throw new Error(
+          `OpenAPI translation failed at ${reviewed}: a property accepted when absent must ` +
+            'exist in a response schema',
+        );
+      }
+      notes.push(`// Response property "${reviewed}" accepted when absent: ${reason}`);
+    }
   }
   const names = operations.map((o) => o.info.operationId);
   const duplicate = names.find((name, i) => names.indexOf(name) !== i);
