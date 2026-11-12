@@ -99,7 +99,10 @@ export interface ExecutionEnvelope {
 export interface SecurityContextProvider {
   clientPolicy(clientId: string): ClientPolicy | undefined;
   consolePolicy(consoleId: string): ConsolePolicy | undefined;
-  capability(consoleId: string, operation: OperationDescriptor): Capability;
+  capability(
+    consoleId: string,
+    operation: Pick<OperationDescriptor, 'moduleId' | 'apiVersionRange'>,
+  ): Capability;
   /** The module version a probe last observed, used only to explain an unsupported result. */
   observedVersion?(consoleId: string, moduleId: string): string | undefined;
 }

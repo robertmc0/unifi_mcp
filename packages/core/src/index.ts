@@ -35,6 +35,33 @@ export {
   type NewExecution,
 } from './executions.ts';
 export { displaySafe, displaySafeLine } from './display.ts';
+export {
+  DEFAULT_EVENT_HUB_LIMITS,
+  EventHub,
+  type EventCloseInfo,
+  type EventConnection,
+  type EventConnector,
+  type EventFeedKey,
+  type EventFeedStatus,
+  type EventHubLimits,
+  type EventHubOptions,
+  type EventReadResult,
+  type EventTarget,
+  type FeedState,
+} from './event-hub.ts';
+export {
+  defineEventStream,
+  EventStreamRegistry,
+  isValidMessageClass,
+  MAX_EVENT_MESSAGE_BYTES,
+  MIN_EVENT_MESSAGE_BYTES,
+  StreamAccess,
+  validateEventStream,
+  type EventStreamDescriptor,
+  type MessageClass,
+  type StreamAccessDependencies,
+  type StreamDecision,
+} from './events.ts';
 export { withoutFields } from './fields.ts';
 export { KeyedMutex } from './locks.ts';
 export { RateLimiter, type RateDecision, type RateLimit } from './rate-limit.ts';

@@ -389,7 +389,16 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
 7. **Events**: WebSocket subscriptions over the same TLS and egress controls, a connection
    manager, MCP resources with `subscriptions/listen`, per-client filtering; tests for
    expiry, revocation, client and upstream disconnects, reconnect storms and slow
-   consumers.
+   consumers. ADR 0020.
+   - 7a ✅ (2026-11-12): our own bounded, read-only WebSocket client over the verified
+     socket; the UniFi event connector; event streams as reviewed registry entries;
+     `StreamAccess`, the one authorisation point for streams and messages; the event hub
+     (on demand, bounded buffer, gaps, opaque cursors, backoff with jitter, a global
+     attempt limit, credential changes). Tests: `tests/unit/unifi-api/websocket.test.ts`,
+     `tests/unit/unifi-api/events.test.ts`, `tests/unit/core/event-hub.test.ts`.
+   - 7b: MCP resources, `subscriptions/listen` in the HTTP gate, one handler per client,
+     re-authorisation, slow consumers and lifetime; service wiring.
+   - 7c: the Protect streams with their security review; coverage.
 8. **Coverage, live read-only test and write runbook.** Live test started (2026-11-12):
    `tests/integration-live-readonly/protect.test.ts` runs every Protect read the console's
    version supports, an optional snapshot, and a WebSocket upgrade probe (key and random

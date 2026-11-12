@@ -59,3 +59,17 @@ export {
   type TlsTrust,
   type TransportErrorCode,
 } from './transport.ts';
+export {
+  openWebSocket,
+  WebSocketConnection,
+  WebSocketError,
+  type WebSocketClose,
+  type WebSocketCloseCode,
+  type WebSocketErrorCode,
+  type WebSocketOptions,
+} from './websocket.ts';
+export {
+  EventConnectError,
+  UnifiEventConnector,
+  type UnifiEventConnectorOptions,
+} from './events.ts';
