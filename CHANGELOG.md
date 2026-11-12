@@ -38,6 +38,10 @@ All notable changes to this project are documented here. The format follows
   live list that returns no items is recorded as `ok (empty)` and not counted as
   validated. Mismatch reports name the received type (`received undefined`).
 - Fixed: the coverage page of every module named its live record "Network".
+- Manual Protect write runbook (`docs/runbook-protect-writes.md`): an arm profile
+  created, renamed, refused and deleted with approvals (no devices needed), then device
+  renames and RTSPS streams. A contract test keeps both runbooks in line with the
+  registered operations, their risk and the CLI.
 - Live records refreshed by the owner's run (2026-11-12): Protect 7.3.74, all 20 reads
   matched (5 with data, 15 empty lists); Network 11.0.99, 23 reads with data matched, 10
   empty lists are no longer counted as validated, and `get_references` still fails in the

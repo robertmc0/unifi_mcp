@@ -41,6 +41,7 @@
 | [applications-network.md](applications-network.md) (versions, reads, sensitive data, limitations)              | 2 (started)     |
 | [runbook-network-writes.md](runbook-network-writes.md) (optional manual write validation on a real console)    | 2               |
 | [applications-protect.md](applications-protect.md) (versions, reads, events, writes, credentials, limitations) | 3 (in progress) |
+| [runbook-protect-writes.md](runbook-protect-writes.md) (optional manual write validation on a real console)    | 3               |
 | events.md                                                                                                      | 3               |
 | applications-access.md                                                                                         | 4               |
 | release.md, development.md                                                                                     | 5               |

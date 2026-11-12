@@ -292,6 +292,8 @@ module by hand (lost on the next generation, and unreviewable).
   are refused the same way (§7).
 - The open questions carried over in `provenance.json`: the snapshot's size bounds and
   rate limits. How subscriptions authenticate was answered live (§8).
+- Writes on a real console: the manual, human-approved `docs/runbook-protect-writes.md`,
+  as for Network (ADR 0018 §7).
 - Device reads have not met real data yet: the console tested had no Protect devices.
 - A console that leaves out further required fields fails that read until the evidence is
   reviewed the same way (§8).

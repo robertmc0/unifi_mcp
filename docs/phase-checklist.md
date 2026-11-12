@@ -409,7 +409,7 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
      (the contract makes them a superset); a scan of every generated union for shadowed
      branches; coverage 73/74 (7.3.74) and 81/83 (7.4.96). ADR 0020 §6. Tests:
      `tests/contract/protect-streams.test.ts`, `tests/integration-mock/protect-events.test.ts`.
-8. **Coverage, live read-only test and write runbook.** Live test started (2026-11-12):
+8. ✅ **Coverage, live read-only test and write runbook** (2026-11-12). Live test:
    `tests/integration-live-readonly/protect.test.ts` runs every Protect read the console's
    version supports, an optional snapshot, and a WebSocket upgrade probe (key and random
    key) of `/v1/subscribe/events`; the guard and helpers are shared with Network
@@ -421,8 +421,13 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
    count as validated. ADR 0019 §8. Rerun (2026-11-12): all 20 reads matched,
    `protect.nvrs.list` included; 5 count as validated (NVRs and the four user reads), 15
    lists were empty. The same run refreshed the Network record (23 validated, 10 empty,
-   `get_references` still failing in the console). **Next:** coverage and the write
-   runbook.
+   `get_references` still failing in the console). Coverage: the matrix lists every
+   operation with its status, reviewed metadata and test evidence, and marks the 5 reads
+   with live data. Write runbook: [runbook-protect-writes.md](runbook-protect-writes.md),
+   manual and approved step by step (an arm profile created, renamed, refused and deleted
+   without devices; device renames and RTSPS streams with devices).
+   `tests/contract/runbooks.test.ts` checks that both runbooks name registered operations
+   with their reviewed risk and only existing CLI commands and options.
 9. **Docs**: `applications-protect.md` and updates to the manual.
 
 ### Gate (spec §16)

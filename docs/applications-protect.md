@@ -214,6 +214,12 @@ record as well.
 - The report holds operation ids, outcomes, the Protect version and the two upgrade
   statuses. It holds no names, ids, e-mail addresses or data. Read it before you commit it.
 
+### Writes
+
+Validating writes on a real console is a manual runbook, approved step by step by you:
+[runbook-protect-writes.md](runbook-protect-writes.md). Its first part needs no Protect
+devices.
+
 ## Credentials are never returned
 
 Some Protect results grant access by themselves. The service removes them from every
