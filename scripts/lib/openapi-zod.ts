@@ -12,8 +12,10 @@
  * - **Response (`…Out`)**: tolerant of additions but never permissive. Undocumented
  *   properties are stripped, so they cannot reach a client; unknown enum values and unknown
  *   discriminator values are accepted (as strings, or as the base object) so that a newer
- *   console does not break reads. Documented required properties stay required, except
- *   reviewed ones a console was observed to leave out (`optionalResponseProperties`).
+ *   console does not break reads. A documented discriminator value must match its own
+ *   variant: it never falls back to the base object, which would silently drop the
+ *   variant's fields. Documented required properties stay required, except reviewed ones a
+ *   console was observed to leave out (`optionalResponseProperties`).
  *
  * Anything the translator does not understand throws, so nothing is translated silently
  * wrong. The vendor document must not contain cycles.
@@ -239,6 +241,8 @@ export class OpenApiZodGenerator {
   readonly #definitions: string[] = [];
   /** Whether a schema uses the `unique` helper (emitted only then, for the linter). */
   usesUnique = false;
+  /** Whether a schema uses the `unlisted` helper (emitted only then, for the linter). */
+  usesUnlisted = false;
   /** Reviewed response properties that may be absent: `"<schema>.<property>"` → reason. */
   readonly #absentAllowed: ReadonlyMap<string, string>;
   /** Those of them that were applied to a response schema. */
@@ -348,14 +352,28 @@ export class OpenApiZodGenerator {
     const ids = variants.map((variant) => this.ref(variant, flavour, `${name}→${variant}`));
     if (flavour === 'in') return `z.discriminatedUnion(${literal(property)}, [${ids.join(', ')}])`;
     // Responses: an unknown discriminator value still yields the documented base fields,
-    // and at least the discriminator (a oneOf-style base has no fields of its own).
+    // and at least the discriminator (a oneOf-style base has no fields of its own). A
+    // documented value must match its variant instead.
     const parts = this.#ownParts(name);
     if (!parts.props.has(property)) {
       parts.props.set(property, { type: 'string' });
       parts.required.add(property);
     }
-    const base = this.#objectCode(parts, flavour, `${name} (base)`);
+    const unlisted = { property, values: Object.keys(discriminator['mapping'] as Schema) };
+    const base = this.#objectCode(parts, flavour, `${name} (base)`, unlisted);
     return `z.union([${[...ids, base].join(', ')}])`;
+  }
+
+  /**
+   * A discriminator in a response's fallback branch: any string except the documented
+   * values, so that a documented variant that misses its own schema is refused rather than
+   * reduced to the base fields. The check aborts: otherwise zod would report only this
+   * branch's issue for a union, hiding the field the selected variant is missing.
+   */
+  #unlistedCode(values: readonly string[]): string {
+    this.usesUnlisted = true;
+    const sorted = [...new Set(values)].sort();
+    return `z.string().refine(unlisted([${sorted.map(literal).join(', ')}]), UNLISTED)`;
   }
 
   /** Properties and required names of an object schema (merging allOf). */
@@ -448,20 +466,28 @@ export class OpenApiZodGenerator {
     for (const [name, values] of from.literals) into.literals.set(name, values);
   }
 
-  #objectCode(parts: Parts, flavour: Flavour, where: string): string {
+  #objectCode(
+    parts: Parts,
+    flavour: Flavour,
+    where: string,
+    /** The fallback branch of a response union: its discriminator and the documented values. */
+    unlisted?: { property: string; values: readonly string[] },
+  ): string {
     for (const name of parts.required) {
       if (!parts.props.has(name)) fail(where, `required property ${name} is not defined`);
     }
     const fields: string[] = [];
     for (const [name, schema] of parts.props) {
       const values = parts.literals.get(name);
-      if (values === undefined && this.#isUnconstrained(schema)) {
+      const fallback = flavour === 'out' && unlisted?.property === name;
+      if (!fallback && values === undefined && this.#isUnconstrained(schema)) {
         // An undocumented shape is never accepted from a client nor passed to one.
         if (flavour === 'in') fail(`${where}.${name}`, 'unconstrained request property');
         continue;
       }
-      let code =
-        values === undefined
+      let code = fallback
+        ? this.#unlistedCode(unlisted.values)
+        : values === undefined
           ? this.#code(schema, flavour, `${where}.${name}`)
           : values.length === 1
             ? `z.literal(${literal(values[0] ?? '')})`
@@ -636,7 +662,8 @@ export class OpenApiZodGenerator {
         if (!refs.has(ref)) fail(where, `the discriminator maps to ${String(ref)}, not a member`);
       }
       if (flavour === 'out') {
-        codes.push(`z.object({ ${key(discriminator['propertyName'])}: z.string() })`);
+        const values = this.#unlistedCode(Object.keys(discriminator['mapping']));
+        codes.push(`z.object({ ${key(discriminator['propertyName'])}: ${values} })`);
       }
     }
     return `${codes.length === 1 ? (codes[0] ?? '') : `z.union([${codes.join(', ')}])`}${suffix}`;
@@ -994,6 +1021,15 @@ export function generateZodModule(doc: OpenApiDocument, options: GeneratorOption
           `const UNIQUE = 'Items must be unique.';`,
           `function unique(items: readonly unknown[]): boolean {`,
           `  return new Set(items.map((item) => JSON.stringify(item))).size === items.length;`,
+          `}`,
+          ``,
+        ]
+      : []),
+    ...(generator.usesUnlisted
+      ? [
+          `const UNLISTED = { message: 'A documented variant must match its own schema.', abort: true };`,
+          `function unlisted(values: readonly string[]): (value: string) => boolean {`,
+          `  return (value) => !values.includes(value);`,
           `}`,
           ``,
         ]

@@ -15,6 +15,11 @@ function unique(items: readonly unknown[]): boolean {
   return new Set(items.map((item) => JSON.stringify(item))).size === items.length;
 }
 
+const UNLISTED = { message: 'A documented variant must match its own schema.', abort: true };
+function unlisted(values: readonly string[]): (value: string) => boolean {
+  return (value) => !values.includes(value);
+}
+
 const CountryDefinitionOut = z.object({ code: z.string(), name: z.string() });
 const CountryDefinitionPageOut = z.object({
   count: z.number(),
@@ -88,7 +93,9 @@ const IPACLRuleEndpointOut = z.union([
   IntegrationIpAclRuleSubnetEndpointFilterDtoOut,
   IntegrationIpAclRuleNetworkEndpointFilterDtoOut,
   IntegrationIpAclRulePortEndpointFilterDtoOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z.string().refine(unlisted(['IP_ADDRESSES_OR_SUBNETS', 'NETWORKS', 'PORTS']), UNLISTED),
+  }),
 ]);
 const IntegrationAclRuleDevicesFilterDtoOut = z.object({
   type: z.literal('DEVICES'),
@@ -96,14 +103,14 @@ const IntegrationAclRuleDevicesFilterDtoOut = z.object({
 });
 const ACLRuleDeviceFilterOut = z.union([
   IntegrationAclRuleDevicesFilterDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DEVICES']), UNLISTED) }),
 ]);
 const DerivedEntityMetadataOut = z.object({ origin: z.literal('DERIVED') });
 const UserDefinedEntityMetadataOut = z.object({ origin: z.literal('USER_DEFINED') });
 const UserDefinedOrDerivedEntityMetadataOut = z.union([
   DerivedEntityMetadataOut,
   UserDefinedEntityMetadataOut,
-  z.object({ origin: z.string() }),
+  z.object({ origin: z.string().refine(unlisted(['DERIVED', 'USER_DEFINED']), UNLISTED) }),
 ]);
 const IntegrationIpAclRuleDtoOut = z.object({
   action: z.string(),
@@ -126,7 +133,7 @@ const IntegrationMacAclRuleMacAddressEndpointFilterDtoOut = z.object({
 });
 const MACACLRuleEndpointOut = z.union([
   IntegrationMacAclRuleMacAddressEndpointFilterDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['MAC_ADDRESSES']), UNLISTED) }),
 ]);
 const IntegrationMacAclRuleDtoOut = z.object({
   action: z.string(),
@@ -154,7 +161,7 @@ const ACLRuleObjectOut = z.union([
     index: z.number(),
     metadata: UserDefinedOrDerivedEntityMetadataOut,
     name: z.string(),
-    type: z.string(),
+    type: z.string().refine(unlisted(['IPV4', 'MAC']), UNLISTED),
   }),
 ]);
 const IntegrationAclRulePageDtoOut = z.object({
@@ -255,7 +262,7 @@ const ACLRuleOut = z.union([
     index: z.number(),
     metadata: UserDefinedOrDerivedEntityMetadataOut,
     name: z.string(),
-    type: z.string(),
+    type: z.string().refine(unlisted(['IPV4', 'MAC']), UNLISTED),
   }),
 ]);
 const ACLRuleOrderingOut = z.object({ orderedAclRuleIds: z.array(z.string()) });
@@ -263,7 +270,7 @@ const ACLRuleOrderingIn = z.strictObject({ orderedAclRuleIds: z.array(z.guid()).
 const DefaultClientAccessOverviewOut = z.object({ type: z.literal('DEFAULT') });
 const TeleportClientAccessOverviewOut = z.union([
   DefaultClientAccessOverviewOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DEFAULT']), UNLISTED) }),
 ]);
 const TeleportClientConnectionOverviewOut = z.object({
   access: TeleportClientAccessOverviewOut,
@@ -275,7 +282,7 @@ const TeleportClientConnectionOverviewOut = z.object({
 });
 const VPNClientAccessOverviewOut = z.union([
   DefaultClientAccessOverviewOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DEFAULT']), UNLISTED) }),
 ]);
 const VPNClientConnectionOverviewOut = z.object({
   access: VPNClientAccessOverviewOut,
@@ -289,7 +296,7 @@ const GuestAccessOverviewOut = z.object({ type: z.literal('GUEST'), authorized: 
 const LocalClientAccessOverviewOut = z.union([
   DefaultClientAccessOverviewOut,
   GuestAccessOverviewOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DEFAULT', 'GUEST']), UNLISTED) }),
 ]);
 const WiredClientOverviewOut = z.object({
   access: LocalClientAccessOverviewOut,
@@ -321,7 +328,7 @@ const ClientOverviewOut = z.union([
     id: z.string(),
     ipAddress: z.string().optional(),
     name: z.string(),
-    type: z.string(),
+    type: z.string().refine(unlisted(['TELEPORT', 'VPN', 'WIRED', 'WIRELESS']), UNLISTED),
   }),
 ]);
 const ClientOverviewPageOut = z.object({
@@ -334,7 +341,7 @@ const ClientOverviewPageOut = z.object({
 const DefaultClientAccessDetailsOut = z.object({ type: z.literal('DEFAULT') });
 const TeleportClientAccessDetailsOut = z.union([
   DefaultClientAccessDetailsOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DEFAULT']), UNLISTED) }),
 ]);
 const TeleportClientConnectionDetailsOut = z.object({
   access: TeleportClientAccessDetailsOut,
@@ -346,7 +353,7 @@ const TeleportClientConnectionDetailsOut = z.object({
 });
 const VPNClientAccessDetailsOut = z.union([
   DefaultClientAccessDetailsOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DEFAULT']), UNLISTED) }),
 ]);
 const VPNClientConnectionDetailsOut = z.object({
   access: VPNClientAccessDetailsOut,
@@ -379,7 +386,7 @@ const GuestAccessDetailsOut = z.object({
 const LocalClientAccessDetailsOut = z.union([
   DefaultClientAccessDetailsOut,
   GuestAccessDetailsOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DEFAULT', 'GUEST']), UNLISTED) }),
 ]);
 const WiredClientDetailsOut = z.object({
   access: LocalClientAccessDetailsOut,
@@ -411,7 +418,7 @@ const ClientDetailsOut = z.union([
     id: z.string(),
     ipAddress: z.string().optional(),
     name: z.string(),
-    type: z.string(),
+    type: z.string().refine(unlisted(['TELEPORT', 'VPN', 'WIRED', 'WIRELESS']), UNLISTED),
   }),
 ]);
 const GuestAccessAuthorizationRequestIn = z.strictObject({
@@ -440,13 +447,17 @@ const GuestAccessUnauthorizationResponseOut = z.object({
 const ClientActionResponseOut = z.union([
   GuestAccessAuthorizationResponseOut,
   GuestAccessUnauthorizationResponseOut,
-  z.object({ action: z.string() }),
+  z.object({
+    action: z
+      .string()
+      .refine(unlisted(['AUTHORIZE_GUEST_ACCESS', 'UNAUTHORIZE_GUEST_ACCESS']), UNLISTED),
+  }),
 ]);
 const OrchestratedEntityMetadataOut = z.object({ origin: z.literal('ORCHESTRATED') });
 const UserOrOrchestratedEntityMetadataOut = z.union([
   OrchestratedEntityMetadataOut,
   UserDefinedEntityMetadataOut,
-  z.object({ origin: z.string() }),
+  z.object({ origin: z.string().refine(unlisted(['ORCHESTRATED', 'USER_DEFINED']), UNLISTED) }),
 ]);
 const DeviceTagOut = z.object({
   deviceIds: z.array(z.string()),
@@ -640,7 +651,20 @@ const DNSPolicyOut = z.union([
     enabled: z.boolean(),
     id: z.string(),
     metadata: UserDefinedEntityMetadataOut,
-    type: z.string(),
+    type: z
+      .string()
+      .refine(
+        unlisted([
+          'AAAA_RECORD',
+          'A_RECORD',
+          'CNAME_RECORD',
+          'FORWARD_DOMAIN',
+          'MX_RECORD',
+          'SRV_RECORD',
+          'TXT_RECORD',
+        ]),
+        UNLISTED,
+      ),
   }),
 ]);
 const IntegrationDnsPolicyPageDtoOut = z.object({
@@ -720,7 +744,7 @@ const FirewallPolicyActionOut = z.union([
   IntegrationFirewallPolicyActionAllowDtoOut,
   IntegrationFirewallPolicyActionBlockDtoOut,
   IntegrationFirewallPolicyActionRejectDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['ALLOW', 'BLOCK', 'REJECT']), UNLISTED) }),
 ]);
 const FirewallPolicyApplicationFilterOut = z.object({ applicationIds: z.array(z.number()) });
 const NumberPortMatchingOut = z.object({ type: z.literal('PORT_NUMBER'), value: z.number() });
@@ -732,7 +756,7 @@ const NumberRangePortMatchingOut = z.object({
 const PortMatchingOut = z.union([
   NumberPortMatchingOut,
   NumberRangePortMatchingOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['PORT_NUMBER', 'PORT_NUMBER_RANGE']), UNLISTED) }),
 ]);
 const IntegrationFirewallPolicyPortValueFilterDtoOut = z.object({
   matchOpposite: z.boolean(),
@@ -747,7 +771,10 @@ const IntegrationFirewallPolicyPortReferenceFilterDtoOut = z.object({
 const FirewallPolicyPortFilterOut = z.union([
   IntegrationFirewallPolicyPortValueFilterDtoOut,
   IntegrationFirewallPolicyPortReferenceFilterDtoOut,
-  z.object({ matchOpposite: z.boolean(), type: z.string() }),
+  z.object({
+    matchOpposite: z.boolean(),
+    type: z.string().refine(unlisted(['PORTS', 'TRAFFIC_MATCHING_LIST']), UNLISTED),
+  }),
 ]);
 const IntegrationFirewallPolicyDestinationApplicationFilterDtoOut = z.object({
   type: z.literal('APPLICATION'),
@@ -768,7 +795,7 @@ const IntegrationFirewallPolicySpecificDomainFilterDtoOut = z.object({
 });
 const FirewallPolicyDomainFilterOut = z.union([
   IntegrationFirewallPolicySpecificDomainFilterDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DOMAINS']), UNLISTED) }),
 ]);
 const IntegrationFirewallPolicyDestinationDomainFilterDtoOut = z.object({
   type: z.literal('DOMAIN'),
@@ -801,7 +828,9 @@ const IPMatchingOut = z.union([
   IntegrationFirewallPolicyIpMatchingIpAddressDtoOut,
   IntegrationFirewallPolicyIpMatchingRangeDtoOut,
   IntegrationFirewallPolicyIpMatchingSubnetDtoOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z.string().refine(unlisted(['IP_ADDRESS', 'IP_ADDRESS_RANGE', 'SUBNET']), UNLISTED),
+  }),
 ]);
 const IntegrationFirewallPolicySpecificIpAddressFilterDtoOut = z.object({
   matchOpposite: z.boolean(),
@@ -816,7 +845,10 @@ const IntegrationFirewallPolicyIpAddressTrafficMatchingListFilterDtoOut = z.obje
 const FirewallPolicyIPAddressFilterOut = z.union([
   IntegrationFirewallPolicySpecificIpAddressFilterDtoOut,
   IntegrationFirewallPolicyIpAddressTrafficMatchingListFilterDtoOut,
-  z.object({ matchOpposite: z.boolean(), type: z.string() }),
+  z.object({
+    matchOpposite: z.boolean(),
+    type: z.string().refine(unlisted(['IP_ADDRESSES', 'TRAFFIC_MATCHING_LIST']), UNLISTED),
+  }),
 ]);
 const IntegrationFirewallPolicyDestinationIpAddressFilterDtoOut = z.object({
   type: z.literal('IP_ADDRESS'),
@@ -868,7 +900,25 @@ const FirewallPolicyDestinationTrafficFilterOut = z.union([
   IntegrationFirewallPolicyDestinationRegionFilterDtoOut,
   IntegrationFirewallPolicyDestinationSiteToSiteVpnTunnelFilterDtoOut,
   IntegrationFirewallPolicyDestinationVpnServerFilterDtoOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z
+      .string()
+      .refine(
+        unlisted([
+          'APPLICATION',
+          'APPLICATION_CATEGORY',
+          'DOMAIN',
+          'IPV6_IID',
+          'IP_ADDRESS',
+          'NETWORK',
+          'PORT',
+          'REGION',
+          'SITE_TO_SITE_VPN_TUNNEL',
+          'VPN_SERVER',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const FirewallPolicyDestinationOut = z.object({
   trafficFilter: FirewallPolicyDestinationTrafficFilterOut.optional(),
@@ -932,7 +982,64 @@ const IntegrationFirewallPolicyIpv4NamedProtocolIcmpDtoOut = z.object({
 const FirewallPolicyIPv4NamedProtocolOut = z.union([
   IntegrationFirewallPolicyIpv4NamedProtocolDefaultDtoOut,
   IntegrationFirewallPolicyIpv4NamedProtocolIcmpDtoOut,
-  z.object({ name: z.string().optional() }),
+  z.object({
+    name: z
+      .string()
+      .refine(
+        unlisted([
+          'AH',
+          'AX_25',
+          'DCCP',
+          'DDP',
+          'EGP',
+          'EIGRP',
+          'ENCAP',
+          'ESP',
+          'ETHERIP',
+          'FC',
+          'GGP',
+          'GRE',
+          'HIP',
+          'HMP',
+          'ICMP',
+          'IDPR_CMTP',
+          'IDRP',
+          'IGMP',
+          'IGP',
+          'IP',
+          'IPCOMP',
+          'IPENCAP',
+          'IPIP',
+          'ISIS',
+          'ISO_TP4',
+          'L2TP',
+          'MANET',
+          'MOBILITY_HEADER',
+          'MPLS_IN_IP',
+          'OSPF',
+          'PIM',
+          'PUP',
+          'RDP',
+          'ROHC',
+          'RSPF',
+          'RSVP',
+          'SCTP',
+          'SHIM6',
+          'SKIP',
+          'ST',
+          'TCP',
+          'UDP',
+          'UDPLITE',
+          'VMTP',
+          'VRRP',
+          'WESP',
+          'XNS_IDP',
+          'XTP',
+        ]),
+        UNLISTED,
+      )
+      .optional(),
+  }),
 ]);
 const IntegrationFirewallPolicyIpv4NamedProtocolFilterDtoOut = z.object({
   type: z.literal('NAMED_PROTOCOL'),
@@ -944,7 +1051,7 @@ const IntegrationFirewallPolicyIpv4ProtocolPresetTcpUdpDtoOut = z.object({
 });
 const FirewallPolicyIPv4ProtocolPresetOut = z.union([
   IntegrationFirewallPolicyIpv4ProtocolPresetTcpUdpDtoOut,
-  z.object({ name: z.string() }),
+  z.object({ name: z.string().refine(unlisted(['TCP_UDP']), UNLISTED) }),
 ]);
 const IntegrationFirewallPolicyIpv4ProtocolPresetFilterDtoOut = z.object({
   type: z.literal('PRESET'),
@@ -959,7 +1066,9 @@ const FirewallPolicyIPv4ProtocolOut = z.union([
   IntegrationFirewallPolicyIpv4NamedProtocolFilterDtoOut,
   IntegrationFirewallPolicyIpv4ProtocolPresetFilterDtoOut,
   FirewallPolicyIPv4ProtocolNumberOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z.string().refine(unlisted(['NAMED_PROTOCOL', 'PRESET', 'PROTOCOL_NUMBER']), UNLISTED),
+  }),
 ]);
 const IntegrationFirewallPolicyIpv4ProtocolScopeDtoOut = z.object({
   ipVersion: z.literal('IPV4'),
@@ -990,7 +1099,34 @@ const IntegrationFirewallPolicyIpv4AndIpv6NamedProtocolDefaultDtoOut = z.object(
 });
 const FirewallPolicyIPv4AndIPv6NamedProtocolOut = z.union([
   IntegrationFirewallPolicyIpv4AndIpv6NamedProtocolDefaultDtoOut,
-  z.object({ name: z.string() }),
+  z.object({
+    name: z
+      .string()
+      .refine(
+        unlisted([
+          'AH',
+          'DCCP',
+          'EIGRP',
+          'ESP',
+          'GRE',
+          'IPCOMP',
+          'ISIS',
+          'L2TP',
+          'MANET',
+          'MOBILITY_HEADER',
+          'MPLS_IN_IP',
+          'OSPF',
+          'PIM',
+          'RSVP',
+          'SCTP',
+          'SHIM6',
+          'TCP',
+          'UDP',
+          'VRRP',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const IntegrationFirewallPolicyIpv4AndIpv6NamedProtocolFilterDtoOut = z.object({
   type: z.literal('NAMED_PROTOCOL'),
@@ -1002,7 +1138,7 @@ const IntegrationFirewallPolicyIpv4AndIpv6ProtocolPresetTcpUdpDtoOut = z.object(
 });
 const FirewallPolicyIPv4AndIPv6ProtocolPresetOut = z.union([
   IntegrationFirewallPolicyIpv4AndIpv6ProtocolPresetTcpUdpDtoOut,
-  z.object({ name: z.string() }),
+  z.object({ name: z.string().refine(unlisted(['TCP_UDP']), UNLISTED) }),
 ]);
 const IntegrationFirewallPolicyIpv4AndIpv6ProtocolPresetFilterDtoOut = z.object({
   type: z.literal('PRESET'),
@@ -1017,7 +1153,9 @@ const FirewallPolicyIPv4AndIPv6ProtocolOut = z.union([
   IntegrationFirewallPolicyIpv4AndIpv6NamedProtocolFilterDtoOut,
   IntegrationFirewallPolicyIpv4AndIpv6ProtocolPresetFilterDtoOut,
   FirewallPolicyIPv4AndIPv6ProtocolNumberOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z.string().refine(unlisted(['NAMED_PROTOCOL', 'PRESET', 'PROTOCOL_NUMBER']), UNLISTED),
+  }),
 ]);
 const IntegrationFirewallPolicyIpv4AndIpv6ProtocolScopeDtoOut = z.object({
   ipVersion: z.literal('IPV4_AND_IPV6'),
@@ -1058,7 +1196,41 @@ const IntegrationFirewallPolicyIpv6NamedProtocolIcmpv6DtoOut = z.object({
 const FirewallPolicyIPv6NamedProtocolOut = z.union([
   IntegrationFirewallPolicyIpv6NamedProtocolDefaultDtoOut,
   IntegrationFirewallPolicyIpv6NamedProtocolIcmpv6DtoOut,
-  z.object({ name: z.string().optional() }),
+  z.object({
+    name: z
+      .string()
+      .refine(
+        unlisted([
+          'AH',
+          'DCCP',
+          'EIGRP',
+          'ESP',
+          'GRE',
+          'ICMPV6',
+          'IPCOMP',
+          'IPV6',
+          'IPV6_FRAG',
+          'IPV6_NONXT',
+          'IPV6_OPTS',
+          'IPV6_ROUTE',
+          'ISIS',
+          'L2TP',
+          'MANET',
+          'MOBILITY_HEADER',
+          'MPLS_IN_IP',
+          'OSPF',
+          'PIM',
+          'RSVP',
+          'SCTP',
+          'SHIM6',
+          'TCP',
+          'UDP',
+          'VRRP',
+        ]),
+        UNLISTED,
+      )
+      .optional(),
+  }),
 ]);
 const IntegrationFirewallPolicyIpv6NamedProtocolFilterDtoOut = z.object({
   type: z.literal('NAMED_PROTOCOL'),
@@ -1070,7 +1242,7 @@ const IntegrationFirewallPolicyIpv6ProtocolPresetTcpUdpDtoOut = z.object({
 });
 const FirewallPolicyIPv6ProtocolPresetOut = z.union([
   IntegrationFirewallPolicyIpv6ProtocolPresetTcpUdpDtoOut,
-  z.object({ name: z.string() }),
+  z.object({ name: z.string().refine(unlisted(['TCP_UDP']), UNLISTED) }),
 ]);
 const IntegrationFirewallPolicyIpv6ProtocolPresetFilterDtoOut = z.object({
   type: z.literal('PRESET'),
@@ -1080,7 +1252,9 @@ const FirewallPolicyIPv6ProtocolOut = z.union([
   IntegrationFirewallPolicyIpv6NamedProtocolFilterDtoOut,
   IntegrationFirewallPolicyIpv6ProtocolPresetFilterDtoOut,
   FirewallPolicyIPv4ProtocolNumberOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z.string().refine(unlisted(['NAMED_PROTOCOL', 'PRESET', 'PROTOCOL_NUMBER']), UNLISTED),
+  }),
 ]);
 const IntegrationFirewallPolicyIpv6ProtocolScopeDtoOut = z.object({
   ipVersion: z.literal('IPV6'),
@@ -1090,14 +1264,16 @@ const FirewallPolicyIPProtocolScopeOut = z.union([
   IntegrationFirewallPolicyIpv4ProtocolScopeDtoOut,
   IntegrationFirewallPolicyIpv4AndIpv6ProtocolScopeDtoOut,
   IntegrationFirewallPolicyIpv6ProtocolScopeDtoOut,
-  z.object({ ipVersion: z.string() }),
+  z.object({ ipVersion: z.string().refine(unlisted(['IPV4', 'IPV4_AND_IPV6', 'IPV6']), UNLISTED) }),
 ]);
 const SystemDefinedEntityMetadataOut = z.object({ origin: z.literal('SYSTEM_DEFINED') });
 const UserOrSystemDefinedOrDerivedEntityMetadataOut = z.union([
   DerivedEntityMetadataOut,
   SystemDefinedEntityMetadataOut,
   UserDefinedEntityMetadataOut,
-  z.object({ origin: z.string() }),
+  z.object({
+    origin: z.string().refine(unlisted(['DERIVED', 'SYSTEM_DEFINED', 'USER_DEFINED']), UNLISTED),
+  }),
 ]);
 const FirewallScheduleTimeOut = z.object({ startTime: z.string(), stopTime: z.string() });
 const IntegrationFirewallScheduleCustomDtoOut = z.object({
@@ -1126,7 +1302,11 @@ const FirewallScheduleOut = z.union([
   IntegrationFirewallScheduleEveryDayDtoOut,
   IntegrationFirewallScheduleEveryWeekDtoOut,
   IntegrationFirewallScheduleOneTimeOnlyDtoOut,
-  z.object({ mode: z.string() }),
+  z.object({
+    mode: z
+      .string()
+      .refine(unlisted(['CUSTOM', 'EVERY_DAY', 'EVERY_WEEK', 'ONE_TIME_ONLY']), UNLISTED),
+  }),
 ]);
 const IntegrationFirewallPolicySourceIpv6IidFilterDtoOut = z.object({
   type: z.literal('IPV6_IID'),
@@ -1180,7 +1360,23 @@ const FirewallPolicySourceTrafficFilterOut = z.union([
   IntegrationFirewallPolicySourceRegionFilterDtoOut,
   IntegrationFirewallPolicySourceSiteToSiteVpnTunnelFilterDtoOut,
   IntegrationFirewallPolicySourceVpnServerFilterDtoOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z
+      .string()
+      .refine(
+        unlisted([
+          'IPV6_IID',
+          'IP_ADDRESS',
+          'MAC_ADDRESS',
+          'NETWORK',
+          'PORT',
+          'REGION',
+          'SITE_TO_SITE_VPN_TUNNEL',
+          'VPN_SERVER',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const FirewallPolicySourceOut = z.object({
   trafficFilter: FirewallPolicySourceTrafficFilterOut.optional(),
@@ -2050,7 +2246,7 @@ const PatchFirewallPolicyIn = z.strictObject({
 const UserOrSystemDefinedEntityMetadataOut = z.union([
   SystemDefinedEntityMetadataOut,
   UserDefinedEntityMetadataOut,
-  z.object({ origin: z.string() }),
+  z.object({ origin: z.string().refine(unlisted(['SYSTEM_DEFINED', 'USER_DEFINED']), UNLISTED) }),
 ]);
 const FirewallZoneOut = z.object({
   id: z.string(),
@@ -2108,7 +2304,11 @@ const UserOrSystemDefinedOrOrchestratedEntityMetadataOut = z.union([
   OrchestratedEntityMetadataOut,
   SystemDefinedEntityMetadataOut,
   UserDefinedEntityMetadataOut,
-  z.object({ origin: z.string() }),
+  z.object({
+    origin: z
+      .string()
+      .refine(unlisted(['ORCHESTRATED', 'SYSTEM_DEFINED', 'USER_DEFINED']), UNLISTED),
+  }),
 ]);
 const GatewayManagedNetworkOverviewOut = z.object({
   default: z.boolean(),
@@ -2147,7 +2347,7 @@ const NetworkOverviewOut = z.union([
     default: z.boolean(),
     enabled: z.boolean(),
     id: z.string(),
-    management: z.string(),
+    management: z.string().refine(unlisted(['GATEWAY', 'SWITCH', 'UNMANAGED']), UNLISTED),
     metadata: UserOrSystemDefinedOrOrchestratedEntityMetadataOut,
     name: z.string(),
     vlanId: z.number(),
@@ -2352,7 +2552,7 @@ const GatewayManagedIPv4DHCPServerConfigurationOut = z.object({
 const GatewayManagedIPv4DHCPConfigurationOut = z.union([
   IPv4DHCPRelayConfigurationOut,
   GatewayManagedIPv4DHCPServerConfigurationOut,
-  z.object({ mode: z.string() }),
+  z.object({ mode: z.string().refine(unlisted(['RELAY', 'SERVER']), UNLISTED) }),
 ]);
 const NATOutboundAutoConfigurationOut = z.object({
   type: z.literal('AUTO'),
@@ -2368,7 +2568,7 @@ const IPAddressRangeSelectorOut = z.object({
 const IPAddressSelector2Out = z.union([
   IPAddressSelectorOut,
   IPAddressRangeSelectorOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['IP_ADDRESS', 'IP_ADDRESS_RANGE']), UNLISTED) }),
 ]);
 const NATOutboundStaticConfigurationOut = z.object({
   type: z.literal('STATIC'),
@@ -2378,7 +2578,10 @@ const NATOutboundStaticConfigurationOut = z.object({
 const WANNATOutboundConfigurationOut = z.union([
   NATOutboundAutoConfigurationOut,
   NATOutboundStaticConfigurationOut,
-  z.object({ type: z.string(), wanInterfaceId: z.string() }),
+  z.object({
+    type: z.string().refine(unlisted(['AUTO', 'STATIC']), UNLISTED),
+    wanInterfaceId: z.string(),
+  }),
 ]);
 const GatewayManagedIPv4ConfigurationOut = z.object({
   additionalHostIpSubnets: z.array(z.string()).optional(),
@@ -2425,7 +2628,7 @@ const NetworkIPv6ConfigurationOut = z.union([
     additionalHostIpSubnets: z.array(z.string()).optional(),
     clientAddressAssignment: IPv6ClientAddressAssignmentOut,
     dnsServerIpAddressesOverride: z.array(z.string()).optional(),
-    interfaceType: z.string(),
+    interfaceType: z.string().refine(unlisted(['PREFIX_DELEGATION', 'STATIC']), UNLISTED),
     routerAdvertisement: RouterAdvertisementConfigurationOut.optional(),
   }),
 ]);
@@ -2457,7 +2660,7 @@ const IPv4DHCPServerConfigurationOut = z.object({
 const SwitchManagedIPv4DHCPConfigurationOut = z.union([
   IPv4DHCPRelayConfigurationOut,
   IPv4DHCPServerConfigurationOut,
-  z.object({ mode: z.string() }),
+  z.object({ mode: z.string().refine(unlisted(['RELAY', 'SERVER']), UNLISTED) }),
 ]);
 const SwitchManagedIPv4ConfigurationOut = z.object({
   additionalHostIpSubnets: z.array(z.string()).optional(),
@@ -2499,7 +2702,7 @@ const NetworkDetailsOut = z.union([
     dhcpGuarding: NetworkDHCPGuardingOut.optional(),
     enabled: z.boolean(),
     id: z.string(),
-    management: z.string(),
+    management: z.string().refine(unlisted(['GATEWAY', 'SWITCH', 'UNMANAGED']), UNLISTED),
     metadata: UserOrSystemDefinedOrOrchestratedEntityMetadataOut,
     name: z.string(),
     vlanId: z.number(),
@@ -2557,7 +2760,11 @@ const LAGDetailsOut = z.union([
   IntegrationLocalLagGlobalDtoOut,
   IntegrationMcLagGlobalDtoOut,
   IntegrationSwitchStackLagGlobalDtoOut,
-  z.object({ id: z.string(), metadata: UserDefinedEntityMetadataOut, type: z.string() }),
+  z.object({
+    id: z.string(),
+    metadata: UserDefinedEntityMetadataOut,
+    type: z.string().refine(unlisted(['LOCAL', 'MULTI_CHASSIS', 'SWITCH_STACK']), UNLISTED),
+  }),
 ]);
 const IntegrationLagPageDtoOut = z.object({
   count: z.number(),
@@ -2627,7 +2834,9 @@ const IPv4MatchingOut = z.union([
   AddressIPv4MatchingOut,
   AddressRangeIPv4MatchingOut,
   SubnetIPv4MatchingOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z.string().refine(unlisted(['IP_ADDRESS', 'IP_ADDRESS_RANGE', 'SUBNET']), UNLISTED),
+  }),
 ]);
 const IntegrationIpV4TrafficMatchingListDtoOut = z.object({
   id: z.string(),
@@ -2640,7 +2849,7 @@ const SubnetIPv6MatchingOut = z.object({ type: z.literal('SUBNET'), value: z.str
 const IPv6MatchingOut = z.union([
   AddressIPv6MatchingOut,
   SubnetIPv6MatchingOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['IP_ADDRESS', 'SUBNET']), UNLISTED) }),
 ]);
 const IntegrationIpV6TrafficMatchingListDtoOut = z.object({
   id: z.string(),
@@ -2658,7 +2867,11 @@ const TrafficMatchingListOut = z.union([
   IntegrationIpV4TrafficMatchingListDtoOut,
   IntegrationIpV6TrafficMatchingListDtoOut,
   IntegrationPortTrafficMatchingListDtoOut,
-  z.object({ id: z.string(), name: z.string(), type: z.string() }),
+  z.object({
+    id: z.string(),
+    name: z.string(),
+    type: z.string().refine(unlisted(['IPV4_ADDRESSES', 'IPV6_ADDRESSES', 'PORTS']), UNLISTED),
+  }),
 ]);
 const TrafficMatchingListsPageOut = z.object({
   count: z.number(),
@@ -2760,7 +2973,7 @@ const VPNServerOverviewOut = z.union([
     id: z.string(),
     metadata: UserDefinedOrDerivedEntityMetadataOut,
     name: z.string(),
-    type: z.string(),
+    type: z.string().refine(unlisted(['L2TP', 'OPENVPN', 'PPTP', 'UID', 'WIREGUARD']), UNLISTED),
   }),
 ]);
 const IntegrationVpnServerOverviewPageDtoOut = z.object({
@@ -2777,7 +2990,7 @@ const IntegrationDerivedSiteToSiteTunnelMetadataOut = z.object({
 const SiteToSiteVPNTunnelMetadataOut = z.union([
   IntegrationDerivedSiteToSiteTunnelMetadataOut,
   UserDefinedEntityMetadataOut,
-  z.object({ origin: z.string() }),
+  z.object({ origin: z.string().refine(unlisted(['DERIVED', 'USER_DEFINED']), UNLISTED) }),
 ]);
 const IntegrationSiteToSiteIpsecTunnelOverviewDtoOut = z.object({
   id: z.string(),
@@ -2805,7 +3018,7 @@ const SiteToSiteVPNTunnelOverviewOut = z.union([
     id: z.string(),
     metadata: SiteToSiteVPNTunnelMetadataOut,
     name: z.string(),
-    type: z.string(),
+    type: z.string().refine(unlisted(['IPSEC', 'OPENVPN', 'WIREGUARD']), UNLISTED),
   }),
 ]);
 const IntegrationSiteToSiteVpnTunnelOverviewPageDtoOut = z.object({
@@ -2834,13 +3047,15 @@ const IntegrationWifiDeviceTagsFilterDtoOut = z.object({
 const BroadcastingDeviceFilterOut = z.union([
   IntegrationWifiDevicesFilterDtoOut,
   IntegrationWifiDeviceTagsFilterDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DEVICES', 'DEVICE_TAGS']), UNLISTED) }),
 ]);
 const UserOrDerivedOrOrchestratedEntityMetadataOut = z.union([
   DerivedEntityMetadataOut,
   OrchestratedEntityMetadataOut,
   UserDefinedEntityMetadataOut,
-  z.object({ origin: z.string() }),
+  z.object({
+    origin: z.string().refine(unlisted(['DERIVED', 'ORCHESTRATED', 'USER_DEFINED']), UNLISTED),
+  }),
 ]);
 const IntegrationWifiNativeNetworkDtoOut = z.object({ type: z.literal('NATIVE') });
 const IntegrationWifiSpecificNetworkDtoOut = z.object({
@@ -2850,7 +3065,7 @@ const IntegrationWifiSpecificNetworkDtoOut = z.object({
 const WifiNetworkReferenceOut = z.union([
   IntegrationWifiNativeNetworkDtoOut,
   IntegrationWifiSpecificNetworkDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['NATIVE', 'SPECIFIC']), UNLISTED) }),
 ]);
 const IntegrationWifiOpenSecurityConfigurationOverviewDtoOut = z.object({
   type: z.literal('OPEN'),
@@ -2882,7 +3097,22 @@ const WifiSecurityConfigurationOverviewOut = z.union([
   IntegrationWifiWpa2Wpa3PersonalSecurityConfigurationOverviewDtoOut,
   IntegrationWifiWpa3EnterpriseSecurityConfigurationOverviewDtoOut,
   IntegrationWifiWpa3PersonalSecurityConfigurationOverviewDtoOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z
+      .string()
+      .refine(
+        unlisted([
+          'OPEN',
+          'WPA2_ENTERPRISE',
+          'WPA2_PERSONAL',
+          'WPA2_WPA3_ENTERPRISE',
+          'WPA2_WPA3_PERSONAL',
+          'WPA3_ENTERPRISE',
+          'WPA3_PERSONAL',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const IntegrationIotOptimizedWifiBroadcastOverviewDtoOut = z.object({
   broadcastingDeviceFilter: BroadcastingDeviceFilterOut.optional(),
@@ -2918,7 +3148,7 @@ const WifiBroadcastOverviewOut = z.union([
     name: z.string(),
     network: WifiNetworkReferenceOut.optional(),
     securityConfiguration: WifiSecurityConfigurationOverviewOut,
-    type: z.string(),
+    type: z.string().refine(unlisted(['IOT_OPTIMIZED', 'STANDARD']), UNLISTED),
   }),
 ]);
 const IntegrationWifiBroadcastPageDtoOut = z.object({
@@ -3280,7 +3510,10 @@ const IntegrationWifiBlackoutScheduleConfigurationPerDayWithTimeRangeDtoOut = z.
 const BlackoutScheduleConfigurationPerDayOut = z.union([
   IntegrationWifiBlackoutScheduleConfigurationPerAllDayDtoOut,
   IntegrationWifiBlackoutScheduleConfigurationPerDayWithTimeRangeDtoOut,
-  z.object({ day: z.string(), type: z.string() }),
+  z.object({
+    day: z.string(),
+    type: z.string().refine(unlisted(['ALL_DAY', 'TIME_RANGE']), UNLISTED),
+  }),
 ]);
 const IntegrationBlackoutScheduleConfigurationOut = z.object({
   days: z.array(BlackoutScheduleConfigurationPerDayOut),
@@ -3302,7 +3535,7 @@ const IntegrationWifiMdnsProxyPredefinedServiceDtoOut = z.object({
 const MDNSServiceOut = z.union([
   IntegrationWifiMdnsProxyCustomServiceDtoOut,
   IntegrationWifiMdnsProxyPredefinedServiceDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['CUSTOM', 'PREDEFINED']), UNLISTED) }),
 ]);
 const IntegrationWifiMdnsProxyAllowPolicyDtoOut = z.object({
   action: z.literal('ALLOW'),
@@ -3317,7 +3550,10 @@ const IntegrationWifiMdnsProxyBlockPolicyDtoOut = z.object({
 const MDNSProxyPolicyOut = z.union([
   IntegrationWifiMdnsProxyAllowPolicyDtoOut,
   IntegrationWifiMdnsProxyBlockPolicyDtoOut,
-  z.object({ action: z.string(), deviceFilter: BroadcastingDeviceFilterOut.optional() }),
+  z.object({
+    action: z.string().refine(unlisted(['ALLOW', 'BLOCK']), UNLISTED),
+    deviceFilter: BroadcastingDeviceFilterOut.optional(),
+  }),
 ]);
 const IntegrationWifiMdnsProxyCustomConfigurationDtoOut = z.object({
   mode: z.literal('CUSTOM'),
@@ -3326,7 +3562,7 @@ const IntegrationWifiMdnsProxyCustomConfigurationDtoOut = z.object({
 const MDNSFilteringConfigurationOut = z.union([
   IntegrationWifiMdnsProxyAutoConfigurationDtoOut,
   IntegrationWifiMdnsProxyCustomConfigurationDtoOut,
-  z.object({ mode: z.string() }),
+  z.object({ mode: z.string().refine(unlisted(['AUTO', 'CUSTOM']), UNLISTED) }),
 ]);
 const IntegrationWifiMulticastFilteringAllowPolicyDtoOut = z.object({
   action: z.literal('ALLOW'),
@@ -3336,7 +3572,7 @@ const IntegrationWifiMulticastFilteringBlockPolicyDtoOut = z.object({ action: z.
 const MulticastFilteringPolicyOut = z.union([
   IntegrationWifiMulticastFilteringAllowPolicyDtoOut,
   IntegrationWifiMulticastFilteringBlockPolicyDtoOut,
-  z.object({ action: z.string() }),
+  z.object({ action: z.string().refine(unlisted(['ALLOW', 'BLOCK']), UNLISTED) }),
 ]);
 const IntegrationWifiRadiusMacAuthenticationConfigurationDtoOut = z.object({
   macAddressFormat: z.string(),
@@ -3352,7 +3588,7 @@ const IntegrationWifiUserDefinedNasIdDtoOut = z.object({
 const WifiRadiusNASIDConfigurationOut = z.union([
   IntegrationWifiDerivedNasIdDtoOut,
   IntegrationWifiUserDefinedNasIdDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['DERIVED', 'USER_DEFINED']), UNLISTED) }),
 ]);
 const IntegrationWifiNonEnterpriseRadiusConfigurationDtoOut = z.object({
   macAuthenticationConfiguration: IntegrationWifiRadiusMacAuthenticationConfigurationDtoOut,
@@ -3438,7 +3674,22 @@ const WifiSecurityConfigurationDetailObjectOut = z.union([
   IntegrationWifiWpa2Wpa3PersonalSecurityConfigurationDetailDtoOut,
   IntegrationWifiWpa3EnterpriseSecurityConfigurationDetailDtoOut,
   IntegrationWifiWpa3PersonalSecurityConfigurationDetailDtoOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z
+      .string()
+      .refine(
+        unlisted([
+          'OPEN',
+          'WPA2_ENTERPRISE',
+          'WPA2_PERSONAL',
+          'WPA2_WPA3_ENTERPRISE',
+          'WPA2_WPA3_PERSONAL',
+          'WPA3_ENTERPRISE',
+          'WPA3_PERSONAL',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const IntegrationIotOptimizedWifiBroadcastDetailDtoOut = z.object({
   basicDataRateKbpsByFrequencyGHz: IntegrationWifiBasicDataRateConfigurationDtoOut.optional(),
@@ -3469,7 +3720,7 @@ const IntegrationWifiDnsAssistanceManualConfigurationDtoOut = z.object({
 const DNSAssistanceConfigurationOut = z.union([
   IntegrationWifiDnsAssistanceAutoConfigurationDtoOut,
   IntegrationWifiDnsAssistanceManualConfigurationDtoOut,
-  z.object({ mode: z.string() }),
+  z.object({ mode: z.string().refine(unlisted(['AUTO', 'MANUAL']), UNLISTED) }),
 ]);
 const IntegrationWifiDtimPeriodConfigurationDtoOut = z.object({
   '5': z.number(),
@@ -3489,7 +3740,7 @@ const IntegrationWifiPasspointConfigurationDetailDtoOut = z.object({
 const WifiHotspotConfigurationOut = z.union([
   IntegrationWifiCaptivePortalConfigurationDetailDtoOut,
   IntegrationWifiPasspointConfigurationDetailDtoOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['CAPTIVE_PORTAL', 'PASSPOINT']), UNLISTED) }),
 ]);
 const IntegrationStandardWifiBroadcastDetailDtoOut = z.object({
   basicDataRateKbpsByFrequencyGHz: IntegrationWifiBasicDataRateConfigurationDtoOut.optional(),
@@ -3543,7 +3794,7 @@ const WifiBroadcastDetailsOut = z.union([
     name: z.string(),
     network: WifiNetworkReferenceOut.optional(),
     securityConfiguration: WifiSecurityConfigurationDetailObjectOut,
-    type: z.string(),
+    type: z.string().refine(unlisted(['IOT_OPTIMIZED', 'STANDARD']), UNLISTED),
     uapsdEnabled: z.boolean(),
   }),
 ]);

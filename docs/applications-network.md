@@ -179,8 +179,9 @@ The report records only these facts:
 - whether paging across two pages and a filter worked;
 - whether the key also worked for Protect, with a random key as the control, and the
   Protect version it reported;
-- for up to five networks, the result of the references read and the network's kind
-  (management, default, origin).
+- for every network (up to 25), the network's kind (management, default, origin) and the
+  results of reading its details and its references, with the fields of any contract
+  mismatch.
 
 It holds no names, addresses, ids or data. Read it, then commit it as
 `docs/api-coverage/live/network-11.0.97.json` and run `npm run api:coverage-report`. The
@@ -200,6 +201,9 @@ Validating writes on a real console is a manual runbook, approved step by step b
   yourself, or page through it.
 - **Required fields.** A console that omits a field the contract marks as required makes
   that read fail with `upstream_contract_mismatch`, rather than returning partial data.
+  That includes a response of a documented type, for example a `GATEWAY` network, that
+  lacks a field its type requires: it is refused, not returned without that type's fields.
+  The service log names the fields ([troubleshooting.md](troubleshooting.md#the-console-answered-with-an-error-or-not-as-documented)).
   Please report it with the console version.
 - **Network references fail for networks in use.** On a console running Network 11.0.99,
   `network.networks.get_references` returned HTTP 500 (`api.unexpected-error`) for 5 of
@@ -209,9 +213,13 @@ Validating writes on a real console is a manual runbook, approved step by step b
   used only by a Wi-Fi broadcast, or by nothing. Assigning one unused switch port to an
   empty network that had answered normally made it fail as well. So a device reference
   alone is enough to make the read fail, and every network with clients failed too. The
-  error says only "Unexpected error", and the console's logs show nothing. The service reports it as
-  `upstream_unavailable`, and retrying does not help. Before you change or delete a
-  network, check what uses it in UniFi Network.
+  error says only "Unexpected error", and the console's logs show nothing; the cause is not
+  known. The networks themselves read normally: with direct requests to the same console,
+  `network.networks.list` returned all 10 networks and `network.networks.get` answered for
+  each of them, those in use included (2026-11-12). Reading a network sends only that one
+  request, so a failing references read never affects it. The service reports the
+  references failure as `upstream_unavailable`, and retrying does not help. Before you
+  change or delete a network, check what uses it in UniFi Network.
 - **API key scope.** UniFi documents no way to limit what an API key can do, and a Network
   key also works for Protect on the same console (observed on Network 11.0.99,
   [ADR 0005](adr/0005-official-local-unifi-api-contracts.md#live-evidence-phase-2-2026-11-11)).

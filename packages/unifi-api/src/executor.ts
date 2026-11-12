@@ -30,6 +30,7 @@ import { connectTls, sendHttp, TransportError, type HttpResponse } from './trans
 const DEFAULT_MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
 const DEFAULT_CONNECT_TIMEOUT_MS = 5_000;
 const UPSTREAM_CODE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
+const UPSTREAM_REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface UnifiExecutorOptions {
   consoles: ConsoleRegistry;
@@ -99,6 +100,12 @@ function parseJson(response: HttpResponse): { ok: true; value: unknown } | { ok:
 function upstreamCode(body: unknown): string | undefined {
   const code = (body as { code?: unknown } | null)?.code;
   return typeof code === 'string' && UPSTREAM_CODE.test(code) ? code : undefined;
+}
+
+/** The documented `requestId` (a UUID) of an error response, if it has one. */
+function upstreamRequestId(body: unknown): string | undefined {
+  const id = (body as { requestId?: unknown } | null)?.requestId;
+  return typeof id === 'string' && UPSTREAM_REQUEST_ID.test(id) ? id : undefined;
 }
 
 export class UnifiExecutor implements OperationExecutor {
@@ -199,6 +206,7 @@ export class UnifiExecutor implements OperationExecutor {
 
     const started = performance.now();
     let response: HttpResponse;
+    let status: number | undefined;
     try {
       const resolved = await this.#egress.resolve(connection.host);
       const socket = await connectTls({
@@ -224,6 +232,7 @@ export class UnifiExecutor implements OperationExecutor {
         maxResponseBytes: descriptor.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES,
         signal: call.signal,
       });
+      status = response.status;
     } catch (error) {
       return failure(this.#transportFailure(error, isWrite, connection.consoleId));
     } finally {
@@ -234,10 +243,18 @@ export class UnifiExecutor implements OperationExecutor {
         method: descriptor.httpMethod,
         pathTemplate: descriptor.pathTemplate,
         attempt: call.attempt,
+        ...(status === undefined ? {} : { status }),
         durationMs: Math.round(performance.now() - started),
       });
     }
-    return this.#interpret(response, isWrite, descriptor.responseType ?? 'json');
+    return this.#interpret(response, isWrite, descriptor.responseType ?? 'json', {
+      correlationId: call.correlationId,
+      consoleId: connection.consoleId,
+      moduleId: connection.moduleId,
+      method: descriptor.httpMethod,
+      pathTemplate: descriptor.pathTemplate,
+      attempt: call.attempt,
+    });
   }
 
   #transportFailure(error: unknown, isWrite: boolean, consoleId: string): UpstreamError {
@@ -283,6 +300,7 @@ export class UnifiExecutor implements OperationExecutor {
     response: HttpResponse,
     isWrite: boolean,
     responseType: ResponseType,
+    request: Readonly<Record<string, unknown>>,
   ): ExecutorOutcome {
     const { status } = response;
     if (status >= 200 && status < 300 && responseType !== 'json') {
@@ -306,6 +324,16 @@ export class UnifiExecutor implements OperationExecutor {
       return { ok: true, data: parsed.value };
     }
     const code = parsed.ok ? upstreamCode(parsed.value) : undefined;
+    const requestId = parsed.ok ? upstreamRequestId(parsed.value) : undefined;
+    // The console answered with an error (not a transport failure). Only the status, the
+    // documented code and the documented request id are logged; the request id lets an
+    // administrator find the request in the console's own log. None reach the client.
+    this.#logger.warn('console returned an error', {
+      ...request,
+      status,
+      ...(code === undefined ? {} : { upstreamCode: code }),
+      ...(requestId === undefined ? {} : { upstreamRequestId: requestId }),
+    });
     const suffix = code === undefined ? '' : `, code ${code}`;
     if (status === 401 || status === 403) {
       return failure({

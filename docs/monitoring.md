@@ -59,6 +59,14 @@ shortly after start, within a minute of a module being enabled, and every 6 hour
 | `console version probe failed` | warn  | The probe failed (`code`, `retryInMs`). Logged when it starts failing or the error changes.    |
 | `console reachable again`      | info  | A failing probe succeeded again.                                                               |
 
+### Console request messages
+
+| `msg`                                          | Level | Meaning                                                                                                                                                                                                              |
+| ---------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `upstream request`                             | debug | One request to a console: `method`, `pathTemplate` (no ids), `attempt`, the HTTP `status` when an answer arrived, and `durationMs`.                                                                                  |
+| `console returned an error`                    | warn  | The console answered with an HTTP error: `status`, its documented `upstreamCode` and, when it sends one, `upstreamRequestId` (the id of the request in the console's own log). Nothing else from the body is logged. |
+| `console response does not match the contract` | warn  | A response failed the documented schema and was withheld: `operationId`, `contractRevision` and `mismatches`, the fields and kinds of mismatch (`ipv4Configuration: invalid_type …`), never their values.            |
+
 ### Event messages
 
 Connections to console event streams and closed subscriptions are logged as described in

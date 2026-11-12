@@ -28,6 +28,7 @@ import {
   defineOperation,
   Dispatcher,
   ExecutionStore,
+  mismatchSummary,
   OperationRegistry,
   satisfies,
   type OperationDescriptor,
@@ -50,7 +51,6 @@ import {
 } from '@unifi-local-mcp/unifi-network';
 import { afterAll, describe, expect, it } from 'vitest';
 import * as z from 'zod';
-import { mismatchSummary } from '../fixtures/schema-mismatch.ts';
 import {
   category,
   httpDetail,
@@ -324,14 +324,36 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
     if (networkId === undefined) skip('network.networks.get_references');
     else await run('network.networks.get_references', { networkId }, siteId);
 
-    // 3b. References of up to five networks, informational: does the console answer for
-    //     every kind of network? Only the network's categories and the result are kept.
-    const networks = await run('network.networks.list', { limit: 5 }, siteId);
+    // 3b. Every network (up to 25), informational: its details, checked against the
+    //     contract, and its references. On Network 11.0.99 the details answered for every
+    //     network while the references failed for networks in use. Only the network's
+    //     categories and the results are kept.
+    const networks = await run('network.networks.list', { limit: 25 }, siteId);
+    const details = descriptorOf('network.networks.get');
     const references = descriptorOf('network.networks.get_references');
     const perNetwork: Record<string, unknown>[] = [];
+    const read = async (descriptor: OperationDescriptor, networkId: string) => {
+      const outcome = await guard.execute({
+        descriptor,
+        arguments: { networkId },
+        target: { consoleId: view.id, siteId },
+        signal: AbortSignal.timeout(descriptor.timeoutMs),
+        correlationId: 'live-per-network',
+        attempt: 1,
+      });
+      if (!outcome.ok)
+        return { result: `${outcome.error.code}${httpDetail(outcome.error.message)}` };
+      const output = descriptor.outputSchema.safeParse(outcome.data);
+      return output.success
+        ? { result: 'ok' }
+        : {
+            result: 'upstream_contract_mismatch',
+            mismatches: mismatchSummary(output.error.issues),
+          };
+    };
     for (const network of ((networks as { data?: unknown[] } | undefined)?.data ?? []).slice(
       0,
-      5,
+      25,
     )) {
       const entry = network as {
         id?: unknown;
@@ -340,22 +362,21 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
         metadata?: { origin?: unknown };
       };
       if (typeof entry.id !== 'string') continue;
-      const outcome = await guard.execute({
-        descriptor: references,
-        arguments: { networkId: entry.id },
-        target: { consoleId: view.id, siteId },
-        signal: AbortSignal.timeout(references.timeoutMs),
-        correlationId: 'live-references',
-        attempt: 1,
-      });
+      const detail = await read(details, entry.id);
+      const reference = await read(references, entry.id);
       perNetwork.push({
         management: category(entry.management),
         default: entry.default === true,
         origin: category(entry.metadata?.origin),
-        result: outcome.ok ? 'ok' : `${outcome.error.code}${httpDetail(outcome.error.message)}`,
+        details: detail.result,
+        ...(detail.mismatches === undefined ? {} : { detailMismatches: detail.mismatches }),
+        references: reference.result,
+        ...(reference.mismatches === undefined
+          ? {}
+          : { referenceMismatches: reference.mismatches }),
       });
     }
-    report['networkReferences'] = perNetwork;
+    report['networks'] = perNetwork;
     await run('network.acl.get_ordering', {}, siteId);
     const zones = await run('network.firewall.list_zones', { limit: 2 }, siteId);
     const zoneIds = ((zones as { data?: { id?: string }[] } | undefined)?.data ?? []).map(

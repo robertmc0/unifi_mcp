@@ -48,6 +48,7 @@ import { KeyedMutex } from './locks.ts';
 import { RateLimiter, type RateLimit } from './rate-limit.ts';
 import type { OperationDescriptor, OperationRegistry, Target } from './registry.ts';
 import { Scheduler, SchedulerError, type SchedulerLimits } from './scheduler.ts';
+import { mismatchSummary } from './schema-mismatch.ts';
 
 /** The verified identity. It comes only from the authenticated token (spec §3.2). */
 export interface Principal {
@@ -711,7 +712,10 @@ export class Dispatcher {
           const outcome = await this.#callWithRetries(context);
           if (!outcome.ok) return this.#failure(context, outcome.error.code, {}, outcome.error);
           const output = context.descriptor.outputSchema.safeParse(outcome.data);
-          if (!output.success) return this.#failure(context, 'upstream_contract_mismatch');
+          if (!output.success) {
+            this.#logMismatch(context, output.error);
+            return this.#failure(context, 'upstream_contract_mismatch');
+          }
           const responseType = context.descriptor.responseType ?? 'json';
           if (responseType !== 'json') {
             if (!(output.data instanceof Uint8Array)) {
@@ -868,6 +872,7 @@ export class Dispatcher {
                     ? output.data
                     : context.descriptor.project(output.data);
               } else {
+                this.#logMismatch(context, output.error);
                 envelope.warnings = [
                   ...(envelope.warnings ?? []),
                   message('upstream_contract_mismatch'),
@@ -959,6 +964,21 @@ export class Dispatcher {
       envelope.error = this.#error(existing.errorCode ?? existing.status);
     }
     return envelope;
+  }
+
+  /**
+   * A console answered, but not as the contract documents: this is a local validation
+   * failure, not an upstream error. The log names the fields and the kind of mismatch,
+   * never their values, so it can be shared when reporting the console version.
+   */
+  #logMismatch(context: Context, error: z.ZodError): void {
+    this.#deps.logger.warn('console response does not match the contract', {
+      correlationId: context.correlationId,
+      operationId: context.descriptor.operationId,
+      consoleId: context.target.consoleId,
+      contractRevision: context.descriptor.contractRevision,
+      mismatches: mismatchSummary(error.issues),
+    });
   }
 
   #failure(

@@ -167,8 +167,10 @@ the 7.3.74 module and the streams serve `>=7.3.74 <8`, like the operations (ADR 
   exactly the single forms' fields and required fields, so the adapter tries them first
   (`DEVICE_MESSAGE`). `tests/contract/protect-streams.test.ts` checks that property from
   the vendor documents, and scans every generated union for an earlier branch that
-  accepts a later branch's documented value with less data: the only cases are this
-  message (handled) and the 7.4.96 update subscription (below).
+  accepts a later branch's documented value with less data. Since 2026-11-12 a fallback
+  accepts only undocumented discriminator values (ADR 0018 §1), so the generated device
+  union no longer drops bulk ids either and the reordered one loses nothing; the order is
+  kept. The only remaining case is the 7.4.96 update subscription (below).
 - **`GET /v1/subscribe/updates`** (7.4.96 only) is not implemented: it takes a `modelKeys`
   query parameter, which this stream model does not have, and its message forms overlap
   in the same way. No official release documents it yet.

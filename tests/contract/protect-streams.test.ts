@@ -221,14 +221,13 @@ describe('Protect event streams', () => {
     const bulk = { type: 'update', item: { id: ['c1', 'c2'], modelKey: 'camera', name: 'Front' } };
     expect(DEVICE_MESSAGE.parse(single)).toEqual(single);
     expect(DEVICE_MESSAGE.parse(bulk)).toEqual(bulk);
-    // The generated order keeps only the bulk message's model key: its id and fields are lost.
-    expect(official.OPERATIONS['GET /v1/subscribe/devices'].output.parse(bulk)).toEqual({
-      type: 'update',
-      item: { modelKey: 'camera' },
-    });
+    // Since 2026-11-12 the generated order keeps them too: the single forms' fallback no
+    // longer accepts a documented device kind (ADR 0018 §1). It used to keep only the
+    // bulk message's model key.
+    expect(official.OPERATIONS['GET /v1/subscribe/devices'].output.parse(bulk)).toEqual(bulk);
   });
 
-  it('leave no generated union where an earlier branch swallows a later one, except the reordered device message', () => {
+  it('leave no generated union where an earlier branch swallows a later one, except the unimplemented update stream', () => {
     const found: string[] = [];
     for (const [revision, operations] of [
       ['7.3.74', official.OPERATIONS],
@@ -246,25 +245,17 @@ describe('Protect event streams', () => {
       }
     }
     expect(found).toEqual([
-      '7.3.74 GET /v1/subscribe/devices 0<1',
-      '7.4.96 GET /v1/subscribe/devices 0<1',
       // Not implemented (ADR 0020 §6); to be resolved before it is.
       '7.4.96 GET /v1/subscribe/updates 0<1',
       '7.4.96 GET /v1/subscribe/updates 0<2',
       '7.4.96 GET /v1/subscribe/updates 1<2',
     ]);
     expect(PROTECT_EVENT_STREAMS.map((s) => s.pathTemplate)).not.toContain('/v1/subscribe/updates');
-    // In the reordered message, the only values the bulk forms take from the single forms
-    // are the single forms' fallback for an undocumented device kind, which is never
-    // delivered either way.
+    // The reordered message loses nothing either: since each fallback accepts only
+    // undocumented device kinds, no branch takes a value meant for another.
     const fixed: [string, z.ZodType][] = [];
     unions(DEVICE_MESSAGE, 'DEVICE_MESSAGE', new Set(), fixed);
-    const lost = fixed.flatMap(([, union]) => shadowed(union));
-    expect(lost.length).toBeGreaterThan(0);
-    for (const { lost: single } of lost) {
-      expect(subscribeDevices.classify(single as never), JSON.stringify(single)).toBeUndefined();
-      const modelKey = (single as { item?: { modelKey?: unknown } }).item?.modelKey;
-      expect(Object.keys(DEVICE_KINDS)).not.toContain(modelKey);
-    }
+    expect(fixed.length).toBeGreaterThan(0);
+    expect(fixed.flatMap(([, union]) => shadowed(union))).toEqual([]);
   });
 });

@@ -29,6 +29,7 @@ import { join } from 'node:path';
 import {
   Dispatcher,
   ExecutionStore,
+  mismatchSummary,
   OperationRegistry,
   satisfies,
   type OperationDescriptor,
@@ -50,7 +51,6 @@ import {
   PROTECT_VERSION_RANGE,
 } from '@unifi-local-mcp/unifi-protect';
 import { afterAll, describe, expect, it } from 'vitest';
-import { mismatchSummary } from '../fixtures/schema-mismatch.ts';
 import { okOutcome, type Outcome, ReadOnlyGuard, upgradeStatus, writeReport } from './shared.ts';
 
 const env = process.env;

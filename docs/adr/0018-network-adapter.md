@@ -37,9 +37,13 @@ contains no descriptions, examples or other prose, and no security metadata.
 - **Responses tolerate additions but pass nothing undocumented.** Objects strip properties
   the contract does not define, so an undocumented field added by a newer console (a
   secret, for example) never reaches a client. Unknown enum values are accepted as strings.
-  An unknown discriminator value yields the base object's documented fields. Documented
-  required properties stay required. A response that does not match is refused as
-  `upstream_contract_mismatch`, so nothing is guessed.
+  An unknown discriminator value yields the base object's documented fields. A documented
+  discriminator value must match its own variant: it never falls back to the base, which
+  would drop that variant's fields without saying so (enforced since 2026-11-12; before,
+  for example, a `GATEWAY` network missing a required field came back without its IPv4
+  configuration). Documented required properties stay required. A response that does not
+  match is refused as `upstream_contract_mismatch`, so nothing is guessed, and the service
+  log names the fields and the kind of mismatch, never their values.
 - **Polymorphism follows JSON Schema semantics.** An instance must satisfy the base and the
   selected variant. The vendor does not always repeat the base in a variant's `allOf`, so
   the base's own properties are merged into every variant, and a property narrowed by a
@@ -202,7 +206,9 @@ client's resume; medium needs only explicit grants.
   console. Only the reads are registered, a guard refuses non-GET requests, the hard lock
   is on and the client can only read. It also records paging, a filter, and whether the
   Network key authorises one documented Protect read (ADR 0005). Its report holds
-  operation ids, outcomes and the version only. A committed, reviewed report
+  operation ids, outcomes and the version only. For every network (up to 25) it records
+  the network's kind and the results of the details and references reads. A committed,
+  reviewed report
   (`docs/api-coverage/live/<module>-<revision>.json`) sets `liveReadValidation` for the
   reads that passed.
 - Whether a local API key can be made read-only cannot be learned without a write, so it

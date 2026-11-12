@@ -6,6 +6,31 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Response unions no longer turn a documented variant that misses one of its own fields
+  into the base object. A `GATEWAY` network without a required field (or with
+  `zoneId: null`) used to come back as `ok` without its IPv4 configuration, isolation or
+  internet access; it is now `upstream_contract_mismatch`. Only an undocumented
+  discriminator value falls back to the base fields (ADR 0018 §1). Network and Protect
+  schemas regenerated; the generated Protect device-message union no longer drops bulk
+  ids either (the adapter's reordered union already kept them, ADR 0020).
+
+### Changed
+
+- Diagnostics: the service log records the HTTP status of each console request, a
+  `console returned an error` record with the documented error code and request id, and,
+  for a contract mismatch, the fields and kinds of mismatch (never values). The manual
+  explains each error code (`troubleshooting.md`) and log message (`monitoring.md`).
+- The Network live test reads the details and the references of every network (up to
+  25), not only the references of five.
+- Network limitation clarified: on the same console, direct requests showed
+  `network.networks.list` and `network.networks.get` working for all 10 networks, those in
+  use included; only `get_references` fails. Reading a network never calls it.
+- Regression tests for network reads with shapes seen on a real console (synthetic
+  values): ten networks, paging, empty strings in DHCP lists, missing optional fields,
+  every management type, UUIDs rather than VLAN ids, and a failing references read.
+
 ### Added — Phase 3: UniFi Protect (gate passed 2026-11-12)
 
 - Protect contract baseline moved to v7.4.96 (83 operations; ADR 0019). The live

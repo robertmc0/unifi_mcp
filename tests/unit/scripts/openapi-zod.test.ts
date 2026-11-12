@@ -317,6 +317,15 @@ describe('discriminated unions', () => {
     });
   });
 
+  it('refuse a documented variant that misses its own schema, rather than reduce it to the base', () => {
+    const output = ops['getThing']?.output;
+    // `A` requires `a`: the base branch must not accept it and drop A's fields.
+    expect(output?.safeParse({ kind: 'A', name: 'n' }).success).toBe(false);
+    expect(output?.safeParse({ kind: 'A', name: 'n', a: 'not a number' }).success).toBe(false);
+    expect(output?.safeParse({ kind: 'B', name: 'n', a: 1 }).success).toBe(false);
+    expect(output?.safeParse({ kind: 'NEW', name: 'n' }).success).toBe(true);
+  });
+
   it('refuse an unconstrained request property that no variant narrows', () => {
     expect(() =>
       generate(doc(schemas, { '/v1/things': post('#/components/schemas/Base') })),
@@ -805,6 +814,9 @@ describe('JSON Schema constructs of the Protect contract', () => {
     expect(op?.output.parse({ m: { type: 'move', secret: 's' } })).toEqual({
       m: { type: 'move' },
     });
+    // A documented value never falls back to the discriminator-only branch.
+    expect(accepts(op?.output, { m: { type: 'add' } })).toBe(false);
+    expect(accepts(op?.output, { m: { type: 'remove', id: 'x' } })).toBe(false);
   });
 
   it('component oneOf with a discriminator mapping (no allOf inheritance)', () => {
@@ -821,6 +833,7 @@ describe('JSON Schema constructs of the Protect contract', () => {
     expect(accepts(body(op), { type: 'remove', id: 1 })).toBe(true);
     expect(accepts(body(op), { type: 'remove', item: 'x' })).toBe(false);
     expect(op?.output.parse({ type: 'later', extra: 1 })).toEqual({ type: 'later' });
+    expect(accepts(op?.output, { type: 'remove', item: 'x' })).toBe(false);
   });
 
   it('pattern, exclusiveMinimum and minProperties bind requests only', () => {

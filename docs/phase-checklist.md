@@ -337,6 +337,11 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
       without clients is assigned to switch ports); it worked for every network used only
       by a Wi-Fi broadcast, or by nothing. Assigning one unused switch port to an empty
       network that had answered made it fail too: a device reference alone is enough.
+      Later the same day the owner's direct requests showed `network.networks.list`
+      returning all 10 networks and `network.networks.get` answering for each of them,
+      those in use included: only the references read fails, and reading a network never
+      calls it (`tests/integration-mock/network-networks.test.ts`). The cause of the
+      references failure is not known.
       `tests/contract/live-tests.test.ts` keeps the test opt-in and read-only.
 - [x] Field shapes, pagination, filtering and errors compared against official docs
       Field shapes come from the official contract (generated schemas, strict requests,
@@ -506,6 +511,18 @@ clean stop).
       alarms or monitoring, sirens, relays, alarm outputs); the permanent microphone
       disable and talkback off by default (`protect-writes.test.ts`, ADR 0019 §6). No MCP
       tool can approve (Phase 1).
+
+### After the gate (2026-11-12)
+
+- Fixed in the generator: a documented union variant that misses one of its own fields
+  is refused (`upstream_contract_mismatch`) instead of being returned as the base object
+  without that variant's fields; Network and Protect schemas regenerated (ADR 0018 §1).
+  Contract mismatches and console errors are logged with field paths, HTTP status, the
+  documented error code and request id (`docs/monitoring.md`, `docs/troubleshooting.md`).
+- **Next:** the owner reruns `npm run test:live` (Network, then Protect). The stricter
+  schemas may now refuse a real response that used to pass without its variant's fields;
+  the report names any such field. The Network run now reads the details and references
+  of every network. Commit the refreshed records after review, then continue with Phase 4.
 
 ## Phase 4 — Access and other documented modules
 

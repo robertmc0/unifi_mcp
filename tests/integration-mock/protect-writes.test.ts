@@ -34,6 +34,11 @@ const APPROVER = { type: 'cli', id: 'root' } as const;
 const UNLIMITED = { ratePerSecond: 10_000, burst: 10_000 };
 /** A PIN must match ^\d{4,6}$, so its sentinel is a number nothing else contains. */
 const PIN = '908172';
+/**
+ * The PIN as a value of its own: random ids and audit hashes are hex and can contain the
+ * same six digits by chance, so digits run into hex characters do not count.
+ */
+const PIN_VALUE = new RegExp(`(?<![0-9a-f])${PIN}(?![0-9a-f])`, 'iu');
 const QUALITIES = new Set(['high', 'medium', 'low', 'package']);
 const DEFAULT_DISABLED = PROTECT_WRITES.filter((d) => d.defaultDisabled === true).map(
   (d) => d.operationId,
@@ -210,7 +215,7 @@ describe('every documented Protect write', () => {
           // Approvers see a redacted summary: no credential from the request.
           const shown = JSON.stringify(approvals.get(approvalId));
           expect(shown, label).not.toContain('SENTINEL');
-          expect(shown, label).not.toContain(PIN);
+          expect(shown, label).not.toMatch(PIN_VALUE);
           approvals.approve(approvalId, APPROVER);
           envelope = await dispatcher.resume(PRINCIPAL, approvalId);
           // A second resume never sends a second request.
@@ -235,14 +240,14 @@ describe('every documented Protect write', () => {
         }
         const returned = JSON.stringify(envelope);
         expect(returned, label).not.toContain('SENTINEL');
-        expect(returned, label).not.toContain(PIN);
+        expect(returned, label).not.toMatch(PIN_VALUE);
         expect(returned, label).not.toContain('rtsps://');
       }
       // Neither the audit trail nor the log ever holds a credential from a request.
       const audited = JSON.stringify(h.audit.list({ limit: 500 }));
       expect(audited).not.toContain('SENTINEL');
-      expect(audited).not.toContain(PIN);
-      expect(h.log.lines.join('\n')).not.toContain(PIN);
+      expect(audited).not.toMatch(PIN_VALUE);
+      expect(h.log.lines.join('\n')).not.toMatch(PIN_VALUE);
       await h.close();
     }, 60_000); // one round trip per body variant
   }

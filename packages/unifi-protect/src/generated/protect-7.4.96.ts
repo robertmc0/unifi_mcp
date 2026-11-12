@@ -10,6 +10,11 @@
  */
 import * as z from 'zod';
 
+const UNLISTED = { message: 'A documented variant must match its own schema.', abort: true };
+function unlisted(values: readonly string[]): (value: string) => boolean {
+  return (value) => !values.includes(value);
+}
+
 const LinkStationIdOut = z.string();
 const DeviceStateOut = z.string();
 const NameOut = z.string();
@@ -1376,7 +1381,29 @@ const DeviceOut = z.union([
   AiProcessorOut,
   AiPortOut,
   LinkStationOut,
-  z.object({ modelKey: z.string() }),
+  z.object({
+    modelKey: z
+      .string()
+      .refine(
+        unlisted([
+          'aiport',
+          'aiprocessor',
+          'bridge',
+          'camera',
+          'chime',
+          'fob',
+          'light',
+          'linkstation',
+          'nvr',
+          'relay',
+          'sensor',
+          'siren',
+          'speaker',
+          'viewer',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const DeviceAddOut = z.object({ type: z.literal('add'), item: DeviceOut });
 const NvrPartialWithReferenceOut = z.object({
@@ -1597,7 +1624,29 @@ const DevicePartialWithReferenceOut = z.union([
   AiProcessorPartialWithReferenceOut,
   AiPortPartialWithReferenceOut,
   LinkStationPartialWithReferenceOut,
-  z.object({ modelKey: z.string() }),
+  z.object({
+    modelKey: z
+      .string()
+      .refine(
+        unlisted([
+          'aiport',
+          'aiprocessor',
+          'bridge',
+          'camera',
+          'chime',
+          'fob',
+          'light',
+          'linkstation',
+          'nvr',
+          'relay',
+          'sensor',
+          'siren',
+          'speaker',
+          'viewer',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const DeviceUpdateOut = z.object({
   type: z.literal('update'),
@@ -1635,7 +1684,29 @@ const DeviceReferenceOut = z.union([
   AiProcessorReferenceOut,
   AiPortReferenceOut,
   LinkStationReferenceOut,
-  z.object({ modelKey: z.string() }),
+  z.object({
+    modelKey: z
+      .string()
+      .refine(
+        unlisted([
+          'aiport',
+          'aiprocessor',
+          'bridge',
+          'camera',
+          'chime',
+          'fob',
+          'light',
+          'linkstation',
+          'nvr',
+          'relay',
+          'sensor',
+          'siren',
+          'speaker',
+          'viewer',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const DeviceRemoveOut = z.object({ type: z.literal('remove'), item: DeviceReferenceOut });
 const NvrModelKeyOut = z.literal('nvr');
@@ -2088,12 +2159,17 @@ const DeviceBulkReferenceOut = z.union([
 ]);
 const DevicesBulkRemoveOut = z.object({ type: z.literal('remove'), item: DeviceBulkReferenceOut });
 const DeviceEventOut = z.union([
-  z.union([DeviceAddOut, DeviceUpdateOut, DeviceRemoveOut, z.object({ type: z.string() })]),
+  z.union([
+    DeviceAddOut,
+    DeviceUpdateOut,
+    DeviceRemoveOut,
+    z.object({ type: z.string().refine(unlisted(['add', 'remove', 'update']), UNLISTED) }),
+  ]),
   z.union([
     DevicesAddOut,
     DevicesBulkUpdateOut,
     DevicesBulkRemoveOut,
-    z.object({ type: z.string() }),
+    z.object({ type: z.string().refine(unlisted(['add', 'remove', 'update']), UNLISTED) }),
   ]),
 ]);
 const EventIdOut = z.string();
@@ -2540,7 +2616,53 @@ const EventOut = z.union([
   AlarmHubBatteryConnectedEventOut,
   NfcCardScannedEventOut,
   FingerprintIdentifiedEventOut,
-  z.object({ type: z.string() }),
+  z.object({
+    type: z
+      .string()
+      .refine(
+        unlisted([
+          'alarmHubBatteryConnected',
+          'alarmHubBatteryLow',
+          'alarmHubButtonPress',
+          'alarmHubDeviceTamper',
+          'alarmHubEntryClosed',
+          'alarmHubEntryOpened',
+          'alarmHubGlassBreak',
+          'alarmHubMotion',
+          'alarmHubRelaySwitched',
+          'alarmHubSmoke',
+          'alarmHubTamper',
+          'cameraDigitalInputChanged',
+          'fingerprintIdentified',
+          'lightMotion',
+          'motion',
+          'nfcCardScanned',
+          'relayInputChanged',
+          'ring',
+          'sensorAlarm',
+          'sensorBatteryLow',
+          'sensorButtonPressed',
+          'sensorClosed',
+          'sensorCoFault',
+          'sensorExtremeValues',
+          'sensorMotion',
+          'sensorOpened',
+          'sensorSmokeBatteryLow',
+          'sensorSmokeEndOfLife',
+          'sensorSmokeFault',
+          'sensorSmokeNeedsCleaning',
+          'sensorSmokeTest',
+          'sensorTamper',
+          'sensorVape',
+          'sensorWaterLeak',
+          'smartAudioDetect',
+          'smartDetectLine',
+          'smartDetectLoiterZone',
+          'smartDetectZone',
+        ]),
+        UNLISTED,
+      ),
+  }),
 ]);
 const EventAddOut = z.object({ type: z.literal('add'), item: EventOut });
 const EventUpdateOut = z.object({ type: z.literal('update'), item: EventOut });
@@ -2559,49 +2681,49 @@ const IntegrationExternalProfileScheduleOut = z.object({
     .union([
       IntegrationExternalProfileIntervalsOut,
       IntegrationExternalProfileAllDayOut,
-      z.object({ type: z.string() }),
+      z.object({ type: z.string().refine(unlisted(['all_day', 'intervals']), UNLISTED) }),
     ])
     .optional(),
   mon: z
     .union([
       IntegrationExternalProfileIntervalsOut,
       IntegrationExternalProfileAllDayOut,
-      z.object({ type: z.string() }),
+      z.object({ type: z.string().refine(unlisted(['all_day', 'intervals']), UNLISTED) }),
     ])
     .optional(),
   tue: z
     .union([
       IntegrationExternalProfileIntervalsOut,
       IntegrationExternalProfileAllDayOut,
-      z.object({ type: z.string() }),
+      z.object({ type: z.string().refine(unlisted(['all_day', 'intervals']), UNLISTED) }),
     ])
     .optional(),
   wed: z
     .union([
       IntegrationExternalProfileIntervalsOut,
       IntegrationExternalProfileAllDayOut,
-      z.object({ type: z.string() }),
+      z.object({ type: z.string().refine(unlisted(['all_day', 'intervals']), UNLISTED) }),
     ])
     .optional(),
   thu: z
     .union([
       IntegrationExternalProfileIntervalsOut,
       IntegrationExternalProfileAllDayOut,
-      z.object({ type: z.string() }),
+      z.object({ type: z.string().refine(unlisted(['all_day', 'intervals']), UNLISTED) }),
     ])
     .optional(),
   fri: z
     .union([
       IntegrationExternalProfileIntervalsOut,
       IntegrationExternalProfileAllDayOut,
-      z.object({ type: z.string() }),
+      z.object({ type: z.string().refine(unlisted(['all_day', 'intervals']), UNLISTED) }),
     ])
     .optional(),
   sat: z
     .union([
       IntegrationExternalProfileIntervalsOut,
       IntegrationExternalProfileAllDayOut,
-      z.object({ type: z.string() }),
+      z.object({ type: z.string().refine(unlisted(['all_day', 'intervals']), UNLISTED) }),
     ])
     .optional(),
 });
@@ -2658,11 +2780,15 @@ const IntegrationExternalArmProfileEventOut = z.union([
   IntegrationExternalArmProfileAddOut,
   IntegrationExternalArmProfileUpdateOut,
   IntegrationExternalArmProfileRemoveOut,
-  z.object({ type: z.string() }),
+  z.object({ type: z.string().refine(unlisted(['add', 'remove', 'update']), UNLISTED) }),
 ]);
 const ModelUpdateEventOut = z.union([
   DeviceEventOut,
-  z.union([EventAddOut, EventUpdateOut, z.object({ type: z.string() })]),
+  z.union([
+    EventAddOut,
+    EventUpdateOut,
+    z.object({ type: z.string().refine(unlisted(['add', 'update']), UNLISTED) }),
+  ]),
   IntegrationExternalArmProfileEventOut,
 ]);
 const UlpUserIdOut = z.string();
@@ -3065,7 +3191,11 @@ export const getV1SubscribeEvents = {
   hasBody: false,
   responseType: 'json',
   input: z.strictObject({}),
-  output: z.union([EventAddOut, EventUpdateOut, z.object({ type: z.string() })]),
+  output: z.union([
+    EventAddOut,
+    EventUpdateOut,
+    z.object({ type: z.string().refine(unlisted(['add', 'update']), UNLISTED) }),
+  ]),
 } as const;
 export const getV1SubscribeUpdates = {
   method: 'GET',

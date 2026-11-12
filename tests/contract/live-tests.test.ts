@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as z from 'zod';
 import defaultConfig from '../../vitest.config.ts';
-import { mismatchSummary } from '../fixtures/schema-mismatch.ts';
+import { mismatchSummary } from '@unifi-local-mcp/core';
 import { okOutcome } from '../integration-live-readonly/shared.ts';
 
 const ROOT = join(import.meta.dirname, '../..');
@@ -109,6 +109,19 @@ describe('live report mismatch summaries', () => {
     });
     expect(mismatchSummary(issues(schema, { data: [{ a: 1, b: 'y' }] }))).toEqual([
       'data[].a: invalid_type (expected string, received number)',
+    ]);
+  });
+
+  it('follow the branch the discriminator selected, not a closer one it did not select', () => {
+    const schema = z.union([
+      z.object({ kind: z.literal('A'), a: z.string(), b: z.string() }),
+      z.object({ kind: z.literal('B') }),
+      z.object({ kind: z.string().refine((k) => k !== 'A' && k !== 'B', { abort: true }) }),
+    ]);
+    // Branch A misses two fields; the others fail only on `kind`, which did not select them.
+    expect(mismatchSummary(issues(schema, { kind: 'A' }))).toEqual([
+      'a: invalid_type (expected string, received undefined)',
+      'b: invalid_type (expected string, received undefined)',
     ]);
   });
 

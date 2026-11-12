@@ -65,6 +65,7 @@ export {
 export { withoutFields } from './fields.ts';
 export { KeyedMutex } from './locks.ts';
 export { RateLimiter, type RateDecision, type RateLimit } from './rate-limit.ts';
+export { mismatchSummary } from './schema-mismatch.ts';
 export {
   BINARY_RESPONSE_TYPES,
   defineOperation,
