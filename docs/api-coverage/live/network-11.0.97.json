@@ -4,32 +4,77 @@
   "date": "2026-11-12",
   "applicationVersion": "11.0.99",
   "supported": true,
-  "networkReferences": [
+  "networks": [
     {
       "management": "GATEWAY",
       "default": false,
       "origin": "USER_DEFINED",
-      "result": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
+      "details": "ok",
+      "references": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
     },
     {
       "management": "GATEWAY",
       "default": false,
       "origin": "USER_DEFINED",
-      "result": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
+      "details": "ok",
+      "references": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
     },
     {
       "management": "GATEWAY",
       "default": true,
       "origin": "SYSTEM_DEFINED",
-      "result": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
+      "details": "ok",
+      "references": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
     },
     {
       "management": "GATEWAY",
       "default": false,
       "origin": "USER_DEFINED",
-      "result": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
+      "details": "ok",
+      "references": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
     },
-    { "management": "GATEWAY", "default": false, "origin": "USER_DEFINED", "result": "ok" }
+    {
+      "management": "GATEWAY",
+      "default": false,
+      "origin": "USER_DEFINED",
+      "details": "ok",
+      "references": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
+    },
+    {
+      "management": "GATEWAY",
+      "default": false,
+      "origin": "USER_DEFINED",
+      "details": "ok",
+      "references": "ok"
+    },
+    {
+      "management": "GATEWAY",
+      "default": false,
+      "origin": "USER_DEFINED",
+      "details": "ok",
+      "references": "ok"
+    },
+    {
+      "management": "GATEWAY",
+      "default": false,
+      "origin": "USER_DEFINED",
+      "details": "ok",
+      "references": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
+    },
+    {
+      "management": "GATEWAY",
+      "default": false,
+      "origin": "USER_DEFINED",
+      "details": "ok",
+      "references": "ok"
+    },
+    {
+      "management": "GATEWAY",
+      "default": false,
+      "origin": "USER_DEFINED",
+      "details": "ok",
+      "references": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
+    }
   ],
   "pagination": {
     "list": "network.networks.list",

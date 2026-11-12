@@ -307,8 +307,17 @@ client's resume; medium needs only explicit grants.
   (`tests/fixtures/serve-network-console.ts`): 43 reads ok, 1 skipped (nothing to read),
   45 requests, all GET. `tests/contract/live-tests.test.ts` keeps it opt-in, out of CI,
   reads-only and hard-locked; `tests/contract/api-coverage-matrix.test.ts` checks that only
-  reads that passed in a live record are marked validated. No real console has been tested
-  yet.
+  reads that passed in a live record are marked validated. The initial dry run did not
+  exercise a real console.
+- Live rerun (2026-11-12, Network 11.0.99), after the stricter union response schemas:
+  23 reads returned data and matched, 10 lists were empty and 7 reads had nothing to read;
+  no new contract mismatch was recorded. All 10 network details matched.
+  `network.networks.get_references`
+  (`GET /v1/sites/{siteId}/networks/{networkId}/references`) worked for 3 networks and
+  returned HTTP 500 `api.unexpected-error` for 7. It remains the only failing read, and
+  the live test still fails on it. The refreshed, reviewed record is
+  `docs/api-coverage/live/network-11.0.97.json`; the cause of the references failure remains
+  unknown.
 
 ## Consequences
 

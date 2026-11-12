@@ -524,10 +524,21 @@ clean stop).
   caution; the network delete is offered without `force` (ADR 0018, reviewed deviation).
   Open, owner's choice: a runbook check that the console refuses a delete without `force`
   of a network in use.
-- **Next:** the owner reruns `npm run test:live` (Network, then Protect). The stricter
-  schemas may now refuse a real response that used to pass without its variant's fields;
-  the report names any such field. The Network run now reads the details and references
-  of every network. Commit the refreshed records after review, then continue with Phase 4.
+- ✅ **Live rerun** (2026-11-12): the owner ran `npm run test:live` after the stricter
+  union schemas and per-network checks. Network 11.0.99: 23 reads returned data and
+  matched, 10 lists were empty, 7 reads had nothing to read; all 10 network details
+  matched. `network.networks.get_references`
+  (`GET /v1/sites/{siteId}/networks/{networkId}/references`) worked for 3 networks and
+  returned HTTP 500 `api.unexpected-error` for 7. That known failure is the only failing
+  read and still fails the Network live test; it has not been suppressed or counted as
+  validated. Protect 7.3.74 passed: all 20 reads with something to read matched (5 with
+  data, 15 empty lists), and event authentication again answered 101 with the key and
+  401 with a random key. No new contract mismatch was recorded. The reviewed Network
+  record is refreshed; the Protect record is unchanged. Device reads, snapshots and
+  device events remain unvalidated on this console without Protect devices.
+- **Next:** Phase 4. Verify the installed UniFi Access version and its official local
+  API contract, including authentication, base path and port, before implementing the
+  adapter.
 
 ## Phase 4 — Access and other documented modules
 
