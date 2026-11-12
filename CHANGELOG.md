@@ -51,8 +51,8 @@ All notable changes to this project are documented here. The format follows
   empty lists are no longer counted as validated, and `get_references` still fails in the
   console.
 - Network limitation narrowed: the console fails `network.networks.get_references` (HTTP 500) for every network used by clients or devices (including switch port assignments),
-  and answers for networks used only by a Wi-Fi broadcast, or by nothing; the cause is
-  not known.
+  and answers for networks used only by a Wi-Fi broadcast, or by nothing. Assigning one
+  unused switch port to an empty network reproduces it.
 - Event subscriptions, part 1 (ADR 0020): a bounded, read-only WebSocket client over the
   verified TLS socket, the event connector, event streams as reviewed registry entries,
   one authorisation point for streams and each message, and an on-demand event hub with a

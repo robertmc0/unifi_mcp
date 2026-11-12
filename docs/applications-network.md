@@ -206,9 +206,10 @@ Validating writes on a real console is a manual runbook, approved step by step b
   10 networks, with requests of the same documented form. It failed for every network
   used by clients or devices: networks with clients, the one carrying the access points,
   and one with no clients that is assigned to switch ports. It worked for every network
-  used only by a Wi-Fi broadcast, or by nothing. So the console fails exactly when its
-  answer would list clients or devices. Its error says only "Unexpected error", and its
-  logs show nothing; the cause is not known. The service reports it as
+  used only by a Wi-Fi broadcast, or by nothing. Assigning one unused switch port to an
+  empty network that had answered normally made it fail as well. So a device reference
+  alone is enough to make the read fail, and every network with clients failed too. The
+  error says only "Unexpected error", and the console's logs show nothing. The service reports it as
   `upstream_unavailable`, and retrying does not help. Before you change or delete a
   network, check what uses it in UniFi Network.
 - **API key scope.** UniFi documents no way to limit what an API key can do, and a Network

@@ -335,7 +335,8 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
       validated), 7 had nothing to read. The owner then checked the references of all 10
       networks by hand: HTTP 500 for every network used by clients or devices (the one
       without clients is assigned to switch ports); it worked for every network used only
-      by a Wi-Fi broadcast, or by nothing.
+      by a Wi-Fi broadcast, or by nothing. Assigning one unused switch port to an empty
+      network that had answered made it fail too: a device reference alone is enough.
       `tests/contract/live-tests.test.ts` keeps the test opt-in and read-only.
 - [x] Field shapes, pagination, filtering and errors compared against official docs
       Field shapes come from the official contract (generated schemas, strict requests,
