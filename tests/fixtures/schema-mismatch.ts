@@ -4,14 +4,34 @@
  */
 import type * as z from 'zod';
 
+/** The JavaScript type names zod reports as "received"; only these are kept. */
+const TYPE_NAMES = new Set([
+  'undefined',
+  'null',
+  'string',
+  'number',
+  'boolean',
+  'object',
+  'array',
+  'bigint',
+  'nan',
+]);
+
+/** `undefined` from "Invalid input: expected string, received undefined"; never a value. */
+function receivedType(message: string): string | undefined {
+  const name = /received (\w+)$/.exec(message)?.[1];
+  return name !== undefined && TYPE_NAMES.has(name) ? name : undefined;
+}
+
 /** Path segments that are schema property names; anything else could be data. */
 const SAFE_SEGMENT = /^[A-Za-z_][A-Za-z0-9_]{0,63}$/;
 const MAX_MISMATCHES = 20;
 
 /**
  * Where and how a response missed its schema: `data[].state: invalid_type (expected
- * string)`. Paths and zod issue codes only. List positions and keys that are not plain
- * property names are masked, and no received value or zod message is kept. For a union,
+ * string, received undefined)`. Paths, zod issue codes and type names only. List positions
+ * and keys that are not plain property names are masked, and no received value or zod
+ * message is kept. For a union,
  * the closest branch (fewest issues) is followed.
  */
 export function mismatchSummary(issues: readonly z.core.$ZodIssue[], prefix = ''): string[] {
@@ -34,9 +54,10 @@ export function mismatchSummary(issues: readonly z.core.$ZodIssue[], prefix = ''
       lines.push(...mismatchSummary(closest, path));
       continue;
     }
+    const received = issue.code === 'invalid_type' ? receivedType(issue.message) : undefined;
     const expected =
       issue.code === 'invalid_type' && SAFE_SEGMENT.test(issue.expected)
-        ? ` (expected ${issue.expected})`
+        ? ` (expected ${issue.expected}${received === undefined ? '' : `, received ${received}`})`
         : '';
     lines.push(`${path === '' ? '(root)' : path}: ${issue.code}${expected}`);
   }

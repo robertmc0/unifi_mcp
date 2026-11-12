@@ -63,8 +63,8 @@ describe('live report mismatch summaries', () => {
     expect(
       mismatchSummary(issues(schema, { data: [{ state: 'ok', port: 1 }, { port: 'x' }] })),
     ).toEqual([
-      'data[].state: invalid_type (expected string)',
-      'data[].port: invalid_type (expected number)',
+      'data[].state: invalid_type (expected string, received undefined)',
+      'data[].port: invalid_type (expected number, received string)',
     ]);
   });
 
@@ -83,7 +83,7 @@ describe('live report mismatch summaries', () => {
       'name: invalid_value',
       'kind: invalid_value',
       'size: too_big',
-      'byMac.?: invalid_type (expected number)',
+      'byMac.?: invalid_type (expected number, received string)',
     ]);
     expect(JSON.stringify(lines)).not.toMatch(/Office|192\.0\.2|aa:bb/);
   });
@@ -98,13 +98,13 @@ describe('live report mismatch summaries', () => {
       ),
     });
     expect(mismatchSummary(issues(schema, { data: [{ a: 1, b: 'y' }] }))).toEqual([
-      'data[].a: invalid_type (expected string)',
+      'data[].a: invalid_type (expected string, received number)',
     ]);
   });
 
   it('mark the root and keep at most 20 lines', () => {
     expect(mismatchSummary(issues(z.object({}), 'x'))).toEqual([
-      '(root): invalid_type (expected object)',
+      '(root): invalid_type (expected object, received string)',
     ]);
     const wide = z.object(
       Object.fromEntries([...Array(30).keys()].map((i) => [`f${String(i)}`, z.string()])),
