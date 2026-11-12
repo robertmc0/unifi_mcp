@@ -396,8 +396,11 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
      (on demand, bounded buffer, gaps, opaque cursors, backoff with jitter, a global
      attempt limit, credential changes). Tests: `tests/unit/unifi-api/websocket.test.ts`,
      `tests/unit/unifi-api/events.test.ts`, `tests/unit/core/event-hub.test.ts`.
-   - 7b: MCP resources, `subscriptions/listen` in the HTTP gate, one handler per client,
-     re-authorisation, slow consumers and lifetime; service wiring.
+   - 7b ✅ (2026-11-12): event resources per client with cursors; `subscriptions/listen`
+     filtered in the HTTP gate; one SDK handler per client; re-authorisation, lifetime,
+     per-client limit and slow-consumer closing; service wiring; works through the stdio
+     bridge; 2025-era clients read only. ADR 0020 §5. Tests:
+     `tests/integration-mock/events.test.ts`, `tests/unit/mcp-server/event-uris.test.ts`.
    - 7c: the Protect streams with their security review; coverage.
 8. **Coverage, live read-only test and write runbook.** Live test started (2026-11-12):
    `tests/integration-live-readonly/protect.test.ts` runs every Protect read the console's

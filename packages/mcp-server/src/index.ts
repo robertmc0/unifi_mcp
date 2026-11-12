@@ -24,7 +24,24 @@ export {
   type AdminListenerConfig,
   type ServiceConfig,
 } from './config.ts';
-export { MCP_PATH, McpHttpService, type McpHttpOptions } from './http.ts';
+export {
+  checkSubscription,
+  eventUri,
+  MAX_SUBSCRIBED_URIS,
+  parseEventUri,
+  registerEventResources,
+  visibleStreams,
+  type EventServices,
+  type ParsedEventUri,
+  type SubscriptionCheck,
+} from './events.ts';
+export {
+  DEFAULT_LISTEN_LIMITS,
+  MCP_PATH,
+  McpHttpService,
+  type ListenLimits,
+  type McpHttpOptions,
+} from './http.ts';
 export {
   SERVICE_VERSION,
   startService,

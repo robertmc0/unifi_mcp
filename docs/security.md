@@ -84,6 +84,17 @@ at any depth, after every projection, and response schemas drop every field the 
 contract does not document. For Network, the client reads need `personal_identifier` and
 `network_identity` ([applications-network.md](applications-network.md#client-data-needs-sensitive-grants)).
 
+### Events
+
+Event streams are reviewed like operations and decided by the same policy engine
+([ADR 0020](adr/0020-event-subscriptions.md)). A client needs the stream's permission (for
+example `protect.events.read`), and each event is shown only if the client could also see
+its content through an ordinary read: an NFC or fingerprint event needs
+`personal_identifier`; a device update needs the permission and grants of the read for
+that device. The decision is made again at subscription, at each notification and at each
+read. Notifications carry no data, and each client's notifications reach only its own
+subscriptions. Event content is read through `resources/read`, which is audited.
+
 ## Risk and approval
 
 Each operation's risk (low, medium, high) is reviewed in code. Policy can raise the risk of

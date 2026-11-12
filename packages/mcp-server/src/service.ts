@@ -21,9 +21,15 @@ import type { DashboardView } from '@unifi-local-mcp/admin-ui';
 import { ApprovalService } from '@unifi-local-mcp/approvals';
 import {
   Dispatcher,
+  EventHub,
+  EventStreamRegistry,
   ExecutionStore,
   OperationRegistry,
+  StreamAccess,
   type ContractInventory,
+  type EventConnector,
+  type EventHubLimits,
+  type EventStreamDescriptor,
   type OperationDescriptor,
   type OperationExecutor,
   type SecurityContextProvider,
@@ -51,6 +57,7 @@ import {
   ConsoleRegistry,
   EgressGuard,
   loadContractInventory,
+  UnifiEventConnector,
   UnifiExecutor,
   VersionMonitor,
   VersionProber,
@@ -59,7 +66,8 @@ import {
 } from '@unifi-local-mcp/unifi-api';
 import { ClientStore } from './clients.ts';
 import type { AdminListenerConfig, ServiceConfig } from './config.ts';
-import { McpHttpService } from './http.ts';
+import { eventUri, type EventServices } from './events.ts';
+import { McpHttpService, type ListenLimits } from './http.ts';
 import { buildMcpServer } from './tools.ts';
 
 export const SERVICE_VERSION = '0.0.0';
@@ -77,6 +85,12 @@ export interface ServiceOptions {
   masterKey?: MasterKey;
   /** Reviewed operations from the module adapters (Phase 2+). */
   operations?: readonly OperationDescriptor[];
+  /** Reviewed event streams from the module adapters (ADR 0020). */
+  eventStreams?: readonly EventStreamDescriptor[];
+  /** Tests only: event hub and subscription limits, and a synthetic connector. */
+  eventHubLimits?: Partial<EventHubLimits>;
+  listenLimits?: Partial<ListenLimits>;
+  eventConnector?: EventConnector;
   /** How each module's application version is learned (ADR 0018 §3). */
   probes?: readonly VersionProbeSpec[];
   /** Tests only: version monitor timing. */
@@ -105,6 +119,8 @@ export interface RunningService {
   registry: OperationRegistry;
   health: HealthMonitor;
   versions: VersionMonitor;
+  events: EventServices;
+  http: McpHttpService;
   admins: AdminStore;
   /** The admin interface URL, or undefined when it is disabled (the default). */
   adminUrl: string | undefined;
@@ -219,13 +235,8 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       capability: (consoleId, descriptor) => consoles.capability(consoleId, descriptor),
       observedVersion: (consoleId, moduleId) => consoles.observedVersion(consoleId, moduleId),
     };
-    const executor =
-      options.executor ??
-      new UnifiExecutor({
-        consoles,
-        egress: new EgressGuard(config.egress, options.lookup),
-        logger,
-      });
+    const egress = new EgressGuard(config.egress, options.lookup);
+    const executor = options.executor ?? new UnifiExecutor({ consoles, egress, logger });
     const dispatcher = new Dispatcher({
       registry,
       executor,
@@ -257,35 +268,59 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
     });
     health.register(versions.healthCheck());
 
-    const handler = createMcpHandler(
-      ({ authInfo }) => {
-        // The gate guarantees authInfo; anything else is a wiring error.
-        if (authInfo === undefined)
-          throw new Error('MCP request reached the handler without identity.');
-        return buildMcpServer({
-          principal: { clientId: authInfo.clientId },
-          registry,
-          dispatcher,
-          approvals,
-          consoles,
-          security,
-          policyStore,
-          deployment: config.deployment,
-          audit,
-          now,
-          serverVersion: SERVICE_VERSION,
-        });
+    // Event subscriptions (ADR 0020): reviewed streams, one authorisation point, on-demand feeds.
+    const streams = new EventStreamRegistry(inventory);
+    for (const stream of options.eventStreams ?? []) streams.register(stream);
+    streams.seal();
+    const access = new StreamAccess({ security, policyStore, deployment: config.deployment, now });
+    let notifyClient: (clientId: string, uri: string) => void = () => undefined;
+    const hub = new EventHub({
+      access,
+      connector: options.eventConnector ?? new UnifiEventConnector({ consoles, egress, logger }),
+      logger,
+      notify: (clientId, consoleId, stream) => {
+        notifyClient(clientId, eventUri(consoleId, stream));
       },
-      {
-        legacy: 'stateless',
-        maxRequestBodySize: 1024 * 1024,
-        onerror: (error) => {
-          logger.warn('MCP protocol error', { err: error });
-        },
-      },
-    );
+      supported: (consoleId, stream) => consoles.capability(consoleId, stream) === 'supported',
+      ...(options.eventHubLimits === undefined ? {} : { limits: options.eventHubLimits }),
+      now,
+    });
+    const events: EventServices = { registry: streams, access, hub };
+
     const http = new McpHttpService({
-      handler,
+      createHandler: () =>
+        createMcpHandler(
+          ({ authInfo, era }) => {
+            // The gate guarantees authInfo; anything else is a wiring error.
+            if (authInfo === undefined)
+              throw new Error('MCP request reached the handler without identity.');
+            return buildMcpServer({
+              principal: { clientId: authInfo.clientId },
+              registry,
+              dispatcher,
+              approvals,
+              consoles,
+              security,
+              policyStore,
+              deployment: config.deployment,
+              audit,
+              now,
+              serverVersion: SERVICE_VERSION,
+              era,
+              events,
+            });
+          },
+          {
+            legacy: 'stateless',
+            maxRequestBodySize: 1024 * 1024,
+            maxSubscriptions: options.listenLimits?.maxPerClient ?? 8,
+            onerror: (error) => {
+              logger.warn('MCP protocol error', { err: error });
+            },
+          },
+        ),
+      events,
+      ...(options.listenLimits === undefined ? {} : { listen: options.listenLimits }),
       clients,
       health,
       audit,
@@ -293,6 +328,9 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       allowedHosts: config.http.allowedHosts,
       allowedOrigins: config.http.allowedOrigins,
     });
+    notifyClient = (clientId, uri) => {
+      http.notifyResourceUpdated(clientId, uri);
+    };
     clients.onRevocation((clientId) => {
       const cancelled = dispatcher.cancelClient(clientId);
       const closed = http.closeClientResponses(clientId);
@@ -369,6 +407,13 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
     // Revocations made by another process (the CLI) are stored in the database but do not
     // reach the in-process listener above: re-check open responses periodically.
     const recheck = setInterval(() => {
+      // Event subscriptions: console settings and credentials, grants, lifetime, slow readers.
+      try {
+        hub.recheck();
+        http.recheckSubscriptions();
+      } catch (error) {
+        logger.error('event subscription re-check failed', { err: error });
+      }
       for (const clientId of http.revalidateOpenResponses()) {
         const inactive = !clients.isClientActive(clientId);
         const cancelled = inactive ? dispatcher.cancelClient(clientId) : 0;
@@ -438,12 +483,15 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       registry,
       health,
       versions,
+      events,
+      http,
       admins,
       adminUrl: admin?.url,
       stop: async () => {
         if (stopped) return;
         stopped = true;
         await versions.stop();
+        await hub.close();
         if (admin !== undefined) await closeServer(admin.server);
         clearInterval(recheck);
         clearInterval(sweep);
@@ -460,7 +508,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
         ]);
         server.closeAllConnections();
         await closed;
-        await handler.close();
+        await http.close();
         try {
           audit.record({
             eventType: 'system',

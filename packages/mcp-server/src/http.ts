@@ -10,32 +10,109 @@
  * (`authInfo.clientId`) comes only from the verified token. The raw token is not passed
  * on: `authInfo.token` carries the public token id. Open responses are tracked per client
  * so revocation can close them immediately (spec §7.1).
+ *
+ * Event subscriptions (ADR 0020 §5):
+ * - every client has its own SDK handler, so its `subscriptions/listen` streams receive
+ *   only its own notifications (the SDK's event bus is shared by all streams of a handler);
+ * - the gate reads each POST body, and for `subscriptions/listen` keeps only the resource
+ *   URIs the client may subscribe to, then registers the demand until the stream closes;
+ * - open listen streams are closed when their grant goes (`recheckSubscriptions`), after a
+ *   maximum lifetime, and when the client stops reading (slow consumer).
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { RateLimiter } from '@unifi-local-mcp/core';
+import { RateLimiter, type EventFeedKey } from '@unifi-local-mcp/core';
+import type { McpHttpHandler } from '@modelcontextprotocol/server';
 import {
   hostHeaderValidation,
   originValidation,
   toNodeHandler,
-  type FetchLikeMcpHandler,
   type NodeIncomingMessageLike,
 } from '@modelcontextprotocol/node';
 import type { AuditLog, HealthMonitor, Logger } from '@unifi-local-mcp/telemetry';
-import { createHealthHandler } from '@unifi-local-mcp/telemetry';
+import { AuditUnavailableError, createHealthHandler } from '@unifi-local-mcp/telemetry';
 import type { ClientStore } from './clients.ts';
+import { checkSubscription, type EventServices } from './events.ts';
 
 export const MCP_PATH = '/mcp';
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 const FAILURE_LIMIT = { ratePerSecond: 0.2, burst: 10 };
 
+export interface ListenLimits {
+  /** Open event subscriptions per client. */
+  maxPerClient: number;
+  /** A subscription is closed after this long; the client subscribes again (re-authorised). */
+  maxLifetimeMs: number;
+  /** A subscription whose client has not read for this long is closed. */
+  slowConsumerMs: number;
+}
+
+export const DEFAULT_LISTEN_LIMITS: ListenLimits = {
+  maxPerClient: 8,
+  maxLifetimeMs: 60 * 60_000,
+  slowConsumerMs: 30_000,
+};
+
 export interface McpHttpOptions {
-  handler: FetchLikeMcpHandler;
+  /** Creates one SDK handler; the service keeps one per client. */
+  createHandler: () => McpHttpHandler;
   clients: ClientStore;
   health: HealthMonitor;
   audit: AuditLog;
   logger: Logger;
   allowedHosts: string[];
   allowedOrigins: string[];
+  events?: EventServices;
+  listen?: Partial<ListenLimits>;
+  now?: () => number;
+}
+
+interface ClientHandler {
+  handler: McpHttpHandler;
+  node: ReturnType<typeof toNodeHandler>;
+}
+
+interface ListenStream {
+  res: ServerResponse;
+  clientId: string;
+  uris: string[];
+  keys: EventFeedKey[];
+  openedAt: number;
+  slowSince: number | undefined;
+  release: () => void;
+}
+
+type JsonRpcError = { status: number; body: unknown };
+
+function rpcError(id: unknown, code: number, message: string, status = 200): JsonRpcError {
+  return {
+    status,
+    body: {
+      jsonrpc: '2.0',
+      id: typeof id === 'string' || typeof id === 'number' ? id : null,
+      error: { code, message },
+    },
+  };
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isListen(message: unknown): message is Record<string, unknown> {
+  return isObject(message) && message['method'] === 'subscriptions/listen';
+}
+
+/** Reads a request body up to `limit` bytes; undefined when it is larger. */
+async function readBody(req: IncomingMessage, limit: number): Promise<Buffer | undefined> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of req) {
+    const buffer = chunk as Buffer;
+    size += buffer.length;
+    if (size > limit) return undefined;
+    chunks.push(buffer);
+  }
+  return Buffer.concat(chunks);
 }
 
 function sendJson(
@@ -64,7 +141,10 @@ function bearer(header: string | undefined): string | undefined {
 
 export class McpHttpService {
   readonly #options: McpHttpOptions;
-  readonly #mcp: ReturnType<typeof toNodeHandler>;
+  readonly #listenLimits: ListenLimits;
+  readonly #handlers = new Map<string, ClientHandler>();
+  readonly #listens = new Map<string, Set<ListenStream>>();
+  readonly #now: () => number;
   readonly #health: (request: Request) => Promise<Response | undefined>;
   readonly #validateHost: (req: IncomingMessage, res: ServerResponse) => boolean;
   readonly #validateOrigin: (req: IncomingMessage, res: ServerResponse) => boolean;
@@ -75,12 +155,8 @@ export class McpHttpService {
 
   constructor(options: McpHttpOptions) {
     this.#options = options;
-    this.#mcp = toNodeHandler(options.handler, {
-      maxRequestBodySize: MAX_REQUEST_BODY_BYTES,
-      onerror: (error) => {
-        options.logger.error('MCP request handling failed', { err: error });
-      },
-    });
+    this.#listenLimits = { ...DEFAULT_LISTEN_LIMITS, ...options.listen };
+    this.#now = options.now ?? (() => Date.now());
     this.#health = createHealthHandler(options.health);
     this.#validateHost = hostHeaderValidation(options.allowedHosts);
     this.#validateOrigin = originValidation(options.allowedOrigins);
@@ -97,10 +173,110 @@ export class McpHttpService {
   /** Closes every open MCP response of a client (revocation). Returns how many. */
   closeClientResponses(clientId: string): number {
     const open = this.#open.get(clientId);
+    const entry = this.#handlers.get(clientId);
+    this.#handlers.delete(clientId);
+    if (entry !== undefined) {
+      entry.handler.close().catch((error: unknown) => {
+        this.#options.logger.error('closing a client handler failed', { err: error });
+      });
+    }
     if (open === undefined) return 0;
     for (const res of open.keys()) res.destroy();
     this.#open.delete(clientId);
     return open.size;
+  }
+
+  /**
+   * Tells one client's subscriptions that a resource changed. Subscriptions whose client
+   * has not been reading for too long are closed instead (slow consumer).
+   */
+  notifyResourceUpdated(clientId: string, uri: string): void {
+    const entry = this.#handlers.get(clientId);
+    if (entry === undefined) return;
+    const now = this.#now();
+    for (const stream of this.#listens.get(clientId) ?? []) {
+      if (stream.uris.includes(uri)) this.#checkSlow(stream, now);
+    }
+    entry.handler.notify.resourceUpdated(uri);
+  }
+
+  /**
+   * Closes event subscriptions that may no longer stay open: a stream the client may no
+   * longer use, a subscription past its lifetime, or a client that stopped reading. The
+   * client may subscribe again and is authorised again. Returns how many were closed.
+   */
+  recheckSubscriptions(): number {
+    const events = this.#options.events;
+    const now = this.#now();
+    let closed = 0;
+    for (const streams of this.#listens.values()) {
+      for (const stream of [...streams]) {
+        const expired = now - stream.openedAt >= this.#listenLimits.maxLifetimeMs;
+        const revoked =
+          events !== undefined &&
+          stream.keys.some(
+            (key) => !events.access.stream(stream.clientId, key.consoleId, key.stream).allowed,
+          );
+        if (expired || revoked) {
+          this.#options.logger.info('event subscription closed', {
+            clientId: stream.clientId,
+            reason: expired ? 'lifetime' : 'no_longer_permitted',
+          });
+          stream.res.destroy();
+          closed++;
+        } else if (this.#checkSlow(stream, now)) {
+          closed++;
+        }
+      }
+    }
+    return closed;
+  }
+
+  /** The number of open event subscriptions (operator status and tests). */
+  get openSubscriptions(): number {
+    let count = 0;
+    for (const streams of this.#listens.values()) count += streams.size;
+    return count;
+  }
+
+  /** True when the stream was closed as a slow consumer. */
+  #checkSlow(stream: ListenStream, now: number): boolean {
+    if (!stream.res.writableNeedDrain) {
+      stream.slowSince = undefined;
+      return false;
+    }
+    stream.slowSince ??= now;
+    if (now - stream.slowSince < this.#listenLimits.slowConsumerMs) return false;
+    this.#options.logger.warn('event subscription closed: the client is not reading', {
+      clientId: stream.clientId,
+    });
+    stream.res.destroy();
+    return true;
+  }
+
+  #handlerFor(clientId: string): ClientHandler {
+    let entry = this.#handlers.get(clientId);
+    if (entry === undefined) {
+      const handler = this.#options.createHandler();
+      entry = {
+        handler,
+        node: toNodeHandler(handler, {
+          maxRequestBodySize: MAX_REQUEST_BODY_BYTES,
+          onerror: (error) => {
+            this.#options.logger.error('MCP request handling failed', { err: error });
+          },
+        }),
+      };
+      this.#handlers.set(clientId, entry);
+    }
+    return entry;
+  }
+
+  /** Closes every client handler (shutdown). */
+  async close(): Promise<void> {
+    const handlers = [...this.#handlers.values()];
+    this.#handlers.clear();
+    await Promise.allSettled(handlers.map((entry) => entry.handler.close()));
   }
 
   /**
@@ -195,9 +371,112 @@ export class McpHttpService {
       scopes: [],
       extra: { tokenId: identity.tokenId },
     };
+    let parsedBody: unknown;
+    if (req.method === 'POST') {
+      const body = await readBody(req, MAX_REQUEST_BODY_BYTES);
+      if (body === undefined) {
+        sendJson(res, 413, rpcError(null, -32600, 'The request body is too large.').body);
+        return;
+      }
+      try {
+        parsedBody = JSON.parse(body.toString('utf8')) as unknown;
+      } catch {
+        sendJson(res, 400, rpcError(null, -32700, 'Parse error').body);
+        return;
+      }
+      const refusal = this.#prepareListen(identity.clientId, parsedBody, res);
+      if (refusal !== undefined) {
+        sendJson(res, refusal.status, refusal.body);
+        return;
+      }
+    }
     // Node's IncomingMessage is the shape the adapter expects; only the optional-property
     // typing differs under exactOptionalPropertyTypes.
-    await this.#mcp(req as unknown as NodeIncomingMessageLike, res);
+    await this.#handlerFor(identity.clientId).node(
+      req as unknown as NodeIncomingMessageLike,
+      res,
+      parsedBody,
+    );
+  }
+
+  /**
+   * For `subscriptions/listen`: keeps only the resource URIs the client may subscribe to
+   * (in place) and registers the demand until the response closes. Returns a refusal to
+   * send instead, or undefined to continue.
+   */
+  #prepareListen(
+    clientId: string,
+    message: unknown,
+    res: ServerResponse,
+  ): JsonRpcError | undefined {
+    if (Array.isArray(message)) {
+      return message.some(isListen)
+        ? rpcError(null, -32600, 'subscriptions/listen cannot be sent in a batch.', 400)
+        : undefined;
+    }
+    if (!isListen(message)) return undefined;
+    const notifications = isObject(message['params'])
+      ? message['params']['notifications']
+      : undefined;
+    if (!isObject(notifications)) return undefined; // the SDK answers the invalid request
+    const requested = notifications['resourceSubscriptions'];
+    if (requested === undefined) return undefined;
+    if (!Array.isArray(requested)) return undefined; // invalid: answered by the SDK
+    const events = this.#options.events;
+    const check =
+      events === undefined
+        ? { accepted: [], keys: [], refused: requested.length }
+        : checkSubscription(events, clientId, requested);
+    if (check.accepted.length === 0) {
+      delete notifications['resourceSubscriptions'];
+    } else {
+      notifications['resourceSubscriptions'] = check.accepted;
+    }
+    try {
+      this.#options.audit.record({
+        eventType: 'mcp.resource',
+        action: 'events.subscribe',
+        outcome: check.accepted.length > 0 ? 'success' : 'denied',
+        actor: { type: 'mcp_client', id: clientId },
+        details: { accepted: check.accepted.length, refused: check.refused },
+      });
+    } catch (error) {
+      if (error instanceof AuditUnavailableError) {
+        return rpcError(message['id'], -32603, 'The audit trail cannot be written.');
+      }
+      throw error;
+    }
+    if (events === undefined || check.keys.length === 0) return undefined;
+    const streams = this.#listens.get(clientId) ?? new Set<ListenStream>();
+    if (streams.size >= this.#listenLimits.maxPerClient) {
+      return rpcError(message['id'], -32603, 'Subscription limit reached');
+    }
+    let release: () => void;
+    try {
+      release = events.hub.subscribe(clientId, check.keys);
+    } catch (error) {
+      this.#options.logger.warn('event subscription refused', { clientId, err: error });
+      return rpcError(message['id'], -32603, 'Subscription limit reached');
+    }
+    const stream: ListenStream = {
+      res,
+      clientId,
+      uris: check.accepted,
+      keys: check.keys,
+      openedAt: this.#now(),
+      slowSince: undefined,
+      release,
+    };
+    streams.add(stream);
+    this.#listens.set(clientId, streams);
+    res.on('close', () => {
+      stream.release();
+      streams.delete(stream);
+      if (streams.size === 0 && this.#listens.get(clientId) === streams) {
+        this.#listens.delete(clientId);
+      }
+    });
+    return undefined;
   }
 
   #authFailed(remote: string, presented: boolean): void {

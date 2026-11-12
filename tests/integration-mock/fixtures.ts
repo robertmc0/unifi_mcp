@@ -7,11 +7,23 @@
 import { request as httpRequest } from 'node:http';
 import { join } from 'node:path';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
-import { defineOperation, type OperationDescriptor } from '@unifi-local-mcp/core';
-import { loadServiceConfig, startService, type RunningService } from '@unifi-local-mcp/mcp-server';
+import {
+  defineOperation,
+  type ContractInventory,
+  type EventHubLimits,
+  type EventStreamDescriptor,
+  type OperationDescriptor,
+} from '@unifi-local-mcp/core';
+import {
+  loadServiceConfig,
+  startService,
+  type ListenLimits,
+  type RunningService,
+} from '@unifi-local-mcp/mcp-server';
 import { afterEach } from 'vitest';
 import { MockConsole, sendJson } from '../fixtures/mock-console.ts';
 import { testPki } from '../fixtures/test-pki.ts';
+import { ServerWebSocket } from '../fixtures/ws-server.ts';
 import {
   getInfo,
   getPicture,
@@ -35,14 +47,26 @@ export const OPERATIONS: OperationDescriptor[] = [
   getPicture,
 ];
 
+export const NETWORK_KEY = 'synthetic-network-key-SENTINEL-77';
+
+/** The synthetic inventory plus one documented subscription for event tests. */
+export const EVENT_INVENTORY: ContractInventory = (moduleId, revision, method, path) =>
+  inventory(moduleId, revision, method, path) ||
+  (moduleId === 'network' &&
+    revision === '1.0' &&
+    method === 'GET' &&
+    path === '/v1/subscribe/things');
+
 export interface TestService {
   service: RunningService;
   mock: MockConsole;
+  /** WebSocket subscriptions the synthetic console accepted, in order. */
+  sockets: ServerWebSocket[];
   consoleId: string;
   logs: string[];
   mcpUrl: URL;
   /** Creates a client with the given grants on the test console and returns its token. */
-  token(clientId: string, allow: string[], consoles?: boolean): string;
+  token(clientId: string, allow: string[], consoles?: boolean, sensitive?: string[]): string;
 }
 
 const running: { stop: () => Promise<void> }[] = [];
@@ -57,6 +81,9 @@ export async function startTestService(options: {
   streamRecheckMs?: number;
   /** Enable the admin listener on an ephemeral loopback port. */
   admin?: boolean;
+  eventStreams?: EventStreamDescriptor[];
+  eventHubLimits?: Partial<EventHubLimits>;
+  listenLimits?: Partial<ListenLimits>;
 }): Promise<TestService> {
   const pki = testPki();
   const logs: string[] = [];
@@ -83,8 +110,11 @@ export async function startTestService(options: {
     config,
     masterKey: testKey('service'),
     operations: OPERATIONS,
-    inventory,
+    inventory: EVENT_INVENTORY,
     logSink: { write: (line: string) => logs.push(line) },
+    ...(options.eventStreams === undefined ? {} : { eventStreams: options.eventStreams }),
+    ...(options.eventHubLimits === undefined ? {} : { eventHubLimits: options.eventHubLimits }),
+    ...(options.listenLimits === undefined ? {} : { listenLimits: options.listenLimits }),
     ...(options.streamRecheckMs === undefined ? {} : { streamRecheckMs: options.streamRecheckMs }),
   });
   const mock = await MockConsole.start({ key: pki.serverKey, cert: pki.serverCert });
@@ -94,6 +124,14 @@ export async function startTestService(options: {
       await mock.stop();
     },
   });
+  const sockets: ServerWebSocket[] = [];
+  mock.upgrade = (request, socket) => {
+    if (request.headers['x-api-key'] !== NETWORK_KEY) {
+      socket.end('HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\n\r\n');
+      return;
+    }
+    sockets.push(new ServerWebSocket(request, socket));
+  };
   mock.respond = (req, res) => {
     if (req.url.endsWith('/picture')) {
       res.writeHead(200, { 'content-type': 'image/jpeg' });
@@ -121,21 +159,26 @@ export async function startTestService(options: {
     );
     consoleId = view.id;
     service.consoles.setModulePort(consoleId, 'network', mock.port, CLI);
-    service.consoles.setCredential(consoleId, 'network', 'synthetic-network-key-SENTINEL-77', CLI);
+    service.consoles.setCredential(consoleId, 'network', NETWORK_KEY, CLI);
     service.consoles.setPolicy(consoleId, { modules: { network: { state: 'read_write' } } }, CLI);
     service.consoles.recordObservedVersion(consoleId, 'network', '1.0.5');
   }
   return {
     service,
     mock,
+    sockets,
     consoleId,
     logs,
     mcpUrl: new URL('/mcp', service.url),
-    token: (clientId, allow, consoles = true) =>
+    token: (clientId, allow, consoles = true, sensitive = []) =>
       service.clients.create(
         {
           clientId,
-          policy: { allow, consoles: consoles && consoleId !== '' ? { [consoleId]: {} } : {} },
+          policy: {
+            allow,
+            consoles: consoles && consoleId !== '' ? { [consoleId]: {} } : {},
+            ...(sensitive.length === 0 ? {} : { sensitive }),
+          },
         },
         CLI,
       ).token,

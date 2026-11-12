@@ -43,6 +43,11 @@ All notable changes to this project are documented here. The format follows
   one authorisation point for streams and each message, and an on-demand event hub with a
   bounded buffer, gap markers, opaque cursors, backoff and a global connection-attempt
   limit.
+- Event subscriptions, part 2: event streams as MCP resources (with cursors) and
+  `subscriptions/listen` for 2026-era clients, filtered per client in the HTTP gate; one
+  SDK handler per client so notifications reach only their own client; subscriptions
+  closed on revocation, withdrawn grants, after one hour and for slow consumers; works
+  through the stdio bridge.
 
 ### Added — Phase 2: UniFi Network (gate passed 2026-11-11)
 

@@ -28,9 +28,13 @@ import { AuditUnavailableError, type AuditLog } from '@unifi-local-mcp/telemetry
 import { MODULE_IDS, type ConsoleRegistry } from '@unifi-local-mcp/unifi-api';
 import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod';
+import { registerEventResources, type EventServices } from './events.ts';
 
 export interface ToolContext {
   principal: Principal;
+  /** `modern` (2026-07-28) clients may subscribe to event resources (ADR 0020 §5). */
+  era?: 'legacy' | 'modern';
+  events?: EventServices;
   registry: OperationRegistry;
   dispatcher: Dispatcher;
   approvals: ApprovalService;
@@ -349,6 +353,19 @@ export function buildMcpServer(ctx: ToolContext): McpServer {
         );
       },
     );
+  }
+
+  if (ctx.events !== undefined) {
+    const client = ctx.security.clientPolicy(ctx.principal.clientId);
+    if (client?.clientId === ctx.principal.clientId) {
+      registerEventResources(server, {
+        clientId: ctx.principal.clientId,
+        consoleIds: Object.keys(client.consoles),
+        events: ctx.events,
+        audit: ctx.audit,
+        subscribe: ctx.era === 'modern',
+      });
+    }
   }
 
   if (canWrite) {
