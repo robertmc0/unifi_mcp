@@ -147,6 +147,36 @@ None of these writes has a concurrency precondition in the contract (no version 
 An approved write applies the approved arguments to whatever the console holds at that
 moment, so review the current state before approving.
 
+## Testing against a real console
+
+`npm run test:live` runs the Protect reads your console's version supports, together with
+the Network reads ([applications-network.md](applications-network.md#testing-against-a-real-console)),
+with the same settings. It is never part of `npm run check` or CI.
+
+```sh
+UNIFI_LIVE_HOST=<console address> \
+UNIFI_LIVE_NETWORK_KEY_FILE=<file with the API key> \
+UNIFI_LIVE_TLS_PIN=sha256/… \
+UNIFI_LIVE_REPORT=docs/api-coverage/live/network-11.0.97.json \
+UNIFI_LIVE_PROTECT_REPORT=docs/api-coverage/live/protect-7.3.74.json \
+npm run test:live
+```
+
+- Only the Protect reads are registered, a guard refuses anything that is not a GET, the
+  hard lock is on and the client can only read. `UNIFI_LIVE_PROTECT_KEY_FILE` sets a
+  different key for Protect.
+- Reads that need a newer Protect than the console runs are skipped. Name the report after
+  the revision the console reaches: `protect-7.3.74.json` for 7.3.x, `protect-7.4.96.json`
+  for 7.4.x.
+- A camera snapshot is fetched only with `UNIFI_LIVE_PROTECT_SNAPSHOT=1`. It stays in
+  memory and is discarded.
+- To learn how event subscriptions authenticate, it asks the documented
+  `/v1/subscribe/events` for a WebSocket upgrade twice: with your key, and with a random
+  key as the control (one failed login on the console). Only the status line is read; no
+  event is.
+- The report holds operation ids, outcomes, the Protect version and the two upgrade
+  statuses. It holds no names, ids, e-mail addresses or data. Read it before you commit it.
+
 ## Credentials are never returned
 
 Some Protect results grant access by themselves. The service removes them from every

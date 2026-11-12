@@ -30,10 +30,7 @@ import {
   ExecutionStore,
   OperationRegistry,
   satisfies,
-  type ExecutionCall,
-  type ExecutorOutcome,
   type OperationDescriptor,
-  type OperationExecutor,
 } from '@unifi-local-mcp/core';
 import { ClientPolicySchema, PolicyStore } from '@unifi-local-mcp/policy';
 import { databasePathFor, MasterKey, openStorage } from '@unifi-local-mcp/storage';
@@ -54,6 +51,7 @@ import {
 import { afterAll, describe, expect, it } from 'vitest';
 import * as z from 'zod';
 import { mismatchSummary } from '../fixtures/schema-mismatch.ts';
+import { category, httpDetail, ReadOnlyGuard, type Outcome } from './shared.ts';
 
 const env = process.env;
 const HOST = env['UNIFI_LIVE_HOST']?.trim() ?? '';
@@ -66,39 +64,6 @@ const ENABLED = HOST !== '' && KEY_FILE !== '' && (PIN !== '' || CA_FILE !== '')
 
 const CLI = { type: 'cli', id: 'live-test' } as const;
 const PRINCIPAL = { clientId: 'live-reader' };
-
-/** Refuses anything but a GET of a read, and records what was sent. */
-class ReadOnlyGuard implements OperationExecutor {
-  readonly sent: string[] = [];
-  readonly #inner: OperationExecutor;
-  constructor(inner: OperationExecutor) {
-    this.#inner = inner;
-  }
-  execute(call: ExecutionCall): Promise<ExecutorOutcome> {
-    if (call.descriptor.httpMethod !== 'GET' || call.descriptor.effect !== 'read') {
-      throw new Error(`Live tests never send ${call.descriptor.httpMethod} requests.`);
-    }
-    this.sent.push(`GET ${call.descriptor.pathTemplate}`);
-    return this.#inner.execute(call);
-  }
-}
-
-/** An upstream enum value such as `GATEWAY`, or `other`; never free text. */
-const category = (value: unknown): string =>
-  typeof value === 'string' && /^[A-Z][A-Z_]{0,31}$/.test(value) ? value : 'other';
-
-/** ` (HTTP 500, code …)` from an executor message, which carries only a vetted code. */
-const httpDetail = (message: string): string => {
-  const match = /\(HTTP (\d{3})(?:, code ([A-Za-z0-9][A-Za-z0-9_.-]{0,63}))?\)/.exec(message);
-  if (match === null) return '';
-  return ` (HTTP ${match[1] ?? ''}${match[2] === undefined ? '' : `, code ${match[2]}`})`;
-};
-
-interface Outcome {
-  operationId: string;
-  outcome: string;
-  mismatches?: string[];
-}
 
 describe.skipIf(!ENABLED)('live read-only: UniFi Network', () => {
   const outcomes: Outcome[] = [];

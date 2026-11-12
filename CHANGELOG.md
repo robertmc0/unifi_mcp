@@ -24,6 +24,8 @@ All notable changes to this project are documented here. The format follows
 - All 38 documented Protect reads, with `camera_image`, `location` and
   `personal_identifier` grants where needed; RTSPS stream URLs are never returned
   (ADR 0019 §5).
+- Opt-in live read-only test for Protect (`npm run test:live`): every read the console's
+  version supports, an optional snapshot, and a WebSocket authentication probe.
 - Protect 7.3.74, the current official release, is supported: operations are built from
   the oldest revision that documents them, and `api:reconcile` checks that later revisions
   only add (ADR 0019 §7).

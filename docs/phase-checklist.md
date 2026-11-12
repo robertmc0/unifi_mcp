@@ -390,7 +390,12 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
    manager, MCP resources with `subscriptions/listen`, per-client filtering; tests for
    expiry, revocation, client and upstream disconnects, reconnect storms and slow
    consumers.
-8. **Coverage, live read-only test and write runbook.**
+8. **Coverage, live read-only test and write runbook.** Live test started (2026-11-12):
+   `tests/integration-live-readonly/protect.test.ts` runs every Protect read the console's
+   version supports, an optional snapshot, and a WebSocket upgrade probe (key and random
+   key) of `/v1/subscribe/events`; the guard and helpers are shared with Network
+   (`shared.ts`). Dry-run against the synthetic console (now Network and Protect).
+   **Waiting for the owner's run.**
 9. **Docs**: `applications-protect.md` and updates to the manual.
 
 ### Gate (spec §16)

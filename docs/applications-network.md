@@ -137,8 +137,9 @@ moment, so review the current state before approving.
 
 ### Read-only checks
 
-`npm run test:live` runs every read against your console from a source checkout. It is
-never part of `npm run check` or CI.
+`npm run test:live` runs every read against your console from a source checkout, and the
+Protect reads as well ([applications-protect.md](applications-protect.md#testing-against-a-real-console)).
+It is never part of `npm run check` or CI.
 
 - Only the reads are registered in that process.
 - A guard refuses anything that is not a GET.

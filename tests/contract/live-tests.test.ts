@@ -24,18 +24,31 @@ describe('live tests', () => {
     expect(pkg.scripts['check']).not.toMatch(/live/);
   });
 
-  it('register only reads, refuse non-GET requests, and keep the hard lock on', async () => {
-    const source = await read('tests/integration-live-readonly/network.test.ts');
-    expect(source).toContain(
-      'for (const descriptor of NETWORK_READS) registry.register(descriptor);',
-    );
-    expect(source).not.toMatch(/NETWORK_WRITES|NETWORK_OPERATIONS|ADAPTER_OPERATIONS/);
-    expect(source).toContain(
+  it('guard every request: only GETs of reads pass', async () => {
+    const shared = await read('tests/integration-live-readonly/shared.ts');
+    expect(shared).toContain(
       "call.descriptor.httpMethod !== 'GET' || call.descriptor.effect !== 'read'",
     );
-    expect(source).toContain('deployment: { forceReadOnly: true }');
-    expect(source).toContain("allow: ['network.*.read']");
+    // The WebSocket probe sends one GET upgrade and reads only its status line.
+    expect(shared).toContain('`GET ${connection.endpoint.basePath}${options.path} HTTP/1.1`');
+    expect(shared.match(/socket\.write\(/g)).toHaveLength(1);
   });
+
+  it.each([
+    ['network', 'NETWORK_READS', /NETWORK_WRITES|NETWORK_OPERATIONS|ADAPTER_OPERATIONS/],
+    ['protect', 'PROTECT_READS', /PROTECT_WRITES|PROTECT_OPERATIONS|ADAPTER_OPERATIONS/],
+  ])(
+    '%s: register only reads, use the guard, and keep the hard lock on',
+    async (module, reads, writes) => {
+      const source = await read(`tests/integration-live-readonly/${module}.test.ts`);
+      expect(source).toContain(`for (const descriptor of ${reads}) registry.register(descriptor);`);
+      expect(source).not.toMatch(writes);
+      expect(source).toContain('new ReadOnlyGuard(new UnifiExecutor(');
+      expect(source).not.toMatch(/new UnifiExecutor\((?!\{ consoles, egress, logger \}\)\))/);
+      expect(source).toContain('deployment: { forceReadOnly: true }');
+      expect(source).toContain(`allow: ['${module}.*.read']`);
+    },
+  );
 });
 
 describe('live report mismatch summaries', () => {

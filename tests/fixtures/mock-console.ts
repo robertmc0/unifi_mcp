@@ -5,7 +5,7 @@
  */
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'node:http';
 import { createServer, type Server } from 'node:https';
-import type { AddressInfo } from 'node:net';
+import type { AddressInfo, Socket } from 'node:net';
 
 export interface RecordedRequest {
   method: string;
@@ -15,6 +15,9 @@ export interface RecordedRequest {
 }
 
 export type Responder = (request: RecordedRequest, response: ServerResponse) => void;
+
+/** Answers an HTTP upgrade (WebSocket) request on the raw socket. */
+export type UpgradeResponder = (request: RecordedRequest, socket: Socket, head: Buffer) => void;
 
 export function sendJson(
   response: ServerResponse,
@@ -31,6 +34,10 @@ export class MockConsole {
   tlsHandshakes = 0;
   respond: Responder = (_request, response) => {
     sendJson(response, 200, {});
+  };
+  /** By default an upgrade is refused with 404. Upgrades are recorded like requests. */
+  upgrade: UpgradeResponder = (_request, socket) => {
+    socket.end('HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n');
   };
   readonly #server: Server;
   readonly #open = new Set<{ destroy: () => void }>();
@@ -62,6 +69,17 @@ export class MockConsole {
         mock.requests.push(recorded);
         mock.respond(recorded, response);
       });
+    });
+    server.on('upgrade', (request: IncomingMessage, socket: Socket, head: Buffer) => {
+      socket.on('error', () => undefined);
+      const recorded = {
+        method: request.method ?? '',
+        url: request.url ?? '',
+        headers: request.headers,
+        body: '',
+      };
+      mock.requests.push(recorded);
+      mock.upgrade(recorded, socket, head);
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     return mock;
