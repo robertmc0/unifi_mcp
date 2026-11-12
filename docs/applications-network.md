@@ -2,8 +2,9 @@
 
 > **Status: Phase 2 complete.** All 73 documented operations of the Network Integration
 > API 11.0.97 (41 reads, 32 writes) are implemented and tested against a synthetic console.
-> 33 reads were also checked on a real console running Network 11.0.99; the others had
-> nothing to read there, or failed in the console (see Limitations). Testing against your
+> 23 reads returned data from a real console running Network 11.0.99 and matched the
+> contract; the others returned empty lists, had nothing to read there, or failed in the
+> console (see Limitations). Testing against your
 > own console is optional and opt-in ([below](#testing-against-a-real-console)).
 
 The service uses the **official local** UniFi Network Integration API on each console,

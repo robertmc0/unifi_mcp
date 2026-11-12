@@ -4,145 +4,42 @@
   "date": "2026-11-12",
   "applicationVersion": "7.3.74",
   "supported": true,
-  "websocketAuth": {
-    "withKey": 101,
-    "withRandomKey": 401
-  },
+  "websocketAuth": { "withKey": 101, "withRandomKey": 401 },
   "websocketAcceptsApiKey": "yes",
   "results": [
-    {
-      "operationId": "protect.nvrs.list",
-      "outcome": "upstream_contract_mismatch",
-      "mismatches": ["armMode.armProfileId: invalid_type (expected string, received undefined)"]
-    },
-    {
-      "operationId": "protect.alarm.list_arm_profiles",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.files.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.cameras.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.cameras.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.lights.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.lights.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.sensors.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.sensors.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.sirens.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.sirens.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.speakers.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.speakers.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.chimes.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.chimes.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.relays.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.relays.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.bridges.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.bridges.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.link_stations.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.link_stations.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.alarm_hubs.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.alarm_hubs.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.fobs.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.fobs.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.viewers.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.viewers.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.liveviews.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.liveviews.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.users.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.users.get",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.users.list_ulp",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "protect.users.get_ulp",
-      "outcome": "ok"
-    },
+    { "operationId": "protect.nvrs.list", "outcome": "ok" },
+    { "operationId": "protect.alarm.list_arm_profiles", "outcome": "ok (empty)" },
+    { "operationId": "protect.files.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.cameras.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.cameras.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.lights.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.lights.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.sensors.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.sensors.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.sirens.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.sirens.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.speakers.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.speakers.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.chimes.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.chimes.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.relays.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.relays.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.bridges.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.bridges.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.link_stations.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.link_stations.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.alarm_hubs.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.alarm_hubs.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.fobs.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.fobs.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.viewers.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.viewers.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.liveviews.list", "outcome": "ok (empty)" },
+    { "operationId": "protect.liveviews.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.users.list", "outcome": "ok" },
+    { "operationId": "protect.users.get", "outcome": "ok" },
+    { "operationId": "protect.users.list_ulp", "outcome": "ok" },
+    { "operationId": "protect.users.get_ulp", "outcome": "ok" },
     {
       "operationId": "protect.alarm.list_external_profiles",
       "outcome": "skipped: needs >=7.4.96 <8"
@@ -151,13 +48,7 @@
       "operationId": "protect.alarm.get_external_profile",
       "outcome": "skipped: needs >=7.4.96 <8"
     },
-    {
-      "operationId": "protect.cameras.get_rtsps_streams",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "protect.cameras.get_snapshot",
-      "outcome": "skipped: nothing to read"
-    }
+    { "operationId": "protect.cameras.get_rtsps_streams", "outcome": "skipped: nothing to read" },
+    { "operationId": "protect.cameras.get_snapshot", "outcome": "skipped: nothing to read" }
   ]
 }

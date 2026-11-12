@@ -262,9 +262,9 @@ backups, and the Phase 5 items listed under the steps.
 ## Phase 2 — UniFi Network ✅ (gate passed 2026-11-11)
 
 All gate items below are met. Carried forward: the optional manual write runbook on a real
-console (owner's choice, never required); the 7 reads with nothing to read on the test
-console, and `network.networks.get_references`, which fails in the console (documented
-limitation), are not live-validated; the Phase 1 carry-forwards (Codex guide, arm64
+console (owner's choice, never required); the 17 reads that had nothing to read or
+returned empty lists on the test console, and `network.networks.get_references`, which
+fails in the console (documented limitation), are not live-validated; the Phase 1 carry-forwards (Codex guide, arm64
 hardware, Phase 5 items).
 
 Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
@@ -330,7 +330,9 @@ Baseline: Network Integration API v11.0.97 (73 operations: 41 reads, 32 writes),
       Run 2026-11-11 against a console with Network 11.0.99, GET only
       ([record](api-coverage/live/network-11.0.97.json)): 33 reads matched the contract, 7
       had nothing to read, and `network.networks.get_references` fails in the console
-      (HTTP 500 for four of five networks; a documented limitation).
+      (HTTP 500 for four of five networks; a documented limitation). Refreshed 2026-11-12:
+      23 reads returned data and matched, 10 returned empty lists (no longer counted as
+      validated), 7 had nothing to read.
       `tests/contract/live-tests.test.ts` keeps the test opt-in and read-only.
 - [x] Field shapes, pagination, filtering and errors compared against official docs
       Field shapes come from the official contract (generated schemas, strict requests,
@@ -416,8 +418,11 @@ subscriptions, 42 writes), in `api-specs/protect/` ([ADR 0019](adr/0019-protect-
    authenticate with the API key (101 with it, 401 with a random key); `GET /v1/nvrs` left
    out the required `armMode.armProfileId`, now a reviewed exception in the generator
    (`optionalResponseProperties`). Empty lists are recorded as `ok (empty)` and no longer
-   count as validated. ADR 0019 §8. **Next:** the owner's rerun to refresh the record;
-   coverage and the write runbook.
+   count as validated. ADR 0019 §8. Rerun (2026-11-12): all 20 reads matched,
+   `protect.nvrs.list` included; 5 count as validated (NVRs and the four user reads), 15
+   lists were empty. The same run refreshed the Network record (23 validated, 10 empty,
+   `get_references` still failing in the console). **Next:** coverage and the write
+   runbook.
 9. **Docs**: `applications-protect.md` and updates to the manual.
 
 ### Gate (spec §16)

@@ -29,12 +29,7 @@
       "origin": "USER_DEFINED",
       "result": "upstream_unavailable (HTTP 500, code api.unexpected-error)"
     },
-    {
-      "management": "GATEWAY",
-      "default": false,
-      "origin": "USER_DEFINED",
-      "result": "ok"
-    }
+    { "management": "GATEWAY", "default": false, "origin": "USER_DEFINED", "result": "ok" }
   ],
   "pagination": {
     "list": "network.networks.list",
@@ -44,203 +39,57 @@
     "nextPageHasOne": true,
     "distinctItems": true
   },
-  "filter": {
-    "accepted": true
-  },
+  "filter": { "accepted": true },
   "protectApplicationVersion": "7.3.74",
-  "protectKeyCheck": {
-    "withNetworkKey": "ok",
-    "withRandomKey": "upstream_unauthorized"
-  },
+  "protectKeyCheck": { "withNetworkKey": "ok", "withRandomKey": "upstream_unauthorized" },
   "networkKeyAuthorisesProtect": "yes",
   "results": [
-    {
-      "operationId": "network.info.get",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.devices.list_pending",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.reference.list_countries",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.reference.list_dpi_applications",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.reference.list_dpi_categories",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.sites.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.devices.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.devices.get",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.clients.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.clients.get",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.networks.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.networks.get",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.wifi.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.wifi.get",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.firewall.list_policies",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.firewall.get_policy",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.firewall.list_zones",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.firewall.get_zone",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.acl.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.acl.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "network.dns.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.dns.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "network.hotspot.list_vouchers",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.hotspot.get_voucher",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "network.switching.list_lags",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.switching.get_lag",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "network.switching.list_mc_lag_domains",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.switching.get_mc_lag_domain",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "network.switching.list_switch_stacks",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.switching.get_switch_stack",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "network.traffic_lists.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.traffic_lists.get",
-      "outcome": "skipped: nothing to read"
-    },
-    {
-      "operationId": "network.devices.list_tags",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.vpn.list_servers",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.vpn.list_site_to_site_tunnels",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.wans.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.radius.list_profiles",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.devices.get_statistics",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.networks.get_references",
-      "outcome": "upstream_unavailable"
-    },
-    {
-      "operationId": "network.networks.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.acl.get_ordering",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.firewall.list_zones",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.firewall.get_policy_ordering",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.sites.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.networks.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.networks.list",
-      "outcome": "ok"
-    },
-    {
-      "operationId": "network.sites.list",
-      "outcome": "ok"
-    }
+    { "operationId": "network.info.get", "outcome": "ok" },
+    { "operationId": "network.devices.list_pending", "outcome": "ok (empty)" },
+    { "operationId": "network.reference.list_countries", "outcome": "ok" },
+    { "operationId": "network.reference.list_dpi_applications", "outcome": "ok" },
+    { "operationId": "network.reference.list_dpi_categories", "outcome": "ok" },
+    { "operationId": "network.sites.list", "outcome": "ok" },
+    { "operationId": "network.devices.list", "outcome": "ok" },
+    { "operationId": "network.devices.get", "outcome": "ok" },
+    { "operationId": "network.clients.list", "outcome": "ok" },
+    { "operationId": "network.clients.get", "outcome": "ok" },
+    { "operationId": "network.networks.list", "outcome": "ok" },
+    { "operationId": "network.networks.get", "outcome": "ok" },
+    { "operationId": "network.wifi.list", "outcome": "ok" },
+    { "operationId": "network.wifi.get", "outcome": "ok" },
+    { "operationId": "network.firewall.list_policies", "outcome": "ok" },
+    { "operationId": "network.firewall.get_policy", "outcome": "ok" },
+    { "operationId": "network.firewall.list_zones", "outcome": "ok" },
+    { "operationId": "network.firewall.get_zone", "outcome": "ok" },
+    { "operationId": "network.acl.list", "outcome": "ok (empty)" },
+    { "operationId": "network.acl.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "network.dns.list", "outcome": "ok (empty)" },
+    { "operationId": "network.dns.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "network.hotspot.list_vouchers", "outcome": "ok (empty)" },
+    { "operationId": "network.hotspot.get_voucher", "outcome": "skipped: nothing to read" },
+    { "operationId": "network.switching.list_lags", "outcome": "ok (empty)" },
+    { "operationId": "network.switching.get_lag", "outcome": "skipped: nothing to read" },
+    { "operationId": "network.switching.list_mc_lag_domains", "outcome": "ok (empty)" },
+    { "operationId": "network.switching.get_mc_lag_domain", "outcome": "skipped: nothing to read" },
+    { "operationId": "network.switching.list_switch_stacks", "outcome": "ok (empty)" },
+    { "operationId": "network.switching.get_switch_stack", "outcome": "skipped: nothing to read" },
+    { "operationId": "network.traffic_lists.list", "outcome": "ok (empty)" },
+    { "operationId": "network.traffic_lists.get", "outcome": "skipped: nothing to read" },
+    { "operationId": "network.devices.list_tags", "outcome": "ok (empty)" },
+    { "operationId": "network.vpn.list_servers", "outcome": "ok" },
+    { "operationId": "network.vpn.list_site_to_site_tunnels", "outcome": "ok (empty)" },
+    { "operationId": "network.wans.list", "outcome": "ok" },
+    { "operationId": "network.radius.list_profiles", "outcome": "ok" },
+    { "operationId": "network.devices.get_statistics", "outcome": "ok" },
+    { "operationId": "network.networks.get_references", "outcome": "upstream_unavailable" },
+    { "operationId": "network.networks.list", "outcome": "ok" },
+    { "operationId": "network.acl.get_ordering", "outcome": "ok" },
+    { "operationId": "network.firewall.list_zones", "outcome": "ok" },
+    { "operationId": "network.firewall.get_policy_ordering", "outcome": "ok" },
+    { "operationId": "network.sites.list", "outcome": "ok" },
+    { "operationId": "network.networks.list", "outcome": "ok" },
+    { "operationId": "network.networks.list", "outcome": "ok" },
+    { "operationId": "network.sites.list", "outcome": "ok" }
   ]
 }

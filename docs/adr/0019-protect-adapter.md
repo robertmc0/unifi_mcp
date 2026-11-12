@@ -258,6 +258,10 @@ record is [api-coverage/live/protect-7.3.74.json](../api-coverage/live/protect-7
 - **One deviation.** `GET /v1/nvrs` returned an NVR whose `armMode` left out
   `armProfileId`. The contract (`nvrArmMode`, in 7.3.74 and 7.4.96) requires it as a
   string or `null`. Every other `armMode` field was present and valid.
+- **Rerun with the exception below (same day).** All 20 reads matched, `GET /v1/nvrs`
+  included. Five returned data and count as live-validated (the NVR list and the four
+  user reads); the 15 lists came back empty (`ok (empty)`). The committed record is this
+  rerun.
 
 **Decision.** `nvrArmMode.armProfileId` is accepted when absent, in responses only. It is
 a reviewed deviation in the generator configuration (`optionalResponseProperties` in
