@@ -9,7 +9,7 @@
     "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e"
   },
   "x-note": "Written by hand from the cached PDF under the rules of docs/adr/0022-access-contract-transcription.md. Facts only: no vendor descriptions, examples or other prose. Checked against the PDF text by npm run api:reconcile.",
-  "x-pdf-pages": [[12, 101]],
+  "x-pdf-pages": [[12, 124]],
   "x-declined": [
     {
       "row": "Authorization",
@@ -109,6 +109,36 @@
       "row": "holiday_schedule",
       "page": 98,
       "reason": "The §5.16 response table repeats fields of the §5.13 schedule schema, the response's \"Schemas\"; the schema is transcribed once. Its week_schedule appears as \"weekly\" in the samples, as in §5.13."
+    },
+    {
+      "row": "activated_at",
+      "page": 111,
+      "reason": "Typed Object but described as a timestamp; every sample shows {}. Its shape is not documented."
+    },
+    {
+      "row": "expired_at",
+      "page": 112,
+      "reason": "Typed Object but described as a timestamp; every sample shows {}. Its shape is not documented."
+    },
+    {
+      "row": "activated_at",
+      "page": 118,
+      "reason": "Typed Object but described as a timestamp; every sample shows {}. Its shape is not documented."
+    },
+    {
+      "row": "expired_at",
+      "page": 118,
+      "reason": "Typed Object but described as a timestamp; every sample shows {}. Its shape is not documented."
+    },
+    {
+      "row": "bundles",
+      "page": 116,
+      "reason": "An array whose item type is not documented (\"reserved for future use\", always empty)."
+    },
+    {
+      "row": "bundles",
+      "page": 122,
+      "reason": "An array whose item type is not documented (\"reserved for future use\", always empty)."
     }
   ],
   "x-error-codes": [
@@ -159,18 +189,8 @@
   ],
   "x-pending": [
     "DELETE /api/v1/developer/api_server/certificates",
-    "DELETE /api/v1/developer/credentials/nfc_cards/sessions/{id}",
-    "DELETE /api/v1/developer/credentials/nfc_cards/tokens/{token}",
     "DELETE /api/v1/developer/door_groups/{id}",
     "DELETE /api/v1/developer/webhooks/endpoints/{id}",
-    "GET /api/v1/developer/credentials/nfc_cards/sessions/{id}",
-    "GET /api/v1/developer/credentials/nfc_cards/tokens",
-    "GET /api/v1/developer/credentials/nfc_cards/tokens/{token}",
-    "GET /api/v1/developer/credentials/qr_codes/download/{visitor_id}",
-    "GET /api/v1/developer/credentials/touch_passes",
-    "GET /api/v1/developer/credentials/touch_passes/assignable",
-    "GET /api/v1/developer/credentials/touch_passes/search",
-    "GET /api/v1/developer/credentials/touch_passes/{id}",
     "GET /api/v1/developer/devices",
     "GET /api/v1/developer/devices/notifications",
     "GET /api/v1/developer/devices/{device_id}/settings",
@@ -188,10 +208,6 @@
     "GET /api/v1/developer/users/{id}/identity/assignments",
     "GET /api/v1/developer/webhooks/endpoints",
     "POST /api/v1/developer/api_server/certificates",
-    "POST /api/v1/developer/credentials/nfc_cards/import",
-    "POST /api/v1/developer/credentials/nfc_cards/sessions",
-    "POST /api/v1/developer/credentials/pin_codes",
-    "POST /api/v1/developer/credentials/touch_passes",
     "POST /api/v1/developer/devices/{device_id}/doorbell",
     "POST /api/v1/developer/door_groups",
     "POST /api/v1/developer/system/logs",
@@ -200,8 +216,6 @@
     "POST /api/v1/developer/users/identity/invitations",
     "POST /api/v1/developer/users/{id}/identity/assignments",
     "POST /api/v1/developer/webhooks/endpoints",
-    "PUT /api/v1/developer/credentials/nfc_cards/tokens/{token}",
-    "PUT /api/v1/developer/credentials/touch_passes/{id}",
     "PUT /api/v1/developer/devices/{device_id}/settings",
     "PUT /api/v1/developer/door_groups/{id}",
     "PUT /api/v1/developer/doors/settings/emergency",
@@ -3590,6 +3604,675 @@
           "200": {}
         }
       }
+    },
+    "/api/v1/developer/credentials/pin_codes": {
+      "post": {
+        "x-note": "No request body; the sample sends an empty one. data is the generated PIN code.",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            },
+            "x-pdf": {
+              "page": 102
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/credentials/nfc_cards/sessions": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "device_id": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 103
+                    }
+                  },
+                  "reset_ua_card": {
+                    "type": "boolean",
+                    "x-pdf": {
+                      "page": 103
+                    }
+                  }
+                },
+                "required": ["device_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "session_id": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 103
+                          }
+                        }
+                      },
+                      "required": ["session_id"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/credentials/nfc_cards/sessions/{id}": {
+      "get": {
+        "x-note": "The path parameter table is labelled \"Request Body\" in the PDF.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 104
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 104
+                          }
+                        },
+                        "card_id": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 104
+                          }
+                        }
+                      },
+                      "required": ["token", "card_id"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 105
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/credentials/nfc_cards/tokens/{token}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 107
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/NfcCard"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 110
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      },
+      "put": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 111
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "alias": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 111
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/credentials/nfc_cards/tokens": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_num",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 108
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 108
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NfcCard"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/credentials/touch_passes": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_num",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 113
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 113
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["ACTIVE", "PENDING", "SUSPENDED", "INACTIVE"]
+            },
+            "x-pdf": {
+              "page": 113
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TouchPass"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "x-note": "The response is one object in the table and the sample, although count may be above 1. Purchasing charges the payment method configured in Access.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "count": {
+                    "type": "integer",
+                    "x-pdf": {
+                      "page": 122
+                    }
+                  }
+                },
+                "required": ["count"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PurchasedTouchPass"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/credentials/touch_passes/search": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "condition",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 115
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TouchPass"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/credentials/touch_passes/assignable": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AssignableTouchPass"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/credentials/touch_passes/{id}": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 118
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "card_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 118
+                    }
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": ["ACTIVE", "SUSPENDED"],
+                    "x-pdf": {
+                      "page": 118
+                    }
+                  },
+                  "bundles": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 118
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "bundle_id": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 118,
+                            "row": "bundles[].bundle_id"
+                          }
+                        },
+                        "bundle_status": {
+                          "type": "string",
+                          "enum": ["DISABLED"],
+                          "x-pdf": {
+                            "page": 118,
+                            "row": "bundles[].bundle_status"
+                          }
+                        }
+                      },
+                      "required": ["bundle_id", "bundle_status"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UpdatedTouchPass"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 120
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TouchPass"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/credentials/qr_codes/download/{visitor_id}": {
+      "get": {
+        "x-note": "Returns an image; the media type is taken from the sample's output file name (.png). Not generated until it is decided (ADR 0022 §5).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "visitor_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 123
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/credentials/nfc_cards/import": {
+      "post": {
+        "x-note": "A multipart CSV upload; not generated until it is decided (ADR 0022 §5).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "x-pdf": {
+                      "page": 124
+                    }
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "alias": {
+                            "type": "string",
+                            "x-pdf": {
+                              "page": 125,
+                              "sample": true
+                            }
+                          },
+                          "nfc_id": {
+                            "type": "string",
+                            "x-pdf": {
+                              "page": 125,
+                              "sample": true
+                            }
+                          },
+                          "token": {
+                            "type": "string",
+                            "x-pdf": {
+                              "page": 125,
+                              "sample": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5243,6 +5926,480 @@
                   "sample": true
                 }
               }
+            }
+          }
+        }
+      },
+      "NfcCard": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "x-pdf": {
+              "page": 106
+            }
+          },
+          "display_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 106
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["assigned", "pending", "disable", "deleted", "loss"],
+            "x-pdf": {
+              "page": 106
+            }
+          },
+          "alias": {
+            "type": "string",
+            "x-pdf": {
+              "page": 106
+            }
+          },
+          "card_type": {
+            "type": "string",
+            "x-pdf": {
+              "page": 106
+            }
+          },
+          "note": {
+            "type": "string",
+            "x-pdf": {
+              "page": 107,
+              "sample": true
+            }
+          },
+          "user_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 106
+            }
+          },
+          "user_type": {
+            "type": "string",
+            "enum": ["USER", "VISITOR"],
+            "x-pdf": {
+              "page": 106
+            }
+          },
+          "user": {
+            "type": "object",
+            "x-pdf": {
+              "page": 106
+            },
+            "properties": {
+              "id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 106,
+                  "row": "user.id"
+                }
+              },
+              "first_name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 106,
+                  "row": "user.first_name"
+                }
+              },
+              "last_name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 106,
+                  "row": "user.last_name"
+                }
+              },
+              "name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 106,
+                  "row": "user.name"
+                }
+              },
+              "avatar": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 107,
+                  "sample": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "TouchPass": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "card_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "last_activity": {
+            "type": "string",
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "PENDING", "SUSPENDED", "INACTIVE", "EXPIRED"],
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "user_avatar": {
+            "type": "string",
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "user_email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "user_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "user_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "user_status": {
+            "type": "string",
+            "enum": ["ACTIVE", "PENDING", "UNLINK"],
+            "x-pdf": {
+              "page": 112
+            }
+          },
+          "bundles": {
+            "type": "array",
+            "x-pdf": {
+              "page": 112
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "bundle_id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 112,
+                    "row": "bundles[].bundle_id"
+                  }
+                },
+                "bundle_status": {
+                  "type": "string",
+                  "enum": ["ACTIVE", "SUSPENDED"],
+                  "x-pdf": {
+                    "page": 112,
+                    "row": "bundles[].bundle_status"
+                  }
+                },
+                "device_id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 112,
+                    "row": "bundles[].device_id"
+                  }
+                },
+                "device_name": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 112,
+                    "row": "bundles[].device_name"
+                  }
+                },
+                "device_type": {
+                  "type": "integer",
+                  "x-pdf": {
+                    "page": 112,
+                    "row": "bundles[].device_type"
+                  }
+                },
+                "source": {
+                  "type": "string",
+                  "enum": ["google", "apple"],
+                  "x-pdf": {
+                    "page": 112,
+                    "row": "bundles[].source"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdatedTouchPass": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "card_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "last_activity": {
+            "type": "string",
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "PENDING", "SUSPENDED", "INACTIVE", "EXPIRED"],
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "user_avatar": {
+            "type": "string",
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "user_email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "user_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "user_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 118
+            }
+          },
+          "user_status": {
+            "type": "string",
+            "enum": ["ACTIVE", "PENDING", "UNLINK"],
+            "x-pdf": {
+              "page": 119
+            }
+          },
+          "bundles": {
+            "type": "array",
+            "x-pdf": {
+              "page": 119
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "bundle_id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 119,
+                    "row": "bundles[].bundle_id"
+                  }
+                },
+                "bundle_status": {
+                  "type": "string",
+                  "enum": ["ACTIVE", "SUSPENDED"],
+                  "x-pdf": {
+                    "page": 119,
+                    "row": "bundles[].bundle_status"
+                  }
+                },
+                "device_id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 119,
+                    "row": "bundles[].device_id"
+                  }
+                },
+                "device_name": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 119,
+                    "row": "bundles[].device_name"
+                  }
+                },
+                "device_type": {
+                  "type": "integer",
+                  "x-pdf": {
+                    "page": 119,
+                    "row": "bundles[].device_type"
+                  }
+                },
+                "source": {
+                  "type": "string",
+                  "enum": ["google", "apple"],
+                  "x-pdf": {
+                    "page": 119,
+                    "row": "bundles[].source"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "AssignableTouchPass": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "card_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "card_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "last_activity": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["SUSPENDED", "INACTIVE"],
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "user_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "user_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "user_email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "user_status": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          },
+          "user_avatar": {
+            "type": "string",
+            "x-pdf": {
+              "page": 116
+            }
+          }
+        }
+      },
+      "PurchasedTouchPass": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "card_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "card_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "last_activity": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "status": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "user_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "user_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "user_email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "user_status": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
+            }
+          },
+          "user_avatar": {
+            "type": "string",
+            "x-pdf": {
+              "page": 122
             }
           }
         }

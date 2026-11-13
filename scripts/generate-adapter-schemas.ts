@@ -89,6 +89,12 @@ export const GENERATED_MODULES = [
       'PUT /api/v1/developer/visitors/{id}/license_plates':
         'the PDF prints no body table, only a sample; without a body the write would send ' +
         'nothing (ADR 0022 §3)',
+      'GET /api/v1/developer/credentials/qr_codes/download/{visitor_id}':
+        'returns a PNG image; non-JSON operations are decided one by one with the adapter ' +
+        '(ADR 0022 §5)',
+      'POST /api/v1/developer/credentials/nfc_cards/import':
+        'a multipart CSV upload; non-JSON operations are decided one by one with the adapter ' +
+        '(ADR 0022 §5)',
     },
   },
 ] as const;

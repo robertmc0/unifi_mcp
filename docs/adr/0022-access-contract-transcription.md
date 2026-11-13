@@ -304,6 +304,21 @@ operations on pages 73 to 101; 50 pending.
 - A field's minimum version may be printed beside another row of the same name
   (`holiday_schedule`: §5.13, p.90); the check now accepts that page.
 
+Step 3, chapter §6 credentials (2026-11-13): 16 operations on pages 102 to 124; 34
+pending.
+
+- Pages 102 to 124 hold 100 rows other than `Authorization`, each transcribed or
+  declined. Removing a field, adding an enumeration value and dropping a required flag
+  each produced a report.
+- Declined: `activated_at` and `expired_at` (typed Object but described as timestamps;
+  every sample shows `{}`), and the bare `bundles` arrays of §6.14 and §6.17.
+- §6.15 prints the Touch Pass table again; it is transcribed with its own citations, like
+  §3.25 to §3.27. §6.18 (a PNG image, its media type taken from the sample's file name)
+  and §6.19 (a multipart CSV upload) are transcribed and not generated.
+- §6.1 returns the generated PIN code as `data`; §6.17 purchases Touch Passes with the
+  payment method configured in Access. Both matter for the adapter's security review, not
+  for the transcription.
+
 ## Consequences
 
 - Access gets schemas as strict as Network's and Protect's, from the same translator, and
