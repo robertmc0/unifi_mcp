@@ -605,7 +605,9 @@ command and its storage are built with the adapter.
    transcription mode; the Access entry in the generator with all 107 operations pending
    and the 44 error codes transcribed. The check already confirms every inventory
    operation's URL, method and permission key on its page. Evidence in ADR 0022.
-3. Transcription, one PDF chapter per commit, each with the regenerated module:
+3. ✅ **Transcription** (2026-11-13), one PDF chapter per commit, each with the
+   regenerated module. Complete: 107 operations, 98 generated, 9 not generated with
+   reasons, 39 PDF rows declined with reasons (ADR 0022, Evidence).
    - ✅ §3 users (2026-11-13): 29 operations, pages 12 to 51; §3.30 (multipart) omitted
      from generation. Declined with reasons: `touch_pass` in the user schema, `expand[]`,
      `bundles`, the §3.27 `emails` map. The detector learned the row shapes found in
@@ -628,7 +630,9 @@ command and its storage are built with the adapter.
    - ✅ §9 system logs (2026-11-13): 4 operations, pages 155 to 161; §9.3 (CSV export)
      and §9.5 (static files) not generated.
    - ✅ §10 UniFi Identity (2026-11-13): 6 operations, pages 162 to 169.
-   - §11 notifications and webhooks, §12 API server.
+   - ✅ §11 notifications and webhooks, §12 API server (2026-11-13): 7 operations;
+     §11.1 (WebSocket) and §12.1 (private key upload) not generated. Webhook reads return
+     the endpoint `secret` (security review).
 4. Access transport: port 12445, bearer token, the `{code, msg, data}` envelope and the
    §2.4 error codes, TLS pinning; a synthetic Access console for tests.
 5. Declared version (ADR 0021 §5): CLI command, storage, audit, expiry, labels.
@@ -636,7 +640,8 @@ command and its storage are built with the adapter.
    negative tests.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 3, §11 (notifications and webhooks) and §12 (API server).
+**Next:** step 4, the Access transport (port, bearer token, envelope, error codes, TLS
+pinning) and a synthetic Access console for tests.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests

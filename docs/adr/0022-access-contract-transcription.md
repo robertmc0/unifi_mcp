@@ -369,7 +369,7 @@ pending.
 Step 3, chapter §10 UniFi Identity (2026-11-13): 6 operations on pages 162 to 169; 7
 pending.
 
-- Pages 162 to 169 hold 21 rows other than `Authorization`, each transcribed or
+- Pages 162 to 169 hold 23 rows other than `Authorization`, each transcribed or
   declined. A wrong parent page and a removed field each produced a report.
 - §10.1's body is a JSON array of invitations, printed as `Array[Object].user_id` and
   `Array[Object].email`; it is cited as their parent (a list's fields may be printed
@@ -380,6 +380,26 @@ pending.
   label, which is declined with that explanation (on p.163 it even says String).
 - `resource_type` accepts one value of its enumeration, although an example lists several
   separated by commas.
+
+Step 3, chapters §11 notifications and webhooks, §12 API server (2026-11-13): 7
+operations; the transcription is complete.
+
+- Pages 170 to 194 hold table rows only for the webhook endpoints (p.173 to 179) and the
+  certificate upload (p.191). Declined: the request `headers` maps (p.175, p.177) and
+  the inbound delivery's `Signature` header (§11.7, outside the inventory).
+- §11.1 is a WebSocket whose messages are shown only as samples; it is transcribed as an
+  operation and decided with the event streams. §12.1 (a multipart private key upload) is
+  not generated. Webhook endpoint reads return each endpoint's `secret`, which matters for
+  the adapter's security review.
+
+The transcription as a whole (2026-11-13):
+
+- All 107 operations, 30 component schemas, 39 declined rows with reasons. Nothing is
+  pending and `x-pdf-pages` covers pages 1 to 194, so every detected row of the PDF is
+  transcribed or declined; `tests/contract/access-transcription.test.ts` keeps it so.
+- 98 operations are generated. Nine are not, each with its reason in the generator
+  configuration: five non-JSON (§3.30, §6.18, §6.19, §9.3, §12.1), the WebSocket (§11.1),
+  the static files (§9.5), §4.13 (no body table) and §8.3 (body disputed by the samples).
 
 ## Consequences
 

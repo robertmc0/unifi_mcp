@@ -102,6 +102,12 @@ export const GENERATED_MODULES = [
       'GET /api/v1/developer/system/static/{path}':
         'returns a file, and its path parameter contains slashes that one encoded path ' +
         'segment cannot carry; decided with the adapter (ADR 0022 §5)',
+      'GET /api/v1/developer/devices/notifications':
+        'a WebSocket whose messages are shown only as samples; decided with the event streams ' +
+        '(ADR 0020, ADR 0022 §5)',
+      'POST /api/v1/developer/api_server/certificates':
+        'a multipart upload of a TLS private key and certificate; non-JSON operations are ' +
+        'decided one by one with the adapter (ADR 0022 §5)',
       'POST /api/v1/developer/credentials/nfc_cards/import':
         'a multipart CSV upload; non-JSON operations are decided one by one with the adapter ' +
         '(ADR 0022 §5)',

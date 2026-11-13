@@ -9,7 +9,7 @@
     "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e"
   },
   "x-note": "Written by hand from the cached PDF under the rules of docs/adr/0022-access-contract-transcription.md. Facts only: no vendor descriptions, examples or other prose. Checked against the PDF text by npm run api:reconcile.",
-  "x-pdf-pages": [[12, 169]],
+  "x-pdf-pages": [[1, 194]],
   "x-declined": [
     {
       "row": "Authorization",
@@ -189,6 +189,21 @@
       "row": "",
       "page": 169,
       "reason": "The last line of the row \"data.[resource_type]\", printed over three lines, so it reads as a row without a label. It types the list under each resource type, which is transcribed from the samples (the row is printed Array[Object])."
+    },
+    {
+      "row": "headers",
+      "page": 175,
+      "reason": "An object used as a map of custom headers. The translator accepts no typed map in a request (ADR 0018)."
+    },
+    {
+      "row": "headers",
+      "page": 177,
+      "reason": "An object used as a map of custom headers. The translator accepts no typed map in a request (ADR 0018)."
+    },
+    {
+      "row": "Signature",
+      "page": 179,
+      "reason": "A header of the inbound webhook delivery (§11.7), which the console sends to a receiver. It is not an operation of the API and is outside the inventory."
     }
   ],
   "x-error-codes": [
@@ -237,15 +252,7 @@
     "CODE_USER_NAME_DUPLICATED",
     "CODE_USER_WORKER_NOT_EXISTS"
   ],
-  "x-pending": [
-    "DELETE /api/v1/developer/api_server/certificates",
-    "DELETE /api/v1/developer/webhooks/endpoints/{id}",
-    "GET /api/v1/developer/devices/notifications",
-    "GET /api/v1/developer/webhooks/endpoints",
-    "POST /api/v1/developer/api_server/certificates",
-    "POST /api/v1/developer/webhooks/endpoints",
-    "PUT /api/v1/developer/webhooks/endpoints/{id}"
-  ],
+  "x-pending": [],
   "paths": {
     "/api/v1/developer/users": {
       "post": {
@@ -5739,6 +5746,220 @@
           }
         }
       }
+    },
+    "/api/v1/developer/devices/notifications": {
+      "get": {
+        "x-note": "A WebSocket (Protocol: WebSocket). Its messages are shown only as samples (§11.1); they are transcribed when the event stream is decided (ADR 0020, ADR 0022 §5). Not generated.",
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/webhooks/endpoints": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookEndpoint"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "x-note": "headers, a map of custom headers, is declined (see x-declined).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 175
+                    }
+                  },
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 175
+                    }
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 175
+                    }
+                  }
+                },
+                "required": ["endpoint", "name", "events"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WebhookEndpoint"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/webhooks/endpoints/{id}": {
+      "put": {
+        "x-note": "headers, a map of custom headers, is declined (see x-declined).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 176
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 177
+                    }
+                  },
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 177
+                    }
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 177
+                    }
+                  }
+                },
+                "required": ["endpoint", "name", "events"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/WebhookEndpoint"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 178
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/api_server/certificates": {
+      "post": {
+        "x-note": "A multipart upload of a private key and a certificate. Not generated until it is decided (ADR 0022 §5). The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "format": "binary",
+                    "x-pdf": {
+                      "page": 191
+                    }
+                  },
+                  "cert": {
+                    "type": "string",
+                    "format": "binary",
+                    "x-pdf": {
+                      "page": 191
+                    }
+                  }
+                },
+                "required": ["key", "cert"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "delete": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "responses": {
+          "200": {}
+        }
+      }
     }
   },
   "components": {
@@ -9010,6 +9231,54 @@
           }
         },
         "required": ["id", "name", "deleted"]
+      },
+      "WebhookEndpoint": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 173
+            }
+          },
+          "endpoint": {
+            "type": "string",
+            "x-pdf": {
+              "page": 173
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 173
+            }
+          },
+          "secret": {
+            "type": "string",
+            "x-pdf": {
+              "page": 174
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 174
+            }
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 174
+            }
+          }
+        },
+        "required": ["id", "endpoint", "name", "secret", "events"]
       }
     }
   }

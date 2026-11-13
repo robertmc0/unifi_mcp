@@ -35,6 +35,12 @@ describe('Access transcription 2026-03-23', () => {
     ).toEqual([]);
   });
 
+  it('is complete: nothing pending, and the reverse check covers every page', () => {
+    // ADR 0022 §7. The PDF has 194 pages (api-specs/README.md).
+    expect(transcription['x-pending']).toEqual([]);
+    expect(transcription['x-pdf-pages']).toEqual([[1, 194]]);
+  });
+
   it('is the source of the generated module', async () => {
     const source = await readFile(MODULE, 'utf8');
     const digest = createHash('sha256').update(text).digest('hex');
