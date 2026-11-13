@@ -159,8 +159,8 @@ at all. It needs either a vendor change or an owner decision (§5).
 
 ## 4. Consequences
 
-- The adapter can be built and tested against synthetic mocks: transcribed schemas, the
-  `{code, msg, data}` envelope, the §2.4 error codes, reviewed security metadata, and
+- The adapter can be built and tested against synthetic mocks: transcribed schemas
+  ([ADR 0022](0022-access-contract-transcription.md)), the `{code, msg, data}` envelope, the §2.4 error codes, reviewed security metadata, and
   high risk for physical-access writes.
 - Under §5, Access runs on a real console only after an administrator has declared its
   version, and only for versions up to 4.2.16. Consoles that run a current release (4.3.x

@@ -589,10 +589,29 @@ audited, and expires after 30 days. Each operation's range is
 decision 23 ("capability detection"); the deviation is recorded in ADR 0021. The CLI
 command and its storage are built with the adapter.
 
-**Next:** decide how the PDF becomes adapter schemas (ADR 0022), then transcribe it and
-build the adapter on synthetic mocks: the `{code, msg, data}` envelope, the §2.4 error
-codes, the declared version, and reviewed security metadata with physical-access writes
-high risk.
+### Implementation order (plan)
+
+1. ✅ **Transcription format** (2026-11-13, [ADR 0022](adr/0022-access-contract-transcription.md)):
+   the PDF is transcribed by hand into `api-specs/access/2026-03-23/transcription.json`, an
+   OpenAPI 3.1 document in which every field cites its PDF page and row. The existing
+   translator generates the adapter schemas from it. Request fields come from field tables
+   only; response fields from tables and samples, optional and nullable; rows that
+   contradict themselves are declined with a reason. A dependency-free PDF text extraction
+   checks the transcription against the pinned PDF in both directions in
+   `api:reconcile`.
+2. Tooling: PDF text extraction, the two-way check, the translator's transcription mode,
+   the Access entry in the generator (all operations pending), offline structural tests.
+3. Transcription, one PDF chapter per commit (§3 users, §4 visitors, §5 policies,
+   §6 credentials, §7 spaces, §8 devices, §9 system logs, §10 identity, §11 notifications
+   and webhooks, §12 API server), each with the regenerated module.
+4. Access transport: port 12445, bearer token, the `{code, msg, data}` envelope and the
+   §2.4 error codes, TLS pinning; a synthetic Access console for tests.
+5. Declared version (ADR 0021 §5): CLI command, storage, audit, expiry, labels.
+6. Reads with reviewed metadata; then writes, physical-access writes always high risk;
+   negative tests.
+7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
+
+**Next:** step 2.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests
