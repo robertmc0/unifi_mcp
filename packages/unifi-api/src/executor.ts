@@ -12,6 +12,8 @@
  *   `outcomeUncertain` for anything after the request may have reached the console.
  * - Upstream text is never returned verbatim: only the HTTP status and a documented,
  *   pattern-checked error `code` are passed on.
+ * - A module with a result envelope (Access, ADR 0023 §1) succeeds only when its `code` is
+ *   the documented success code; any other code is an error, whatever the HTTP status.
  */
 import {
   renderPath,
@@ -25,6 +27,7 @@ import {
 import type { Logger } from '@unifi-local-mcp/telemetry';
 import type { ConsoleRegistry } from './consoles.ts';
 import { EgressError, type EgressGuard } from './egress.ts';
+import type { EnvelopeErrorClass, ResultEnvelope } from './modules.ts';
 import { connectTls, sendHttp, TransportError, type HttpResponse } from './transport.ts';
 
 const DEFAULT_MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
@@ -247,14 +250,20 @@ export class UnifiExecutor implements OperationExecutor {
         durationMs: Math.round(performance.now() - started),
       });
     }
-    return this.#interpret(response, isWrite, descriptor.responseType ?? 'json', {
-      correlationId: call.correlationId,
-      consoleId: connection.consoleId,
-      moduleId: connection.moduleId,
-      method: descriptor.httpMethod,
-      pathTemplate: descriptor.pathTemplate,
-      attempt: call.attempt,
-    });
+    return this.#interpret(
+      response,
+      isWrite,
+      descriptor.responseType ?? 'json',
+      connection.endpoint.envelope,
+      {
+        correlationId: call.correlationId,
+        consoleId: connection.consoleId,
+        moduleId: connection.moduleId,
+        method: descriptor.httpMethod,
+        pathTemplate: descriptor.pathTemplate,
+        attempt: call.attempt,
+      },
+    );
   }
 
   #transportFailure(error: unknown, isWrite: boolean, consoleId: string): UpstreamError {
@@ -300,6 +309,7 @@ export class UnifiExecutor implements OperationExecutor {
     response: HttpResponse,
     isWrite: boolean,
     responseType: ResponseType,
+    envelope: ResultEnvelope | undefined,
     request: Readonly<Record<string, unknown>>,
   ): ExecutorOutcome {
     const { status } = response;
@@ -313,6 +323,7 @@ export class UnifiExecutor implements OperationExecutor {
           });
     }
     const parsed = parseJson(response);
+    const code = parsed.ok ? upstreamCode(parsed.value) : undefined;
     if (status >= 200 && status < 300) {
       if (!parsed.ok) {
         return failure({
@@ -321,9 +332,17 @@ export class UnifiExecutor implements OperationExecutor {
           outcomeUncertain: isWrite,
         });
       }
-      return { ok: true, data: parsed.value };
+      if (envelope === undefined || code === envelope.successCode) {
+        return { ok: true, data: parsed.value };
+      }
+      if (code === undefined) {
+        return failure({
+          code: 'invalid_response',
+          message: 'The console returned a response without the documented result code.',
+          outcomeUncertain: isWrite,
+        });
+      }
     }
-    const code = parsed.ok ? upstreamCode(parsed.value) : undefined;
     const requestId = parsed.ok ? upstreamRequestId(parsed.value) : undefined;
     // The console answered with an error (not a transport failure). Only the status, the
     // documented code and the documented request id are logged; the request id lets an
@@ -334,46 +353,74 @@ export class UnifiExecutor implements OperationExecutor {
       ...(code === undefined ? {} : { upstreamCode: code }),
       ...(requestId === undefined ? {} : { upstreamRequestId: requestId }),
     });
-    const suffix = code === undefined ? '' : `, code ${code}`;
-    // Structured, for operations that declare a known failure (ADR 0018 §4).
-    const http = { status, ...(code === undefined ? {} : { upstreamCode: code }) };
-    if (status === 401 || status === 403) {
-      return failure({
+    // An envelope's error code says what went wrong whatever the HTTP status; a rate limit
+    // is still a rate limit.
+    if (envelope !== undefined && code !== undefined && code !== envelope.successCode) {
+      if (status !== 429) {
+        return failure(errorFor(envelope.classify(code), status, code, isWrite, undefined));
+      }
+    }
+    return failure(errorFor(statusClass(status), status, code, isWrite, response.retryAfter));
+  }
+}
+
+type ErrorClass = EnvelopeErrorClass | 'rate_limited';
+
+function statusClass(status: number): ErrorClass {
+  if (status === 401 || status === 403) return 'unauthorized';
+  if (status === 404) return 'not_found';
+  if (status === 429) return 'rate_limited';
+  if (status >= 500) return 'unavailable';
+  return 'rejected';
+}
+
+/** The client-facing error for a console's error answer; never the console's own text. */
+function errorFor(
+  kind: ErrorClass,
+  status: number,
+  code: string | undefined,
+  isWrite: boolean,
+  retryAfter: string | undefined,
+): UpstreamError {
+  const suffix = code === undefined ? '' : `, code ${code}`;
+  // Structured, for operations that declare a known failure (ADR 0018 §4).
+  const http = { status, ...(code === undefined ? {} : { upstreamCode: code }) };
+  switch (kind) {
+    case 'unauthorized':
+      return {
         ...http,
         code: 'upstream_unauthorized',
         message: `The console rejected the credential (HTTP ${String(status)}${suffix}).`,
-      });
-    }
-    if (status === 404) {
-      return failure({
+      };
+    case 'not_found':
+      return {
         ...http,
         code: 'upstream_not_found',
-        message: `The console reports that the resource does not exist (HTTP 404${suffix}).`,
-      });
-    }
-    if (status === 429) {
-      const delay = retryAfterMs(response.retryAfter);
-      return failure({
+        message: `The console reports that the resource does not exist (HTTP ${String(status)}${suffix}).`,
+      };
+    case 'rate_limited': {
+      const delay = retryAfterMs(retryAfter);
+      return {
         ...http,
         code: 'upstream_rate_limited',
         message: 'The console is rate limiting requests.',
         transient: true,
         ...(delay === undefined ? {} : { retryAfterMs: delay }),
-      });
+      };
     }
-    if (status >= 500) {
-      return failure({
+    case 'unavailable':
+      return {
         ...http,
         code: 'upstream_unavailable',
         message: `The console reported an internal error (HTTP ${String(status)}${suffix}).`,
         transient: true,
         outcomeUncertain: isWrite,
-      });
-    }
-    return failure({
-      ...http,
-      code: 'upstream_rejected',
-      message: `The console rejected the request (HTTP ${String(status)}${suffix}).`,
-    });
+      };
+    case 'rejected':
+      return {
+        ...http,
+        code: 'upstream_rejected',
+        message: `The console rejected the request (HTTP ${String(status)}${suffix}).`,
+      };
   }
 }

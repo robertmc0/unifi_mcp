@@ -314,6 +314,96 @@ describe('responses', () => {
   });
 });
 
+describe('result envelope (Access, ADR 0023 §1)', () => {
+  const accessRead = {
+    ...getInfo,
+    moduleId: 'access',
+    pathTemplate: '/api/v1/developer/info',
+  } as OperationDescriptor;
+  const accessWrite = {
+    ...getInfo,
+    moduleId: 'access',
+    effect: 'write',
+    httpMethod: 'PUT',
+    retryClass: 'idempotent',
+    pathTemplate: '/api/v1/developer/doors/{id}/unlock',
+  } as OperationDescriptor;
+  const VENDOR_TEXT = 'VENDOR-MESSAGE-SENTINEL';
+
+  async function access(status: number, body: unknown, descriptor = accessRead) {
+    const h = await setup();
+    h.consoles.setCredential(h.consoleId, 'access', 'synthetic-access-token-1', CLI);
+    h.mock.respond = (_req, res) => {
+      sendJson(res, status, body);
+    };
+    const outcome = await h.executor.execute(call(descriptor, h.consoleId, { id: 'door-1' }));
+    await h.close();
+    return outcome;
+  }
+
+  it('is a success only with the documented success code', async () => {
+    const body = { code: 'SUCCESS', msg: 'success', data: { id: 'x' } };
+    expect(await access(200, body)).toEqual({ ok: true, data: body });
+    expect(errorOf(await access(200, { data: { id: 'x' } }))).toMatchObject({
+      code: 'invalid_response',
+    });
+    expect(errorOf(await access(200, { data: {} }, accessWrite))).toMatchObject({
+      code: 'invalid_response',
+      outcomeUncertain: true,
+    });
+  });
+
+  it('turns an error code into the error it describes, whatever the HTTP status', async () => {
+    const answer = (code: string) => ({ code, msg: VENDOR_TEXT, data: null });
+    const rejected = errorOf(await access(200, answer('CODE_PARAMS_INVALID'), accessWrite));
+    expect(rejected).toMatchObject({
+      code: 'upstream_rejected',
+      status: 200,
+      upstreamCode: 'CODE_PARAMS_INVALID',
+    });
+    // The console refused the write: it did not happen, and is not retried.
+    expect(rejected.outcomeUncertain).toBeUndefined();
+    expect(rejected.transient).toBeUndefined();
+    expect(errorOf(await access(200, answer('CODE_ACCESS_TOKEN_INVALID')))).toMatchObject({
+      code: 'upstream_unauthorized',
+    });
+    for (const notFound of [
+      'CODE_RESOURCE_NOT_FOUND',
+      'CODE_NOT_EXISTS',
+      'CODE_USER_ACCOUNT_NOT_EXIST',
+    ]) {
+      expect(errorOf(await access(200, answer(notFound)))).toMatchObject({
+        code: 'upstream_not_found',
+      });
+    }
+    expect(errorOf(await access(400, answer('CODE_NOT_EXISTS')))).toMatchObject({
+      code: 'upstream_not_found',
+      status: 400,
+    });
+    expect(errorOf(await access(200, answer('CODE_SYSTEM_ERROR'), accessWrite))).toMatchObject({
+      code: 'upstream_unavailable',
+      transient: true,
+      outcomeUncertain: true,
+    });
+    expect(errorOf(await access(429, answer('CODE_SYSTEM_ERROR')))).toMatchObject({
+      code: 'upstream_rate_limited',
+    });
+    expect(errorOf(await access(503, 'not json'))).toMatchObject({
+      code: 'upstream_unavailable',
+    });
+    expect(JSON.stringify(rejected)).not.toContain(VENDOR_TEXT);
+  });
+
+  it('applies only to modules that declare it', async () => {
+    const h = await setup();
+    h.mock.respond = (_req, res) => {
+      sendJson(res, 200, { code: 'CODE_PARAMS_INVALID', version: '1' });
+    };
+    expect(await h.executor.execute(call(getInfo, h.consoleId))).toMatchObject({ ok: true });
+    await h.close();
+  });
+});
+
 describe('credential hygiene', () => {
   it('never logs or audits the credential', async () => {
     const h = await setup({ serverCert: 'self-signed', tls: { mode: 'verify' } });

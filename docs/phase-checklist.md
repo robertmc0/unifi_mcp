@@ -633,15 +633,19 @@ command and its storage are built with the adapter.
    - ✅ §11 notifications and webhooks, §12 API server (2026-11-13): 7 operations;
      §11.1 (WebSocket) and §12.1 (private key upload) not generated. Webhook reads return
      the endpoint `secret` (security review).
-4. Access transport: port 12445, bearer token, the `{code, msg, data}` envelope and the
-   §2.4 error codes, TLS pinning; a synthetic Access console for tests.
+4. ✅ **Access transport** (2026-11-13, [ADR 0023](adr/0023-access-adapter.md) §1): the
+   module's result envelope in the executor (success only with `SUCCESS`; error codes
+   classified by code, whatever the HTTP status; `msg` never passed on); TLS by pinning
+   the Access certificate beside the console's (no new storage); a synthetic Access API
+   (`tests/fixtures/access-console.ts`). All 98 generated operations round-trip through
+   the real executor. The operator guide for Access follows with step 6.
 5. Declared version (ADR 0021 §5): CLI command, storage, audit, expiry, labels.
 6. Reads with reviewed metadata; then writes, physical-access writes always high risk;
    negative tests.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 4, the Access transport (port, bearer token, envelope, error codes, TLS
-pinning) and a synthetic Access console for tests.
+**Next:** step 5, the declared Access version (ADR 0021 §5): CLI command, storage,
+audit, 30-day expiry, "declared, not observed" labels.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests

@@ -42,11 +42,14 @@ export {
   type VersionProbeSpec,
 } from './probe.ts';
 export {
+  ACCESS_ENVELOPE,
   isModuleId,
   MODULE_ENDPOINTS,
   MODULE_IDS,
+  type EnvelopeErrorClass,
   type ModuleEndpoint,
   type ModuleId,
+  type ResultEnvelope,
 } from './modules.ts';
 export {
   connectTls,
