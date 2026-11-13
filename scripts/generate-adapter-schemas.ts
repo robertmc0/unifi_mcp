@@ -86,6 +86,9 @@ export const GENERATED_MODULES = [
       'POST /api/v1/developer/users/{id}/avatar':
         'a multipart upload of a profile picture; non-JSON operations are decided one by one ' +
         'with the adapter (ADR 0022 §5)',
+      'PUT /api/v1/developer/visitors/{id}/license_plates':
+        'the PDF prints no body table, only a sample; without a body the write would send ' +
+        'nothing (ADR 0022 §3)',
     },
   },
 ] as const;

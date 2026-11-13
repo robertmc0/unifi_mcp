@@ -610,7 +610,10 @@ command and its storage are built with the adapter.
      from generation. Declined with reasons: `touch_pass` in the user schema, `expand[]`,
      `bundles`, the §3.27 `emails` map. The detector learned the row shapes found in
      the whole PDF.
-   - §4 visitors, §5 policies, §6 credentials, §7 spaces, §8 devices, §9 system logs,
+   - ✅ §4 visitors (2026-11-13): 13 operations, pages 52 to 72; §4.13 (license plates)
+     is not generated because the PDF prints no body table. ADR 0022 §3 gained the
+     representative-row and empty-sample rules.
+   - §5 policies, §6 credentials, §7 spaces, §8 devices, §9 system logs,
      §10 identity, §11 notifications and webhooks, §12 API server.
 4. Access transport: port 12445, bearer token, the `{code, msg, data}` envelope and the
    §2.4 error codes, TLS pinning; a synthetic Access console for tests.
@@ -619,7 +622,7 @@ command and its storage are built with the adapter.
    negative tests.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 3, §4 (visitors).
+**Next:** step 3, §5 (access policies, holidays, schedules).
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests

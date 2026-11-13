@@ -71,6 +71,8 @@ const ENVELOPE = new Set(['data', 'pagination']);
  */
 const ROW =
   /^((?:[A-Za-z_][A-Za-z0-9_.[\]]*?|-)??)(T|F)?(String|Integer|Int(?![a-z])|Number|Boolean|Object(?! ?[(<])|Array of Strings|Array\[[A-Za-z]+\]|Array(?![[a-z])|File)(?![.[\]_])/;
+/** The one lower-case type name in the PDF (`expand[]Fstring`), only after a flag. */
+const LOWER_CASE_STRING = /^([A-Za-z_][A-Za-z0-9_.[\]]*?)(T|F)string(?![a-z])/;
 /** A label and flag alone on a line, when the type is printed on the following lines. */
 const SPLIT_LABEL = /^([A-Za-z_][A-Za-z0-9_.[\]]*|-)(T|F)$/;
 /** Types printed over several lines, or as a phrase (`Object (Map)`, `Array of Strings`). */
@@ -104,9 +106,12 @@ export function detectTableRows(pages: PdfPages): TableRow[] {
       let flag: string;
       let type: string;
       const match = ROW.exec(line);
-      const split = match === null ? SPLIT_LABEL.exec(line) : null;
+      const lower = match === null ? LOWER_CASE_STRING.exec(line) : null;
+      const split = match === null && lower === null ? SPLIT_LABEL.exec(line) : null;
       if (match !== null) {
         [label, flag, type] = [match[1] ?? '', match[2] ?? '', match[3] ?? ''];
+      } else if (lower !== null) {
+        [label, flag, type] = [lower[1] ?? '', lower[2] ?? '', 'String'];
       } else if (split !== null) {
         const next = SPLIT_TYPE.exec(`${lines[i + 1] ?? ''} ${lines[i + 2] ?? ''}`);
         if (next === null) return;
@@ -716,7 +721,10 @@ export function pdfProblems(
       }
     }
     for (const value of enumValues(element.schema, schemas)) {
-      if (typeof value !== 'string' || !text.includes(value)) {
+      if (
+        (typeof value !== 'string' && typeof value !== 'number') ||
+        !text.includes(String(value))
+      ) {
         problems.push(
           `${element.where}: enum value ${JSON.stringify(value)} not on p.${String(page)}.`,
         );

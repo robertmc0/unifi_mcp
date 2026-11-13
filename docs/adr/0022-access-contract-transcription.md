@@ -107,8 +107,19 @@ Requests are transcribed for least privilege and responses for fidelity.
 - **Response fields come from field tables and samples.** A field shown only in a
   response sample is transcribed when the sample shows a value of a definite JSON type.
   Its type is taken from that value and it is marked `"sample": true`. A sample value of
-  `null`, `[]` or `{}` with no table row defines no type, so the field is not transcribed
-  and is stripped from results, like an unconstrained property in ADR 0018.
+  `null`, `[]` or `{}` defines no type by itself. Such a field is transcribed only when
+  the same structure is typed elsewhere in the PDF, by a table row or by a filled entry of
+  the same sample, and an `x-note` names it (§4: a visitor schedule's empty `monday: []`
+  takes the type of its filled `friday`). Otherwise it is not transcribed and is stripped
+  from results, like an unconstrained property in ADR 0018.
+- **A representative row.** Where a table prints one row for a set of fields and says so,
+  each field of the set cites that row, and the field names come from the samples, with
+  an `x-note` (§4: `week_schedule.monday` is printed for the periods "from Sunday to
+  Saturday", so each of the seven days cites it). Transcribing the row alone would accept
+  Mondays only.
+- **A body shown only in a sample.** A write whose request body has no table is
+  transcribed without a body and is not generated, because it would send nothing (§4.13
+  visitor license plates).
 - **Required.** Request fields: as the `T`/`F` column says. Response fields: never. The
   PDF marks none, and older Access versions lack fields that newer ones send (ADR 0021
   §3 item 3).
@@ -262,6 +273,17 @@ Step 3, chapter §3 users (2026-11-13): 29 operations on pages 12 to 51, 78 pend
   `pin_code`; §3.8 uses DELETE; §3.12 and others repeat `/developer/developer/`; §3.24's
   `data` is not valid JSON and is read as a list of users.
 - §3.30 (multipart profile picture) is transcribed and omitted from generation.
+
+Step 3, chapter §4 visitors (2026-11-13): 13 operations on pages 52 to 72; 65 pending.
+
+- Pages 52 to 72 hold 89 rows other than `Authorization`, each transcribed. Removing one
+  schema field and one query parameter each produced a report. Nothing is declined.
+- The detector learned the one lower-case type in the PDF (`expand[]Fstring`, p.59), and
+  enumeration values may be numbers (§4.4 `status`, Integer 1 to 6).
+- Decisions recorded in `x-note`: the representative `week_schedule.monday` row; the
+  samples' `weekly`, transcribed beside the table's `week_schedule`; "Support both door
+  and door_group" read as the allowed set of `resources[].type`; `expand[]` and `status`
+  accept one value each; §4.13 has no body table and is not generated.
 
 ## Consequences
 

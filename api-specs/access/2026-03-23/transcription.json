@@ -9,7 +9,7 @@
     "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e"
   },
   "x-note": "Written by hand from the cached PDF under the rules of docs/adr/0022-access-contract-transcription.md. Facts only: no vendor descriptions, examples or other prose. Checked against the PDF text by npm run api:reconcile.",
-  "x-pdf-pages": [[12, 51]],
+  "x-pdf-pages": [[12, 72]],
   "x-declined": [
     {
       "row": "Authorization",
@@ -105,10 +105,6 @@
     "DELETE /api/v1/developer/credentials/nfc_cards/sessions/{id}",
     "DELETE /api/v1/developer/credentials/nfc_cards/tokens/{token}",
     "DELETE /api/v1/developer/door_groups/{id}",
-    "DELETE /api/v1/developer/visitors/{id}",
-    "DELETE /api/v1/developer/visitors/{id}/pin_codes",
-    "DELETE /api/v1/developer/visitors/{id}/qr_codes",
-    "DELETE /api/v1/developer/visitors/{visitor_id}/license_plates/{license_plate_id}",
     "DELETE /api/v1/developer/webhooks/endpoints/{id}",
     "GET /api/v1/developer/access_policies",
     "GET /api/v1/developer/access_policies/holiday_groups",
@@ -139,8 +135,6 @@
     "GET /api/v1/developer/user_groups/{id}/identity/assignments",
     "GET /api/v1/developer/users/identity/assignments",
     "GET /api/v1/developer/users/{id}/identity/assignments",
-    "GET /api/v1/developer/visitors",
-    "GET /api/v1/developer/visitors/{id}",
     "GET /api/v1/developer/webhooks/endpoints",
     "POST /api/v1/developer/access_policies",
     "POST /api/v1/developer/access_policies/holiday_groups",
@@ -157,7 +151,6 @@
     "POST /api/v1/developer/user_groups/{id}/identity/assignments",
     "POST /api/v1/developer/users/identity/invitations",
     "POST /api/v1/developer/users/{id}/identity/assignments",
-    "POST /api/v1/developer/visitors",
     "POST /api/v1/developer/webhooks/endpoints",
     "PUT /api/v1/developer/access_policies/holiday_groups/{id}",
     "PUT /api/v1/developer/access_policies/schedules/{id}",
@@ -169,12 +162,6 @@
     "PUT /api/v1/developer/doors/settings/emergency",
     "PUT /api/v1/developer/doors/{id}/lock_rule",
     "PUT /api/v1/developer/doors/{id}/unlock",
-    "PUT /api/v1/developer/visitors/{id}",
-    "PUT /api/v1/developer/visitors/{id}/license_plates",
-    "PUT /api/v1/developer/visitors/{id}/nfc_cards",
-    "PUT /api/v1/developer/visitors/{id}/nfc_cards/delete",
-    "PUT /api/v1/developer/visitors/{id}/pin_codes",
-    "PUT /api/v1/developer/visitors/{id}/qr_codes",
     "PUT /api/v1/developer/webhooks/endpoints/{id}"
   ],
   "paths": {
@@ -1379,6 +1366,1010 @@
           }
         }
       }
+    },
+    "/api/v1/developer/visitors": {
+      "post": {
+        "x-note": "The sample sends visit_reason \"Interviemw\", outside the documented set; the table wins. resources[].type: \"Support both door and door_group\" is read as the allowed set.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 53
+                    }
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 53
+                    }
+                  },
+                  "remarks": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 53
+                    }
+                  },
+                  "mobile_phone": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 53
+                    }
+                  },
+                  "email": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 53
+                    }
+                  },
+                  "visitor_company": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 53
+                    }
+                  },
+                  "start_time": {
+                    "type": "integer",
+                    "x-pdf": {
+                      "page": 54
+                    }
+                  },
+                  "end_time": {
+                    "type": "integer",
+                    "x-pdf": {
+                      "page": 54
+                    }
+                  },
+                  "visit_reason": {
+                    "type": "string",
+                    "enum": ["Interview", "Business", "Cooperation", "Others"],
+                    "x-pdf": {
+                      "page": 54
+                    }
+                  },
+                  "resources": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 54
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 54,
+                            "row": "resources[0].id"
+                          }
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["door", "door_group"],
+                          "x-pdf": {
+                            "page": 54,
+                            "row": "resources[0].type"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "week_schedule": {
+                    "type": "object",
+                    "properties": {
+                      "sunday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 54,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "monday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 54,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "tuesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 54,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "wednesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 54,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "thursday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 54,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "friday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 54,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "saturday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 54,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 54,
+                          "row": "week_schedule.monday"
+                        }
+                      }
+                    },
+                    "x-note": "The table prints one row, monday, for the daily periods \"from Sunday to Saturday\"; each of the seven days cites that row. The day names follow the samples.",
+                    "x-pdf": {
+                      "page": 54,
+                      "row": "week_schedule"
+                    }
+                  }
+                },
+                "required": ["first_name", "last_name", "start_time", "end_time", "visit_reason"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Visitor"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "x-note": "status is typed Integer with the values 1 to 6 (UPCOMING=1 ... ACTIVE=6). expand[] is typed string, so one value is accepted although the example repeats it. No response sample is printed, so no pagination is transcribed.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [1, 2, 3, 4, 5, 6]
+            },
+            "x-pdf": {
+              "page": 59
+            }
+          },
+          {
+            "in": "query",
+            "name": "keyword",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 59
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_num",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 59
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 59
+            }
+          },
+          {
+            "in": "query",
+            "name": "expand[]",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["none", "access_policy", "resource", "schedule", "nfc_card", "pin_code"]
+            },
+            "x-pdf": {
+              "page": 59
+            },
+            "x-minimum-version": "1.22.16"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Visitor"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/visitors/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 57
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Visitor"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "x-note": "The PDF notes that the status cannot be changed.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 61
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "remarks": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "mobile_phone": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "email": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "visitor_company": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "start_time": {
+                    "type": "integer",
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "end_time": {
+                    "type": "integer",
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "visit_reason": {
+                    "type": "string",
+                    "enum": ["Interview", "Business", "Cooperation", "Others"],
+                    "x-pdf": {
+                      "page": 60
+                    }
+                  },
+                  "resources": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 60
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 61,
+                            "row": "resources[0].id"
+                          }
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["door", "door_group"],
+                          "x-pdf": {
+                            "page": 61,
+                            "row": "resources[0].type"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "week_schedule": {
+                    "type": "object",
+                    "properties": {
+                      "sunday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 61,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "monday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 61,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "tuesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 61,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "wednesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 61,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "thursday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 61,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "friday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 61,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "saturday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 61,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 61,
+                          "row": "week_schedule.monday"
+                        }
+                      }
+                    },
+                    "x-note": "The table prints one row, monday, for the daily periods \"from Sunday to Saturday\"; each of the seven days cites that row. The day names follow the samples.",
+                    "x-pdf": {
+                      "page": 61,
+                      "row": "week_schedule"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Visitor"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 64
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_force",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "x-pdf": {
+              "page": 64
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/visitors/{id}/nfc_cards": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 65
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 65
+                    }
+                  },
+                  "force_add": {
+                    "type": "boolean",
+                    "x-pdf": {
+                      "page": 65
+                    }
+                  }
+                },
+                "required": ["token"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/visitors/{id}/nfc_cards/delete": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 66
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 66
+                    }
+                  }
+                },
+                "required": ["token"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/visitors/{id}/pin_codes": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 67
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pin_code": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 67
+                    }
+                  }
+                },
+                "required": ["pin_code"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 68
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/visitors/{id}/qr_codes": {
+      "put": {
+        "x-note": "No request body; the sample sends none.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 69
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 70
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/visitors/{id}/license_plates": {
+      "put": {
+        "x-note": "The PDF prints no body table: only the sample shows a JSON array of plate numbers (compare §3.28, whose table types it). Request fields come from tables only, so no body is transcribed and the operation is not generated.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 71
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/visitors/{visitor_id}/license_plates/{license_plate_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "visitor_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 72
+            }
+          },
+          {
+            "in": "path",
+            "name": "license_plate_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 72
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
     }
   },
   "components": {
@@ -1904,6 +2895,637 @@
             "type": "string",
             "x-pdf": {
               "page": 48
+            }
+          }
+        }
+      },
+      "Visitor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "first_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "last_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["UPCOMING", "VISITED", "VISITING", "CANCELLED", "NO_VISIT", "ACTIVE"],
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "inviter_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "inviter_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "mobile_phone": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "remarks": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "visitor_company": {
+            "type": "string",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "visit_reason": {
+            "type": "string",
+            "enum": ["Interview", "Business", "Cooperation", "Others"],
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "start_time": {
+            "type": "integer",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "end_time": {
+            "type": "integer",
+            "x-pdf": {
+              "page": 52
+            }
+          },
+          "nfc_cards": {
+            "type": "array",
+            "x-pdf": {
+              "page": 52
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 52,
+                    "row": "nfc_cards[].id"
+                  }
+                },
+                "token": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 52,
+                    "row": "nfc_cards[].token"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 58,
+                    "sample": true
+                  }
+                }
+              }
+            }
+          },
+          "pin_code": {
+            "type": "object",
+            "x-pdf": {
+              "page": 52
+            },
+            "properties": {
+              "token": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 52,
+                  "row": "pin_code.token"
+                }
+              }
+            }
+          },
+          "schedule_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 53
+            }
+          },
+          "schedule": {
+            "type": "object",
+            "x-pdf": {
+              "page": 53
+            },
+            "properties": {
+              "id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 55,
+                  "sample": true
+                }
+              },
+              "name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 53,
+                  "row": "schedule.name"
+                }
+              },
+              "type": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 53,
+                  "row": "schedule.type"
+                }
+              },
+              "is_default": {
+                "type": "boolean",
+                "x-pdf": {
+                  "page": 55,
+                  "sample": true
+                }
+              },
+              "week_schedule": {
+                "type": "object",
+                "properties": {
+                  "sunday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 53,
+                      "row": "schedule.week_schedule.monday"
+                    }
+                  },
+                  "monday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 53,
+                      "row": "schedule.week_schedule.monday"
+                    }
+                  },
+                  "tuesday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 53,
+                      "row": "schedule.week_schedule.monday"
+                    }
+                  },
+                  "wednesday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 53,
+                      "row": "schedule.week_schedule.monday"
+                    }
+                  },
+                  "thursday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 53,
+                      "row": "schedule.week_schedule.monday"
+                    }
+                  },
+                  "friday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 53,
+                      "row": "schedule.week_schedule.monday"
+                    }
+                  },
+                  "saturday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 53,
+                            "row": "schedule.week_schedule.monday[0].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 53,
+                      "row": "schedule.week_schedule.monday"
+                    }
+                  }
+                },
+                "x-note": "The table prints one row, monday, for the daily periods \"from Sunday to Saturday\"; each of the seven days cites that row. The day names follow the samples.",
+                "x-pdf": {
+                  "page": 53,
+                  "row": "schedule.week_schedule"
+                }
+              },
+              "weekly": {
+                "type": "object",
+                "properties": {
+                  "sunday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 55,
+                      "sample": true
+                    }
+                  },
+                  "monday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 55,
+                      "sample": true
+                    }
+                  },
+                  "tuesday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 55,
+                      "sample": true
+                    }
+                  },
+                  "wednesday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 55,
+                      "sample": true
+                    }
+                  },
+                  "thursday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 55,
+                      "sample": true
+                    }
+                  },
+                  "friday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 55,
+                      "sample": true
+                    }
+                  },
+                  "saturday": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 55,
+                            "sample": true
+                          }
+                        }
+                      }
+                    },
+                    "x-pdf": {
+                      "page": 55,
+                      "sample": true
+                    }
+                  }
+                },
+                "x-pdf": {
+                  "page": 55,
+                  "sample": true
+                },
+                "x-note": "The response samples name the week schedule \"weekly\"; the table names it week_schedule, so both are transcribed. Days shown empty ([]) take the type of the days shown filled in the same sample."
+              }
+            }
+          },
+          "resources": {
+            "type": "array",
+            "x-pdf": {
+              "page": 53
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 53,
+                    "row": "resources[0].id"
+                  }
+                },
+                "name": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 53,
+                    "row": "resources[0].name"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 53,
+                    "row": "resources[0].type"
+                  }
+                }
+              }
+            }
+          },
+          "license_plates": {
+            "type": "array",
+            "x-pdf": {
+              "page": 53
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 53,
+                    "row": "license_plates[].id"
+                  }
+                },
+                "credential": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 53,
+                    "row": "license_plates[].credential"
+                  }
+                },
+                "credential_type": {
+                  "type": "string",
+                  "enum": ["license"],
+                  "x-pdf": {
+                    "page": 53,
+                    "row": "license_plates[].credential_type"
+                  }
+                },
+                "credential_status": {
+                  "type": "string",
+                  "enum": ["active", "deactivate"],
+                  "x-pdf": {
+                    "page": 53,
+                    "row": "license_plates[].credential_status"
+                  }
+                }
+              }
             }
           }
         }
