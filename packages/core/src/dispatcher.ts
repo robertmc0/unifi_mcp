@@ -51,7 +51,9 @@ import type {
   OperationDescriptor,
   OperationRegistry,
   Target,
+  VersionedField,
 } from './registry.ts';
+import { satisfies } from './versions.ts';
 import { Scheduler, SchedulerError, type SchedulerLimits } from './scheduler.ts';
 import { mismatchSummary } from './schema-mismatch.ts';
 
@@ -278,6 +280,25 @@ export interface ExecutionStatusView {
   createdAt: string;
   startedAt: string | null;
   finishedAt: string | null;
+}
+
+/**
+ * Whether a call uses a versioned field: an argument name (`expand[]`), or a path into the
+ * arguments where `name[]` means "any item of the list" (`body.items[].id`).
+ */
+function argumentUsed(args: Readonly<Record<string, unknown>>, field: string): boolean {
+  if (!field.includes('.')) return args[field] !== undefined;
+  const used = (value: unknown, segments: readonly string[]): boolean => {
+    const [head, ...rest] = segments;
+    if (head === undefined) return value !== undefined;
+    if (value === null || typeof value !== 'object') return false;
+    const list = head.endsWith('[]');
+    const child = (value as Record<string, unknown>)[list ? head.slice(0, -2) : head];
+    return list
+      ? Array.isArray(child) && child.some((item) => used(item, rest))
+      : used(child, rest);
+  };
+  return used(args, field.split('.'));
 }
 
 type Authorization =
@@ -671,7 +692,7 @@ export class Dispatcher {
       };
     }
     const consolePolicy = this.#deps.security.consolePolicy(context.target.consoleId);
-    return evaluate({
+    const decision = evaluate({
       now: this.#now(),
       deployment: this.#deps.deployment,
       policy: { version: snapshot.version, document: snapshot.document },
@@ -685,6 +706,33 @@ export class Dispatcher {
           : this.#deps.security.capability(context.target.consoleId, context.descriptor),
       purpose: 'execute',
     });
+    // Stage 7 also covers arguments that need a later version than the operation (ADR 0022
+    // §3): refused like an unsupported operation, before anything is sent.
+    if (decision.allowed && this.#unsupportedField(context) !== undefined) {
+      return {
+        allowed: false,
+        reason: 'operation_unsupported',
+        stage: 7,
+        message: message('operation_unsupported'),
+        policyVersion: decision.policyVersion,
+      };
+    }
+    return decision;
+  }
+
+  /** The first argument used that needs a later version than the console's, if any. */
+  #unsupportedField(context: Context): VersionedField | undefined {
+    const fields = context.descriptor.versionedFields ?? [];
+    if (fields.length === 0) return undefined;
+    const known = this.#deps.security.moduleVersion?.(
+      context.target.consoleId,
+      context.descriptor.moduleId,
+    );
+    // Without a version the operation itself is refused as version_unknown.
+    if (known === undefined) return undefined;
+    return fields.find(
+      (f) => argumentUsed(context.args, f.field) && !satisfies(known.version, `>=${f.minimum}`),
+    );
   }
 
   #denied(
@@ -734,6 +782,10 @@ export class Dispatcher {
       known?.source === 'declared'
         ? `An administrator declared ${moduleId} ${shown} (declared, not observed)`
         : `The console reports ${moduleId} ${shown}`;
+    const field = this.#unsupportedField(context);
+    if (field !== undefined) {
+      return `The argument ${field.field} needs ${moduleId} ${field.minimum} or later. ${source}.`;
+    }
     return `${base} ${source}; this operation is verified for ${apiVersionRange}.`;
   }
 

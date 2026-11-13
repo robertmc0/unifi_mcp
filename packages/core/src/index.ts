@@ -82,6 +82,7 @@ export {
   type ResponseType,
   type RetryClass,
   type Target,
+  type VersionedField,
 } from './registry.ts';
 export {
   Scheduler,

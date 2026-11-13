@@ -18,6 +18,7 @@
     "@unifi-local-mcp/policy": "0.0.0",
     "@unifi-local-mcp/storage": "0.0.0",
     "@unifi-local-mcp/telemetry": "0.0.0",
+    "@unifi-local-mcp/unifi-access": "0.0.0",
     "@unifi-local-mcp/unifi-api": "0.0.0",
     "@unifi-local-mcp/unifi-network": "0.0.0",
     "@unifi-local-mcp/unifi-protect": "0.0.0",

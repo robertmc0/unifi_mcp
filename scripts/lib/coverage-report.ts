@@ -61,6 +61,15 @@ const EVIDENCE: Record<
       'tests/integration-mock/protect-events.test.ts',
     ],
   },
+  access: {
+    all: [
+      'tests/contract/access-transcription.test.ts',
+      'tests/contract/access-security-review.test.ts',
+      'tests/integration-mock/access-transport.test.ts',
+    ],
+    read: ['tests/integration-mock/access-reads.test.ts'],
+    write: [],
+  },
 };
 
 /** What the matrix needs of a registered operation or event stream. */
@@ -299,7 +308,9 @@ export async function buildCoverageFiles(
         d.moduleId === application &&
         d.httpMethod === method &&
         d.pathTemplate === path &&
-        satisfies(revision, d.apiVersionRange),
+        // Its own revision, or a later one its range includes. Access revisions are dates,
+        // not versions, so only the first applies to them.
+        (d.contractRevision === revision || satisfies(revision, d.apiVersionRange)),
     );
   const matched = new Set<Implementation>();
   for (const rev of await listSpecRevisions()) {

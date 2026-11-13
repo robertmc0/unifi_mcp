@@ -92,6 +92,47 @@ ADR 0021 §5 (B2): Access reports no version, so a host administrator declares i
 - The version monitor never probes Access (it has no probe), so the `console_versions`
   health check is unaffected.
 
+## 3. Reads (step 6)
+
+- **Building.** `accessOperation()` joins the generated facts of one operation (method,
+  path, schemas, the vendor-stated minimum version, the documentation link and the
+  versioned request fields, all from the transcription and `operations.json`) with
+  hand-written review metadata. The minimum, link and vendor permission are emitted into
+  the generated module, so no reviewed file repeats them; the reviewed override of
+  ADR 0021 §3 item 2 (2.2.6 for §10.5 and §10.6) sits in the generator configuration and
+  may only raise a minimum.
+- **Range.** `>=<minimum> <=4.2.16` (`ACCESS_MAX_VERSION`, ADR 0021 §5 U1).
+- **Field versions.** Descriptors carry `versionedFields`. The dispatcher refuses a call
+  that uses one on an older version at stage 7 (`operation_unsupported`), naming the
+  argument and the version, before anything is sent. This is generic: any module can use
+  it.
+- **Results.** A result is the envelope's `data`; the paging facts are `pageNum`,
+  `pageSize`, `total` and `nextPageNum` (from `pagination`, or `page` and `total` beside
+  `data` in §9.2).
+- **39 reads**, all low risk, console-level, `access.<category>.read`. Named tools:
+  `access_list_doors`, `access_get_door`.
+- **Sensitivity.** People: users, visitors and user group members carry
+  `personal_identifier` (names, e-mail and phone, employee numbers) and
+  `biometric_or_access_identity` (NFC cards, license plates, Touch Pass, schedules). NFC
+  cards and Touch Passes carry both; the enrollment state only the second. System logs
+  carry `access_log` and `personal_identifier`; log resources (video and thumbnail paths)
+  `access_log` and `recording`. Doors, door groups, devices, policies, schedules, user
+  groups, identity resources and webhook endpoints carry none: they describe the
+  installation, not people.
+- **Bounded histories.** Spec §6.4 requires Access histories to have time and size
+  limits. `access.logs.list` requires `since` and `until`, at most 31 days apart (the
+  PDF's own limit for the export, §9.3), and `page_size` at most 100.
+- **Credentials.** Removed from every result at any depth, after the projection:
+  `pin_code.token` (a PIN hash, reversible by trying every PIN; the empty `pin_code`
+  stays), `secret` (webhook signing secret) and `headers` (forwarded to a webhook
+  receiver, the usual place for its credentials). NFC card tokens stay: they address
+  cards in the API (§6.7 to §6.10) and are not the card's secret, and the reads that
+  return them need `biometric_or_access_identity`.
+- **Not offered.** The PIN generator (§6.1): its result is a PIN, a credential (spec
+  §6.4), so it is not registered.
+- **Registration.** `ADAPTERS` lists Access without a version probe; the coverage matrix
+  matches an Access operation by its contract revision (a date, not a version).
+
 ## Evidence
 
 - `tests/unit/unifi-api/executor.test.ts`, "result envelope": success only with
@@ -121,6 +162,18 @@ ADR 0021 §5 (B2): Access reports no version, so a host administrator declares i
   (`unifi_list_consoles` over MCP). Mutation checks, each making a test fail: declarations
   never expiring; an administrator allowed to declare; no approval invalidation; Network
   declarable; no label on results; no label on approvals; `doctor` silent.
+- Step 6, reads: `tests/contract/access-security-review.test.ts` (the review table of
+  every implemented operation; ranges from the generated minimum to 4.2.16, the minimum
+  raised only for §10.5 and §10.6; the removed credentials and log bounds);
+  `tests/integration-mock/access-reads.test.ts` (all 39 reads through the dispatcher and
+  executor with a declared version: one request with the documented method, path, query
+  and token; credential sentinels, an undocumented field and the vendor `msg` never
+  returned; the declared-version warning; paging facts; sensitive grants; the log
+  window; field versions, the raised §10.6 minimum, 4.3.x refused, an undeclared version
+  explained); `tests/unit/core/dispatcher.test.ts` (versioned fields, for an argument and
+  a body path). Mutation checks, each making a test fail: credentials not removed; PIN
+  hashes kept; people untagged; the log window not bounded; the bound widened to 4.3.24;
+  field versions dropped; a permission renamed.
 - Not verified: how a real Access console sets the HTTP status of an error, and whether
   its tokens' scopes match the permission keys (provenance `unverified`). Both need an
   installed Access (ADR 0021, evidence C).

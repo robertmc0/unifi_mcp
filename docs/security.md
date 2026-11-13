@@ -83,6 +83,9 @@ returned to any client. There is no grant for them. Adapters remove them from ev
 at any depth, after every projection, and response schemas drop every field the vendor
 contract does not document. For Network, the client reads need `personal_identifier` and
 `network_identity` ([applications-network.md](applications-network.md#client-data-needs-sensitive-grants)).
+For Access, people, cards and plates need `personal_identifier` and
+`biometric_or_access_identity`, and the system logs `access_log`, with reads bounded to 31
+days ([applications-access.md](applications-access.md#sensitive-reads)).
 
 ### Events
 

@@ -11,9 +11,10 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import * as prettier from 'prettier';
-import { REPO_ROOT, readJson, sha256, type Provenance } from './lib/api-specs.ts';
+import { satisfies } from '@unifi-local-mcp/core';
+import { REPO_ROOT, readJson, sha256, type Inventory, type Provenance } from './lib/api-specs.ts';
 import { parseOpenApi } from './lib/openapi-inventory.ts';
-import { generateZodModule } from './lib/openapi-zod.ts';
+import { generateZodModule, type OperationFacts } from './lib/openapi-zod.ts';
 
 /** The adapter modules generated from OpenAPI contracts. */
 export const GENERATED_MODULES = [
@@ -81,6 +82,13 @@ export const GENERATED_MODULES = [
     naming: 'path',
     targetParameters: [],
     omittedParameters: {},
+    // ADR 0021 §3 item 2: where two vendor statements disagree, the higher minimum applies.
+    // §10.5 and §10.6 state 2.2.0, but the change log lists them under V2.2.6 with the
+    // user groups they act on, which §3.11 introduces at 2.2.6.
+    minimumVersionOverrides: {
+      'POST /api/v1/developer/user_groups/{id}/identity/assignments': '2.2.6',
+      'GET /api/v1/developer/user_groups/{id}/identity/assignments': '2.2.6',
+    },
     // Non-JSON operations are transcribed but decided one by one (ADR 0022 §5).
     omittedOperations: {
       'POST /api/v1/developer/users/{id}/avatar':
@@ -171,6 +179,33 @@ async function renderTranscription(
   if (from?.artifact !== artifact.name || from.sha256 !== artifact.sha256) {
     throw new Error(`${relative(REPO_ROOT, file)} does not transcribe the PDF in provenance.json.`);
   }
+  // Inventory facts of each operation: the vendor-stated minimum version (ADR 0021 §3),
+  // raised where reviewed, the documentation link and the vendor permission key.
+  const inventory = await readJson<Inventory>(
+    join(REPO_ROOT, 'api-specs', module.application, module.revision, 'operations.json'),
+  );
+  const operationFacts: Record<string, OperationFacts> = {};
+  for (const op of inventory.operations) {
+    if (
+      op.minimumApplicationVersion === undefined ||
+      op.documentationUrl === null ||
+      op.vendorPermission === undefined
+    ) {
+      continue;
+    }
+    operationFacts[op.key] = {
+      minimumVersion: op.minimumApplicationVersion,
+      documentationUrl: op.documentationUrl,
+      vendorPermission: op.vendorPermission,
+    };
+  }
+  for (const [key, version] of Object.entries(module.minimumVersionOverrides)) {
+    const facts = operationFacts[key];
+    if (facts === undefined || !satisfies(version, `>${facts.minimumVersion}`)) {
+      throw new Error(`${key}: a minimum version override must raise the stated minimum.`);
+    }
+    operationFacts[key] = { ...facts, minimumVersion: version };
+  }
   const source = generateZodModule(doc, {
     source: relative(REPO_ROOT, file),
     sourceSha256: sha256(text),
@@ -180,6 +215,7 @@ async function renderTranscription(
     naming: module.naming,
     omittedOperations: module.omittedOperations,
     transcription: true,
+    operationFacts,
   });
   const outputPath = join(REPO_ROOT, module.output);
   const config = (await prettier.resolveConfig(outputPath)) ?? {};

@@ -88,6 +88,17 @@ export interface OperationDescriptor<
    * operation carries, in the summary the approver and the client see (ADR 0011).
    */
   approvalCaution?: string;
+  /**
+   * Arguments that need a later application version than the operation itself (ADR 0022
+   * §3): `expand[]` (an argument) or `body.user_email`, `body.items[].id` (paths into the
+   * body). A call that uses one on an older version is refused before anything is sent.
+   */
+  versionedFields?: readonly VersionedField[];
+}
+
+export interface VersionedField {
+  field: string;
+  minimum: string;
 }
 
 /**
@@ -190,6 +201,14 @@ export function validateDescriptor(
     }
     if (!reviewedText(descriptor.approvalCaution)) {
       problems.push('approvalCaution must be one line of 1–300 characters');
+    }
+  }
+  for (const versioned of descriptor.versionedFields ?? []) {
+    if (
+      !/^[\w[\].]{1,200}$/.test(versioned.field) ||
+      parseRange(`>=${versioned.minimum}`) === undefined
+    ) {
+      problems.push('a versioned field needs a field path and a minimum version');
     }
   }
   if (parseRange(descriptor.apiVersionRange) === undefined) {

@@ -645,11 +645,16 @@ command and its storage are built with the adapter.
    approvals, `unifi_list_consoles`, the admin UI and messages; `doctor` warnings.
 6. Reads with reviewed metadata; then writes, physical-access writes always high risk;
    negative tests.
+   - ✅ **Reads** (2026-11-13, [ADR 0023](adr/0023-access-adapter.md) §3): 39 reads,
+     sensitive grants for people, cards and logs, log reads bounded to 31 days and 100
+     entries, PIN hashes and webhook secrets and headers removed, field versions enforced
+     by the dispatcher, the PIN generator not offered. Operator guide started:
+     [applications-access.md](applications-access.md).
+   - Writes: next.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 6, Access reads with reviewed security metadata, then writes (physical
-access always high risk), negative tests, and the operator guide
-(`docs/applications-access.md`).
+**Next:** step 6, the Access writes (physical access always high risk), with negative
+tests, and the writes section of the operator guide.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests

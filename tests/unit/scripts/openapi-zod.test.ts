@@ -991,7 +991,17 @@ describe('hand transcriptions of a PDF contract (ADR 0022)', () => {
       },
     },
   );
-  const options = { naming: 'path' as const, transcription: true };
+  const options = {
+    naming: 'path' as const,
+    transcription: true,
+    operationFacts: {
+      'PUT /api/users/{id}': {
+        minimumVersion: '1.9.1',
+        documentationUrl: 'https://example.invalid/reference.pdf#page=4',
+        vendorPermission: 'edit:user',
+      },
+    },
+  };
 
   it('are refused as vendor documents: the citation extensions are not vendor keywords', () => {
     expect(() => generate(document, { naming: 'path' })).toThrow(/unsupported keyword "x-pdf"/);
@@ -1033,6 +1043,14 @@ describe('hand transcriptions of a PDF contract (ADR 0022)', () => {
       { field: 'expand[]', minimum: '1.22.16' },
     ]);
     expect(source).toContain('hand transcription of a PDF contract, not a vendor');
+    expect(load(source)['putApiUsersById']).toMatchObject({
+      minimumVersion: '1.9.1',
+      documentationUrl: 'https://example.invalid/reference.pdf#page=4',
+      vendorPermission: 'edit:user',
+    });
+    expect(() => generate(document, { ...options, operationFacts: {} })).toThrow(
+      /no inventory facts/,
+    );
     expect(generate(doc({}, {}), { naming: 'path' })).not.toContain('versionedFields');
   });
 

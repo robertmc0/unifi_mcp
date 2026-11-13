@@ -16,7 +16,9 @@ import {
   harness,
   JPEG,
   listDevices,
+  RULE,
   SITE,
+  updateFirewallRule,
   type HarnessOptions,
 } from './fixtures.ts';
 
@@ -492,6 +494,43 @@ describe('console versions', () => {
     expect(envelope.error?.message).toContain('verified for >=1.0 <2');
     expect(h.executor.calls).toEqual([]);
     h.storage.close();
+  });
+
+  it('refuses arguments that need a later version, before anything is sent (ADR 0022 §3)', async () => {
+    const list = defineOperation({
+      ...listDevices,
+      versionedFields: [{ field: 'limit', minimum: '2.0' }],
+    });
+    const rule = defineOperation({
+      ...updateFirewallRule,
+      versionedFields: [{ field: 'body.presharedKey', minimum: '2.0' }],
+    });
+    const old = await setup({ descriptors: [list, rule], observedVersion: '1.5' });
+    const refused = await old.dispatcher.execute(CLIENT, { ...LIST, arguments: { limit: 5 } });
+    expectError(refused, 'operation_unsupported');
+    expect(refused.error?.message).toBe(
+      'The argument limit needs network 2.0 or later. The console reports network 1.5.',
+    );
+    expect((await old.dispatcher.execute(CLIENT, LIST)).status).toBe('ok');
+    const write = (body: Record<string, unknown>) =>
+      old.dispatcher.execute(CLIENT, {
+        operationId: 'network.firewall.update_rule',
+        consoleId: CONSOLE,
+        siteId: SITE,
+        arguments: { ruleId: RULE, body },
+      });
+    expectError(
+      await write({ action: 'block', presharedKey: 'long-enough' }),
+      'operation_unsupported',
+    );
+    expect((await write({ action: 'block' })).error?.code).not.toBe('operation_unsupported');
+    expect(old.executor.calls).toHaveLength(1);
+    old.storage.close();
+    const current = await setup({ descriptors: [list], observedVersion: '2.0.1' });
+    expect(
+      (await current.dispatcher.execute(CLIENT, { ...LIST, arguments: { limit: 5 } })).status,
+    ).toBe('ok');
+    current.storage.close();
   });
 
   it('tells a client that an undeclared version needs an administrator', async () => {

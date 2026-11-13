@@ -131,6 +131,12 @@ export interface GeneratorOptions {
    * properties where they cite the PDF, and `versionedFields` on every operation.
    */
   transcription?: boolean;
+  /**
+   * Transcriptions only: inventory facts of each operation, by `"<METHOD> <path>"` (from
+   * operations.json): the lowest application version the vendor states (ADR 0021 §3), the
+   * documentation link and the vendor permission key. Every generated operation needs them.
+   */
+  operationFacts?: Readonly<Record<string, OperationFacts>>;
 }
 
 interface OperationInfo {
@@ -143,6 +149,12 @@ interface OperationInfo {
   pathParameters: string[];
   queryParameters: string[];
   hasBody: boolean;
+}
+
+export interface OperationFacts {
+  minimumVersion: string;
+  documentationUrl: string;
+  vendorPermission: string;
 }
 
 /** A request field that needs a later application version than its operation. */
@@ -275,12 +287,17 @@ export class OpenApiZodGenerator {
   readonly absentApplied = new Set<string>();
   /** Whether the document is a hand transcription (ADR 0022). */
   readonly #transcription: boolean;
+  readonly #facts: Readonly<Record<string, OperationFacts>>;
 
   constructor(
     doc: OpenApiDocument,
-    options: Pick<GeneratorOptions, 'optionalResponseProperties' | 'transcription'> = {},
+    options: Pick<
+      GeneratorOptions,
+      'optionalResponseProperties' | 'transcription' | 'operationFacts'
+    > = {},
   ) {
     this.#transcription = options.transcription === true;
+    this.#facts = options.operationFacts ?? {};
     this.#absentAllowed = new Map(
       Object.entries(options.optionalResponseProperties ?? {}).flatMap(([schema, properties]) =>
         Object.entries(properties).map(([property, reason]) => [`${schema}.${property}`, reason]),
@@ -982,6 +999,11 @@ export class OpenApiZodGenerator {
       `  responseType: ${literal(responseType)},`,
       ...(this.#transcription
         ? [
+            ...((facts: OperationFacts) => [
+              `  minimumVersion: ${literal(facts.minimumVersion)},`,
+              `  documentationUrl: ${literal(facts.documentationUrl)},`,
+              `  vendorPermission: ${literal(facts.vendorPermission)},`,
+            ])(this.#facts[info.key] ?? fail(where, 'no inventory facts')),
             `  versionedFields: [${versioned
               .sort((a, b) => a.field.localeCompare(b.field))
               .map((v) => `{ field: ${literal(v.field)}, minimum: ${literal(v.minimum)} }`)
@@ -1045,6 +1067,7 @@ export function generateZodModule(doc: OpenApiDocument, options: GeneratorOption
       ? {}
       : { optionalResponseProperties: options.optionalResponseProperties }),
     ...(options.transcription === undefined ? {} : { transcription: options.transcription }),
+    ...(options.operationFacts === undefined ? {} : { operationFacts: options.operationFacts }),
   });
   const targets = new Set(options.targetParameters ?? []);
   const paths = (doc as { paths?: unknown }).paths;
