@@ -10,6 +10,7 @@ import {
   loadServiceConfig,
   ADAPTERS,
 } from '@unifi-local-mcp/mcp-server';
+import type { ConsoleModuleView } from '@unifi-local-mcp/unifi-api';
 import { requireString, string, type Command, type RunContext } from '../cli.ts';
 import {
   apply,
@@ -137,6 +138,29 @@ export const configCommands: Record<string, Command> = {
 
 type Status = 'ok' | 'warn' | 'fail';
 
+const DECLARATION_WARNING_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** doctor: a module without a version that counts, or a declaration about to expire. */
+function versionProblems(alias: string, module: ConsoleModuleView): string[] {
+  const id = module.moduleId;
+  if (module.versionSource === 'probe') {
+    return module.observedVersion === null ? [`${id}: version not yet probed`] : [];
+  }
+  const declare = `unifi-mcp console declare-version ${alias} --module ${id} --version <x.y.z>`;
+  const until = (module.declarationExpiresAt ?? '').slice(0, 10);
+  if (module.effectiveVersion === null) {
+    return [
+      module.declaredVersion === null
+        ? `${id}: version not declared (${declare})`
+        : `${id}: declared version expired on ${until} (${declare})`,
+    ];
+  }
+  const left = Date.parse(module.declarationExpiresAt ?? '') - Date.now();
+  return left < DECLARATION_WARNING_MS
+    ? [`${id}: declared version ${module.effectiveVersion.version} expires on ${until}`]
+    : [];
+}
+
 function describeFailure(error: unknown): string {
   const code = (error as { code?: unknown }).code;
   return `${(error as Error).message}${typeof code === 'string' ? ` (${code})` : ''}`;
@@ -211,7 +235,7 @@ export const doctorCommand: Command = {
             const module = view.modules.find((m) => m.moduleId === id);
             return [
               ...(module?.hasCredential === true ? [] : [`${id}: no credential`]),
-              ...(module?.observedVersion == null ? [`${id}: version not yet probed`] : []),
+              ...(module === undefined ? [] : versionProblems(view.alias, module)),
             ];
           }),
         ];

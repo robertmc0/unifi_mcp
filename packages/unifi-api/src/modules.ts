@@ -28,7 +28,15 @@ export interface ModuleEndpoint {
   /** Secret record kind of the module's credential. */
   credentialKind: string;
   envelope?: ResultEnvelope;
+  /**
+   * Where the application version comes from: a documented read (`probe`, ADR 0018 §3) or,
+   * where none exists, an administrator's declaration (`declared`, ADR 0021 §5).
+   */
+  versionSource: 'probe' | 'declared';
 }
+
+/** How long a declared version counts before it must be declared again (ADR 0021 §5). */
+export const DECLARATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** Access §2.4: codes that refuse the token or its permission scopes. */
 const ACCESS_UNAUTHORIZED = new Set([
@@ -54,12 +62,14 @@ export const MODULE_ENDPOINTS: Readonly<Record<ModuleId, ModuleEndpoint>> = {
     defaultPort: 443,
     auth: { header: 'X-API-KEY', scheme: 'raw' },
     credentialKind: 'console.network_api_key',
+    versionSource: 'probe',
   },
   protect: {
     basePath: '/proxy/protect/integration',
     defaultPort: 443,
     auth: { header: 'X-API-KEY', scheme: 'raw' },
     credentialKind: 'console.protect_api_key',
+    versionSource: 'probe',
   },
   access: {
     basePath: '',
@@ -67,6 +77,7 @@ export const MODULE_ENDPOINTS: Readonly<Record<ModuleId, ModuleEndpoint>> = {
     auth: { header: 'Authorization', scheme: 'bearer' },
     credentialKind: 'console.access_api_token',
     envelope: ACCESS_ENVELOPE,
+    versionSource: 'declared',
   },
 };
 

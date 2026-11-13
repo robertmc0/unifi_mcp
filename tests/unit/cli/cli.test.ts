@@ -421,6 +421,78 @@ describe('doctor and api coverage', () => {
     expect(noKey.code).toBe(1);
   });
 
+  it('declares an Access version from the CLI only, and doctor reports its state', async () => {
+    const h = await setup();
+    await h.run(['console', 'add', '--alias', 'lab', '--host', '192.0.2.10']);
+    await writeFile(join(h.dir, 'token'), 'synthetic-access-token-1');
+    await h.run([
+      'console',
+      'set-credential',
+      'lab',
+      '--module',
+      'access',
+      '--key-file',
+      join(h.dir, 'token'),
+    ]);
+    await h.run(['console', 'enable-module', 'lab', '--module', 'access']);
+    const consoleCheck = async () =>
+      (await h.json<{ check: string; detail: string }[]>(['doctor'])).find(
+        (c) => c.check === 'console lab',
+      )?.detail;
+    expect(await consoleCheck()).toContain(
+      'access: version not declared (unifi-mcp console declare-version lab --module access',
+    );
+    expect((await h.run(['console', 'declare-version', 'lab', '--version', '4.2.16'])).code).toBe(
+      2,
+    );
+    expect((await h.run(['console', 'declare-version', 'lab', '--module', 'access'])).code).toBe(2);
+    expect(
+      (
+        await h.run([
+          'console',
+          'declare-version',
+          'lab',
+          '--module',
+          'network',
+          '--version',
+          '11.0.97',
+        ])
+      ).code,
+    ).not.toBe(0);
+    const declared = await h.run([
+      'console',
+      'declare-version',
+      'lab',
+      '--module',
+      'access',
+      '--version',
+      '4.2.16',
+    ]);
+    expect(declared.code).toBe(0);
+    expect(declared.out).toContain('access 4.2.16 declared until');
+    expect(declared.out).toContain('Declared, not observed');
+    expect(await consoleCheck()).not.toContain('access:');
+    const shown = await h.json<{ modules: { moduleId: string; effectiveVersion: unknown }[] }>([
+      'console',
+      'show',
+      'lab',
+    ]);
+    expect(shown.modules.find((m) => m.moduleId === 'access')?.effectiveVersion).toMatchObject({
+      version: '4.2.16',
+      source: 'declared',
+    });
+    const withdrawn = await h.run([
+      'console',
+      'declare-version',
+      'lab',
+      '--module',
+      'access',
+      '--clear',
+    ]);
+    expect(withdrawn.out).toContain('withdrawn');
+    expect(await consoleCheck()).toContain('access: version not declared');
+  });
+
   it('counts an operation for a revision only within its verified version range', async () => {
     // A made-up Network 12.0.0 that documents exactly the 11.0.97 operations: the Network
     // operations are verified for >=11.0.97 <12, so none counts as implemented for it.

@@ -16,6 +16,7 @@ export {
   type ConsoleModuleView,
   type ConsoleRegistryOptions,
   type ConsoleView,
+  type ModuleVersion,
   type TlsTrustInput,
 } from './consoles.ts';
 export {
@@ -43,6 +44,7 @@ export {
 } from './probe.ts';
 export {
   ACCESS_ENVELOPE,
+  DECLARATION_TTL_MS,
   isModuleId,
   MODULE_ENDPOINTS,
   MODULE_IDS,

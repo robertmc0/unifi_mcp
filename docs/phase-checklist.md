@@ -639,13 +639,17 @@ command and its storage are built with the adapter.
    the Access certificate beside the console's (no new storage); a synthetic Access API
    (`tests/fixtures/access-console.ts`). All 98 generated operations round-trip through
    the real executor. The operator guide for Access follows with step 6.
-5. Declared version (ADR 0021 §5): CLI command, storage, audit, expiry, labels.
+5. ✅ **Declared version** (2026-11-13, [ADR 0023](adr/0023-access-adapter.md) §2):
+   `unifi-mcp console declare-version` (CLI only), storage migration 10, audit events,
+   30-day expiry, policy-version bump on change; "declared, not observed" in results,
+   approvals, `unifi_list_consoles`, the admin UI and messages; `doctor` warnings.
 6. Reads with reviewed metadata; then writes, physical-access writes always high risk;
    negative tests.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 5, the declared Access version (ADR 0021 §5): CLI command, storage,
-audit, 30-day expiry, "declared, not observed" labels.
+**Next:** step 6, Access reads with reviewed security metadata, then writes (physical
+access always high risk), negative tests, and the operator guide
+(`docs/applications-access.md`).
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests

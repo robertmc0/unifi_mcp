@@ -32,6 +32,7 @@ import {
 } from '@unifi-local-mcp/storage';
 import type { AuditEvent, AuditLog, Logger } from '@unifi-local-mcp/telemetry';
 import {
+  DECLARATION_TTL_MS,
   isModuleId,
   MODULE_ENDPOINTS,
   MODULE_IDS,
@@ -65,12 +66,29 @@ export interface ConsoleInput {
   tls: TlsTrustInput;
 }
 
+/** A module's application version and where it comes from (ADR 0021 §5, ADR 0023 §2). */
+export interface ModuleVersion {
+  version: string;
+  /** `declared`: stated by an administrator, not observed; the service cannot check it. */
+  source: 'observed' | 'declared';
+  /** For a declared version: when it stops counting. */
+  expiresAt?: string;
+}
+
 export interface ConsoleModuleView {
   moduleId: ModuleId;
   port: number;
   hasCredential: boolean;
   observedVersion: string | null;
   observedAt: string | null;
+  /** `probe` for modules that report their version, `declared` for those that cannot. */
+  versionSource: 'probe' | 'declared';
+  declaredVersion: string | null;
+  declaredAt: string | null;
+  /** When the declaration stops counting, whether or not it already has. */
+  declarationExpiresAt: string | null;
+  /** The version operations are checked against now, if any. */
+  effectiveVersion: ModuleVersion | null;
 }
 
 export interface ConsoleView {
@@ -105,6 +123,9 @@ const CREDENTIAL = /^[\x21-\x7e]{8,1024}$/;
 function invalid(message: string): ConsoleError {
   return new ConsoleError('console_invalid', message);
 }
+
+/** A declared version: dotted numbers, as Access release notes print them. */
+const DECLARED_VERSION = /^\d{1,4}(?:\.\d{1,6}){1,3}$/;
 
 function validateHost(host: string): string {
   const trimmed = host.trim();
@@ -409,6 +430,70 @@ export class ConsoleRegistry {
     });
   }
 
+  /**
+   * Declares (or, with `null`, withdraws) the application version of a module that reports
+   * none (ADR 0021 §5). Only the host CLI may: no MCP tool or admin page can. It counts for
+   * 30 days. Every declaration is audited; changing the version that operations were
+   * checked against bumps the policy version, invalidating pending approvals.
+   */
+  declareVersion(
+    consoleId: string,
+    moduleId: ModuleId,
+    version: string | null,
+    actor: PolicyActor,
+  ): { previous: string | null; expiresAt: string | null } {
+    if (actor.type !== 'cli') {
+      throw new ConsoleError(
+        'console_actor_forbidden',
+        'Only the host CLI can declare an application version.',
+      );
+    }
+    if (MODULE_ENDPOINTS[moduleId].versionSource !== 'declared') {
+      throw invalid(`${moduleId} reports its own version; it cannot be declared.`);
+    }
+    if (version !== null && !DECLARED_VERSION.test(version)) {
+      throw invalid('A version is dotted numbers, for example 4.2.16.');
+    }
+    return this.#db.transaction(() => {
+      this.#require(consoleId);
+      this.#ensureModuleRow(consoleId, moduleId);
+      const row = this.#moduleRow(consoleId, moduleId);
+      const previous = row === undefined ? null : columnOptionalText(row, 'declared_version');
+      const counted = row === undefined ? undefined : this.#effective(row, moduleId);
+      const now = this.#now();
+      const expiresAt =
+        version === null ? null : new Date(now.getTime() + DECLARATION_TTL_MS).toISOString();
+      this.#db.run(
+        'UPDATE console_modules SET declared_version = ?, declared_at = ?, declared_by = ? ' +
+          'WHERE console_id = ? AND module_id = ?',
+        [
+          version,
+          version === null ? null : now.toISOString(),
+          version === null ? null : `${actor.type}:${actor.id ?? ''}`.slice(0, 200),
+          consoleId,
+          moduleId,
+        ],
+      );
+      if (version === null) {
+        this.#record(actor, 'console.version_declaration_removed', consoleId, {
+          moduleId,
+          ...(previous === null ? {} : { previous }),
+        });
+      } else {
+        this.#record(actor, 'console.version_declared', consoleId, {
+          moduleId,
+          version,
+          expiresAt,
+          ...(previous === null ? {} : { previous }),
+        });
+      }
+      if (counted !== undefined && counted.version !== version) {
+        bumpPolicyVersion(this.#db, actor, () => now);
+      }
+      return { previous, expiresAt };
+    });
+  }
+
   get(idOrAlias: string): ConsoleView | undefined {
     const row = this.#db.get('SELECT * FROM consoles WHERE id = ? OR alias = ?', [
       idOrAlias,
@@ -434,16 +519,44 @@ export class ConsoleRegistry {
     return (row === undefined ? null : columnOptionalText(row, 'observed_version')) ?? undefined;
   }
 
-  /** Supported only when the probed version satisfies the operation's version range. */
+  /** The version operations are checked against now: observed, or declared and current. */
+  moduleVersion(consoleId: string, moduleId: string): ModuleVersion | undefined {
+    if (!isModuleId(moduleId)) return undefined;
+    const row = this.#moduleRow(consoleId, moduleId);
+    return row === undefined ? undefined : this.#effective(row, moduleId);
+  }
+
+  /**
+   * Supported only when the module's version satisfies the operation's version range. The
+   * version is the probed one, or for modules that report none, a declaration less than 30
+   * days old (ADR 0021 §5); without either it is unknown.
+   */
   capability(
     consoleId: string,
     descriptor: Pick<OperationDescriptor, 'moduleId' | 'apiVersionRange'>,
   ): Capability {
+    const version = this.moduleVersion(consoleId, descriptor.moduleId);
     if (!isModuleId(descriptor.moduleId)) return 'unsupported';
-    const row = this.#moduleRow(consoleId, descriptor.moduleId);
-    const observed = row === undefined ? null : columnOptionalText(row, 'observed_version');
-    if (observed === null) return 'unknown';
-    return satisfies(observed, descriptor.apiVersionRange) ? 'supported' : 'unsupported';
+    if (version === undefined) return 'unknown';
+    return satisfies(version.version, descriptor.apiVersionRange) ? 'supported' : 'unsupported';
+  }
+
+  #effective(row: Row, moduleId: ModuleId): ModuleVersion | undefined {
+    if (MODULE_ENDPOINTS[moduleId].versionSource === 'probe') {
+      const observed = columnOptionalText(row, 'observed_version');
+      return observed === null ? undefined : { version: observed, source: 'observed' };
+    }
+    const declared = columnOptionalText(row, 'declared_version');
+    const expiresAt = this.#declarationExpiry(row);
+    if (declared === null || expiresAt === null) return undefined;
+    if (this.#now().getTime() >= Date.parse(expiresAt)) return undefined;
+    return { version: declared, source: 'declared', expiresAt };
+  }
+
+  #declarationExpiry(row: Row): string | null {
+    const at = columnOptionalText(row, 'declared_at');
+    const time = at === null ? NaN : Date.parse(at);
+    return Number.isNaN(time) ? null : new Date(time + DECLARATION_TTL_MS).toISOString();
   }
 
   connection(consoleId: string, moduleId: string): ConsoleConnection | undefined {
@@ -514,6 +627,11 @@ export class ConsoleRegistry {
             hasCredential: columnOptionalText(moduleRow, 'credential_secret_id') !== null,
             observedVersion: columnOptionalText(moduleRow, 'observed_version'),
             observedAt: columnOptionalText(moduleRow, 'observed_at'),
+            versionSource: MODULE_ENDPOINTS[moduleId].versionSource,
+            declaredVersion: columnOptionalText(moduleRow, 'declared_version'),
+            declaredAt: columnOptionalText(moduleRow, 'declared_at'),
+            declarationExpiresAt: this.#declarationExpiry(moduleRow),
+            effectiveVersion: this.#effective(moduleRow, moduleId) ?? null,
           },
         ];
       }),

@@ -257,6 +257,10 @@ export interface HarnessOptions {
   capability?: Capability;
   /** What a probe last observed, reported in unsupported-version messages. */
   observedVersion?: string;
+  /** A declared version instead (ADR 0021 §5), with its expiry. */
+  declaredVersion?: { version: string; expiresAt: string };
+  /** The module's version is declared, but none counts now. */
+  declares?: boolean;
   /** Replaces the registered operations. */
   descriptors?: OperationDescriptor[];
   dir: string;
@@ -336,7 +340,13 @@ export async function harness(options: HarnessOptions): Promise<Harness> {
       clientPolicy: (id) => clients.get(id),
       consolePolicy: (id) => consoles.get(id),
       capability: () => options.capability ?? 'supported',
-      observedVersion: () => options.observedVersion,
+      declaresVersion: () => options.declaredVersion !== undefined || options.declares === true,
+      moduleVersion: () =>
+        options.declaredVersion !== undefined
+          ? { ...options.declaredVersion, source: 'declared' as const }
+          : options.observedVersion === undefined
+            ? undefined
+            : { version: options.observedVersion, source: 'observed' as const },
     },
     policyStore,
     deployment,

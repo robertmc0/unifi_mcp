@@ -56,6 +56,33 @@ describe('protocol eras', () => {
   }
 });
 
+describe('declared versions (ADR 0021 §5)', () => {
+  it('lists a declared module version as declared, not observed, with its expiry', async () => {
+    const t = await startTestService({ dir: await tempDir() });
+    const consoles = t.service.consoles;
+    const policy = consoles.policy(t.consoleId);
+    consoles.setPolicy(
+      t.consoleId,
+      { ...policy, modules: { ...policy?.modules, access: { state: 'read_only' } } },
+      CLI,
+    );
+    const { expiresAt } = consoles.declareVersion(t.consoleId, 'access', '4.2.16', CLI);
+    const client = await connect(t.mcpUrl, t.token('reader', ['network.*.read']), 'auto');
+    const listed = structured(
+      await client.callTool({ name: 'unifi_list_consoles', arguments: {} }),
+    );
+    expect(JSON.stringify(listed)).toContain(
+      JSON.stringify({
+        moduleId: 'access',
+        state: 'read_only',
+        applicationVersion: '4.2.16',
+        versionSource: 'declared, not observed',
+        versionExpiresAt: expiresAt,
+      }),
+    );
+  });
+});
+
 describe('binary reads (ADR 0019)', () => {
   for (const mode of ['legacy', 'auto'] as const) {
     it(`reach a ${mode === 'auto' ? '2026' : '2025'}-era client as image content, outside the JSON`, async () => {

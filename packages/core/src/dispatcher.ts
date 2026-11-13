@@ -109,8 +109,21 @@ export interface SecurityContextProvider {
     consoleId: string,
     operation: Pick<OperationDescriptor, 'moduleId' | 'apiVersionRange'>,
   ): Capability;
-  /** The module version a probe last observed, used only to explain an unsupported result. */
-  observedVersion?(consoleId: string, moduleId: string): string | undefined;
+  /**
+   * The module version operations are checked against, and whether a probe observed it or
+   * an administrator declared it (ADR 0021 §5). Used to explain an unsupported result and to
+   * label results and approvals of declared versions.
+   */
+  moduleVersion?(consoleId: string, moduleId: string): ModuleVersionInfo | undefined;
+  /** Whether the module's version is declared by an administrator rather than probed. */
+  declaresVersion?(moduleId: string): boolean;
+}
+
+export interface ModuleVersionInfo {
+  version: string;
+  source: 'observed' | 'declared';
+  /** For a declared version: when it stops counting. */
+  expiresAt?: string;
 }
 
 export interface UpstreamError {
@@ -166,6 +179,8 @@ export interface ProposalContext {
   policyVersion: number;
   effectiveRisk: Risk;
   correlationId: string;
+  /** Set when the module's version was declared, not observed: the approver is told. */
+  versionNotice?: string;
 }
 
 /** A human-approved request that may now be resumed by its original client. */
@@ -460,7 +475,10 @@ export class Dispatcher {
     const decision = this.#authorize(context);
     if (!decision.allowed) return this.#denied(context, decision);
     if (decision.policyVersion !== claim.policyVersion) return refuse('approval_invalidated');
-    return this.#runWrite(context, decision, undefined, claim.approvalId);
+    return this.#withNotice(
+      await this.#runWrite(context, decision, undefined, claim.approvalId),
+      this.#versionNotice(context),
+    );
   }
 
   /** Status of one of this client's own executions; other clients' ids are not found. */
@@ -603,20 +621,28 @@ export class Dispatcher {
     if (decision.approvalRequired) {
       if (this.#deps.approvals === undefined)
         return reject('denied', 'approval_unavailable', 'denied');
-      return this.#deps.approvals.propose({
-        principal,
-        descriptor,
-        arguments: context.args,
-        target,
-        argumentsSha256: this.#digest(context),
-        policyVersion: decision.policyVersion,
-        effectiveRisk: decision.effectiveRisk,
-        correlationId: base.correlationId,
-      });
+      const versionNotice = this.#versionNotice(context);
+      return this.#withNotice(
+        this.#deps.approvals.propose({
+          principal,
+          descriptor,
+          arguments: context.args,
+          target,
+          argumentsSha256: this.#digest(context),
+          policyVersion: decision.policyVersion,
+          effectiveRisk: decision.effectiveRisk,
+          correlationId: base.correlationId,
+          ...(versionNotice === undefined ? {} : { versionNotice }),
+        }),
+        versionNotice,
+      );
     }
-    return descriptor.effect === 'read'
-      ? this.#runRead(context)
-      : this.#runWrite(context, decision, request.idempotencyKey);
+    return this.#withNotice(
+      await (descriptor.effect === 'read'
+        ? this.#runRead(context)
+        : this.#runWrite(context, decision, request.idempotencyKey)),
+      this.#versionNotice(context),
+    );
   }
 
   #authorize(context: Context): Authorization {
@@ -684,19 +710,48 @@ export class Dispatcher {
         message:
           decision.reason === 'operation_unsupported'
             ? this.#unsupportedMessage(context, decision.message)
-            : decision.message,
+            : decision.reason === 'version_unknown' &&
+                this.#deps.security.declaresVersion?.(context.descriptor.moduleId) === true
+              ? `The ${context.descriptor.moduleId} application reports no version, and none ` +
+                'is declared for this console, or the declaration has expired. A host ' +
+                'administrator must declare it (unifi-mcp console declare-version); until then ' +
+                'no operation of this module can run.'
+              : decision.message,
       },
     };
   }
 
-  /** Names the observed version and the verified range, so the operator knows what to do. */
+  /** Names the version and the verified range, so the operator knows what to do. */
   #unsupportedMessage(context: Context, base: string): string {
     const { moduleId, apiVersionRange } = context.descriptor;
-    const observed = this.#deps.security.observedVersion?.(context.target.consoleId, moduleId);
-    // The version string comes from the console: it is shown only if it looks like one.
+    const known = this.#deps.security.moduleVersion?.(context.target.consoleId, moduleId);
+    // An observed version string comes from the console: it is shown only if it looks like one.
     const shown =
-      observed !== undefined && SAFE_VERSION.test(observed) ? observed : 'an unrecognised version';
-    return `${base} The console reports ${moduleId} ${shown}; this operation is verified for ${apiVersionRange}.`;
+      known !== undefined && SAFE_VERSION.test(known.version)
+        ? known.version
+        : 'an unrecognised version';
+    const source =
+      known?.source === 'declared'
+        ? `An administrator declared ${moduleId} ${shown} (declared, not observed)`
+        : `The console reports ${moduleId} ${shown}`;
+    return `${base} ${source}; this operation is verified for ${apiVersionRange}.`;
+  }
+
+  /** For a module whose version was declared, not observed (ADR 0021 §5): a notice. */
+  #versionNotice(context: Context): string | undefined {
+    const { moduleId } = context.descriptor;
+    const known = this.#deps.security.moduleVersion?.(context.target.consoleId, moduleId);
+    if (known?.source !== 'declared' || !SAFE_VERSION.test(known.version)) return undefined;
+    const until = known.expiresAt === undefined ? '' : ` until ${known.expiresAt.slice(0, 10)}`;
+    return (
+      `The ${moduleId} version ${known.version} was declared by an administrator, not ` +
+      `observed; the service cannot check it. It counts${until}.`
+    );
+  }
+
+  #withNotice(envelope: ExecutionEnvelope, notice: string | undefined): ExecutionEnvelope {
+    if (notice === undefined) return envelope;
+    return { ...envelope, warnings: [...(envelope.warnings ?? []), notice] };
   }
 
   #rateLimit(context: Context): number | undefined {

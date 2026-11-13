@@ -56,7 +56,9 @@ import {
 import {
   ConsoleRegistry,
   EgressGuard,
+  isModuleId,
   loadContractInventory,
+  MODULE_ENDPOINTS,
   UnifiEventConnector,
   UnifiExecutor,
   VersionMonitor,
@@ -233,7 +235,9 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       clientPolicy: (clientId) => clients.policy(clientId),
       consolePolicy: (consoleId) => consoles.policy(consoleId),
       capability: (consoleId, descriptor) => consoles.capability(consoleId, descriptor),
-      observedVersion: (consoleId, moduleId) => consoles.observedVersion(consoleId, moduleId),
+      moduleVersion: (consoleId, moduleId) => consoles.moduleVersion(consoleId, moduleId),
+      declaresVersion: (moduleId) =>
+        isModuleId(moduleId) && MODULE_ENDPOINTS[moduleId].versionSource === 'declared',
     };
     const egress = new EgressGuard(config.egress, options.lookup);
     const executor = options.executor ?? new UnifiExecutor({ consoles, egress, logger });
@@ -390,6 +394,10 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
                   state: view.policy?.modules[module.moduleId]?.state ?? 'disabled',
                   hasCredential: module.hasCredential,
                   observedVersion: module.observedVersion,
+                  declaredVersion:
+                    module.effectiveVersion?.source === 'declared'
+                      ? module.effectiveVersion.version
+                      : null,
                 })),
               })),
               clients: clients.list().length,

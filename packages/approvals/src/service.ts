@@ -262,6 +262,8 @@ export class ApprovalService implements ApprovalGate {
     const reviewed = {
       description,
       ...(approvalCaution === undefined ? {} : { caution: approvalCaution }),
+      // A version declared by an administrator, not observed (ADR 0021 §5).
+      ...(context.versionNotice === undefined ? {} : { versionNotice: context.versionNotice }),
     };
     let summaryJson = JSON.stringify(
       redact({ ...reviewed, arguments: context.arguments }, SUMMARY_LIMITS),

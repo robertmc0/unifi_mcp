@@ -188,12 +188,23 @@ export function buildMcpServer(ctx: ToolContext): McpServer {
               description: view.description,
               modules: Object.entries(policy.modules)
                 .filter(([, module]) => module.state !== 'disabled')
-                .map(([moduleId, module]) => ({
-                  moduleId,
-                  state: module.state,
-                  applicationVersion:
-                    view.modules.find((m) => m.moduleId === moduleId)?.observedVersion ?? null,
-                })),
+                .map(([moduleId, module]) => {
+                  const version = view.modules.find(
+                    (m) => m.moduleId === moduleId,
+                  )?.effectiveVersion;
+                  return {
+                    moduleId,
+                    state: module.state,
+                    applicationVersion: version?.version ?? null,
+                    // ADR 0021 §5: an administrator's statement, not something observed.
+                    ...(version?.source === 'declared'
+                      ? {
+                          versionSource: 'declared, not observed',
+                          versionExpiresAt: version.expiresAt,
+                        }
+                      : {}),
+                  };
+                }),
             },
           ];
         });

@@ -192,8 +192,8 @@ detection") and is recorded here as spec §20 requires.
 - Only a plausible version string is accepted (`PLAUSIBLE_VERSION`). Declaring a version
   above the bound is accepted and recorded, and operations are then refused as
   `operation_unsupported`, so the result says why.
-- The CLI command and its storage are built with the adapter (Phase 4). They do not exist
-  yet.
+- Built in Phase 4 step 5 ([ADR 0023](0023-access-adapter.md) §2): `unifi-mcp console
+declare-version`, storage migration 10, the audit events and the labels.
 
 **U1. The range.** Each Access operation carries `apiVersionRange`
 `>=<stated minimum> <=4.2.16`. The minimum is the operation's own "UniFi Access

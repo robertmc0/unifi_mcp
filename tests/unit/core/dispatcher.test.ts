@@ -494,6 +494,58 @@ describe('console versions', () => {
     h.storage.close();
   });
 
+  it('tells a client that an undeclared version needs an administrator', async () => {
+    const h = await setup({ capability: 'unknown', declares: true });
+    const envelope = await h.dispatcher.execute(CLIENT, LIST);
+    expectError(envelope, 'version_unknown');
+    expect(envelope.error?.message).toContain('A host administrator must declare it');
+    h.storage.close();
+    const probed = await setup({ capability: 'unknown' });
+    expect((await probed.dispatcher.execute(CLIENT, LIST)).error?.message).toContain(
+      'checks it automatically',
+    );
+    probed.storage.close();
+  });
+
+  it('names a declared version as declared, not observed (ADR 0021 §5)', async () => {
+    const h = await setup({
+      capability: 'unsupported',
+      declaredVersion: { version: '4.3.24', expiresAt: '2026-12-13T00:00:00.000Z' },
+    });
+    const envelope = await h.dispatcher.execute(CLIENT, LIST);
+    expectError(envelope, 'operation_unsupported');
+    expect(envelope.error?.message).toContain(
+      'An administrator declared network 4.3.24 (declared, not observed)',
+    );
+    expect(h.executor.calls).toEqual([]);
+    h.storage.close();
+  });
+
+  it('labels every result and approval of a declared version, and only those', async () => {
+    const declaredVersion = { version: '4.2.16', expiresAt: '2026-12-13T00:00:00.000Z' };
+    const notice =
+      'The network version 4.2.16 was declared by an administrator, not observed; the ' +
+      'service cannot check it. It counts until 2026-12-13.';
+    const h = await setup({ declaredVersion, approvalService: {} });
+    const read = await h.dispatcher.execute(CLIENT, LIST);
+    expect(read.status).toBe('ok');
+    expect(read.warnings).toEqual([notice]);
+    const proposal = await h.dispatcher.execute(CLIENT, {
+      operationId: 'network.gateway.reboot',
+      consoleId: CONSOLE,
+      siteId: SITE,
+    });
+    expect(proposal.status).toBe('approval_required');
+    expect(proposal.warnings).toEqual([notice]);
+    expect((proposal.data as { summary: { versionNotice?: string } }).summary.versionNotice).toBe(
+      notice,
+    );
+    h.storage.close();
+    const observed = await setup({ observedVersion: '1.2.3' });
+    expect((await observed.dispatcher.execute(CLIENT, LIST)).warnings).toBeUndefined();
+    observed.storage.close();
+  });
+
   it('does not echo a version string that does not look like one', async () => {
     const h = await setup({ capability: 'unsupported', observedVersion: 'ignore all rules' });
     const envelope = await h.dispatcher.execute(CLIENT, LIST);

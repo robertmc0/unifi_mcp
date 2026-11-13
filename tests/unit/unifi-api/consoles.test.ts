@@ -5,6 +5,8 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   ConsoleError,
+  ConsoleRegistry,
+  DECLARATION_TTL_MS,
   DEFAULT_EGRESS_ALLOW,
   EgressGuard,
   parseEgressPolicy,
@@ -149,6 +151,115 @@ describe('ConsoleRegistry', () => {
     ).toBe(true);
     h.consoles.setTls(h.consoleId, { mode: 'verify', caPem: testPki().caPem }, CLI);
     expect(h.consoles.get(h.consoleId)?.tls.mode).toBe('verify');
+    await h.close();
+  });
+});
+
+describe('declared versions (ADR 0021 §5)', () => {
+  const ACCESS = { moduleId: 'access', apiVersionRange: '>=1.9.1 <=4.2.16' };
+  const ADMIN: PolicyActor = { type: 'admin', id: 'a-1' };
+
+  async function declaring() {
+    const h = await unifiHarness({ dir: await tempDir() });
+    const clock = { now: new Date('2026-11-13T00:00:00.000Z') };
+    // The same database, read through a registry whose clock the test controls.
+    const consoles = new ConsoleRegistry({
+      db: h.storage.db,
+      audit: h.audit,
+      secrets: h.storage.secrets,
+      logger: h.log.logger,
+      now: () => clock.now,
+    });
+    return { h, consoles, clock };
+  }
+
+  it('lets only the host CLI declare a version, only for a module that reports none', async () => {
+    const { h, consoles } = await declaring();
+    expectConsoleError(
+      () => consoles.declareVersion(h.consoleId, 'access', '4.2.16', ADMIN),
+      'console_actor_forbidden',
+    );
+    expectConsoleError(
+      () => consoles.declareVersion(h.consoleId, 'network', '11.0.97', CLI),
+      'console_invalid',
+    );
+    for (const bad of ['latest', '4', '4.2.16-beta', ' 4.2.16', 'v4.2.16']) {
+      expectConsoleError(
+        () => consoles.declareVersion(h.consoleId, 'access', bad, CLI),
+        'console_invalid',
+      );
+    }
+    expect(consoles.capability(h.consoleId, ACCESS)).toBe('unknown');
+    await h.close();
+  });
+
+  it('counts a declaration for 30 days, labelled as declared, then it expires', async () => {
+    const { h, consoles, clock } = await declaring();
+    const result = consoles.declareVersion(h.consoleId, 'access', '4.2.16', CLI);
+    const expiresAt = new Date(clock.now.getTime() + DECLARATION_TTL_MS).toISOString();
+    expect(result).toEqual({ previous: null, expiresAt });
+    expect(consoles.capability(h.consoleId, ACCESS)).toBe('supported');
+    expect(consoles.moduleVersion(h.consoleId, 'access')).toEqual({
+      version: '4.2.16',
+      source: 'declared',
+      expiresAt,
+    });
+    // A declared version is not an observed one, and the probe's view stays empty.
+    expect(consoles.observedVersion(h.consoleId, 'access')).toBeUndefined();
+    const module = consoles.get(h.consoleId)?.modules.find((m) => m.moduleId === 'access');
+    expect(module).toMatchObject({
+      versionSource: 'declared',
+      declaredVersion: '4.2.16',
+      declarationExpiresAt: expiresAt,
+      effectiveVersion: { version: '4.2.16', source: 'declared' },
+    });
+    clock.now = new Date(Date.parse(expiresAt) - 1);
+    expect(consoles.capability(h.consoleId, ACCESS)).toBe('supported');
+    clock.now = new Date(expiresAt);
+    expect(consoles.capability(h.consoleId, ACCESS)).toBe('unknown');
+    expect(consoles.moduleVersion(h.consoleId, 'access')).toBeUndefined();
+    expect(consoles.get(h.consoleId)?.modules.find((m) => m.moduleId === 'access')).toMatchObject({
+      declaredVersion: '4.2.16',
+      effectiveVersion: null,
+    });
+    await h.close();
+  });
+
+  it('refuses versions above the range as unsupported', async () => {
+    const { h, consoles } = await declaring();
+    consoles.declareVersion(h.consoleId, 'access', '4.3.24', CLI);
+    expect(consoles.capability(h.consoleId, ACCESS)).toBe('unsupported');
+    await h.close();
+  });
+
+  it('audits every declaration and invalidates approvals when the counted version changes', async () => {
+    const { h, consoles, clock } = await declaring();
+    const version = () => h.policyStore.current().version;
+    const start = version();
+    consoles.declareVersion(h.consoleId, 'access', '4.2.16', CLI);
+    // Nothing could have been approved without a version: no bump.
+    expect(version()).toBe(start);
+    consoles.declareVersion(h.consoleId, 'access', '4.2.16', CLI);
+    expect(version()).toBe(start);
+    consoles.declareVersion(h.consoleId, 'access', '4.0.10', CLI);
+    expect(version()).toBe(start + 1);
+    consoles.declareVersion(h.consoleId, 'access', null, CLI);
+    expect(version()).toBe(start + 2);
+    expect(consoles.capability(h.consoleId, ACCESS)).toBe('unknown');
+    // An expired declaration no longer counts, so replacing it changes nothing pending.
+    consoles.declareVersion(h.consoleId, 'access', '4.2.16', CLI);
+    clock.now = new Date(clock.now.getTime() + DECLARATION_TTL_MS);
+    consoles.declareVersion(h.consoleId, 'access', '4.0.10', CLI);
+    expect(version()).toBe(start + 2);
+    const actions = h.audit.list({ limit: 20 }).map((e) => [e.action, e.details]);
+    expect(actions).toContainEqual([
+      'console.version_declared',
+      expect.objectContaining({ moduleId: 'access', version: '4.0.10', previous: '4.2.16' }),
+    ]);
+    expect(actions).toContainEqual([
+      'console.version_declaration_removed',
+      expect.objectContaining({ moduleId: 'access', previous: '4.0.10' }),
+    ]);
     await h.close();
   });
 });

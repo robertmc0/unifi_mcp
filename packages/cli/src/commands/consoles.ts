@@ -141,6 +141,53 @@ export const consoleCommands: Record<string, Command> = {
       return 0;
     },
   },
+  'declare-version': {
+    summary:
+      'Declare the application version of a module that cannot report it (Access; counts 30 days)',
+    usage: '<alias|id> --module access (--version <x.y.z> | --clear)',
+    options: {
+      module: { type: 'string' },
+      version: { type: 'string' },
+      clear: { type: 'boolean' },
+    },
+    args: { min: 1, max: 1 },
+    run: async (ctx) => {
+      const services = await ctx.services();
+      const id = consoleId(services, ctx.positionals[0] ?? '');
+      if (string(ctx.values, 'module') === undefined) {
+        throw new CliError('Name the module: --module access.', 2);
+      }
+      const moduleId = moduleOption(ctx);
+      const version = string(ctx.values, 'version');
+      const clear = ctx.values['clear'] === true;
+      if ((version === undefined) !== clear) {
+        throw new CliError('Give either --version <x.y.z> or --clear.', 2);
+      }
+      const declared = clear ? null : (version ?? null);
+      const result = services.consoles.declareVersion(id, moduleId, declared, services.actor);
+      ctx.print(
+        {
+          consoleId: id,
+          moduleId,
+          version: declared,
+          expiresAt: result.expiresAt,
+          previous: result.previous,
+        },
+        () =>
+          declared === null
+            ? [
+                `Declared ${moduleId} version withdrawn. Its operations are refused until a ` +
+                  'version is declared again.',
+              ]
+            : [
+                `${moduleId} ${declared} declared until ${(result.expiresAt ?? '').slice(0, 10)}.`,
+                'Declared, not observed: the service cannot check it. Declare it again after ' +
+                  'every Access update, and before it expires.',
+              ],
+      );
+      return 0;
+    },
+  },
   'enable-module': {
     summary: 'Enable a module on a console (read_only by default)',
     usage:

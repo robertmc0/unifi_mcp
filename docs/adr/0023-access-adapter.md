@@ -59,6 +59,39 @@ the CLI stores the token, the port and the module mode like any other module.
 - Nothing else is specific to Access: egress, DNS re-validation, timeouts, size limits,
   redirect refusal and the dispatcher's retry rules apply unchanged (ADR 0012).
 
+## 2. Declared version (step 5)
+
+ADR 0021 §5 (B2): Access reports no version, so a host administrator declares it.
+
+- **Storage.** Migration 10 adds `declared_version`, `declared_at` and `declared_by` to
+  `console_modules`, apart from `observed_version`. `MODULE_ENDPOINTS` says where each
+  module's version comes from: `probe` for Network and Protect, `declared` for Access.
+- **Declaring.** `unifi-mcp console declare-version <alias> --module access --version
+<x.y.z>` (or `--clear`). `ConsoleRegistry.declareVersion` accepts only the CLI actor,
+  only modules whose version is declared, and only dotted numbers. No MCP tool or admin
+  page calls it. Every declaration and withdrawal is audited
+  (`console.version_declared`, `console.version_declaration_removed`). When the version
+  that operations were checked against changes or is withdrawn, the policy version is
+  bumped, so pending approvals are invalidated. A first declaration, or one replacing an
+  expired declaration, bumps nothing, because nothing could have been approved without a
+  version.
+- **Counting.** `capability()` and `moduleVersion()` use the effective version: the
+  observed one for probed modules, and for declared modules a declaration less than 30
+  days old. After that the module is `version_unknown` again. A declared version above
+  4.2.16 is recorded and its operations are refused as `operation_unsupported`.
+- **Labels.** Every result and approval request of a module with a declared version
+  carries a warning: "The access version 4.2.16 was declared by an administrator, not
+  observed; the service cannot check it. It counts until <date>." The approval summary
+  shows it as `versionNotice`. `unifi_list_consoles` lists such a module with
+  `versionSource: "declared, not observed"` and `versionExpiresAt`. An
+  `operation_unsupported` message names the version as declared. A `version_unknown`
+  message for Access says that an administrator must declare the version, instead of
+  "try again shortly". The admin UI marks the version "(declared, not observed)", and
+  `doctor` warns when no version is declared, when the declaration has expired, or when it
+  expires within 7 days.
+- The version monitor never probes Access (it has no probe), so the `console_versions`
+  health check is unaffected.
+
 ## Evidence
 
 - `tests/unit/unifi-api/executor.test.ts`, "result envelope": success only with
@@ -77,6 +110,17 @@ the CLI stores the token, the port and the module mode like any other module.
 - Mutation checks, each making a test fail: every 2xx accepted as success; the error class
   taken from the status instead of the code; `CODE_SYSTEM_ERROR` not transient; Access
   without its envelope; a 429 with a code no longer a rate limit.
+- Step 5: `tests/unit/unifi-api/consoles.test.ts`, "declared versions" (CLI only, Access
+  only, dotted numbers; 30 days to the millisecond; a version above the range
+  unsupported; audit and policy-version bumps, including none after an expired
+  declaration); `tests/unit/core/dispatcher.test.ts` (the `version_unknown` and
+  `operation_unsupported` messages; the warning on a read and on an approval request, and
+  the approval summary's `versionNotice`; no warning for observed versions);
+  `tests/unit/cli/cli.test.ts` (`declare-version` arguments, output, `console show`,
+  withdrawal, and `doctor`); `tests/integration-mock/mcp-http.test.ts`
+  (`unifi_list_consoles` over MCP). Mutation checks, each making a test fail: declarations
+  never expiring; an administrator allowed to declare; no approval invalidation; Network
+  declarable; no label on results; no label on approvals; `doctor` silent.
 - Not verified: how a real Access console sets the HTTP status of an error, and whether
   its tokens' scopes match the permission keys (provenance `unverified`). Both need an
   installed Access (ADR 0021, evidence C).

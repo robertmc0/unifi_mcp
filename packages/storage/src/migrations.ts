@@ -272,6 +272,19 @@ CREATE TABLE admin_sessions (
 CREATE INDEX admin_sessions_admin ON admin_sessions (admin_id);
 `,
   },
+  {
+    // An administrator-declared application version, for modules that report none (Access;
+    // ADR 0021 §5, ADR 0023 §2). Kept apart from observed versions; it expires after 30 days.
+    version: 10,
+    name: 'declared_versions',
+    sql: `
+ALTER TABLE console_modules ADD COLUMN declared_version TEXT
+  CHECK (declared_version IS NULL OR length(declared_version) <= 64);
+ALTER TABLE console_modules ADD COLUMN declared_at TEXT;
+ALTER TABLE console_modules ADD COLUMN declared_by TEXT
+  CHECK (declared_by IS NULL OR length(declared_by) <= 200);
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `

@@ -28,6 +28,8 @@ export interface ConsoleSummary {
     state: string;
     hasCredential: boolean;
     observedVersion: string | null;
+    /** A current declaration (ADR 0021 §5): shown as declared, not observed. */
+    declaredVersion: string | null;
   }[];
 }
 
@@ -249,7 +251,7 @@ export function dashboardPage(frame: Frame, view: DashboardView): string {
                             (m) =>
                               html`<div>
                                 ${m.moduleId}:
-                                ${m.state}${m.hasCredential ? '' : ' (no credential)'}${m.observedVersion === null ? '' : `, v${m.observedVersion}`}
+                                ${m.state}${m.hasCredential ? '' : ' (no credential)'}${m.observedVersion === null ? '' : `, v${m.observedVersion}`}${m.declaredVersion === null ? '' : `, v${m.declaredVersion} (declared, not observed)`}
                               </div>`,
                           )}
                         </td>
