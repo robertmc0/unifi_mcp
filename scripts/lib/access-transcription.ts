@@ -347,29 +347,37 @@ function walkOperation(walk: Walk, key: string, op: Schema, requestComponents: S
     return;
   }
   if (media.type !== 'application/json') return;
-  // The envelope without code and msg (ADR 0022 §4).
+  // The envelope without code and msg (ADR 0022 §4): data, pagination, and siblings of
+  // data that a sample shows (§9.2's page and total).
   const envelope = media.schema;
   const properties = isObject(envelope) ? envelope['properties'] : undefined;
   const required = isObject(envelope) ? envelope['required'] : undefined;
+  const sampled = (schema: unknown): boolean =>
+    isObject(schema) && isObject(schema['x-pdf']) && schema['x-pdf']['sample'] === true;
   if (
     !isObject(envelope) ||
     envelope['type'] !== 'object' ||
     !isObject(properties) ||
-    !Object.keys(properties).every((name) => ENVELOPE.has(name)) ||
+    !Object.entries(properties).every(([name, schema]) => ENVELOPE.has(name) || sampled(schema)) ||
     !Array.isArray(required) ||
     !required.includes('data')
   ) {
-    walk.problems.push(`${key}: the response is not the envelope {data, pagination?}.`);
+    walk.problems.push(
+      `${key}: the response is not the envelope {data, pagination?, sampled siblings}.`,
+    );
     return;
   }
   for (const [name, schema] of Object.entries(properties)) {
     const at = `${key} ${name}`;
     if (!isObject(schema)) continue;
-    if (schema['x-pdf'] !== undefined) {
+    if (ENVELOPE.has(name) && schema['x-pdf'] !== undefined) {
       walk.problems.push(`${at}: an envelope property cites its row on the response instead.`);
     }
     if (name === 'data' && response['x-pdf'] !== undefined) {
       addElement(walk, response, at, 'data', schema, true, false);
+    }
+    if (!ENVELOPE.has(name)) {
+      addElement(walk, schema, at, name, schema, false, false);
     }
     walkSchema(walk, schema, at, false);
   }

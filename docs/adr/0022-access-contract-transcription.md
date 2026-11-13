@@ -162,8 +162,9 @@ Every Access response has the form `{code, msg, data}`. A response is a success 
 - An operation's success schema describes the envelope without `code` and `msg`: a
   required `data` (§2.8 always shows it), and an optional `pagination` where a list read
   shows one. This matches the dispatcher's existing `pagination(output)` hook (ADR 0018
-  §2). An operation whose `data` the PDF documents as `null` has no response content, and
-  the translator discards whatever arrives.
+  §2). Other siblings of `data` that a sample shows are transcribed as sample fields
+  (§9.2 prints `page` and `total` there). An operation whose `data` the PDF documents as
+  `null` has no response content, and the translator discards whatever arrives.
 
 ### 5. Operations the translator cannot express yet
 
@@ -351,6 +352,19 @@ Step 3, chapter §8 devices (2026-11-13): 4 operations on pages 147 to 154; 17 p
 - §8.2 and §8.3: the tables list the access methods at the top with "true"/"false"; both
   samples nest them under `access_methods` with "yes"/"no". The response transcribes
   both; the §8.3 write transcribes the table and is not generated (§3, new rule).
+
+Step 3, chapter §9 system logs (2026-11-13): 4 operations on pages 155 to 161; 13
+pending.
+
+- Pages 155 to 161 hold 17 rows other than `Authorization`, each transcribed. A wrong
+  sample page and a removed field each produced a report.
+- §9.2: the response table names the four parts of a log entry; the sample places them
+  under `data.hits[]._source` and shows `page` and `total` beside `data` (§4 now allows
+  such sampled siblings). §9.1's key and value tables have no types and are not field
+  tables.
+- §9.3 (a CSV export) and §9.5 (files whose path parameter contains slashes; the PDF
+  states no media type) are transcribed and not generated. §9.4's response comes from
+  its sample.
 
 ## Consequences
 

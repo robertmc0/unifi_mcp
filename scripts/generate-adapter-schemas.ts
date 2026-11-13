@@ -96,6 +96,12 @@ export const GENERATED_MODULES = [
         'the table and both samples disagree on the body (top-level methods with "true"/' +
         '"false" against access_methods with "yes"/"no"); not generated until it is verified ' +
         '(ADR 0022 §3)',
+      'POST /api/v1/developer/system/logs/export':
+        'returns a CSV file; non-JSON operations are decided one by one with the adapter ' +
+        '(ADR 0022 §5)',
+      'GET /api/v1/developer/system/static/{path}':
+        'returns a file, and its path parameter contains slashes that one encoded path ' +
+        'segment cannot carry; decided with the adapter (ADR 0022 §5)',
       'POST /api/v1/developer/credentials/nfc_cards/import':
         'a multipart CSV upload; non-JSON operations are decided one by one with the adapter ' +
         '(ADR 0022 §5)',

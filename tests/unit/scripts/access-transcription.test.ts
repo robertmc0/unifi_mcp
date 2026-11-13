@@ -308,7 +308,21 @@ describe('structural checks (offline)', () => {
       media['application/json'] = { schema: { $ref: '#/components/schemas/Thing' } };
     });
     expect(structuralProblems(notEnvelope, INVENTORY, CONTRACT)).toContain(
-      'PUT /api/things/{id}: the response is not the envelope {data, pagination?}.',
+      'PUT /api/things/{id}: the response is not the envelope {data, pagination?, sampled siblings}.',
+    );
+    const envelopeOf = (d: Doc): Doc => {
+      const content = ((put(d)['responses'] as Doc)['200'] as Doc)['content'] as Doc;
+      return ((content['application/json'] as Doc)['schema'] as Doc)['properties'] as Doc;
+    };
+    const sibling = variant((d) => {
+      envelopeOf(d)['total'] = { type: 'integer', 'x-pdf': { page: 2, sample: true } };
+    });
+    expect(structuralProblems(sibling, INVENTORY, CONTRACT)).toEqual([]);
+    const uncited = variant((d) => {
+      envelopeOf(d)['total'] = { type: 'integer' };
+    });
+    expect(structuralProblems(uncited, INVENTORY, CONTRACT).join('\n')).toMatch(
+      /is not the envelope/,
     );
   });
 
