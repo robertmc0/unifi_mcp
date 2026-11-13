@@ -546,13 +546,14 @@ installed; Access is not installed. The owner therefore cannot supply an install
 version or download its documentation from this console, verify its token-scope UI, or
 run live Access reads and event checks. Official-contract research and synthetic mock
 preparation can proceed without installing Access. The cached Access PDF has no version
-label ([provenance](../api-specs/access/2026-03-23/provenance.json), ADR 0005); binding it
-to a supported application version remains unresolved. Do not infer a compatibility range
+label ([provenance](../api-specs/access/2026-03-23/provenance.json), ADR 0005); its
+binding to application versions is decided in ADR 0021 §5 (declared version, bound
+4.2.16), which is not verified contract evidence. Do not infer a compatibility range
 from the PDF date or its API minimum version, or mark the Phase 4 gate complete without
 verified contract evidence. Access remains in scope, not silently deferred or declared
 unsupported because it is absent from the test console.
 
-### Contract review (2026-11-12, [ADR 0021](adr/0021-access-contract-version-evidence.md), Proposed)
+### Contract review (2026-11-12, [ADR 0021](adr/0021-access-contract-version-evidence.md), Accepted 2026-11-13)
 
 - The hosted PDF is unchanged since Phase 0, and is still the vendor's only Access
   contract: developer.ui.com lists no Access API. The PDF states **lower bounds only**.
@@ -564,7 +565,7 @@ unsupported because it is absent from the test console.
   vendor-stated). Releases 4.2.27 to 4.3.24 followed without a PDF update.
 - **No documented Access operation reports the application version**, so the version
   probe the platform relies on cannot exist for Access. Every Access operation fails
-  closed (`version_unknown`) until the owner decides ADR 0021 §5.
+  closed (`version_unknown`) until an administrator declares the version (ADR 0021 §5).
 - Corrected: `docs/events.md` and ADR 0020 said Access documents no event subscription.
   §11.1 documents a local WebSocket.
 
@@ -575,12 +576,23 @@ unsupported because it is absent from the test console.
 - (B) A way to learn the installed version.
 - (C) A live read-only run on that version.
 
-A and C need an installed Access. B needs a vendor change or the owner's choice of
-operator-declared versions (ADR 0021 §5, B2 with bound U1 or U2).
+A and C need an installed Access. B is answered by the owner's decision below, as a
+declared, not observed, version.
 
-**Next:** owner decision on ADR 0021 §5 (B1/B2, U1/U2). Mock-based adapter work does not
-depend on that decision: transcribe schemas, the `{code, msg, data}` envelope, the §2.4
-error codes, and reviewed security metadata with physical-access writes high risk.
+### Decision: declared version, bounded at 4.2.16 (2026-11-13)
+
+The owner chose ADR 0021 §5 **B2 with U1**: a host administrator declares a console's
+Access version through the CLI (never over MCP); it is labelled "declared, not observed",
+audited, and expires after 30 days. Each operation's range is
+`>=<stated minimum> <=4.2.16`. Current Access releases (4.3.x) are therefore refused
+(`operation_unsupported`) until evidence A or C covers them. This deviates from spec §2
+decision 23 ("capability detection"); the deviation is recorded in ADR 0021. The CLI
+command and its storage are built with the adapter.
+
+**Next:** decide how the PDF becomes adapter schemas (ADR 0022), then transcribe it and
+build the adapter on synthetic mocks: the `{code, msg, data}` envelope, the §2.4 error
+codes, the declared version, and reviewed security metadata with physical-access writes
+high risk.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests

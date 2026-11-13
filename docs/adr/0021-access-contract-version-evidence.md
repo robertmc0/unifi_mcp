@@ -1,7 +1,7 @@
 # 0021. UniFi Access contract: version evidence and binding
 
-- Status: Proposed. The owner decides §5 before an Access adapter talks to a real console.
-- Date: 2026-11-12
+- Status: Accepted. The owner chose B2 with U1 on 2026-11-13 (§5).
+- Date: 2026-11-12 (proposed), 2026-11-13 (decided)
 - Phase: 4
 - Spec references: §2 decision 23; §4.1; §4.3; §4.5; §16 Phase 4; §20
 
@@ -152,44 +152,55 @@ at all. It needs either a vendor change or an owner decision (§5).
    request field is accepted only for versions that state it.
 4. **These bounds are not a compatibility range.** No Access operation gets an upper
    bound from this evidence alone, and the Phase 4 gate stays open.
-5. **Fail closed until §5 is decided.** Access has no version source, so its operations
-   are denied as `version_unknown`. That is the platform's existing behaviour.
+5. **No version, no operation.** An Access operation runs only when the console's Access
+   version is known and inside the operation's range. With no documented version read,
+   the version comes from an administrator's declaration (§5). Without a valid declaration,
+   operations are denied as `version_unknown`, the platform's existing behaviour.
 
 ## 4. Consequences
 
 - The adapter can be built and tested against synthetic mocks: transcribed schemas, the
   `{code, msg, data}` envelope, the §2.4 error codes, reviewed security metadata, and
-  high risk for physical-access writes. On a real console it does nothing until §5 is
-  decided.
-- The Phase 4 gate needs evidence A and C from an installed Access version, and an answer
-  to B.
+  high risk for physical-access writes.
+- Under §5, Access runs on a real console only after an administrator has declared its
+  version, and only for versions up to 4.2.16. Consoles that run a current release (4.3.x
+  as of 2026-11) are refused (`operation_unsupported`) even with a declaration, until
+  evidence A or C covers that release.
+- The Phase 4 gate needs evidence A and C from an installed Access version. B is answered
+  by §5 (declared, not observed) and must be visible as such in every result and approval.
 
-## 5. Open: the owner's choice (not decided)
+## 5. Decided: operator-declared version, bounded at 4.2.16 (B2 with U1)
 
-**B. How the installed version is learned.**
+The owner chose **B2 with U1** on 2026-11-13.
 
-- **B1. Wait for a documented version read.** Access operations stay `version_unknown` on
-  real consoles. No deviation from the spec.
-- **B2. Operator-declared version.** This deviates from spec §2 decision 23, "capability
-  detection". A host administrator declares the installed Access version through the CLI;
-  it cannot be set over MCP. The service stores it apart from observed versions, audits
-  it, and shows it as "declared, not observed" in results and approvals. It expires after
-  a set period (proposal: 30 days), so an Access auto-update cannot hide behind a stale
-  value.
+**Considered and not chosen.** B1, waiting for a documented version read: Access would
+stay `version_unknown` on every real console, with no deviation from the spec. U2, the
+bound `<5`: Network (`<12`) and Protect (`<8`) rest on a version-labelled contract and a
+probed version; Access has neither, so U2 would stack one inference on another.
 
-**U. The upper bound (needed with B2).**
+**B2. Operator-declared version.** This deviates from spec §2 decision 23 ("capability
+detection") and is recorded here as spec §20 requires.
 
-- **U1. `<=4.2.16`.** The newest version the PDF's change log covers. Current releases
-  (4.3.x) are refused until evidence A or C covers them.
-- **U2. `<5`.** Same major version, like Network (`<12`) and Protect (`<8`). Those ranges
-  rest on a version-labelled contract and a probed version. Access has neither, so this
-  would stack one inference on another.
+- A host administrator declares the installed Access version of one console through the
+  host CLI. It cannot be set over MCP, and no tool or argument can change it.
+- The service stores it apart from observed versions, audits it, and labels it "declared,
+  not observed" in results, tool descriptions and approval requests.
+- It expires 30 days after it was declared, so an Access auto-update cannot hide behind a
+  stale value. After expiry, Access operations are `version_unknown` until it is declared
+  again. A declaration that changes the version bumps the policy version, which invalidates
+  pending approvals, exactly as an observed change does (ADR 0018 §3).
+- Only a plausible version string is accepted (`PLAUSIBLE_VERSION`). Declaring a version
+  above the bound is accepted and recorded, and operations are then refused as
+  `operation_unsupported`, so the result says why.
+- The CLI command and its storage are built with the adapter (Phase 4). They do not exist
+  yet.
 
-**Recommendation.** Build the adapter on mocks now, since that work is needed under
-every option. Unless Ubiquiti documents a version read, B2 is the only way Access can run
-on a real console, but it does not help on the current test console. Decide B2 and the
-bound before anyone runs Access live. If B2 is chosen, pair it with U1 and widen the bound
-only on evidence A or C.
+**U1. The range.** Each Access operation carries `apiVersionRange`
+`>=<stated minimum> <=4.2.16`. The minimum is the operation's own "UniFi Access
+Requirement", otherwise §1.5's 1.9.1, and the higher of two disagreeing vendor statements
+(§3 item 2: 2.2.6 for §10.5 and §10.6). Field-level requirements (§3 item 3) apply within
+that range. 4.2.16 is the newest version the PDF's change log covers. Widening the bound
+needs evidence A or C for the newer version, recorded in this ADR.
 
 ## Re-evaluation triggers
 
@@ -197,5 +208,5 @@ only on evidence A or C.
   that reports the Access version.
 - The hosted PDF changes (`npm run api:fetch-specs` reports a checksum mismatch).
 - Someone supplies the in-app documentation download, or a live read-only run, from an
-  installed Access version.
+  installed Access version. Either can widen the U1 bound to the version it covers.
 - An Access release note names a new, changed or removed API operation.
