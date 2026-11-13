@@ -9,7 +9,7 @@
     "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e"
   },
   "x-note": "Written by hand from the cached PDF under the rules of docs/adr/0022-access-contract-transcription.md. Facts only: no vendor descriptions, examples or other prose. Checked against the PDF text by npm run api:reconcile.",
-  "x-pdf-pages": [[12, 146]],
+  "x-pdf-pages": [[12, 154]],
   "x-declined": [
     {
       "row": "Authorization",
@@ -225,9 +225,7 @@
   "x-pending": [
     "DELETE /api/v1/developer/api_server/certificates",
     "DELETE /api/v1/developer/webhooks/endpoints/{id}",
-    "GET /api/v1/developer/devices",
     "GET /api/v1/developer/devices/notifications",
-    "GET /api/v1/developer/devices/{device_id}/settings",
     "GET /api/v1/developer/system/logs/resource/{id}",
     "GET /api/v1/developer/system/static/{path}",
     "GET /api/v1/developer/user_groups/{id}/identity/assignments",
@@ -235,14 +233,12 @@
     "GET /api/v1/developer/users/{id}/identity/assignments",
     "GET /api/v1/developer/webhooks/endpoints",
     "POST /api/v1/developer/api_server/certificates",
-    "POST /api/v1/developer/devices/{device_id}/doorbell",
     "POST /api/v1/developer/system/logs",
     "POST /api/v1/developer/system/logs/export",
     "POST /api/v1/developer/user_groups/{id}/identity/assignments",
     "POST /api/v1/developer/users/identity/invitations",
     "POST /api/v1/developer/users/{id}/identity/assignments",
     "POST /api/v1/developer/webhooks/endpoints",
-    "PUT /api/v1/developer/devices/{device_id}/settings",
     "PUT /api/v1/developer/webhooks/endpoints/{id}"
   ],
   "paths": {
@@ -4826,6 +4822,330 @@
           }
         }
       }
+    },
+    "/api/v1/developer/devices": {
+      "get": {
+        "x-note": "The sample nests the devices in lists (\"data\": [[...]]), which the table does not show; data is read as that list of lists.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 147
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Device"
+                        }
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/devices/{device_id}/settings": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 148
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DeviceAccessMethods"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "x-note": "The table lists the methods at the top of the body with \"true\" or \"false\"; the request and response samples nest them under access_methods and send \"yes\" or \"no\". The table is transcribed (ADR 0022 §3), but this write is not generated until the body is verified. Valid face combinations (anti_spoofing_level/detect_distance): no/far, no/medium, medium/near, high/near; the schema cannot express them. The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 151
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nfc": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 151
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 151,
+                          "row": "nfc.enabled"
+                        }
+                      }
+                    }
+                  },
+                  "bt_tap": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 151
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 151,
+                          "row": "bt_tap.enabled"
+                        }
+                      }
+                    }
+                  },
+                  "bt_button": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 151
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 151,
+                          "row": "bt_button.enabled"
+                        }
+                      }
+                    }
+                  },
+                  "bt_shake": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 151
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 151,
+                          "row": "bt_shake.enabled"
+                        }
+                      }
+                    }
+                  },
+                  "mobile_wave": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 151
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 151,
+                          "row": "mobile_wave.enabled"
+                        }
+                      }
+                    }
+                  },
+                  "pin_code": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 151
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 151,
+                          "row": "pin_code.enabled"
+                        }
+                      },
+                      "pin_code_shuffle": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 152,
+                          "row": "pin_code.pin_code_shuffle"
+                        }
+                      }
+                    }
+                  },
+                  "face": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 152
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 152,
+                          "row": "face.enabled"
+                        }
+                      },
+                      "anti_spoofing_level": {
+                        "type": "string",
+                        "enum": ["high", "medium", "no"],
+                        "x-pdf": {
+                          "page": 152,
+                          "row": "face.anti_spoofing_level"
+                        }
+                      },
+                      "detect_distance": {
+                        "type": "string",
+                        "enum": ["near", "medium", "far"],
+                        "x-pdf": {
+                          "page": 152,
+                          "row": "face.detect_distance"
+                        }
+                      }
+                    }
+                  },
+                  "wave": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 152
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 152,
+                          "row": "wave.enabled"
+                        }
+                      }
+                    }
+                  },
+                  "qr_code": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 152
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 152,
+                          "row": "qr_code.enabled"
+                        }
+                      }
+                    }
+                  },
+                  "touch_pass": {
+                    "type": "object",
+                    "x-pdf": {
+                      "page": 152
+                    },
+                    "properties": {
+                      "enabled": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 152,
+                          "row": "touch_pass.enabled"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/devices/{device_id}/doorbell": {
+      "post": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "device_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 154
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "room_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 154
+                    }
+                  },
+                  "cancel": {
+                    "type": "boolean",
+                    "x-pdf": {
+                      "page": 154
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
     }
   },
   "components": {
@@ -7413,6 +7733,358 @@
           "door_lock_relay_status",
           "door_position_status"
         ]
+      },
+      "Device": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 147
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 147
+            }
+          },
+          "type": {
+            "type": "string",
+            "x-pdf": {
+              "page": 147
+            }
+          },
+          "alias": {
+            "type": "string",
+            "x-pdf": {
+              "page": 147
+            }
+          }
+        },
+        "required": ["id", "name", "type", "alias"]
+      },
+      "DeviceAccessMethods": {
+        "type": "object",
+        "properties": {
+          "nfc": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "nfc.enabled"
+                }
+              }
+            }
+          },
+          "bt_tap": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "bt_tap.enabled"
+                }
+              }
+            }
+          },
+          "bt_button": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "bt_button.enabled"
+                }
+              }
+            }
+          },
+          "bt_shake": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "bt_shake.enabled"
+                }
+              }
+            }
+          },
+          "mobile_wave": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "mobile_wave.enabled"
+                }
+              }
+            }
+          },
+          "pin_code": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "pin_code.enabled"
+                }
+              },
+              "pin_code_shuffle": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "pin_code.pin_code_shuffle"
+                }
+              }
+            }
+          },
+          "face": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "face.enabled"
+                }
+              },
+              "anti_spoofing_level": {
+                "type": "string",
+                "enum": ["high", "medium", "no"],
+                "x-pdf": {
+                  "page": 149,
+                  "row": "face.anti_spoofing_level"
+                }
+              },
+              "detect_distance": {
+                "type": "string",
+                "enum": ["near", "medium", "far"],
+                "x-pdf": {
+                  "page": 149,
+                  "row": "face.detect_distance"
+                }
+              }
+            }
+          },
+          "wave": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "wave.enabled"
+                }
+              }
+            }
+          },
+          "qr_code": {
+            "type": "object",
+            "x-pdf": {
+              "page": 149
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 149,
+                  "row": "qr_code.enabled"
+                }
+              }
+            }
+          },
+          "touch_pass": {
+            "type": "object",
+            "x-pdf": {
+              "page": 150
+            },
+            "properties": {
+              "enabled": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 150,
+                  "row": "touch_pass.enabled"
+                }
+              }
+            }
+          },
+          "access_methods": {
+            "type": "object",
+            "x-pdf": {
+              "page": 150,
+              "sample": true
+            },
+            "properties": {
+              "bt_button": {
+                "type": "object",
+                "x-pdf": {
+                  "page": 150,
+                  "sample": true
+                },
+                "properties": {
+                  "enabled": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  }
+                }
+              },
+              "bt_tap": {
+                "type": "object",
+                "x-pdf": {
+                  "page": 150,
+                  "sample": true
+                },
+                "properties": {
+                  "enabled": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  }
+                }
+              },
+              "face": {
+                "type": "object",
+                "x-pdf": {
+                  "page": 150,
+                  "sample": true
+                },
+                "properties": {
+                  "anti_spoofing_level": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  },
+                  "detect_distance": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  }
+                }
+              },
+              "nfc": {
+                "type": "object",
+                "x-pdf": {
+                  "page": 150,
+                  "sample": true
+                },
+                "properties": {
+                  "enabled": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  }
+                }
+              },
+              "pin_code": {
+                "type": "object",
+                "x-pdf": {
+                  "page": 150,
+                  "sample": true
+                },
+                "properties": {
+                  "enabled": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  },
+                  "pin_code_shuffle": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  }
+                }
+              },
+              "qr_code": {
+                "type": "object",
+                "x-pdf": {
+                  "page": 150,
+                  "sample": true
+                },
+                "properties": {
+                  "enabled": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  }
+                }
+              },
+              "touch_pass": {
+                "type": "object",
+                "x-pdf": {
+                  "page": 150,
+                  "sample": true
+                },
+                "properties": {
+                  "enabled": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 150,
+                      "sample": true
+                    }
+                  }
+                }
+              }
+            },
+            "x-note": "The sample nests the methods under access_methods; the table lists them at the top. Both are transcribed."
+          },
+          "device_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 150,
+              "sample": true
+            }
+          }
+        },
+        "x-note": "The tables describe \"true\" or \"false\"; the samples send \"yes\" and \"no\". No enumeration is transcribed."
       }
     }
   }

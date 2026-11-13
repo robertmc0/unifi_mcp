@@ -120,6 +120,10 @@ Requests are transcribed for least privilege and responses for fidelity.
 - **A body shown only in a sample.** A write whose request body has no table is
   transcribed without a body and is not generated, because it would send nothing (§4.13
   visitor license plates).
+- **A body the samples contradict.** Where the request and response samples agree with
+  each other against the table on a write's body structure, the table is still
+  transcribed, but the write is not generated until the body is verified (§8.3 device
+  access methods).
 - **Required.** Request fields: as the `T`/`F` column says. Response fields: never. The
   PDF marks none, and older Access versions lack fields that newer ones send (ADR 0021
   §3 item 3).
@@ -336,6 +340,17 @@ Step 3, chapter §7 spaces (2026-11-13): 13 operations on pages 125 to 146; 21 p
 - §7.9 remote unlock: the change-log field versions above, read from p.193; `entry_method`
   (in, out) and `control_cmd` (open, close, stop) are enumerations, as the rows name the
   supported values. That `actor_id` and `actor_name` go together is left to the console.
+
+Step 3, chapter §8 devices (2026-11-13): 4 operations on pages 147 to 154; 17 pending.
+
+- Pages 147 to 154 hold 56 rows other than `Authorization`, each transcribed. A removed
+  method and a wrong enumeration value each produced a report. Nothing is declined. The
+  `Content-Type` header rows (p.151, p.153) are the only rows whose label has a hyphen;
+  the detector does not see them, and the transport sends the header anyway.
+- §8.1: the sample nests the devices in lists (`[[…]]`); `data` is read that way.
+- §8.2 and §8.3: the tables list the access methods at the top with "true"/"false"; both
+  samples nest them under `access_methods` with "yes"/"no". The response transcribes
+  both; the §8.3 write transcribes the table and is not generated (§3, new rule).
 
 ## Consequences
 

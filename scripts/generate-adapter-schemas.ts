@@ -92,6 +92,10 @@ export const GENERATED_MODULES = [
       'GET /api/v1/developer/credentials/qr_codes/download/{visitor_id}':
         'returns a PNG image; non-JSON operations are decided one by one with the adapter ' +
         '(ADR 0022 §5)',
+      'PUT /api/v1/developer/devices/{device_id}/settings':
+        'the table and both samples disagree on the body (top-level methods with "true"/' +
+        '"false" against access_methods with "yes"/"no"); not generated until it is verified ' +
+        '(ADR 0022 §3)',
       'POST /api/v1/developer/credentials/nfc_cards/import':
         'a multipart CSV upload; non-JSON operations are decided one by one with the adapter ' +
         '(ADR 0022 §5)',
