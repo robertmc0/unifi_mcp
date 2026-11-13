@@ -285,6 +285,25 @@ Step 3, chapter §4 visitors (2026-11-13): 13 operations on pages 52 to 72; 65 p
   and door_group" read as the allowed set of `resources[].type`; `expand[]` and `status`
   accept one value each; §4.13 has no body table and is not generated.
 
+Step 3, chapter §5 access policies, holiday groups and schedules (2026-11-13): 15
+operations on pages 73 to 101; 50 pending.
+
+- Pages 73 to 101 hold 113 rows other than `Authorization`, each transcribed or
+  declined. Removing a field, removing a declined row and changing a field version each
+  produced a report.
+- Chapter 3's sample-based access policy schema is replaced by the §5.1 table. Its `Id`
+  row is printed without a type, so `id` is typed from the sample.
+- Declined: seven response tables that list only the `id` of the object the response
+  returns in full (its "Schemas"); the `Id` printed as a required body field of the read of
+  all holiday groups (it contradicts the operation; the sample sends no body); the
+  §5.16 response table, which repeats four fields of the §5.13 schedule.
+- `Data` rows (§5.5, §5.6, §5.17) are cited on the response. Holiday times are requests'
+  `date-time`, because the tables state RFC 3339. The schedule's representative `monday`
+  rows apply as in §4; on create they are required, so all seven days are. `"data":
+"success"` responses are discarded.
+- A field's minimum version may be printed beside another row of the same name
+  (`holiday_schedule`: §5.13, p.90); the check now accepts that page.
+
 ## Consequences
 
 - Access gets schemas as strict as Network's and Protect's, from the same translator, and

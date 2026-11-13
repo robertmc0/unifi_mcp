@@ -9,7 +9,7 @@
     "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e"
   },
   "x-note": "Written by hand from the cached PDF under the rules of docs/adr/0022-access-contract-transcription.md. Facts only: no vendor descriptions, examples or other prose. Checked against the PDF text by npm run api:reconcile.",
-  "x-pdf-pages": [[12, 72]],
+  "x-pdf-pages": [[12, 101]],
   "x-declined": [
     {
       "row": "Authorization",
@@ -49,6 +49,66 @@
       "row": "bundles",
       "page": 48,
       "reason": "An array whose item type is not documented (\"reserved for future use\", always empty)."
+    },
+    {
+      "row": "id",
+      "page": 74,
+      "reason": "A response table that lists only the id of the object created, updated or read; the response is the section's schema (\"Schemas\"), which contains it."
+    },
+    {
+      "row": "id",
+      "page": 77,
+      "reason": "A response table that lists only the id of the object created, updated or read; the response is the section's schema (\"Schemas\"), which contains it."
+    },
+    {
+      "row": "id",
+      "page": 82,
+      "reason": "A response table that lists only the id of the object created, updated or read; the response is the section's schema (\"Schemas\"), which contains it."
+    },
+    {
+      "row": "id",
+      "page": 85,
+      "reason": "A response table that lists only the id of the object created, updated or read; the response is the section's schema (\"Schemas\"), which contains it."
+    },
+    {
+      "row": "id",
+      "page": 87,
+      "reason": "A response table that lists only the id of the object created, updated or read; the response is the section's schema (\"Schemas\"), which contains it."
+    },
+    {
+      "row": "id",
+      "page": 92,
+      "reason": "A response table that lists only the id of the object created, updated or read; the response is the section's schema (\"Schemas\"), which contains it."
+    },
+    {
+      "row": "id",
+      "page": 96,
+      "reason": "A response table that lists only the id of the object created, updated or read; the response is the section's schema (\"Schemas\"), which contains it."
+    },
+    {
+      "row": "Id",
+      "page": 89,
+      "reason": "Printed as a required \"Request Body\" field of the read of all holiday groups: it contradicts the operation, and the sample sends no body."
+    },
+    {
+      "row": "name",
+      "page": 98,
+      "reason": "The §5.16 response table repeats fields of the §5.13 schedule schema, the response's \"Schemas\"; the schema is transcribed once. Its week_schedule appears as \"weekly\" in the samples, as in §5.13."
+    },
+    {
+      "row": "week_schedule",
+      "page": 98,
+      "reason": "The §5.16 response table repeats fields of the §5.13 schedule schema, the response's \"Schemas\"; the schema is transcribed once. Its week_schedule appears as \"weekly\" in the samples, as in §5.13."
+    },
+    {
+      "row": "holiday_group",
+      "page": 98,
+      "reason": "The §5.16 response table repeats fields of the §5.13 schedule schema, the response's \"Schemas\"; the schema is transcribed once. Its week_schedule appears as \"weekly\" in the samples, as in §5.13."
+    },
+    {
+      "row": "holiday_schedule",
+      "page": 98,
+      "reason": "The §5.16 response table repeats fields of the §5.13 schedule schema, the response's \"Schemas\"; the schema is transcribed once. Its week_schedule appears as \"weekly\" in the samples, as in §5.13."
     }
   ],
   "x-error-codes": [
@@ -98,20 +158,11 @@
     "CODE_USER_WORKER_NOT_EXISTS"
   ],
   "x-pending": [
-    "DELETE /api/v1/developer/access_policies/holiday_groups/{id}",
-    "DELETE /api/v1/developer/access_policies/schedules/{id}",
-    "DELETE /api/v1/developer/access_policies/{id}",
     "DELETE /api/v1/developer/api_server/certificates",
     "DELETE /api/v1/developer/credentials/nfc_cards/sessions/{id}",
     "DELETE /api/v1/developer/credentials/nfc_cards/tokens/{token}",
     "DELETE /api/v1/developer/door_groups/{id}",
     "DELETE /api/v1/developer/webhooks/endpoints/{id}",
-    "GET /api/v1/developer/access_policies",
-    "GET /api/v1/developer/access_policies/holiday_groups",
-    "GET /api/v1/developer/access_policies/holiday_groups/{id}",
-    "GET /api/v1/developer/access_policies/schedules",
-    "GET /api/v1/developer/access_policies/schedules/{id}",
-    "GET /api/v1/developer/access_policies/{id}",
     "GET /api/v1/developer/credentials/nfc_cards/sessions/{id}",
     "GET /api/v1/developer/credentials/nfc_cards/tokens",
     "GET /api/v1/developer/credentials/nfc_cards/tokens/{token}",
@@ -136,9 +187,6 @@
     "GET /api/v1/developer/users/identity/assignments",
     "GET /api/v1/developer/users/{id}/identity/assignments",
     "GET /api/v1/developer/webhooks/endpoints",
-    "POST /api/v1/developer/access_policies",
-    "POST /api/v1/developer/access_policies/holiday_groups",
-    "POST /api/v1/developer/access_policies/schedules",
     "POST /api/v1/developer/api_server/certificates",
     "POST /api/v1/developer/credentials/nfc_cards/import",
     "POST /api/v1/developer/credentials/nfc_cards/sessions",
@@ -152,9 +200,6 @@
     "POST /api/v1/developer/users/identity/invitations",
     "POST /api/v1/developer/users/{id}/identity/assignments",
     "POST /api/v1/developer/webhooks/endpoints",
-    "PUT /api/v1/developer/access_policies/holiday_groups/{id}",
-    "PUT /api/v1/developer/access_policies/schedules/{id}",
-    "PUT /api/v1/developer/access_policies/{id}",
     "PUT /api/v1/developer/credentials/nfc_cards/tokens/{token}",
     "PUT /api/v1/developer/credentials/touch_passes/{id}",
     "PUT /api/v1/developer/devices/{device_id}/settings",
@@ -476,7 +521,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/UserAccessPolicy"
+                        "$ref": "#/components/schemas/AccessPolicy"
                       }
                     }
                   },
@@ -993,7 +1038,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/UserAccessPolicy"
+                        "$ref": "#/components/schemas/AccessPolicy"
                       }
                     }
                   },
@@ -2370,6 +2415,1181 @@
           "200": {}
         }
       }
+    },
+    "/api/v1/developer/access_policies": {
+      "post": {
+        "x-note": "The body field is \"resource\", as the table and the sample name it, although its item rows are printed as resources[]; responses name it \"resources\".",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 74
+                    }
+                  },
+                  "resource": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 74
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": ["door", "door_group"],
+                          "x-pdf": {
+                            "page": 74,
+                            "row": "resources[].type"
+                          }
+                        },
+                        "id": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 74,
+                            "row": "resources[].id"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "schedule_id": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 74
+                    }
+                  }
+                },
+                "required": ["name", "schedule_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AccessPolicy"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AccessPolicy"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            },
+            "x-pdf": {
+              "page": 79,
+              "row": "Data"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/access_policies/{id}": {
+      "put": {
+        "x-note": "The body field is \"resource\", as the table and the sample name it, although its item rows are printed as resources[]; responses name it \"resources\".",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 76,
+              "row": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 76
+                    }
+                  },
+                  "resource": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 76
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": ["door", "door_group"],
+                          "x-pdf": {
+                            "page": 76,
+                            "row": "resources[].type"
+                          }
+                        },
+                        "id": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 76,
+                            "row": "resources[].id"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "schedule_id": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 76
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AccessPolicy"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 77,
+              "row": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "x-note": "The sample targets /api/v1/developer/ccess_policy; the method line wins.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 78,
+              "row": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AccessPolicy"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            },
+            "x-pdf": {
+              "page": 78,
+              "row": "Data"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/access_policies/holiday_groups": {
+      "post": {
+        "x-note": "start_time and end_time are \"provided in UTC format according to RFC3339\", so requests must send date-times; the response samples print them with a space.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 82
+                    }
+                  },
+                  "description": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 82
+                    }
+                  },
+                  "holidays": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 82
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 82,
+                            "row": "holidays[].description"
+                          }
+                        },
+                        "name": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 82,
+                            "row": "holidays[].name"
+                          }
+                        },
+                        "repeat": {
+                          "type": "boolean",
+                          "x-pdf": {
+                            "page": 82,
+                            "row": "holidays[].repeat"
+                          }
+                        },
+                        "is_template": {
+                          "type": "boolean",
+                          "x-pdf": {
+                            "page": 82,
+                            "row": "holidays[].is_template"
+                          }
+                        },
+                        "start_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "x-pdf": {
+                            "page": 82,
+                            "row": "holidays[].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "x-pdf": {
+                            "page": 82,
+                            "row": "holidays[].end_time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/HolidayGroup"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HolidayGroupSummary"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/access_policies/holiday_groups/{id}": {
+      "put": {
+        "x-note": "start_time and end_time are \"provided in UTC format according to RFC3339\", so requests must send date-times; the response samples print them with a space.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 84,
+              "row": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 84
+                    }
+                  },
+                  "description": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 84
+                    }
+                  },
+                  "holidays": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 84
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 84,
+                            "row": "holidays[].id"
+                          }
+                        },
+                        "description": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 84,
+                            "row": "holidays[].description"
+                          }
+                        },
+                        "name": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 84,
+                            "row": "holidays[].name"
+                          }
+                        },
+                        "repeat": {
+                          "type": "boolean",
+                          "x-pdf": {
+                            "page": 84,
+                            "row": "holidays[].repeat"
+                          }
+                        },
+                        "start_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "x-pdf": {
+                            "page": 84,
+                            "row": "holidays[].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "x-pdf": {
+                            "page": 84,
+                            "row": "holidays[].end_time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/HolidayGroup"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 86
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "x-note": "The path parameter table is labelled \"Request Body\" in the PDF.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 87,
+              "row": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/HolidayGroup"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/access_policies/schedules": {
+      "post": {
+        "x-note": "week_schedule.monday is required (T) and stands for every day, so all seven days are required, as the sample sends them. holiday_schedule needs 1.20.11, as §5.13 states.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 91
+                    }
+                  },
+                  "week_schedule": {
+                    "type": "object",
+                    "properties": {
+                      "sunday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          },
+                          "required": ["start_time", "end_time"]
+                        },
+                        "x-pdf": {
+                          "page": 92,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "monday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          },
+                          "required": ["start_time", "end_time"]
+                        },
+                        "x-pdf": {
+                          "page": 92,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "tuesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          },
+                          "required": ["start_time", "end_time"]
+                        },
+                        "x-pdf": {
+                          "page": 92,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "wednesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          },
+                          "required": ["start_time", "end_time"]
+                        },
+                        "x-pdf": {
+                          "page": 92,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "thursday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          },
+                          "required": ["start_time", "end_time"]
+                        },
+                        "x-pdf": {
+                          "page": 92,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "friday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          },
+                          "required": ["start_time", "end_time"]
+                        },
+                        "x-pdf": {
+                          "page": 92,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "saturday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 92,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          },
+                          "required": ["start_time", "end_time"]
+                        },
+                        "x-pdf": {
+                          "page": 92,
+                          "row": "week_schedule.monday"
+                        }
+                      }
+                    },
+                    "x-note": "The table prints one row, monday, for the daily periods \"from Sunday to Saturday\"; each of the seven days cites that row. The day names follow the samples.",
+                    "x-pdf": {
+                      "page": 91,
+                      "row": "week_schedule"
+                    },
+                    "required": [
+                      "sunday",
+                      "monday",
+                      "tuesday",
+                      "wednesday",
+                      "thursday",
+                      "friday",
+                      "saturday"
+                    ]
+                  },
+                  "holiday_group_id": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 92
+                    }
+                  },
+                  "holiday_schedule": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 92,
+                      "row": "holiday_schedule"
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 92,
+                            "row": "holiday_schedule[].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 92,
+                            "row": "holiday_schedule[].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-minimum-version": "1.20.11"
+                  }
+                },
+                "required": ["name", "week_schedule"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Schedule"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Schedule"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            },
+            "x-pdf": {
+              "page": 100,
+              "row": "Data"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/access_policies/schedules/{id}": {
+      "put": {
+        "x-note": "The response sample shows \"data\": {}; the response is read as a schedule with every field optional. holiday_schedule needs 1.20.11, as §5.13 states.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 95,
+              "row": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 95
+                    }
+                  },
+                  "week_schedule": {
+                    "type": "object",
+                    "properties": {
+                      "sunday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 95,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "monday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 95,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "tuesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 95,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "wednesday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 95,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "thursday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 95,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "friday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 95,
+                          "row": "week_schedule.monday"
+                        }
+                      },
+                      "saturday": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].start_time"
+                              }
+                            },
+                            "end_time": {
+                              "type": "string",
+                              "x-pdf": {
+                                "page": 95,
+                                "row": "week_schedule.monday[0].end_time"
+                              }
+                            }
+                          }
+                        },
+                        "x-pdf": {
+                          "page": 95,
+                          "row": "week_schedule.monday"
+                        }
+                      }
+                    },
+                    "x-note": "The table prints one row, monday, for the daily periods \"from Sunday to Saturday\"; each of the seven days cites that row. The day names follow the samples.",
+                    "x-pdf": {
+                      "page": 95,
+                      "row": "week_schedule"
+                    }
+                  },
+                  "holiday_group_id": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 95
+                    }
+                  },
+                  "holiday_schedule": {
+                    "type": "array",
+                    "x-pdf": {
+                      "page": 96,
+                      "row": "holiday_schedule"
+                    },
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "start_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 96,
+                            "row": "holiday_schedule[].start_time"
+                          }
+                        },
+                        "end_time": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 96,
+                            "row": "holiday_schedule[].end_time"
+                          }
+                        }
+                      }
+                    },
+                    "x-minimum-version": "1.20.11"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Schedule"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 98,
+              "row": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Schedule"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 101,
+              "row": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
     }
   },
   "components": {
@@ -2540,7 +3760,7 @@
           "access_policies": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/UserAccessPolicy"
+              "$ref": "#/components/schemas/AccessPolicy"
             },
             "x-pdf": {
               "page": 13
@@ -2576,59 +3796,6 @@
           }
         },
         "x-note": "touch_pass is declined (see x-declined). avatar_relative_path, email and username appear only in the samples of the user group member reads (§3.18, §3.19) and the search (§3.24), which name this schema."
-      },
-      "UserAccessPolicy": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "x-pdf": {
-              "page": 17,
-              "sample": true
-            }
-          },
-          "name": {
-            "type": "string",
-            "x-pdf": {
-              "page": 17,
-              "sample": true
-            }
-          },
-          "resources": {
-            "type": "array",
-            "x-pdf": {
-              "page": 17,
-              "sample": true
-            },
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "x-pdf": {
-                    "page": 17,
-                    "sample": true
-                  }
-                },
-                "type": {
-                  "type": "string",
-                  "x-pdf": {
-                    "page": 17,
-                    "sample": true
-                  }
-                }
-              }
-            }
-          },
-          "schedule_id": {
-            "type": "string",
-            "x-pdf": {
-              "page": 17,
-              "sample": true
-            }
-          }
-        },
-        "x-note": "From the user read samples only; replaced by citations of the §5.1 table when chapter 5 is transcribed."
       },
       "UserGroup": {
         "type": "object",
@@ -3524,6 +4691,556 @@
                     "page": 53,
                     "row": "license_plates[].credential_status"
                   }
+                }
+              }
+            }
+          }
+        }
+      },
+      "AccessPolicy": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 75,
+              "sample": true
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 73
+            }
+          },
+          "resources": {
+            "type": "array",
+            "x-pdf": {
+              "page": 73
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["door", "door_group"],
+                  "x-pdf": {
+                    "page": 73,
+                    "row": "resources[].type"
+                  }
+                },
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 73,
+                    "row": "resources[].id"
+                  }
+                }
+              }
+            }
+          },
+          "schedule_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 73
+            }
+          }
+        },
+        "x-note": "The §5.1 table prints the Id row without a type; id is typed from the sample."
+      },
+      "HolidayGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 81
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 81
+            }
+          },
+          "is_default": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 81
+            }
+          },
+          "description": {
+            "type": "string",
+            "x-pdf": {
+              "page": 81
+            }
+          },
+          "holidays": {
+            "type": "array",
+            "x-pdf": {
+              "page": 81
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 81,
+                    "row": "holidays[].description"
+                  }
+                },
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 81,
+                    "row": "holidays[].id"
+                  }
+                },
+                "name": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 81,
+                    "row": "holidays[].name"
+                  }
+                },
+                "repeat": {
+                  "type": "boolean",
+                  "x-pdf": {
+                    "page": 81,
+                    "row": "holidays[].repeat"
+                  }
+                },
+                "start_time": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 81,
+                    "row": "holidays[].start_time"
+                  }
+                },
+                "end_time": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 81,
+                    "row": "holidays[].end_time"
+                  }
+                },
+                "is_template": {
+                  "type": "boolean",
+                  "x-pdf": {
+                    "page": 94,
+                    "sample": true
+                  }
+                }
+              }
+            }
+          },
+          "template_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 83,
+              "sample": true
+            }
+          }
+        }
+      },
+      "HolidayGroupSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 89
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 89
+            }
+          },
+          "description": {
+            "type": "string",
+            "x-pdf": {
+              "page": 89
+            }
+          },
+          "count": {
+            "type": "integer",
+            "x-pdf": {
+              "page": 89
+            }
+          },
+          "is_default": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 89,
+              "sample": true
+            }
+          }
+        },
+        "required": ["id", "name", "description", "count"]
+      },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 90
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 90
+            }
+          },
+          "is_default": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 90
+            }
+          },
+          "type": {
+            "type": "string",
+            "x-pdf": {
+              "page": 90
+            }
+          },
+          "status": {
+            "type": "integer",
+            "x-pdf": {
+              "page": 101,
+              "sample": true
+            }
+          },
+          "weekly": {
+            "type": "object",
+            "properties": {
+              "sunday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "start_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].start_time"
+                      }
+                    },
+                    "end_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].end_time"
+                      }
+                    }
+                  }
+                },
+                "x-pdf": {
+                  "page": 90,
+                  "row": "weekly.monday"
+                }
+              },
+              "monday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "start_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].start_time"
+                      }
+                    },
+                    "end_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].end_time"
+                      }
+                    }
+                  }
+                },
+                "x-pdf": {
+                  "page": 90,
+                  "row": "weekly.monday"
+                }
+              },
+              "tuesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "start_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].start_time"
+                      }
+                    },
+                    "end_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].end_time"
+                      }
+                    }
+                  }
+                },
+                "x-pdf": {
+                  "page": 90,
+                  "row": "weekly.monday"
+                }
+              },
+              "wednesday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "start_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].start_time"
+                      }
+                    },
+                    "end_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].end_time"
+                      }
+                    }
+                  }
+                },
+                "x-pdf": {
+                  "page": 90,
+                  "row": "weekly.monday"
+                }
+              },
+              "thursday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "start_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].start_time"
+                      }
+                    },
+                    "end_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].end_time"
+                      }
+                    }
+                  }
+                },
+                "x-pdf": {
+                  "page": 90,
+                  "row": "weekly.monday"
+                }
+              },
+              "friday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "start_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].start_time"
+                      }
+                    },
+                    "end_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].end_time"
+                      }
+                    }
+                  }
+                },
+                "x-pdf": {
+                  "page": 90,
+                  "row": "weekly.monday"
+                }
+              },
+              "saturday": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "start_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].start_time"
+                      }
+                    },
+                    "end_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 90,
+                        "row": "weekly.monday[].end_time"
+                      }
+                    }
+                  }
+                },
+                "x-pdf": {
+                  "page": 90,
+                  "row": "weekly.monday"
+                }
+              }
+            },
+            "x-note": "The table prints one row, monday, for the daily periods \"from Sunday to Saturday\"; each of the seven days cites that row. The day names follow the samples.",
+            "x-pdf": {
+              "page": 90,
+              "row": "weekly"
+            }
+          },
+          "holiday_schedule": {
+            "type": "array",
+            "x-pdf": {
+              "page": 90,
+              "row": "holiday_schedule"
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "start_time": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 90,
+                    "row": "holiday_schedule[0].start_time"
+                  }
+                },
+                "end_time": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 90,
+                    "row": "holiday_schedule[0].end_time"
+                  }
+                }
+              }
+            },
+            "x-minimum-version": "1.20.11"
+          },
+          "holiday_group_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 90
+            }
+          },
+          "holiday_group": {
+            "type": "object",
+            "x-pdf": {
+              "page": 90,
+              "parent": true
+            },
+            "properties": {
+              "id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 90,
+                  "row": "holiday_group.id"
+                }
+              },
+              "name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 90,
+                  "row": "holiday_group.name"
+                }
+              },
+              "is_default": {
+                "type": "boolean",
+                "x-pdf": {
+                  "page": 91,
+                  "row": "holiday_group.is_default"
+                }
+              },
+              "description": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 91,
+                  "row": "holiday_group.description"
+                }
+              },
+              "holidays": {
+                "type": "array",
+                "x-pdf": {
+                  "page": 91,
+                  "row": "holiday_group.holidays"
+                },
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 91,
+                        "row": "holiday_group.holidays[].description"
+                      }
+                    },
+                    "id": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 91,
+                        "row": "holiday_group.holidays[].id"
+                      }
+                    },
+                    "name": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 91,
+                        "row": "holiday_group.holidays[].name"
+                      }
+                    },
+                    "repeat": {
+                      "type": "boolean",
+                      "x-pdf": {
+                        "page": 91,
+                        "row": "holiday_group.holidays[].repeat"
+                      }
+                    },
+                    "start_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 91,
+                        "row": "holiday_group.holidays[].start_time"
+                      }
+                    },
+                    "end_time": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 91,
+                        "row": "holiday_group.holidays[].end_time"
+                      }
+                    },
+                    "is_template": {
+                      "type": "boolean",
+                      "x-pdf": {
+                        "page": 94,
+                        "sample": true
+                      }
+                    }
+                  }
+                }
+              },
+              "template_name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 94,
+                  "sample": true
                 }
               }
             }

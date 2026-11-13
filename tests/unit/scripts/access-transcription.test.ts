@@ -379,7 +379,9 @@ describe('checks against the PDF text', () => {
     const problems = pdfProblems(doc, PAGES, INVENTORY).join('\n');
     expect(problems).toMatch(/updated_at: "updated_at" is not in a sample on p\.1/);
     expect(problems).toMatch(/status: enum value "ARCHIVED" not on p\.1/);
-    expect(problems).toMatch(/body\.color: minimum version 3\.3\.10 not on p\.2–3/);
+    expect(problems).toMatch(
+      /body\.color: minimum version 3\.3\.10 not on p\.2–3 or beside another "color" row/,
+    );
     expect(problems).toMatch(/parts: no rows of fields under "parts" on p\.2 \(as parts\[\]\.…\)/);
   });
 

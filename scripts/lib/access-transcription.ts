@@ -731,11 +731,15 @@ export function pdfProblems(
       }
     }
     if (element.minimumVersion !== undefined) {
-      const near = `${text}\n${pageText(pages, page + 1)}`;
+      // A requirement is printed once, beside the field's row in one table (the schema's,
+      // for instance); a request table of the same field may not repeat it.
+      const label = element.pdf.row ?? element.name;
+      const same = rows.filter((row) => row.label === label).map((row) => row.page);
+      const near = [page, page + 1, ...same].map((p) => pageText(pages, p)).join('\n');
       if (!near.includes(element.minimumVersion)) {
         problems.push(
           `${element.where}: minimum version ${element.minimumVersion} not on ` +
-            `p.${String(page)}–${String(page + 1)}.`,
+            `p.${String(page)}–${String(page + 1)} or beside another "${label}" row.`,
         );
       }
     }
