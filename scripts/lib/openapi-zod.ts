@@ -17,6 +17,12 @@
  *   variant's fields. Documented required properties stay required, except reviewed ones a
  *   console was observed to leave out (`optionalResponseProperties`).
  *
+ * A hand transcription of a PDF contract (`transcription`, ADR 0022) is translated by the
+ * same rules, with three differences: the citation extensions (`x-pdf`, `x-note`,
+ * `x-minimum-version`) are accepted as annotations; a response property that cites the PDF
+ * is optional and nullable, because the PDF states neither; and each operation lists the
+ * request fields that need a later application version than the operation itself.
+ *
  * Anything the translator does not understand throws, so nothing is translated silently
  * wrong. The vendor document must not contain cycles.
  */
@@ -42,6 +48,12 @@ const ANNOTATIONS = new Set([
   'x-tags',
   'x-enum-descriptions',
   'x-enum-varnames',
+]);
+/** Annotations a transcription adds (ADR 0022 §2, §3). A vendor document may not use them. */
+export const TRANSCRIPTION_ANNOTATIONS: ReadonlySet<string> = new Set([
+  'x-pdf',
+  'x-note',
+  'x-minimum-version',
 ]);
 const STRUCTURAL = new Set([
   'type',
@@ -112,6 +124,12 @@ export interface GeneratorOptions {
    * the decision is revisited.
    */
   optionalResponseProperties?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /**
+   * The document is this project's hand transcription of a PDF contract, not a vendor
+   * document (ADR 0022). Enables its annotations, optional and nullable response
+   * properties where they cite the PDF, and `versionedFields` on every operation.
+   */
+  transcription?: boolean;
 }
 
 interface OperationInfo {
@@ -124,6 +142,13 @@ interface OperationInfo {
   pathParameters: string[];
   queryParameters: string[];
   hasBody: boolean;
+}
+
+/** A request field that needs a later application version than its operation. */
+interface VersionedField {
+  /** The argument (`expand[]`) or a path into the body (`body.user_email`, `body.items[].id`). */
+  field: string;
+  minimum: string;
 }
 
 interface Parts {
@@ -247,13 +272,16 @@ export class OpenApiZodGenerator {
   readonly #absentAllowed: ReadonlyMap<string, string>;
   /** Those of them that were applied to a response schema. */
   readonly absentApplied = new Set<string>();
+  /** Whether the document is a hand transcription (ADR 0022). */
+  readonly #transcription: boolean;
 
   constructor(
     doc: OpenApiDocument,
-    optionalResponseProperties: GeneratorOptions['optionalResponseProperties'] = {},
+    options: Pick<GeneratorOptions, 'optionalResponseProperties' | 'transcription'> = {},
   ) {
+    this.#transcription = options.transcription === true;
     this.#absentAllowed = new Map(
-      Object.entries(optionalResponseProperties).flatMap(([schema, properties]) =>
+      Object.entries(options.optionalResponseProperties ?? {}).flatMap(([schema, properties]) =>
         Object.entries(properties).map(([property, reason]) => [`${schema}.${property}`, reason]),
       ),
     );
@@ -293,7 +321,7 @@ export class OpenApiZodGenerator {
    * where a variant narrows it.
    */
   #isUnconstrained(schema: Schema): boolean {
-    const keywords = Object.keys(schema).filter((keyword) => !ANNOTATIONS.has(keyword));
+    const keywords = Object.keys(schema).filter((keyword) => !this.#isAnnotation(keyword));
     if (keywords.length === 0) return true;
     if (keywords.length === 1 && keywords[0] === '$ref') {
       const target = refName(schema['$ref'], 'unconstrained check');
@@ -308,9 +336,15 @@ export class OpenApiZodGenerator {
     return schema;
   }
 
+  #isAnnotation(keyword: string): boolean {
+    return (
+      ANNOTATIONS.has(keyword) || (this.#transcription && TRANSCRIPTION_ANNOTATIONS.has(keyword))
+    );
+  }
+
   #checkKeywords(schema: Schema, where: string): void {
     for (const keyword of Object.keys(schema)) {
-      if (!ANNOTATIONS.has(keyword) && !STRUCTURAL.has(keyword)) {
+      if (!this.#isAnnotation(keyword) && !STRUCTURAL.has(keyword)) {
         fail(where, `unsupported keyword "${keyword}"`);
       }
     }
@@ -494,7 +528,11 @@ export class OpenApiZodGenerator {
             : `z.enum([${values.map(literal).join(', ')}])`;
       // `where` is the component name for a component's own object (ADR 0019 §8).
       const reviewed = `${where}.${name}`;
-      if (flavour === 'out' && this.#absentAllowed.has(reviewed)) {
+      if (flavour === 'out' && this.#transcription && schema['x-pdf'] !== undefined) {
+        // The PDF marks no response field required and states no nullability (ADR 0022 §3).
+        if (!code.endsWith('.nullable()')) code += '.nullable()';
+        code += '.optional()';
+      } else if (flavour === 'out' && this.#absentAllowed.has(reviewed)) {
         if (!parts.required.has(name)) fail(reviewed, 'is no longer required: revisit its review');
         this.absentApplied.add(reviewed);
         code += '.optional()';
@@ -633,7 +671,7 @@ export class OpenApiZodGenerator {
       fail(where, 'oneOf/anyOf must be a non-empty list of schemas');
     }
     const isNull = (m: Schema) =>
-      m['type'] === 'null' && Object.keys(m).every((k) => k === 'type' || ANNOTATIONS.has(k));
+      m['type'] === 'null' && Object.keys(m).every((k) => k === 'type' || this.#isAnnotation(k));
     const nullable = members.some(isNull);
     const others = members.filter((m) => !isNull(m));
     if (others.length === 0) fail(where, 'a union of null only');
@@ -641,7 +679,7 @@ export class OpenApiZodGenerator {
     const constants = others.map((m) =>
       typeof m['const'] === 'string' &&
       (m['type'] === undefined || m['type'] === 'string') &&
-      Object.keys(m).every((k) => k === 'const' || k === 'type' || ANNOTATIONS.has(k))
+      Object.keys(m).every((k) => k === 'const' || k === 'type' || this.#isAnnotation(k))
         ? m['const']
         : undefined,
     );
@@ -858,6 +896,18 @@ export class OpenApiZodGenerator {
     for (const match of pathTemplate.matchAll(/\{([^}]+)\}/g)) {
       if (!pathParameters.includes(match[1] ?? '')) fail(where, `undeclared {${match[1] ?? ''}}`);
     }
+    const versioned: VersionedField[] = [];
+    if (this.#transcription) {
+      for (const parameter of parameters.values()) {
+        const name = String(parameter['name']);
+        if (parameter['in'] === 'query' && omitted[name] !== undefined) continue;
+        const minimum = parameter['x-minimum-version'];
+        if (minimum === undefined) continue;
+        if (typeof minimum !== 'string')
+          fail(`${where}.${name}`, 'x-minimum-version is not a string');
+        versioned.push({ field: name, minimum });
+      }
+    }
     const requestBody = op['requestBody'];
     let hasBody = false;
     if (requestBody !== undefined) {
@@ -872,6 +922,7 @@ export class OpenApiZodGenerator {
         fail(where, 'only application/json request bodies are supported');
       }
       hasBody = true;
+      if (this.#transcription) this.#versionedFields(media['schema'], 'body', versioned, new Set());
       const code = this.#code(media['schema'], 'in', `${where}.body`);
       fields.push(`body: ${code}${requestBody['required'] === true ? '' : '.optional()'}`);
     }
@@ -928,11 +979,57 @@ export class OpenApiZodGenerator {
       `  queryParameters: [${queryParameters.map(literal).join(', ')}],`,
       `  hasBody: ${String(hasBody)},`,
       `  responseType: ${literal(responseType)},`,
+      ...(this.#transcription
+        ? [
+            `  versionedFields: [${versioned
+              .sort((a, b) => a.field.localeCompare(b.field))
+              .map((v) => `{ field: ${literal(v.field)}, minimum: ${literal(v.minimum)} }`)
+              .join(', ')}],`,
+          ]
+        : []),
       `  input: z.strictObject({ ${fields.join(', ')} }),`,
       `  output: ${output},`,
       `} as const;`,
     ].join('\n');
     return { info, code };
+  }
+
+  /** Request fields below `schema` that state their own minimum version (ADR 0022 §3). */
+  #versionedFields(
+    schema: Schema,
+    field: string,
+    out: VersionedField[],
+    seen: ReadonlySet<string>,
+  ): void {
+    if (schema['$ref'] !== undefined) {
+      const name = refName(schema['$ref'], field);
+      if (seen.has(name)) fail(field, 'recursive schemas are not supported');
+      const component = this.#component(name, field);
+      this.#versionedFields(component, field, out, new Set([...seen, name]));
+      return;
+    }
+    for (const keyword of ['allOf', 'oneOf', 'anyOf']) {
+      const members = schema[keyword];
+      if (!Array.isArray(members)) continue;
+      for (const member of members) {
+        if (isObject(member)) this.#versionedFields(member, field, out, seen);
+      }
+    }
+    const properties = schema['properties'];
+    if (isObject(properties)) {
+      for (const [name, value] of Object.entries(properties)) {
+        if (!isObject(value)) continue;
+        const path = `${field}.${name}`;
+        const minimum = value['x-minimum-version'];
+        if (minimum !== undefined) {
+          if (typeof minimum !== 'string') fail(path, 'x-minimum-version is not a string');
+          out.push({ field: path, minimum });
+        }
+        this.#versionedFields(value, path, out, seen);
+      }
+    }
+    const items = schema['items'];
+    if (isObject(items)) this.#versionedFields(items, `${field}[]`, out, seen);
   }
 
   definitions(): readonly string[] {
@@ -942,7 +1039,12 @@ export class OpenApiZodGenerator {
 
 /** Generates the complete module source (unformatted). */
 export function generateZodModule(doc: OpenApiDocument, options: GeneratorOptions): string {
-  const generator = new OpenApiZodGenerator(doc, options.optionalResponseProperties);
+  const generator = new OpenApiZodGenerator(doc, {
+    ...(options.optionalResponseProperties === undefined
+      ? {}
+      : { optionalResponseProperties: options.optionalResponseProperties }),
+    ...(options.transcription === undefined ? {} : { transcription: options.transcription }),
+  });
   const targets = new Set(options.targetParameters ?? []);
   const paths = (doc as { paths?: unknown }).paths;
   if (!isObject(paths)) throw new Error('The document has no paths.');
@@ -1013,9 +1115,20 @@ export function generateZodModule(doc: OpenApiDocument, options: GeneratorOption
     ` * Request schemas (…In) are strict; response schemas (…Out) strip undocumented fields.`,
     ` * Vendor descriptions and examples are not copied (ADR 0006). Security metadata is not`,
     ` * here: it is reviewed by hand in the adapter (spec §4.3).`,
+    ...(options.transcription === true
+      ? [
+          ` *`,
+          ` * The source is this project's hand transcription of a PDF contract, not a vendor`,
+          ` * document (ADR 0022). Response properties that cite the PDF are optional and`,
+          ` * nullable; \`versionedFields\` lists request fields that need a later application`,
+          ` * version than their operation.`,
+        ]
+      : []),
     ` */`,
-    `import * as z from 'zod';`,
-    ``,
+    // A transcription with every operation still pending has nothing to validate yet.
+    ...(operations.length > 0 || generator.definitions().length > 0
+      ? [`import * as z from 'zod';`, ``]
+      : []),
     ...(generator.usesUnique
       ? [
           `const UNIQUE = 'Items must be unique.';`,

@@ -908,3 +908,136 @@ describe('JSON Schema constructs of the Protect contract', () => {
     expect(accepts(body(op), { s: 'c' })).toBe(false);
   });
 });
+
+describe('hand transcriptions of a PDF contract (ADR 0022)', () => {
+  const cite = (page: number) => ({ page });
+  const document = doc(
+    {
+      Plate: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', 'x-pdf': cite(3) },
+          added: { type: 'string', 'x-pdf': cite(3), 'x-minimum-version': '3.3.10' },
+        },
+        required: ['id'],
+      },
+      User: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', 'x-pdf': { page: 2, row: 'Id' } },
+          email: { type: 'string', 'x-pdf': cite(2), 'x-minimum-version': '1.22.16' },
+          plates: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/Plate' },
+            'x-pdf': { page: 3, parent: true },
+          },
+        },
+        required: ['id'],
+      },
+    },
+    {
+      '/api/users/{id}': {
+        put: {
+          'x-note': 'our own words about a transcription choice',
+          parameters: [
+            {
+              in: 'path',
+              name: 'id',
+              required: true,
+              schema: { type: 'string' },
+              'x-pdf': cite(4),
+            },
+            {
+              in: 'query',
+              name: 'expand[]',
+              schema: { type: 'string' },
+              'x-pdf': cite(4),
+              'x-minimum-version': '1.22.16',
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    first_name: { type: 'string', 'x-pdf': cite(4) },
+                    plates: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Plate' },
+                      'x-pdf': { page: 4, parent: true },
+                    },
+                  },
+                  required: ['first_name'],
+                },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { data: { $ref: '#/components/schemas/User' } },
+                    required: ['data'],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  );
+  const options = { naming: 'path' as const, transcription: true };
+
+  it('are refused as vendor documents: the citation extensions are not vendor keywords', () => {
+    expect(() => generate(document, { naming: 'path' })).toThrow(/unsupported keyword "x-pdf"/);
+  });
+
+  it('make cited response properties optional and nullable; the envelope keeps data required', () => {
+    const op = load(generate(document, options))['putApiUsersById'];
+    expect(op?.output.safeParse({ data: { id: null, email: null, plates: null } }).success).toBe(
+      true,
+    );
+    expect(op?.output.parse({ data: {} })).toEqual({ data: {} });
+    expect(op?.output.safeParse({}).success).toBe(false);
+    // Typed values are still enforced, and undocumented fields still stripped.
+    expect(op?.output.safeParse({ data: { id: 7 } }).success).toBe(false);
+    expect(op?.output.parse({ data: { id: 'u', secret: 'x' } })).toEqual({ data: { id: 'u' } });
+  });
+
+  it('keep requests strict: required as transcribed, no null, no unknown fields', () => {
+    const op = load(generate(document, options))['putApiUsersById'];
+    const ok = { id: 'u', body: { first_name: 'A', plates: [{ id: 'p' }] } };
+    expect(op?.input.safeParse(ok).success).toBe(true);
+    expect(op?.input.safeParse({ id: 'u', body: {} }).success).toBe(false);
+    expect(op?.input.safeParse({ id: 'u', body: { first_name: null } }).success).toBe(false);
+    expect(op?.input.safeParse({ id: 'u', body: { first_name: 'A', pin_code: '1' } }).success).toBe(
+      false,
+    );
+    expect(op?.input.safeParse({ id: 'u', body: { first_name: 'A', plates: [{}] } }).success).toBe(
+      false,
+    );
+  });
+
+  it('list request fields that need a later version, through references and arrays', () => {
+    const source = generate(document, options);
+    const op = load(source)['putApiUsersById'] as unknown as {
+      versionedFields: readonly { field: string; minimum: string }[];
+    };
+    expect(op.versionedFields).toEqual([
+      { field: 'body.plates[].added', minimum: '3.3.10' },
+      { field: 'expand[]', minimum: '1.22.16' },
+    ]);
+    expect(source).toContain('hand transcription of a PDF contract, not a vendor');
+    expect(generate(doc({}, {}), { naming: 'path' })).not.toContain('versionedFields');
+  });
+
+  it('copy no annotations into the generated code', () => {
+    const source = generate(document, options);
+    expect(source).not.toMatch(/x-pdf|x-note|our own words|"page"/);
+  });
+});

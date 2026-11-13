@@ -1,6 +1,7 @@
 /**
  * Generates the zod schemas of each OpenAPI-sourced adapter from the local vendor cache
- * (ADR 0006 item 6, ADR 0018).
+ * (ADR 0006 item 6, ADR 0018), and of Access from this project's committed transcription of
+ * its PDF contract (ADR 0022).
  *
  *   node scripts/generate-adapter-schemas.ts           write the generated modules
  *   node scripts/generate-adapter-schemas.ts --check   exit 1 if a module is stale
@@ -71,7 +72,22 @@ export const GENERATED_MODULES = [
         'string); not implemented until the contract names it (ADR 0019)',
     },
   },
+  {
+    application: 'access',
+    revision: '2026-03-23',
+    output: 'packages/unifi-access/src/generated/access-2026-03-23.ts',
+    // No OpenAPI document exists: the source is our transcription of the PDF (ADR 0022).
+    source: 'transcription',
+    naming: 'path',
+    targetParameters: [],
+    omittedParameters: {},
+  },
 ] as const;
+
+/** The committed transcription of a PDF contract (ADR 0022). */
+export function transcriptionPath(application: string, revision: string): string {
+  return join(REPO_ROOT, 'api-specs', application, revision, 'transcription.json');
+}
 
 export interface GenerationResult {
   output: string;
@@ -83,6 +99,7 @@ async function render(module: (typeof GENERATED_MODULES)[number]): Promise<strin
   const provenance = await readJson<Provenance>(join(specDir, 'provenance.json'));
   const artifact = provenance.artifacts.find((a) => a.role === 'contract');
   if (artifact === undefined) throw new Error(`${specDir}: no contract artefact.`);
+  if ('source' in module) return renderTranscription(module, artifact);
   const vendorFile = join(specDir, 'vendor', artifact.name);
   const text = await readFile(vendorFile, 'utf8').catch(() => {
     throw new Error(`${relative(REPO_ROOT, vendorFile)} is missing: run npm run api:fetch-specs.`);
@@ -102,6 +119,35 @@ async function render(module: (typeof GENERATED_MODULES)[number]): Promise<strin
     ...('optionalResponseProperties' in module
       ? { optionalResponseProperties: module.optionalResponseProperties }
       : {}),
+  });
+  const outputPath = join(REPO_ROOT, module.output);
+  const config = (await prettier.resolveConfig(outputPath)) ?? {};
+  return prettier.format(source, { ...config, filepath: outputPath });
+}
+
+/**
+ * A transcription is committed, so it is generated without the vendor cache. It must name
+ * the PDF that provenance.json pins: a changed PDF needs a new review first.
+ */
+async function renderTranscription(
+  module: Extract<(typeof GENERATED_MODULES)[number], { source: 'transcription' }>,
+  artifact: { name: string; sha256: string },
+): Promise<string> {
+  const file = transcriptionPath(module.application, module.revision);
+  const text = await readFile(file, 'utf8');
+  const doc = JSON.parse(text) as { 'x-transcribed-from'?: { artifact?: string; sha256?: string } };
+  const from = doc['x-transcribed-from'];
+  if (from?.artifact !== artifact.name || from.sha256 !== artifact.sha256) {
+    throw new Error(`${relative(REPO_ROOT, file)} does not transcribe the PDF in provenance.json.`);
+  }
+  const source = generateZodModule(doc, {
+    source: relative(REPO_ROOT, file),
+    sourceSha256: sha256(text),
+    generator: 'scripts/generate-adapter-schemas.ts',
+    targetParameters: module.targetParameters,
+    omittedParameters: module.omittedParameters,
+    naming: module.naming,
+    transcription: true,
   });
   const outputPath = join(REPO_ROOT, module.output);
   const config = (await prettier.resolveConfig(outputPath)) ?? {};

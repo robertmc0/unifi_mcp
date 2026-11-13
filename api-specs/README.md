@@ -12,8 +12,16 @@ api-specs/
     provenance.json    committed: source URLs, SHA-256, sizes, local/forbidden base URLs,
                        authentication, notes, unverified assumptions
     operations.json    committed: derived factual inventory (method, path, id, title, link)
+    transcription.json committed, Access only: our hand transcription of the PDF's fields
+                       as OpenAPI, each citing its page and row (ADR 0022)
     vendor/            NOT committed (gitignored): verbatim vendor artefacts, verified by checksum
 ```
+
+Access publishes no OpenAPI document. Its adapter schemas are generated from
+`transcription.json`, which holds facts only (names, types, required flags, enumerations)
+and no vendor prose. `npm run api:reconcile` compares it with the cached PDF in both
+directions: every citation must match a table row or sample on its page, and every table
+row on a transcribed page must be transcribed or declined with a reason.
 
 ## Terms and redistribution
 

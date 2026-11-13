@@ -78,12 +78,13 @@ validation code).
 
 Each parameter and each schema property carries `x-pdf`:
 
-| Form                                    | Meaning                                                                      |
-| --------------------------------------- | ---------------------------------------------------------------------------- |
-| `{"page": 14}`                          | A table row on page 14 whose label is the element's name.                    |
-| `{"page": 13, "row": "nfc_cards[].id"}` | A table row printed with a different label: a nested path, or `Id` for `id`. |
-| `{"page": 33, "row": ""}`               | A row without a label, which types the whole request body.                   |
-| `{"page": 21, "sample": true}`          | The field appears only in a response sample on page 21 (response-only, §3).  |
+| Form                                    | Meaning                                                                                 |
+| --------------------------------------- | --------------------------------------------------------------------------------------- |
+| `{"page": 14}`                          | A table row on page 14 whose label is the element's name.                               |
+| `{"page": 13, "row": "nfc_cards[].id"}` | A table row printed with a different label: a nested path, or `Id` for `id`.            |
+| `{"page": 33, "row": ""}`               | A row without a label, which types the whole request body.                              |
+| `{"page": 13, "parent": true}`          | No row of its own: its fields' rows are printed under its name (`license_plates[].id`). |
+| `{"page": 21, "sample": true}`          | The field appears only in a response sample on page 21 (response-only, §3).             |
 
 Page numbers are the PDF's physical pages, as in `operations.json` `sourceRef`.
 
@@ -168,12 +169,18 @@ check is part of `npm run api:reconcile`, which CI runs after `api:fetch-specs`.
   - Every `x-pdf` table row exists on its page, with the transcribed type and, for request
     fields, the transcribed required flag.
   - Every `"sample": true` field appears as `"<name>":` on its page.
-  - Every enumeration value and every `x-minimum-version` appears on the field's page.
-  - Every operation's method and documented path appear on its `sourceRef` page.
-- **PDF → transcription.** Every detected table row must be claimed by at least one
-  element that cites its page, or be listed under `x-declined` with a reason. The request
-  header `Authorization` is declined once for the whole document: the transport sends it.
-  Omitted rows are therefore found mechanically, not only by review.
+  - Every enumeration value appears on the field's page, and every `x-minimum-version` on
+    that page or the next.
+  - Every inventory operation's documented path, permission key and method are printed on
+    its `sourceRef` page or the next, transcribed or not. This also checks
+    `operations.json`.
+  - The error codes in `x-error-codes` are exactly those printed in the PDF.
+- **PDF → transcription.** On the pages the transcription declares done (`x-pdf-pages`),
+  every detected table row must be claimed by at least one element that cites its page,
+  or be listed under `x-declined` with a reason. The request header `Authorization` is
+  declined once for the whole document: the transport sends it. A declined row that
+  matches nothing is reported. Omitted rows are therefore found mechanically, not only by
+  review.
 - **Limits.** The check shows that each element matches a row on the page it cites. It
   cannot show that the row belongs to that operation rather than to a neighbour on the
   same page, that nesting is right, or that a sample's type is meant generally. A person
@@ -184,21 +191,52 @@ check is part of `npm run api:reconcile`, which CI runs after `api:fetch-specs`.
 
 - `GENERATED_MODULES` gains an Access entry that reads the transcription instead of a
   vendor document. Before generating, it checks that `x-transcribed-from` matches the PDF
-  checksum in `provenance.json`. Operations are named by method and path (`naming:
-'path'`).
-- The translator accepts the extensions `x-pdf`, `x-note`, `x-minimum-version`,
-  `x-declined`, `x-error-codes` and `x-transcribed-from` only from a transcription. In a
-  vendor document they still fail generation. The rules of §3 that differ from OpenAPI
-  sources (optional and nullable response properties, field versions) are generator
-  options with this ADR as their reason, so the generated file states them in its header.
+  checksum in `provenance.json`. Operations are named by method and path, as for Protect.
+- The translator accepts the schema annotations `x-pdf`, `x-note` and
+  `x-minimum-version` only in transcription mode. In a vendor document they still fail
+  generation. The rules of §3 that differ from OpenAPI sources (optional and nullable
+  response properties, field versions) apply only in that mode, and the generated file
+  states them in its header.
 - Because the transcription is committed, the generated module and its freshness test
   run offline. Only the PDF comparison (§6) needs the vendor cache.
 - **In stages.** The PDF is transcribed one chapter at a time (§3 users, §4 visitors, and
   so on), one reviewed commit each, including the regenerated module. Until all
-  operations are transcribed, the rest are listed as pending in the generator
-  configuration and are not generated. The PDF → transcription direction covers the pages
-  of the chapters done. The transcription is complete when nothing is pending and that
-  check covers every page with table rows.
+  operations are transcribed, the rest are listed in the transcription's `x-pending` and
+  are not generated. `x-pdf-pages` grows with each chapter, and every citation must fall
+  inside it. The transcription is complete when nothing is pending and `x-pdf-pages`
+  covers every page with table rows.
+
+## Evidence
+
+Step 2, tooling (2026-11-13). No operation is transcribed yet: all 107 are pending.
+
+- `scripts/lib/pdf-text.ts` reads the pinned PDF (194 pages) in about 0.4 s. Its output is
+  byte-identical to an independent extraction written earlier in Python for the ADR 0021
+  review.
+- `detectTableRows` finds 706 rows on pages 12 to 192. The irregular ones are the
+  request header `Authorization` (declined once for the whole document), `Id` and `Data`
+  labels, the unlabelled body rows (p.33, p.34, p.163, p.166, p.169), `Array[Object].…`
+  labels (p.162) and the inbound webhook `Signature` header (p.179). Rows whose description
+  starts in lower case (`statusStringenum …`) are detected.
+- The parent citation form (§2) was added when a trial run over pages 12 to 16 listed
+  `license_plates[].id` and its siblings on p.13, with no row for `license_plates` itself.
+- `api:reconcile` (check 9) finds, for each of the 107 inventory operations, the
+  `Request URL`, `Permission Key` and `Method` printed on its `sourceRef` page or the
+  next. This also checks `operations.json`. The 44 error codes in `x-error-codes` equal
+  those printed in the PDF.
+- Tests: `tests/unit/scripts/pdf-text.test.ts` (synthetic PDFs: simple and Type0 fonts,
+  ToUnicode maps, compressed streams, forms, the page tree, failures);
+  `tests/unit/scripts/access-transcription.test.ts` (row detection; the structural
+  checks; both directions of the PDF comparison; operations and error codes);
+  `tests/unit/scripts/openapi-zod.test.ts` (transcription mode);
+  `tests/contract/access-transcription.test.ts` (the committed transcription and the
+  generated module, offline).
+- Mutation checks, each making a test fail: cited response properties not optional and
+  nullable; citation extensions accepted in a vendor document; field versions not followed
+  into array items; the reverse check off; a sample field accepted in a request; the
+  required-flag comparison off; components used by requests not treated as requests; vendor
+  prose accepted; a misplaced citation accepted; a declined row that matches nothing
+  accepted; wide `TJ` gaps not turned into spaces; a page-tree loop not detected.
 
 ## Consequences
 

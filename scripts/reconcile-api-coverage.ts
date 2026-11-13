@@ -16,8 +16,12 @@
  *   7. the coverage matrix equals a fresh build from the inventories and the registered
  *      adapters (status, reviewed metadata, test evidence);
  *   8. an operation built from one revision whose version range includes a later revision
- *      differs from it only additively (ADR 0019 §7).
- * PDF-sourced contracts (Access) are hand-transcribed; only checks 1 and 5 apply.
+ *      differs from it only additively (ADR 0019 §7);
+ *   9. PDF: the hand transcription (transcription.json) is well formed, covers exactly the
+ *      inventory, and matches the text of the cached PDF in both directions; every
+ *      inventory operation's method, path and permission key are printed on its page
+ *      (ADR 0022 §6).
+ * PDF-sourced contracts (Access) are hand-transcribed; checks 1, 5, 6 and 9 apply.
  */
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -33,7 +37,9 @@ import {
   type InventoryOperation,
   type SpecRevision,
 } from './lib/api-specs.ts';
-import { generateAdapterSchemas } from './generate-adapter-schemas.ts';
+import { generateAdapterSchemas, transcriptionPath } from './generate-adapter-schemas.ts';
+import { pdfProblems, structuralProblems } from './lib/access-transcription.ts';
+import { extractPdfText } from './lib/pdf-text.ts';
 import { satisfies } from '@unifi-local-mcp/core';
 import { ADAPTERS } from '@unifi-local-mcp/mcp-server';
 import { buildCoverageFiles } from './lib/coverage-report.ts';
@@ -156,15 +162,38 @@ for (const rev of await listSpecRevisions()) {
       }
     }
   } else {
-    // PDF-manual contracts: verify the cached document is the one transcribed.
+    // PDF-manual contracts: verify the cached document is the one transcribed (1), then
+    // compare the transcription with it (9).
     for (const artifact of rev.provenance.artifacts.filter((a) => a.role === 'contract')) {
+      let data: Buffer | undefined;
       try {
-        const data = await readFile(vendorPath(rev, artifact.name));
-        if (sha256(data) !== artifact.sha256)
+        data = await readFile(vendorPath(rev, artifact.name));
+        if (sha256(data) !== artifact.sha256) {
           report(rev, `vendor/${artifact.name} checksum changed; re-transcribe`);
+          data = undefined;
+        }
       } catch {
         report(rev, `vendor/${artifact.name} not cached; run "npm run api:fetch-specs"`);
       }
+      const file = transcriptionPath(application, revision);
+      const transcription = await readJson<Record<string, unknown>>(file).catch(() => undefined);
+      if (transcription === undefined) {
+        report(rev, 'transcription.json is missing or not JSON (ADR 0022)');
+        continue;
+      }
+      for (const line of structuralProblems(transcription, inventory.operations, artifact)) {
+        report(rev, `transcription: ${line}`);
+      }
+      if (data === undefined) continue;
+      const pages = extractPdfText(data);
+      for (const line of pdfProblems(transcription, pages, inventory.operations)) {
+        report(rev, `transcription vs PDF: ${line}`);
+      }
+      const pending = transcription['x-pending'];
+      console.log(
+        `checked ${application}/${revision}: transcription against ${String(pages.length)} PDF ` +
+          `pages (${String(Array.isArray(pending) ? pending.length : '?')} operations pending)`,
+      );
     }
   }
 

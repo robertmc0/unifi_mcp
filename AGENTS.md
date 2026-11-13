@@ -38,6 +38,10 @@ These rules apply to Codex, Claude Code and human contributors alike.
 - Adapter request/response schemas are generated from the vendor cache by
   `scripts/generate-adapter-schemas.ts` (ADR 0018). Never edit a file under
   `packages/*/src/generated/` by hand; regenerate it and review the diff.
+- Access has only a PDF contract. Its schemas are generated from
+  `api-specs/access/<revision>/transcription.json`, which is edited by hand under the rules
+  of ADR 0022: facts only, every field citing its PDF page and row, request fields from
+  field tables only. `npm run api:reconcile` checks it against the PDF.
 - Security metadata (risk, sensitivity, permission) is reviewed in code inside each
   adapter package. It must never be derived from vendor documents automatically. The
   provisional classes in `docs/api-coverage/` are planning aids only.

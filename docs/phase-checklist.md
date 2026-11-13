@@ -599,8 +599,12 @@ command and its storage are built with the adapter.
    contradict themselves are declined with a reason. A dependency-free PDF text extraction
    checks the transcription against the pinned PDF in both directions in
    `api:reconcile`.
-2. Tooling: PDF text extraction, the two-way check, the translator's transcription mode,
-   the Access entry in the generator (all operations pending), offline structural tests.
+2. ✅ **Tooling** (2026-11-13): dependency-free PDF text extraction
+   (`scripts/lib/pdf-text.ts`); the structural and two-way checks
+   (`scripts/lib/access-transcription.ts`, `api:reconcile` check 9); the translator's
+   transcription mode; the Access entry in the generator with all 107 operations pending
+   and the 44 error codes transcribed. The check already confirms every inventory
+   operation's URL, method and permission key on its page. Evidence in ADR 0022.
 3. Transcription, one PDF chapter per commit (§3 users, §4 visitors, §5 policies,
    §6 credentials, §7 spaces, §8 devices, §9 system logs, §10 identity, §11 notifications
    and webhooks, §12 API server), each with the regenerated module.
@@ -611,7 +615,7 @@ command and its storage are built with the adapter.
    negative tests.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 2.
+**Next:** step 3, starting with §3 (users).
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests
