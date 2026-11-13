@@ -716,7 +716,10 @@ export function pdfProblems(
     } else if (element.pdf.parent === true) {
       const label = element.pdf.row ?? element.name;
       const type = baseType(resolve(element.schema, schemas));
-      const child = new RegExp(`^${escapeRegExp(label)}${type === 'array' ? '\\[\\d*\\]' : ''}\\.`);
+      // A list's fields are printed as `list[].field`, `list[0].field` or `list.field`.
+      const child = new RegExp(
+        `^${escapeRegExp(label)}${type === 'array' ? '(\\[\\d*\\])?' : ''}\\.`,
+      );
       if (
         (type !== 'array' && type !== 'object') ||
         !rows.some((row) => row.page === page && child.test(row.label))

@@ -366,6 +366,21 @@ pending.
   states no media type) are transcribed and not generated. §9.4's response comes from
   its sample.
 
+Step 3, chapter §10 UniFi Identity (2026-11-13): 6 operations on pages 162 to 169; 7
+pending.
+
+- Pages 162 to 169 hold 21 rows other than `Authorization`, each transcribed or
+  declined. A wrong parent page and a removed field each produced a report.
+- §10.1's body is a JSON array of invitations, printed as `Array[Object].user_id` and
+  `Array[Object].email`; it is cited as their parent (a list's fields may be printed
+  without brackets).
+- The resource reads return `data` as an object keyed by resource type, each a list of
+  resources (a typed map, which responses support). Its row `data.[resource_type]` is
+  printed over three lines; the detector reads only its last line, as a row without a
+  label, which is declined with that explanation (on p.163 it even says String).
+- `resource_type` accepts one value of its enumeration, although an example lists several
+  separated by commas.
+
 ## Consequences
 
 - Access gets schemas as strict as Network's and Protect's, from the same translator, and

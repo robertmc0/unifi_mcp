@@ -9,7 +9,7 @@
     "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e"
   },
   "x-note": "Written by hand from the cached PDF under the rules of docs/adr/0022-access-contract-transcription.md. Facts only: no vendor descriptions, examples or other prose. Checked against the PDF text by npm run api:reconcile.",
-  "x-pdf-pages": [[12, 161]],
+  "x-pdf-pages": [[12, 169]],
   "x-declined": [
     {
       "row": "Authorization",
@@ -174,6 +174,21 @@
       "row": "extra",
       "page": 139,
       "reason": "An object used as a map of passthrough data. The translator accepts no typed map in a request (ADR 0018)."
+    },
+    {
+      "row": "",
+      "page": 163,
+      "reason": "The last line of the row \"data.[resource_type]\", printed over three lines, so it reads as a row without a label. It types the list under each resource type, which is transcribed from the samples (the row is printed String, but the sample shows lists)."
+    },
+    {
+      "row": "",
+      "page": 166,
+      "reason": "The last line of the row \"data.[resource_type]\", printed over three lines, so it reads as a row without a label. It types the list under each resource type, which is transcribed from the samples (the row is printed Array[Object])."
+    },
+    {
+      "row": "",
+      "page": 169,
+      "reason": "The last line of the row \"data.[resource_type]\", printed over three lines, so it reads as a row without a label. It types the list under each resource type, which is transcribed from the samples (the row is printed Array[Object])."
     }
   ],
   "x-error-codes": [
@@ -226,14 +241,8 @@
     "DELETE /api/v1/developer/api_server/certificates",
     "DELETE /api/v1/developer/webhooks/endpoints/{id}",
     "GET /api/v1/developer/devices/notifications",
-    "GET /api/v1/developer/user_groups/{id}/identity/assignments",
-    "GET /api/v1/developer/users/identity/assignments",
-    "GET /api/v1/developer/users/{id}/identity/assignments",
     "GET /api/v1/developer/webhooks/endpoints",
     "POST /api/v1/developer/api_server/certificates",
-    "POST /api/v1/developer/user_groups/{id}/identity/assignments",
-    "POST /api/v1/developer/users/identity/invitations",
-    "POST /api/v1/developer/users/{id}/identity/assignments",
     "POST /api/v1/developer/webhooks/endpoints",
     "PUT /api/v1/developer/webhooks/endpoints/{id}"
   ],
@@ -5422,6 +5431,314 @@
           }
         }
       }
+    },
+    "/api/v1/developer/users/identity/invitations": {
+      "post": {
+        "x-note": "The body is a JSON array of invitations, printed as Array[Object].…. data is empty when every invitation was sent and lists the failures otherwise (samples).",
+        "requestBody": {
+          "required": true,
+          "x-pdf": {
+            "page": 162,
+            "parent": true,
+            "row": "Array[Object]"
+          },
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "user_id": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 162,
+                        "row": "Array[Object].user_id"
+                      }
+                    },
+                    "email": {
+                      "type": "string",
+                      "x-pdf": {
+                        "page": 162,
+                        "row": "Array[Object].email"
+                      }
+                    }
+                  },
+                  "required": ["user_id"]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "error_code": {
+                            "type": "string",
+                            "x-pdf": {
+                              "page": 163,
+                              "sample": true
+                            }
+                          },
+                          "error_msg": {
+                            "type": "string",
+                            "x-pdf": {
+                              "page": 163,
+                              "sample": true
+                            }
+                          },
+                          "user_email": {
+                            "type": "string",
+                            "x-pdf": {
+                              "page": 163,
+                              "sample": true
+                            }
+                          },
+                          "user_id": {
+                            "type": "string",
+                            "x-pdf": {
+                              "page": 163,
+                              "sample": true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/users/identity/assignments": {
+      "get": {
+        "x-note": "resource_type accepts one value of its enumeration; the example lists several separated by commas, which the enumeration does not allow. data is an object keyed by resource type (ev_station, vpn, wifi, camera), each a list of resources, as the samples show. The table prints that row as \"data.[resource_type]\" over three lines; its last line is declined (see x-declined).",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "resource_type",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["ev_station", "vpn", "wifi"]
+            },
+            "x-pdf": {
+              "page": 163
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/IdentityResource"
+                        }
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/users/{id}/identity/assignments": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 165
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "resource_type": {
+                    "type": "string",
+                    "enum": ["ev_station", "vpn", "wifi"],
+                    "x-pdf": {
+                      "page": 165
+                    }
+                  },
+                  "resource_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 165
+                    }
+                  }
+                },
+                "required": ["resource_type", "resource_ids"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "x-note": "data is an object keyed by resource type (ev_station, vpn, wifi, camera), each a list of resources, as the samples show. The table prints that row as \"data.[resource_type]\" over three lines; its last line is declined (see x-declined).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 166
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/UserIdentityResource"
+                        }
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/user_groups/{id}/identity/assignments": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 168
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "resource_type": {
+                    "type": "string",
+                    "enum": ["ev_station", "vpn", "wifi"],
+                    "x-pdf": {
+                      "page": 168
+                    }
+                  },
+                  "resource_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 168
+                    }
+                  }
+                },
+                "required": ["resource_type", "resource_ids"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "x-note": "data is an object keyed by resource type (ev_station, vpn, wifi, camera), each a list of resources, as the samples show. The table prints that row as \"data.[resource_type]\" over three lines; its last line is declined (see x-declined).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 169
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/UserGroupIdentityResource"
+                        }
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8552,6 +8869,147 @@
           }
         },
         "x-note": "The response table (p.157) lists actor, event, authentication and target; the sample places them under hits[]._source and shows their fields. §9.1 describes the same keys in prose tables without types."
+      },
+      "IdentityResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 163
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 163
+            }
+          },
+          "deleted": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 164
+            }
+          },
+          "short_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 164,
+              "sample": true
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "x-pdf": {
+              "page": 167,
+              "sample": true
+            },
+            "properties": {
+              "has_ip": {
+                "type": "boolean",
+                "x-pdf": {
+                  "page": 167,
+                  "sample": true
+                }
+              }
+            }
+          }
+        },
+        "required": ["id", "name", "deleted"]
+      },
+      "UserIdentityResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 166
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 166
+            }
+          },
+          "deleted": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 166
+            }
+          },
+          "short_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 164,
+              "sample": true
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "x-pdf": {
+              "page": 167,
+              "sample": true
+            },
+            "properties": {
+              "has_ip": {
+                "type": "boolean",
+                "x-pdf": {
+                  "page": 167,
+                  "sample": true
+                }
+              }
+            }
+          }
+        },
+        "required": ["id", "name", "deleted"]
+      },
+      "UserGroupIdentityResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 169
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 169
+            }
+          },
+          "deleted": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 169
+            }
+          },
+          "short_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 164,
+              "sample": true
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "x-pdf": {
+              "page": 167,
+              "sample": true
+            },
+            "properties": {
+              "has_ip": {
+                "type": "boolean",
+                "x-pdf": {
+                  "page": 167,
+                  "sample": true
+                }
+              }
+            }
+          }
+        },
+        "required": ["id", "name", "deleted"]
       }
     }
   }

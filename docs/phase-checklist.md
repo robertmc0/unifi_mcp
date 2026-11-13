@@ -627,7 +627,8 @@ command and its storage are built with the adapter.
      settings) not generated: table and samples disagree on its body.
    - ✅ §9 system logs (2026-11-13): 4 operations, pages 155 to 161; §9.3 (CSV export)
      and §9.5 (static files) not generated.
-   - §10 identity, §11 notifications and webhooks, §12 API server.
+   - ✅ §10 UniFi Identity (2026-11-13): 6 operations, pages 162 to 169.
+   - §11 notifications and webhooks, §12 API server.
 4. Access transport: port 12445, bearer token, the `{code, msg, data}` envelope and the
    §2.4 error codes, TLS pinning; a synthetic Access console for tests.
 5. Declared version (ADR 0021 §5): CLI command, storage, audit, expiry, labels.
@@ -635,7 +636,7 @@ command and its storage are built with the adapter.
    negative tests.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 3, §10 (UniFi Identity).
+**Next:** step 3, §11 (notifications and webhooks) and §12 (API server).
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests
