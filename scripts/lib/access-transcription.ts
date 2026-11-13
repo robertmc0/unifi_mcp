@@ -70,7 +70,17 @@ const ENVELOPE = new Set(['data', 'pagination']);
  * followed by `.`, `[`, `]` or `_`, which would make it part of a label.
  */
 const ROW =
-  /^((?:[A-Za-z_][A-Za-z0-9_.[\]]*?)??)(T|F)?(String|Integer|Int(?![a-z])|Number|Boolean|Object|Array\[[A-Za-z]+\]|File)(?![.[\]_])/;
+  /^((?:[A-Za-z_][A-Za-z0-9_.[\]]*?|-)??)(T|F)?(String|Integer|Int(?![a-z])|Number|Boolean|Object(?! ?[(<])|Array of Strings|Array\[[A-Za-z]+\]|Array(?![[a-z])|File)(?![.[\]_])/;
+/** A label and flag alone on a line, when the type is printed on the following lines. */
+const SPLIT_LABEL = /^([A-Za-z_][A-Za-z0-9_.[\]]*|-)(T|F)$/;
+/** Types printed over several lines, or as a phrase (`Object (Map)`, `Array of Strings`). */
+const SPLIT_TYPE = /^(Array of Strings|Object \(Map\)|Object<String, String>)/;
+/** Type phrases, as the canonical names a transcribed schema is compared with. */
+const TYPE_NAMES: Record<string, string> = {
+  'Array of Strings': 'Array[String]',
+  'Object (Map)': 'Map',
+  'Object<String, String>': 'Map',
+};
 
 function isObject(value: unknown): value is Schema {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -80,18 +90,39 @@ function pageText(pages: PdfPages, page: number): string {
   return (pages[page - 1] ?? []).join('\n');
 }
 
-/** Detects field-table rows on every page. A row without a label needs a required flag. */
+/**
+ * Detects field-table rows on every page. A row without a label needs a required flag; a
+ * label printed as `-` is no label (the row types the whole body). Type phrases become the
+ * canonical names `Array[String]` and `Map`; a type printed below its label and flag
+ * (`idsT`, then `Array of`, `Strings`) is joined to them.
+ */
 export function detectTableRows(pages: PdfPages): TableRow[] {
   const rows: TableRow[] = [];
   pages.forEach((lines, index) => {
-    for (const line of lines) {
+    lines.forEach((line, i) => {
+      let label: string;
+      let flag: string;
+      let type: string;
       const match = ROW.exec(line);
-      if (match === null) continue;
-      const label = match[1] ?? '';
-      const flag = (match[2] ?? '') as TableRow['flag'];
-      if (label === '' && flag === '') continue;
-      rows.push({ page: index + 1, label, flag, type: match[3] ?? '' });
-    }
+      const split = match === null ? SPLIT_LABEL.exec(line) : null;
+      if (match !== null) {
+        [label, flag, type] = [match[1] ?? '', match[2] ?? '', match[3] ?? ''];
+      } else if (split !== null) {
+        const next = SPLIT_TYPE.exec(`${lines[i + 1] ?? ''} ${lines[i + 2] ?? ''}`);
+        if (next === null) return;
+        [label, flag, type] = [split[1] ?? '', split[2] ?? '', next[1] ?? ''];
+      } else {
+        return;
+      }
+      if (label === '-') label = '';
+      if (label === '' && flag === '') return;
+      rows.push({
+        page: index + 1,
+        label,
+        flag: flag as TableRow['flag'],
+        type: TYPE_NAMES[type] ?? type,
+      });
+    });
   });
   return rows;
 }
@@ -515,7 +546,8 @@ export function structuralProblems(
   const { elements, problems: walkProblems } = collectElements(doc);
   problems.push(...walkProblems);
   for (const element of elements) {
-    if (!covered(ranges, element.pdf.page)) {
+    // Samples take no part in the reverse check, so only rows must be on transcribed pages.
+    if (element.pdf.sample !== true && !covered(ranges, element.pdf.page)) {
       problems.push(`${element.where}: cites p.${String(element.pdf.page)}, outside x-pdf-pages.`);
     }
   }
@@ -557,10 +589,11 @@ export function pdfTypes(schema: Schema, components: Record<string, Schema>): re
   if (type === 'array' && isObject(resolved['items'])) {
     const items = resolve(resolved['items'], components);
     const itemType = baseType(items);
-    if (itemType === 'object') return ['Array[Object]', 'Array[object]'];
+    if (itemType === 'object') return ['Array[Object]', 'Array[object]', 'Array'];
     const names = typeof itemType === 'string' ? (SCALAR_TYPES[itemType] ?? []) : [];
-    return names.map((name) => `Array[${name}]`);
+    return [...names.map((name) => `Array[${name}]`), 'Array'];
   }
+  if (type === 'object' && isObject(resolved['additionalProperties'])) return ['Map'];
   return typeof type === 'string' ? (SCALAR_TYPES[type] ?? []) : [];
 }
 

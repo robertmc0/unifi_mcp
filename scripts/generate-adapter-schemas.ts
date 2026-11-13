@@ -81,6 +81,12 @@ export const GENERATED_MODULES = [
     naming: 'path',
     targetParameters: [],
     omittedParameters: {},
+    // Non-JSON operations are transcribed but decided one by one (ADR 0022 §5).
+    omittedOperations: {
+      'POST /api/v1/developer/users/{id}/avatar':
+        'a multipart upload of a profile picture; non-JSON operations are decided one by one ' +
+        'with the adapter (ADR 0022 §5)',
+    },
   },
 ] as const;
 
@@ -147,6 +153,7 @@ async function renderTranscription(
     targetParameters: module.targetParameters,
     omittedParameters: module.omittedParameters,
     naming: module.naming,
+    omittedOperations: module.omittedOperations,
     transcription: true,
   });
   const outputPath = join(REPO_ROOT, module.output);

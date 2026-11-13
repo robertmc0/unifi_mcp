@@ -189,6 +189,19 @@ describe('table row detection', () => {
         'IdTString',
         'onboard_timeFInteger',
         'countInt',
+        'bundlesArrayReserved for future use.',
+        '-TArray of StringsList of plates',
+        'idsT',
+        'Array of',
+        'Strings',
+        'emailsF',
+        'Object',
+        '(Map)',
+        'headersF',
+        'Object<String,',
+        'String>',
+        'CODE_NAME_EXIST',
+        'The name already',
         'String',
         'Interval between polls',
         'ParameterRequiredTypeDescription',
@@ -203,6 +216,11 @@ describe('table row detection', () => {
       ['Id', 'T', 'String'],
       ['onboard_time', 'F', 'Integer'],
       ['count', '', 'Int'],
+      ['bundles', '', 'Array'],
+      ['', 'T', 'Array[String]'],
+      ['ids', 'T', 'Array[String]'],
+      ['emails', 'F', 'Map'],
+      ['headers', 'F', 'Map'],
     ]);
   });
 
@@ -302,9 +320,12 @@ describe('structural checks (offline)', () => {
     const outside = variant((d) => {
       d['x-pdf-pages'] = [[1, 1]];
     });
-    expect(structuralProblems(outside, INVENTORY, CONTRACT)).toContain(
+    const outsideProblems = structuralProblems(outside, INVENTORY, CONTRACT);
+    expect(outsideProblems).toContain(
       'PUT /api/things/{id} path id: cites p.2, outside x-pdf-pages.',
     );
+    // A sample is not a row: it may sit on a page whose rows are not transcribed yet.
+    expect(outsideProblems.join('\n')).not.toMatch(/updated_at/);
   });
 
   it('collect required flags and minimum versions with each element', () => {

@@ -9,11 +9,46 @@
     "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e"
   },
   "x-note": "Written by hand from the cached PDF under the rules of docs/adr/0022-access-contract-transcription.md. Facts only: no vendor descriptions, examples or other prose. Checked against the PDF text by npm run api:reconcile.",
-  "x-pdf-pages": [],
+  "x-pdf-pages": [[12, 51]],
   "x-declined": [
     {
       "row": "Authorization",
       "reason": "Request header in every section; the transport sends the bearer token (ADR 0022 §6)."
+    },
+    {
+      "row": "touch_pass",
+      "page": 13,
+      "reason": "Typed Array[Object], but every sample (pp.18, 20) shows one object, and the text says a user has at most one Touch Pass. Either reading would fail reads that send the other; the Touch Pass reads of chapter 6 return the same data."
+    },
+    {
+      "row": "expand[]",
+      "page": 17,
+      "reason": "Typed Boolean, but its example is expand[]=access_policy: the row contradicts itself. §3.20 reads a user's access policies."
+    },
+    {
+      "row": "expand[]",
+      "page": 19,
+      "reason": "Typed Boolean, but its example is expand[]=access_policy: the row contradicts itself. §3.20 reads a user's access policies."
+    },
+    {
+      "row": "bundles",
+      "page": 44,
+      "reason": "An array whose item type is not documented (\"reserved for future use\", always empty)."
+    },
+    {
+      "row": "bundles",
+      "page": 46,
+      "reason": "An array whose item type is not documented (\"reserved for future use\", always empty)."
+    },
+    {
+      "row": "emails",
+      "page": 47,
+      "reason": "An object used as a map from user ID to email address. The translator accepts no typed map in a request (ADR 0018), and the PDF does not say whether it is needed beside ids."
+    },
+    {
+      "row": "bundles",
+      "page": 48,
+      "reason": "An array whose item type is not documented (\"reserved for future use\", always empty)."
     }
   ],
   "x-error-codes": [
@@ -70,11 +105,6 @@
     "DELETE /api/v1/developer/credentials/nfc_cards/sessions/{id}",
     "DELETE /api/v1/developer/credentials/nfc_cards/tokens/{token}",
     "DELETE /api/v1/developer/door_groups/{id}",
-    "DELETE /api/v1/developer/user_groups/{id}",
-    "DELETE /api/v1/developer/users/{id}",
-    "DELETE /api/v1/developer/users/{id}/pin_codes",
-    "DELETE /api/v1/developer/users/{user_id}/license_plates/{license_plate_id}",
-    "DELETE /api/v1/developer/users/{user_id}/touch_passes/{touch_pass_id}",
     "DELETE /api/v1/developer/visitors/{id}",
     "DELETE /api/v1/developer/visitors/{id}/pin_codes",
     "DELETE /api/v1/developer/visitors/{id}/qr_codes",
@@ -106,17 +136,8 @@
     "GET /api/v1/developer/doors/{id}/lock_rule",
     "GET /api/v1/developer/system/logs/resource/{id}",
     "GET /api/v1/developer/system/static/{path}",
-    "GET /api/v1/developer/user_groups",
-    "GET /api/v1/developer/user_groups/{id}",
-    "GET /api/v1/developer/user_groups/{id}/access_policies",
     "GET /api/v1/developer/user_groups/{id}/identity/assignments",
-    "GET /api/v1/developer/user_groups/{id}/users",
-    "GET /api/v1/developer/user_groups/{id}/users/all",
-    "GET /api/v1/developer/users",
     "GET /api/v1/developer/users/identity/assignments",
-    "GET /api/v1/developer/users/search",
-    "GET /api/v1/developer/users/{id}",
-    "GET /api/v1/developer/users/{id}/access_policies",
     "GET /api/v1/developer/users/{id}/identity/assignments",
     "GET /api/v1/developer/visitors",
     "GET /api/v1/developer/visitors/{id}",
@@ -133,13 +154,8 @@
     "POST /api/v1/developer/door_groups",
     "POST /api/v1/developer/system/logs",
     "POST /api/v1/developer/system/logs/export",
-    "POST /api/v1/developer/user_groups",
     "POST /api/v1/developer/user_groups/{id}/identity/assignments",
-    "POST /api/v1/developer/user_groups/{id}/users",
-    "POST /api/v1/developer/user_groups/{id}/users/delete",
-    "POST /api/v1/developer/users",
     "POST /api/v1/developer/users/identity/invitations",
-    "POST /api/v1/developer/users/{id}/avatar",
     "POST /api/v1/developer/users/{id}/identity/assignments",
     "POST /api/v1/developer/visitors",
     "POST /api/v1/developer/webhooks/endpoints",
@@ -153,16 +169,6 @@
     "PUT /api/v1/developer/doors/settings/emergency",
     "PUT /api/v1/developer/doors/{id}/lock_rule",
     "PUT /api/v1/developer/doors/{id}/unlock",
-    "PUT /api/v1/developer/user_groups/{id}",
-    "PUT /api/v1/developer/user_groups/{id}/access_policies",
-    "PUT /api/v1/developer/users/touch_passes/assign",
-    "PUT /api/v1/developer/users/{id}",
-    "PUT /api/v1/developer/users/{id}/access_policies",
-    "PUT /api/v1/developer/users/{id}/license_plates",
-    "PUT /api/v1/developer/users/{id}/nfc_cards",
-    "PUT /api/v1/developer/users/{id}/nfc_cards/delete",
-    "PUT /api/v1/developer/users/{id}/pin_codes",
-    "PUT /api/v1/developer/users/{user_id}/touch_passes/{touch_pass_id}",
     "PUT /api/v1/developer/visitors/{id}",
     "PUT /api/v1/developer/visitors/{id}/license_plates",
     "PUT /api/v1/developer/visitors/{id}/nfc_cards",
@@ -171,8 +177,1737 @@
     "PUT /api/v1/developer/visitors/{id}/qr_codes",
     "PUT /api/v1/developer/webhooks/endpoints/{id}"
   ],
-  "paths": {},
+  "paths": {
+    "/api/v1/developer/users": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 14
+                    }
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 14
+                    }
+                  },
+                  "user_email": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 14
+                    },
+                    "x-minimum-version": "1.22.16"
+                  },
+                  "employee_number": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 14
+                    }
+                  },
+                  "onboard_time": {
+                    "type": "integer",
+                    "x-pdf": {
+                      "page": 14
+                    }
+                  }
+                },
+                "required": ["first_name", "last_name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "x-note": "page_num and page_size are typed String in the table, although the examples are numbers.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_num",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 19
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 19
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/users/{id}": {
+      "put": {
+        "x-note": "The curl sample targets /api/v1/developer/user and also sends pin_code. The method line and the field table win: pin_code is not accepted. status lists ACTIVE and DEACTIVATED as examples, not as the allowed set.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 15
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 15
+                    }
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 15
+                    }
+                  },
+                  "user_email": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 15
+                    },
+                    "x-minimum-version": "1.22.16"
+                  },
+                  "employee_number": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 16
+                    }
+                  },
+                  "onboard_time": {
+                    "type": "integer",
+                    "x-pdf": {
+                      "page": 16
+                    }
+                  },
+                  "status": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 16
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 17
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 42
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/users/{id}/access_policies": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 22
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "access_policy_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 22
+                    }
+                  }
+                },
+                "required": ["access_policy_ids"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 37
+            }
+          },
+          {
+            "in": "query",
+            "name": "only_user_policies",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "x-pdf": {
+              "page": 38
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserAccessPolicy"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/users/{id}/nfc_cards": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 23
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 24
+                    }
+                  },
+                  "force_add": {
+                    "type": "boolean",
+                    "x-pdf": {
+                      "page": 24
+                    }
+                  }
+                },
+                "required": ["token"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/users/{id}/nfc_cards/delete": {
+      "put": {
+        "x-note": "The curl sample uses DELETE; the method line says PUT.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 24
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 25
+                    }
+                  }
+                },
+                "required": ["token"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/users/{id}/pin_codes": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 25
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pin_code": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 26
+                    }
+                  }
+                },
+                "required": ["pin_code"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/user_groups": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 27
+                    }
+                  },
+                  "up_id": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 27
+                    }
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "x-note": "The curl sample targets /api/v1/developer/developer/user_groups; the method line wins.",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserGroup"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/user_groups/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 29
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UserGroup"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 30
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 31
+                    }
+                  },
+                  "up_id": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 31
+                    }
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 32
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/user_groups/{id}/users": {
+      "post": {
+        "x-note": "The body is a JSON array of user IDs, as the unlabelled row and the sample show.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 32
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "x-pdf": {
+            "page": 33,
+            "row": ""
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 35
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/user_groups/{id}/users/delete": {
+      "post": {
+        "x-note": "The body is a JSON array of user IDs, as the unlabelled row and the sample show.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 34
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "x-pdf": {
+            "page": 34,
+            "row": ""
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/user_groups/{id}/users/all": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 36
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/user_groups/{id}/access_policies": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 39
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "access_policy_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 39
+                    }
+                  }
+                },
+                "required": ["access_policy_ids"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 40
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserAccessPolicy"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/users/search": {
+      "get": {
+        "x-note": "The response sample nests the list in an object (\"data\": { [ ... ] }), which is not valid JSON; it is read as a list of users, as in §3.5. user_id and status are typed String, so one value each is accepted although the examples repeat them. The sample shows no pagination.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "keyword",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 42
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 43
+            }
+          },
+          {
+            "in": "query",
+            "name": "only_admin",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "x-pdf": {
+              "page": 43
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 43
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_num",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 43
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 43
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/users/{user_id}/touch_passes/{touch_pass_id}": {
+      "put": {
+        "x-note": "No request body; the sample sends an empty one.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 44
+            }
+          },
+          {
+            "in": "path",
+            "name": "touch_pass_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 44
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AssignedTouchPass"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          {
+            "in": "path",
+            "name": "touch_pass_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 46
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UnassignedTouchPass"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/users/touch_passes/assign": {
+      "put": {
+        "x-note": "emails, a map from user ID to email address, is declined (see x-declined).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 47
+                    }
+                  }
+                },
+                "required": ["ids"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/BatchAssignedTouchPass"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/users/{id}/license_plates": {
+      "put": {
+        "x-note": "The body is a JSON array of plate numbers; the row is printed with the label \"-\".",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 49
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "x-pdf": {
+            "page": 49,
+            "row": ""
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/users/{user_id}/license_plates/{license_plate_id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 50
+            }
+          },
+          {
+            "in": "path",
+            "name": "license_plate_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/users/{id}/avatar": {
+      "post": {
+        "x-note": "A multipart upload; not generated until it is decided (ADR 0022 §5).",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 51
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "x-pdf": {
+                      "page": 51
+                    }
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "avatar_url": {
+                          "type": "string",
+                          "x-pdf": {
+                            "page": 52,
+                            "sample": true
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "components": {
-    "schemas": {}
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12,
+              "row": "Id"
+            }
+          },
+          "first_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12
+            }
+          },
+          "last_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12
+            }
+          },
+          "full_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12
+            }
+          },
+          "alias": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12
+            }
+          },
+          "user_email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12
+            },
+            "x-minimum-version": "1.22.16"
+          },
+          "email_status": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12
+            }
+          },
+          "phone": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12
+            }
+          },
+          "employee_number": {
+            "type": "string",
+            "x-pdf": {
+              "page": 12
+            }
+          },
+          "onboard_time": {
+            "type": "integer",
+            "x-pdf": {
+              "page": 12
+            }
+          },
+          "nfc_cards": {
+            "type": "array",
+            "x-pdf": {
+              "page": 13
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 13,
+                    "row": "nfc_cards[].id"
+                  }
+                },
+                "token": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 13,
+                    "row": "nfc_cards[].token"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 18,
+                    "sample": true
+                  }
+                }
+              }
+            }
+          },
+          "license_plates": {
+            "type": "array",
+            "x-pdf": {
+              "page": 13,
+              "parent": true
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 13,
+                    "row": "license_plates[].id"
+                  }
+                },
+                "credential": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 13,
+                    "row": "license_plates[].credential"
+                  }
+                },
+                "credential_type": {
+                  "type": "string",
+                  "enum": ["license"],
+                  "x-pdf": {
+                    "page": 13,
+                    "row": "license_plates[].credential_type"
+                  }
+                },
+                "credential_status": {
+                  "type": "string",
+                  "enum": ["active", "deactivate"],
+                  "x-pdf": {
+                    "page": 13,
+                    "row": "license_plates[].credential_status"
+                  }
+                }
+              }
+            }
+          },
+          "pin_code": {
+            "type": "object",
+            "x-pdf": {
+              "page": 13
+            },
+            "properties": {
+              "token": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 13,
+                  "row": "pin_code.token"
+                }
+              }
+            }
+          },
+          "access_policy_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 13
+            }
+          },
+          "access_policies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserAccessPolicy"
+            },
+            "x-pdf": {
+              "page": 13
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "PENDING", "DEACTIVATED"],
+            "x-pdf": {
+              "page": 13
+            }
+          },
+          "avatar_relative_path": {
+            "type": "string",
+            "x-pdf": {
+              "page": 35,
+              "sample": true
+            }
+          },
+          "email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 35,
+              "sample": true
+            }
+          },
+          "username": {
+            "type": "string",
+            "x-pdf": {
+              "page": 35,
+              "sample": true
+            }
+          }
+        },
+        "x-note": "touch_pass is declined (see x-declined). avatar_relative_path, email and username appear only in the samples of the user group member reads (§3.18, §3.19) and the search (§3.24), which name this schema."
+      },
+      "UserAccessPolicy": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 17,
+              "sample": true
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 17,
+              "sample": true
+            }
+          },
+          "resources": {
+            "type": "array",
+            "x-pdf": {
+              "page": 17,
+              "sample": true
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 17,
+                    "sample": true
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 17,
+                    "sample": true
+                  }
+                }
+              }
+            }
+          },
+          "schedule_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 17,
+              "sample": true
+            }
+          }
+        },
+        "x-note": "From the user read samples only; replaced by citations of the §5.1 table when chapter 5 is transcribed."
+      },
+      "UserGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 29,
+              "sample": true
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 29,
+              "sample": true
+            }
+          },
+          "full_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 29,
+              "sample": true
+            }
+          },
+          "up_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 29,
+              "sample": true
+            }
+          },
+          "up_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 29,
+              "sample": true
+            }
+          }
+        },
+        "x-note": "The PDF has no user group table; all fields come from samples."
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page_num": {
+            "type": "integer",
+            "x-pdf": {
+              "page": 21,
+              "sample": true
+            }
+          },
+          "page_size": {
+            "type": "integer",
+            "x-pdf": {
+              "page": 21,
+              "sample": true
+            }
+          },
+          "total": {
+            "type": "integer",
+            "x-pdf": {
+              "page": 21,
+              "sample": true
+            }
+          }
+        }
+      },
+      "AssignedTouchPass": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 44
+            }
+          },
+          "card_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 44
+            }
+          },
+          "card_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 44
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING"],
+            "x-pdf": {
+              "page": 44
+            }
+          },
+          "last_activity": {
+            "type": "string",
+            "x-pdf": {
+              "page": 44
+            }
+          },
+          "user_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 44
+            }
+          },
+          "user_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 45
+            }
+          },
+          "user_email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 45
+            }
+          },
+          "user_status": {
+            "type": "string",
+            "x-pdf": {
+              "page": 45
+            }
+          },
+          "user_avatar": {
+            "type": "string",
+            "x-pdf": {
+              "page": 45
+            }
+          }
+        }
+      },
+      "UnassignedTouchPass": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "card_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "card_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["SUSPENDED", "INACTIVE"],
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "last_activity": {
+            "type": "string",
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "user_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "user_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "user_email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "user_status": {
+            "type": "string",
+            "enum": ["ACTIVE", "PENDING"],
+            "x-pdf": {
+              "page": 46
+            }
+          },
+          "user_avatar": {
+            "type": "string",
+            "x-pdf": {
+              "page": 46
+            }
+          }
+        }
+      },
+      "BatchAssignedTouchPass": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "card_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "card_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING"],
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "last_activity": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "user_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "user_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "user_email": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "user_status": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          },
+          "user_avatar": {
+            "type": "string",
+            "x-pdf": {
+              "page": 48
+            }
+          }
+        }
+      }
+    }
   }
 }

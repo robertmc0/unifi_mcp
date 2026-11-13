@@ -40,11 +40,11 @@ What the PDF provides (observed in the cached copy, SHA-256 `6abb576c…`):
   §12.1 HTTPS private key and certificate), file downloads (§6.18 QR code image, §9.3 CSV
   export, §9.5 static resources) and one WebSocket (§11.1).
 - **A text layer that can be checked by machine.** A dependency-free extraction of the
-  cached PDF finds 702 table rows, each a field label directly followed by its required
-  flag and type. The only irregular rows are the request header `Authorization` (repeated
-  in every section), `Id` printed for the field `id` (p.12), and two rows without a label
-  (p.33 and p.34): there the request body itself is an array of strings, as the §3.16 and
-  §3.17 samples show.
+  cached PDF finds about 700 table rows, each a field label directly followed by its
+  required flag and type. The only irregular rows are the request header `Authorization`
+  (repeated in every section), `Id` printed for the field `id` (p.12), and two rows
+  without a label (p.33 and p.34): there the request body itself is an array of strings,
+  as the §3.16 and §3.17 samples show. (Step 3 found more shapes; see Evidence.)
 
 Third-party OpenAPI conversions of the PDF exist (ADR 0021 §1). They are not vendor
 artefacts and are not consulted.
@@ -185,7 +185,8 @@ check is part of `npm run api:reconcile`, which CI runs after `api:fetch-specs`.
   cannot show that the row belongs to that operation rather than to a neighbour on the
   same page, that nesting is right, or that a sample's type is meant generally. A person
   checks those in review. A row the extraction cannot detect is missed in both
-  directions, which is why the review follows the PDF page by page.
+  directions, which is why the review follows the PDF page by page, and why every row
+  shape found in the whole PDF is taught to the detector (Evidence, step 3).
 
 ### 7. Generation and freshness
 
@@ -202,9 +203,11 @@ check is part of `npm run api:reconcile`, which CI runs after `api:fetch-specs`.
 - **In stages.** The PDF is transcribed one chapter at a time (§3 users, §4 visitors, and
   so on), one reviewed commit each, including the regenerated module. Until all
   operations are transcribed, the rest are listed in the transcription's `x-pending` and
-  are not generated. `x-pdf-pages` grows with each chapter, and every citation must fall
-  inside it. The transcription is complete when nothing is pending and `x-pdf-pages`
-  covers every page with table rows.
+  are not generated. `x-pdf-pages` grows with each chapter, and every row citation must
+  fall inside it. A sample citation may point to a later page (§3.30's sample is printed
+  on p.52, beside chapter 4's first table), because samples take no part in the reverse
+  check. The transcription is complete when nothing is pending and `x-pdf-pages` covers
+  every page with table rows.
 
 ## Evidence
 
@@ -237,6 +240,28 @@ Step 2, tooling (2026-11-13). No operation is transcribed yet: all 107 are pendi
   required-flag comparison off; components used by requests not treated as requests; vendor
   prose accepted; a misplaced citation accepted; a declined row that matches nothing
   accepted; wide `TJ` gaps not turned into spaces; a page-tree loop not detected.
+
+Step 3, chapter §3 users (2026-11-13): 29 operations on pages 12 to 51, 78 pending.
+
+- Reading the chapter showed row shapes the detector missed. A scan of the whole PDF for
+  them found: a bare `Array` type (p.44, 46, 48, 116, 122); types printed below the label
+  and flag (`idsT`, then `Array of` and `Strings`; `Object` `(Map)` and
+  `Object<String, String>` on p.47, 139, 174, 175 and 177); and the label `-` (p.49). The
+  detector now reads them (718 rows); typed maps are compared as `Map`.
+- Tables are not always on the page of their section heading: §3.7's body table, for
+  example, is printed at the top of p.24 beside §3.8's header and path tables. Each table
+  was assigned by its section's labels and its sample.
+- Pages 12 to 51 hold 150 rows, 120 of them other than `Authorization`. Each is
+  transcribed (113 row citations, 1 parent citation, plus 19 sample citations) or
+  declined. Removing one transcribed field and one declined row each produced a report.
+- Declined: `touch_pass` in the user schema (typed `Array[Object]`; every sample shows one
+  object); `expand[]` on p.17 and p.19 (Boolean with the example `access_policy`);
+  `bundles` on p.44, 46 and 48 (item type undocumented); `emails` in the §3.27 body (a
+  map, which a request cannot carry).
+- Sample disagreements recorded in `x-note`: §3.3 posts to `/developer/user` and sends
+  `pin_code`; §3.8 uses DELETE; §3.12 and others repeat `/developer/developer/`; §3.24's
+  `data` is not valid JSON and is read as a list of users.
+- §3.30 (multipart profile picture) is transcribed and omitted from generation.
 
 ## Consequences
 

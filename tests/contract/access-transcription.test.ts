@@ -46,11 +46,10 @@ describe('Access transcription 2026-03-23', () => {
 
   it('generates exactly the transcribed operations, none of the pending ones', () => {
     const omitted = Object.keys(
-      config !== undefined && 'omittedOperations' in config
-        ? (config.omittedOperations as Record<string, string>)
-        : {},
+      config !== undefined && 'omittedOperations' in config ? config.omittedOperations : {},
     );
     const transcribed = [...transcribedOperations(transcription).keys()];
+    expect(omitted.every((key) => transcribed.includes(key))).toBe(true);
     expect(Object.keys(operations).sort()).toEqual(
       transcribed.filter((key) => !omitted.includes(key)).sort(),
     );
