@@ -9,7 +9,7 @@
     "sha256": "6abb576c43637535143d5bfdc720c5025657063e5a983b29cd564e76441e896e"
   },
   "x-note": "Written by hand from the cached PDF under the rules of docs/adr/0022-access-contract-transcription.md. Facts only: no vendor descriptions, examples or other prose. Checked against the PDF text by npm run api:reconcile.",
-  "x-pdf-pages": [[12, 124]],
+  "x-pdf-pages": [[12, 146]],
   "x-declined": [
     {
       "row": "Authorization",
@@ -139,6 +139,41 @@
       "row": "bundles",
       "page": 122,
       "reason": "An array whose item type is not documented (\"reserved for future use\", always empty)."
+    },
+    {
+      "row": "resources",
+      "page": 128,
+      "reason": "Typed String, but its fields are printed as resources[].… and every sample shows a list of objects; the list is cited by those fields."
+    },
+    {
+      "row": "resources",
+      "page": 129,
+      "reason": "Typed String, but its fields are printed as resources[].… and every sample shows a list of objects; the list is cited by those fields."
+    },
+    {
+      "row": "resources",
+      "page": 132,
+      "reason": "Typed String, but its fields are printed as resources[].… and every sample shows a list of objects; the list is cited by those fields."
+    },
+    {
+      "row": "resources",
+      "page": 133,
+      "reason": "Typed String, but its fields are printed as resources[].… and every sample shows a list of objects; the list is cited by those fields."
+    },
+    {
+      "row": "is_bind_hub",
+      "page": 136,
+      "reason": "Typed String, but every sample shows a boolean and §7.1 types the same field Boolean; it is typed from the sample."
+    },
+    {
+      "row": "is_bind_hub",
+      "page": 137,
+      "reason": "Typed String, but every sample shows a boolean and §7.1 types the same field Boolean; it is typed from the sample."
+    },
+    {
+      "row": "extra",
+      "page": 139,
+      "reason": "An object used as a map of passthrough data. The translator accepts no typed map in a request (ADR 0018)."
     }
   ],
   "x-error-codes": [
@@ -189,18 +224,10 @@
   ],
   "x-pending": [
     "DELETE /api/v1/developer/api_server/certificates",
-    "DELETE /api/v1/developer/door_groups/{id}",
     "DELETE /api/v1/developer/webhooks/endpoints/{id}",
     "GET /api/v1/developer/devices",
     "GET /api/v1/developer/devices/notifications",
     "GET /api/v1/developer/devices/{device_id}/settings",
-    "GET /api/v1/developer/door_groups",
-    "GET /api/v1/developer/door_groups/topology",
-    "GET /api/v1/developer/door_groups/{id}",
-    "GET /api/v1/developer/doors",
-    "GET /api/v1/developer/doors/settings/emergency",
-    "GET /api/v1/developer/doors/{id}",
-    "GET /api/v1/developer/doors/{id}/lock_rule",
     "GET /api/v1/developer/system/logs/resource/{id}",
     "GET /api/v1/developer/system/static/{path}",
     "GET /api/v1/developer/user_groups/{id}/identity/assignments",
@@ -209,7 +236,6 @@
     "GET /api/v1/developer/webhooks/endpoints",
     "POST /api/v1/developer/api_server/certificates",
     "POST /api/v1/developer/devices/{device_id}/doorbell",
-    "POST /api/v1/developer/door_groups",
     "POST /api/v1/developer/system/logs",
     "POST /api/v1/developer/system/logs/export",
     "POST /api/v1/developer/user_groups/{id}/identity/assignments",
@@ -217,10 +243,6 @@
     "POST /api/v1/developer/users/{id}/identity/assignments",
     "POST /api/v1/developer/webhooks/endpoints",
     "PUT /api/v1/developer/devices/{device_id}/settings",
-    "PUT /api/v1/developer/door_groups/{id}",
-    "PUT /api/v1/developer/doors/settings/emergency",
-    "PUT /api/v1/developer/doors/{id}/lock_rule",
-    "PUT /api/v1/developer/doors/{id}/unlock",
     "PUT /api/v1/developer/webhooks/endpoints/{id}"
   ],
   "paths": {
@@ -4273,6 +4295,537 @@
           }
         }
       }
+    },
+    "/api/v1/developer/door_groups/topology": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DoorGroupTopology"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/door_groups": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "group_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 128
+                    }
+                  },
+                  "resources": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 128
+                    }
+                  }
+                },
+                "required": ["group_name", "resources"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/CreatedDoorGroup"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ListedDoorGroup"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/door_groups/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 129,
+              "row": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/DoorGroup"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 131
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "group_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 131
+                    }
+                  },
+                  "resources": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "x-pdf": {
+                      "page": 131
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/UpdatedDoorGroup"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 135
+            }
+          }
+        ],
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/doors/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 136
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Door"
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/doors": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ListedDoor"
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/doors/{id}/unlock": {
+      "put": {
+        "x-note": "actor_id and actor_name must be sent together or not at all; the schema cannot express that, so the console checks it. extra is declined (see x-declined). The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 139
+            }
+          },
+          {
+            "in": "query",
+            "name": "reader_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 139
+            }
+          },
+          {
+            "in": "query",
+            "name": "entry_method",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["in", "out"]
+            },
+            "x-pdf": {
+              "page": 139
+            },
+            "x-minimum-version": "4.2.16",
+            "x-minimum-version-source": {
+              "page": 193
+            },
+            "x-note": "Double-driveway mode, which §13 lists under v4.2.16."
+          },
+          {
+            "in": "query",
+            "name": "control_cmd",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["open", "close", "stop"]
+            },
+            "x-pdf": {
+              "page": 139
+            },
+            "x-minimum-version": "4.2.16",
+            "x-minimum-version-source": {
+              "page": 193
+            },
+            "x-note": "Three-button mode, which §13 lists under v4.2.16."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "actor_id": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 139
+                    },
+                    "x-minimum-version": "3.3.21",
+                    "x-minimum-version-source": {
+                      "page": 193
+                    }
+                  },
+                  "actor_name": {
+                    "type": "string",
+                    "x-pdf": {
+                      "page": 139
+                    },
+                    "x-minimum-version": "3.3.21",
+                    "x-minimum-version-source": {
+                      "page": 193
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      }
+    },
+    "/api/v1/developer/doors/{id}/lock_rule": {
+      "put": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 140
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "keep_lock",
+                      "keep_unlock",
+                      "custom",
+                      "reset",
+                      "lock_early",
+                      "lock_now"
+                    ],
+                    "x-pdf": {
+                      "page": 141
+                    }
+                  },
+                  "interval": {
+                    "type": "integer",
+                    "x-pdf": {
+                      "page": 141
+                    }
+                  }
+                },
+                "required": ["type"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "x-pdf": {
+              "page": 143
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": ["schedule", "keep_lock", "keep_unlock", "custom", "lock_early"],
+                          "x-pdf": {
+                            "page": 143
+                          }
+                        },
+                        "ended_time": {
+                          "type": "integer",
+                          "x-pdf": {
+                            "page": 143
+                          }
+                        }
+                      },
+                      "required": ["type", "ended_time"]
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/developer/doors/settings/emergency": {
+      "put": {
+        "x-note": "The sample returns \"data\": \"success\", which carries nothing; it is discarded.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lockdown": {
+                    "type": "boolean",
+                    "x-pdf": {
+                      "page": 144
+                    }
+                  },
+                  "evacuation": {
+                    "type": "boolean",
+                    "x-pdf": {
+                      "page": 144
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {}
+        }
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "lockdown": {
+                          "type": "boolean",
+                          "x-pdf": {
+                            "page": 146
+                          }
+                        },
+                        "evacuation": {
+                          "type": "boolean",
+                          "x-pdf": {
+                            "page": 146
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": ["data"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6403,6 +6956,463 @@
             }
           }
         }
+      },
+      "DoorGroupTopology": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 126
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": ["building", "access"],
+            "x-pdf": {
+              "page": 126
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 126,
+              "sample": true
+            }
+          },
+          "resource_topologies": {
+            "type": "array",
+            "x-pdf": {
+              "page": 126
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 126,
+                    "row": "resource_topologies[].id"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 126,
+                    "row": "resource_topologies[].type"
+                  }
+                },
+                "name": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 126,
+                    "row": "resource_topologies[].name"
+                  }
+                },
+                "resources": {
+                  "type": "array",
+                  "x-pdf": {
+                    "page": 126,
+                    "row": "resource_topologies[].resources"
+                  },
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 126,
+                          "row": "resource_topologies[].resources.id"
+                        }
+                      },
+                      "name": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 126,
+                          "row": "resource_topologies[].resources.name"
+                        }
+                      },
+                      "type": {
+                        "type": "string",
+                        "x-pdf": {
+                          "page": 126,
+                          "row": "resource_topologies[].resources.type"
+                        }
+                      },
+                      "is_bind_hub": {
+                        "type": "boolean",
+                        "x-pdf": {
+                          "page": 126,
+                          "sample": true
+                        }
+                      }
+                    },
+                    "required": ["id", "name", "type"]
+                  }
+                },
+                "is_bind_hub": {
+                  "type": "boolean",
+                  "x-pdf": {
+                    "page": 126,
+                    "row": "resource_topologies[].is_bind_hub"
+                  }
+                }
+              },
+              "required": ["id", "type", "name", "resources"]
+            }
+          }
+        },
+        "required": ["type", "resource_topologies"],
+        "x-note": "The table places is_bind_hub on the floor (resource_topologies[]); the sample shows it on each door. Both are transcribed."
+      },
+      "CreatedDoorGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 128
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 128
+            }
+          },
+          "type": {
+            "type": "string",
+            "x-pdf": {
+              "page": 129,
+              "sample": true
+            }
+          },
+          "resources": {
+            "type": "array",
+            "x-pdf": {
+              "page": 128,
+              "parent": true
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 128,
+                    "row": "resources[].id"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 128,
+                    "row": "resources[].type"
+                  }
+                }
+              },
+              "required": ["id", "type"]
+            }
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "DoorGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 129
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 129
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": ["access", "building"],
+            "x-pdf": {
+              "page": 129,
+              "row": "typet"
+            },
+            "x-note": "The row is printed \"typetString\": a lower-case required flag, cited as printed."
+          },
+          "resources": {
+            "type": "array",
+            "x-pdf": {
+              "page": 129,
+              "parent": true
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 129,
+                    "row": "resources[].id"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 129,
+                    "row": "resources[].type"
+                  }
+                },
+                "name": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 130,
+                    "row": "resources[].name"
+                  }
+                }
+              },
+              "required": ["id", "type", "name"]
+            }
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "UpdatedDoorGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 131
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 132
+            }
+          },
+          "type": {
+            "type": "string",
+            "x-pdf": {
+              "page": 133,
+              "sample": true
+            }
+          },
+          "resources": {
+            "type": "array",
+            "x-pdf": {
+              "page": 132,
+              "parent": true
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 132,
+                    "row": "resources[].id"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 132,
+                    "row": "resources[].type"
+                  }
+                }
+              },
+              "required": ["id", "type"]
+            }
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "ListedDoorGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 133
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 133
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": ["access", "building"],
+            "x-pdf": {
+              "page": 133,
+              "row": "typet"
+            },
+            "x-note": "The row is printed \"typetString\": a lower-case required flag, cited as printed."
+          },
+          "resources": {
+            "type": "array",
+            "x-pdf": {
+              "page": 133,
+              "parent": true
+            },
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 133,
+                    "row": "resources[].id"
+                  }
+                },
+                "type": {
+                  "type": "string",
+                  "x-pdf": {
+                    "page": 133,
+                    "row": "resources[].type"
+                  }
+                }
+              },
+              "required": ["id", "type"]
+            }
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "Door": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 136
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 136
+            }
+          },
+          "full_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 136
+            }
+          },
+          "floor_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 136
+            }
+          },
+          "type": {
+            "type": "string",
+            "x-pdf": {
+              "page": 136
+            }
+          },
+          "door_lock_relay_status": {
+            "type": "string",
+            "enum": ["lock", "unlock"],
+            "x-pdf": {
+              "page": 136
+            }
+          },
+          "door_position_status": {
+            "type": "string",
+            "x-pdf": {
+              "page": 136
+            }
+          },
+          "is_bind_hub": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 136,
+              "sample": true
+            },
+            "x-note": "The table types it String; every sample shows a boolean, as §7.1 types it."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "full_name",
+          "floor_id",
+          "type",
+          "door_lock_relay_status",
+          "door_position_status"
+        ]
+      },
+      "ListedDoor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 137
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 137
+            }
+          },
+          "full_name": {
+            "type": "string",
+            "x-pdf": {
+              "page": 137
+            }
+          },
+          "floor_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 137
+            }
+          },
+          "type": {
+            "type": "string",
+            "x-pdf": {
+              "page": 137
+            }
+          },
+          "door_lock_relay_status": {
+            "type": "string",
+            "enum": ["lock", "unlock"],
+            "x-pdf": {
+              "page": 137
+            }
+          },
+          "door_position_status": {
+            "type": "string",
+            "x-pdf": {
+              "page": 137
+            }
+          },
+          "is_bind_hub": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 138,
+              "sample": true
+            },
+            "x-note": "The table types it String; every sample shows a boolean, as §7.1 types it."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "full_name",
+          "floor_id",
+          "type",
+          "door_lock_relay_status",
+          "door_position_status"
+        ]
       }
     }
   }

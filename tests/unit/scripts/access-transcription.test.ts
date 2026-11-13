@@ -385,6 +385,30 @@ describe('checks against the PDF text', () => {
     expect(problems).toMatch(/parts: no rows of fields under "parts" on p\.2 \(as parts\[\]\.…\)/);
   });
 
+  it('check a version stated only in the change log on the page named as its source', () => {
+    const sourced = (version: string) =>
+      variant((d) => {
+        Object.assign(bodyProperties(d)['color'] as Doc, {
+          'x-minimum-version': version,
+          'x-minimum-version-source': { page: 1 },
+        });
+      });
+    const pages = [
+      [...(PAGES[0] ?? []), 'v3.3.21 Supports custom color fields. (#3.3)'],
+      ...PAGES.slice(1),
+    ];
+    expect(pdfProblems(sourced('3.3.21'), pages, INVENTORY)).toEqual([]);
+    expect(pdfProblems(sourced('4.0.10'), pages, INVENTORY).join('\n')).toMatch(
+      /body\.color: minimum version 4\.0\.10 not on its source p\.1–2/,
+    );
+    const malformed = variant((d) => {
+      (bodyProperties(d)['name'] as Doc)['x-minimum-version-source'] = { page: 1 };
+    });
+    expect(structuralProblems(malformed, INVENTORY, CONTRACT).join('\n')).toMatch(
+      /body\.name: malformed x-minimum-version-source/,
+    );
+  });
+
   it('find rows on transcribed pages that are neither transcribed nor declined', () => {
     const undeclared = variant((d) => {
       d['x-declined'] = [];

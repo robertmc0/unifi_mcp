@@ -620,7 +620,10 @@ command and its storage are built with the adapter.
      §6.19 (CSV upload) not generated. Declined: timestamp fields typed Object, bare
      `bundles` arrays. For the security review: §6.1 returns a PIN code, §6.17 spends
      money.
-   - §7 spaces, §8 devices, §9 system logs,
+   - ✅ §7 spaces (2026-11-13): 13 operations, pages 125 to 146. The remote unlock's
+     field versions come from the change log (`x-minimum-version-source`). Declined: the
+     String-typed `resources` and `is_bind_hub` rows, the unlock's `extra` map.
+   - §8 devices, §9 system logs,
      §10 identity, §11 notifications and webhooks, §12 API server.
 4. Access transport: port 12445, bearer token, the `{code, msg, data}` envelope and the
    §2.4 error codes, TLS pinning; a synthetic Access console for tests.
@@ -629,7 +632,7 @@ command and its storage are built with the adapter.
    negative tests.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 3, §7 (spaces: door groups, doors, unlock, lock rules, emergency).
+**Next:** step 3, §8 (devices) and §9 (system logs).
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests

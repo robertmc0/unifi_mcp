@@ -139,8 +139,11 @@ Requests are transcribed for least privilege and responses for fidelity.
   `format: uuid`. Strings and arrays without a stated bound get the translator's defaults
   (4096 characters, 1000 items).
 - **Field-level versions.** A field with its own "UniFi Access Requirement" carries
-  `x-minimum-version`, transcribed literally. The generated module lists these per
-  operation. The adapter refuses a request that uses such a field when the console's
+  `x-minimum-version`, transcribed literally. Where only the change log (§13) names the
+  field or its mode, `x-minimum-version-source` gives that page, and the check looks for
+  the version there (§7.9: `actor_id` and `actor_name` from v3.3.21; the UA Hub Gate
+  modes `entry_method` and `control_cmd` from v4.2.16). The generated module lists these
+  per operation. The adapter refuses a request that uses such a field when the console's
   declared version is lower, and sends nothing (ADR 0021 §3 item 3). Response fields need
   nothing extra: they are optional anyway.
 
@@ -204,8 +207,8 @@ check is part of `npm run api:reconcile`, which CI runs after `api:fetch-specs`.
 - `GENERATED_MODULES` gains an Access entry that reads the transcription instead of a
   vendor document. Before generating, it checks that `x-transcribed-from` matches the PDF
   checksum in `provenance.json`. Operations are named by method and path, as for Protect.
-- The translator accepts the schema annotations `x-pdf`, `x-note` and
-  `x-minimum-version` only in transcription mode. In a vendor document they still fail
+- The translator accepts the schema annotations `x-pdf`, `x-note`, `x-minimum-version`
+  and `x-minimum-version-source` only in transcription mode. In a vendor document they still fail
   generation. The rules of §3 that differ from OpenAPI sources (optional and nullable
   response properties, field versions) apply only in that mode, and the generated file
   states them in its header.
@@ -318,6 +321,21 @@ pending.
 - §6.1 returns the generated PIN code as `data`; §6.17 purchases Touch Passes with the
   payment method configured in Access. Both matter for the adapter's security review, not
   for the transcription.
+
+Step 3, chapter §7 spaces (2026-11-13): 13 operations on pages 125 to 146; 21 pending.
+
+- Pages 125 to 146 hold 75 rows other than `Authorization`, each transcribed or declined.
+  A wrong change-log page, a removed field and a removed decline each produced a report.
+- Declined: the door groups' `resources` rows (typed String; their fields and every
+  sample make them lists of objects, which are cited by those fields); the doors'
+  `is_bind_hub` rows (typed String; every sample shows a boolean, and §7.1 types it
+  Boolean, so it is typed from the sample); the unlock's `extra` map.
+- Door group `type` rows are printed `typetString` (a lower-case flag) and cited as
+  printed. Each door group and door response table is transcribed with its own
+  citations.
+- §7.9 remote unlock: the change-log field versions above, read from p.193; `entry_method`
+  (in, out) and `control_cmd` (open, close, stop) are enumerations, as the rows name the
+  supported values. That `actor_id` and `actor_name` go together is left to the console.
 
 ## Consequences
 

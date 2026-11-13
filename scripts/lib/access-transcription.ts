@@ -36,6 +36,8 @@ export interface TranscribedElement {
   schema: Schema;
   required: boolean;
   minimumVersion?: string;
+  /** The page that states the version, when only the change log (§13) does. */
+  minimumVersionPage?: number;
   /** Reached from a request (inline, or through a component a request uses). */
   inRequest: boolean;
 }
@@ -199,6 +201,25 @@ function minimumVersion(walk: Walk, holder: Schema, where: string): string | und
   return value;
 }
 
+/** `x-minimum-version-source`: `{ "page": n }`, the change-log page that states the version. */
+function minimumVersionPage(walk: Walk, holder: Schema, where: string): number | undefined {
+  const value = holder['x-minimum-version-source'];
+  if (value === undefined) return undefined;
+  const page = isObject(value) ? value['page'] : undefined;
+  if (
+    !isObject(value) ||
+    Object.keys(value).length !== 1 ||
+    typeof page !== 'number' ||
+    !Number.isInteger(page) ||
+    page < 1 ||
+    holder['x-minimum-version'] === undefined
+  ) {
+    walk.problems.push(`${where}: malformed x-minimum-version-source ${JSON.stringify(value)}.`);
+    return undefined;
+  }
+  return page;
+}
+
 function addElement(
   walk: Walk,
   holder: Schema,
@@ -210,6 +231,7 @@ function addElement(
 ): void {
   const pdf = citation(walk, holder['x-pdf'], where);
   const version = minimumVersion(walk, holder, where);
+  const versionPage = minimumVersionPage(walk, holder, where);
   if (pdf === undefined) return;
   walk.elements.push({
     where,
@@ -219,6 +241,7 @@ function addElement(
     required,
     inRequest,
     ...(version === undefined ? {} : { minimumVersion: version }),
+    ...(versionPage === undefined ? {} : { minimumVersionPage: versionPage }),
   });
 }
 
@@ -735,11 +758,15 @@ export function pdfProblems(
       // for instance); a request table of the same field may not repeat it.
       const label = element.pdf.row ?? element.name;
       const same = rows.filter((row) => row.label === label).map((row) => row.page);
-      const near = [page, page + 1, ...same].map((p) => pageText(pages, p)).join('\n');
+      const source = element.minimumVersionPage;
+      const searched = source === undefined ? [page, page + 1, ...same] : [source, source + 1];
+      const near = searched.map((p) => pageText(pages, p)).join('\n');
       if (!near.includes(element.minimumVersion)) {
         problems.push(
           `${element.where}: minimum version ${element.minimumVersion} not on ` +
-            `p.${String(page)}–${String(page + 1)} or beside another "${label}" row.`,
+            (source === undefined
+              ? `p.${String(page)}–${String(page + 1)} or beside another "${label}" row.`
+              : `its source p.${String(source)}–${String(source + 1)}.`),
         );
       }
     }

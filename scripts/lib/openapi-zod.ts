@@ -54,6 +54,7 @@ export const TRANSCRIPTION_ANNOTATIONS: ReadonlySet<string> = new Set([
   'x-pdf',
   'x-note',
   'x-minimum-version',
+  'x-minimum-version-source',
 ]);
 const STRUCTURAL = new Set([
   'type',
