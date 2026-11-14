@@ -536,6 +536,16 @@ clean stop).
   401 with a random key. No new contract mismatch was recorded. The reviewed Network
   record is refreshed; the Protect record is unchanged. Device reads, snapshots and
   device events remain unvalidated on this console without Protect devices.
+- **Protect device adopted** (owner, 2026-11-14): the test console now has a Protect
+  device, so device reads, the snapshot and device events can be checked live. The live
+  test now also opens both documented subscriptions (events, device changes) for a bounded
+  window (default 60 s) with the service's own WebSocket client, checks every message
+  against its contract schema and classifies it as the event hub does; the record keeps
+  counts, event types, device kinds and mismatching field paths only. A subscription with
+  no messages is skipped, not validated. Dry-run against the synthetic console (which now
+  sends sampled messages), including a mismatching message, a non-JSON message and silence.
+  **Open:** the owner's run with `UNIFI_LIVE_PROTECT_SNAPSHOT=1`, and a refreshed
+  `docs/api-coverage/live/protect-7.3.74.json`.
 - ✅ **Phase 4 contract review** (2026-11-12): see Phase 4 below and
   [ADR 0021](adr/0021-access-contract-version-evidence.md).
 

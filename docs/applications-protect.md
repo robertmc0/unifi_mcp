@@ -191,6 +191,7 @@ UNIFI_LIVE_HOST=<console address> \
 UNIFI_LIVE_NETWORK_KEY_FILE=<file with the API key> \
 UNIFI_LIVE_TLS_PIN=sha256/… \
 UNIFI_LIVE_PROTECT_REPORT=docs/api-coverage/live/protect-7.3.74.json \
+UNIFI_LIVE_PROTECT_SNAPSHOT=1 \
 npm run test:live
 ```
 
@@ -210,10 +211,18 @@ record as well.
   memory and is discarded.
 - To learn how event subscriptions authenticate, it asks the documented
   `/v1/subscribe/events` for a WebSocket upgrade twice: with your key, and with a random
-  key as the control (one failed login on the console). Only the status line is read; no
-  event is.
-- The report holds operation ids, outcomes, the Protect version and the two upgrade
-  statuses. It holds no names, ids, e-mail addresses or data. Read it before you commit it.
+  key as the control (one failed login on the console). Only the status line is read.
+- It then opens both documented subscriptions, events and device changes, with the
+  service's own read-only WebSocket client, for 60 seconds (`UNIFI_LIVE_PROTECT_LISTEN_SECONDS`
+  sets 0 to 600; 0 leaves them out). The test prints when the window opens: walk in front
+  of a camera then, so that it reports motion. Each message is checked against its
+  contract schema and classified as the service would, then dropped. A subscription that
+  received no message is reported as skipped, not validated; a message that misses its
+  schema fails the test and names the field paths.
+- The report holds operation ids, outcomes, the Protect version, the two upgrade statuses
+  and, per subscription, message counts with their event types or device kinds and
+  actions (`motion_add`, `camera_update`). It holds no names, ids, e-mail addresses or
+  data. Read it before you commit it.
 
 ### Writes
 

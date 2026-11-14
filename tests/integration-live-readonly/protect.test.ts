@@ -8,6 +8,7 @@
  *   UNIFI_LIVE_NETWORK_KEY_FILE=<key file> (or UNIFI_LIVE_PROTECT_KEY_FILE=<key file>) \
  *   [UNIFI_LIVE_PROTECT_REPORT=docs/api-coverage/live/protect-7.3.74.json] \
  *   [UNIFI_LIVE_PROTECT_SNAPSHOT=1]        (also fetch one camera snapshot) \
+ *   [UNIFI_LIVE_PROTECT_LISTEN_SECONDS=60] (how long to read events and device changes; 0: not at all) \
  *   npm run test:live
  *
  * Safety:
@@ -17,6 +18,10 @@
  * - A snapshot is fetched only when asked for, kept in memory and discarded.
  * - Two WebSocket upgrades of the documented events subscription, with the key and with a
  *   random key, answer how subscriptions authenticate; only the status line is read.
+ * - Both documented subscriptions (events, device changes) are then opened with the
+ *   service's own read-only WebSocket client for a bounded time. Each message is checked
+ *   against its contract schema and classified like the event hub does, and then dropped;
+ *   only counts, event types, device kinds and mismatching field paths are recorded.
  * - Nothing the console returns is printed or written: the report holds operation ids,
  *   outcomes, the application version and status codes, never names, ids or data.
  */
@@ -32,6 +37,7 @@ import {
   mismatchSummary,
   OperationRegistry,
   satisfies,
+  type EventStreamDescriptor,
   type OperationDescriptor,
 } from '@unifi-local-mcp/core';
 import { ClientPolicySchema, PolicyStore } from '@unifi-local-mcp/policy';
@@ -41,17 +47,26 @@ import {
   ConsoleRegistry,
   EgressGuard,
   loadContractInventory,
+  UnifiEventConnector,
   UnifiExecutor,
   VersionProber,
 } from '@unifi-local-mcp/unifi-api';
 import {
   PROTECT_CONTRACT_REVISIONS,
+  PROTECT_EVENT_STREAMS,
   PROTECT_READS,
   PROTECT_VERSION_PROBE,
   PROTECT_VERSION_RANGE,
 } from '@unifi-local-mcp/unifi-protect';
 import { afterAll, describe, expect, it } from 'vitest';
-import { okOutcome, type Outcome, ReadOnlyGuard, upgradeStatus, writeReport } from './shared.ts';
+import {
+  identifier,
+  okOutcome,
+  type Outcome,
+  ReadOnlyGuard,
+  upgradeStatus,
+  writeReport,
+} from './shared.ts';
 
 const env = process.env;
 const HOST = env['UNIFI_LIVE_HOST']?.trim() ?? '';
@@ -62,6 +77,10 @@ const CA_FILE = env['UNIFI_LIVE_CA_FILE']?.trim() ?? '';
 const PORT = env['UNIFI_LIVE_PORT']?.trim() ?? '';
 const REPORT = env['UNIFI_LIVE_PROTECT_REPORT']?.trim() ?? '';
 const SNAPSHOT = env['UNIFI_LIVE_PROTECT_SNAPSHOT']?.trim() === '1';
+const LISTEN_SECONDS = Number(env['UNIFI_LIVE_PROTECT_LISTEN_SECONDS']?.trim() || '60');
+if (!Number.isInteger(LISTEN_SECONDS) || LISTEN_SECONDS < 0 || LISTEN_SECONDS > 600) {
+  throw new Error('UNIFI_LIVE_PROTECT_LISTEN_SECONDS must be a whole number from 0 to 600.');
+}
 const ENABLED = HOST !== '' && KEY_FILE !== '' && (PIN !== '' || CA_FILE !== '');
 
 const CLI = { type: 'cli', id: 'live-test' } as const;
@@ -103,219 +122,312 @@ describe.skipIf(!ENABLED)('live read-only: UniFi Protect', () => {
     if (dir !== '') await rm(dir, { recursive: true, force: true });
   });
 
-  it('reads Protect with GET requests only, and every read matches the contract', async () => {
-    dir = await mkdtemp(join(tmpdir(), 'unifi-live-protect-'));
-    const storage = await openStorage({
-      databasePath: databasePathFor(join(dir, 'data')),
-      masterKey: MasterKey.fromBytes(randomBytes(32)),
-    });
-    close = () => {
-      storage.close();
-      close = undefined;
-    };
-    const logger = createLogger({ level: 'error', sink: { write: () => undefined } });
-    const audit = new AuditLog(storage.db, { logger });
-    const policyStore = new PolicyStore(storage.db, audit);
-    policyStore.current();
-    const consoles = new ConsoleRegistry({
-      db: storage.db,
-      audit,
-      secrets: storage.secrets,
-      logger,
-    });
-    const view = consoles.add(
-      {
-        alias: 'live',
-        host: HOST,
-        tls:
-          PIN !== ''
-            ? { mode: 'pinned', pins: [PIN] }
-            : { mode: 'verify', caPem: await readFile(CA_FILE, 'utf8') },
-      },
-      CLI,
-    );
-    if (PORT !== '') consoles.setModulePort(view.id, 'protect', Number(PORT), CLI);
-    const key = (await readFile(KEY_FILE, 'utf8')).trim();
-    consoles.setCredential(view.id, 'protect', key, CLI);
-    consoles.setPolicy(view.id, { modules: { protect: { state: 'read_only' } } }, CLI);
-
-    const address = isIP(HOST) === 0 ? (await lookup(HOST)).address : HOST;
-    const egress = new EgressGuard({ allow: [`${address}/${isIP(address) === 6 ? 128 : 32}`] });
-    const guard = new ReadOnlyGuard(new UnifiExecutor({ consoles, egress, logger }));
-    const inventory = await loadContractInventory(join(import.meta.dirname, '../../api-specs'));
-    const registry = new OperationRegistry(inventory);
-    for (const descriptor of PROTECT_READS) registry.register(descriptor);
-    registry.seal();
-    const descriptorOf = (operationId: string): OperationDescriptor => {
-      const descriptor = registry.get(operationId);
-      if (descriptor === undefined) throw new Error(`${operationId} is not registered.`);
-      return descriptor;
-    };
-
-    /** Asks again for a response that missed its schema, and says where it missed. */
-    const diagnose = async (
-      descriptor: OperationDescriptor,
-      args: Record<string, unknown>,
-    ): Promise<string[]> => {
-      const input = descriptor.inputSchema.safeParse(args);
-      if (!input.success) return ['(the test sent arguments outside the contract)'];
-      const outcome = await guard.execute({
-        descriptor,
-        arguments: input.data,
-        target: { consoleId: view.id },
-        signal: AbortSignal.timeout(descriptor.timeoutMs),
-        correlationId: 'live-diagnose',
-        attempt: 1,
+  it(
+    'reads Protect with GET requests only, and every read matches the contract',
+    async () => {
+      dir = await mkdtemp(join(tmpdir(), 'unifi-live-protect-'));
+      const storage = await openStorage({
+        databasePath: databasePathFor(join(dir, 'data')),
+        masterKey: MasterKey.fromBytes(randomBytes(32)),
       });
-      if (!outcome.ok) return [`(the second request failed: ${outcome.error.code})`];
-      const output = descriptor.outputSchema.safeParse(outcome.data);
-      return output.success
-        ? ['(the second response matched)']
-        : mismatchSummary(output.error.issues);
-    };
+      close = () => {
+        storage.close();
+        close = undefined;
+      };
+      const logger = createLogger({ level: 'error', sink: { write: () => undefined } });
+      const audit = new AuditLog(storage.db, { logger });
+      const policyStore = new PolicyStore(storage.db, audit);
+      policyStore.current();
+      const consoles = new ConsoleRegistry({
+        db: storage.db,
+        audit,
+        secrets: storage.secrets,
+        logger,
+      });
+      const view = consoles.add(
+        {
+          alias: 'live',
+          host: HOST,
+          tls:
+            PIN !== ''
+              ? { mode: 'pinned', pins: [PIN] }
+              : { mode: 'verify', caPem: await readFile(CA_FILE, 'utf8') },
+        },
+        CLI,
+      );
+      if (PORT !== '') consoles.setModulePort(view.id, 'protect', Number(PORT), CLI);
+      const key = (await readFile(KEY_FILE, 'utf8')).trim();
+      consoles.setCredential(view.id, 'protect', key, CLI);
+      consoles.setPolicy(view.id, { modules: { protect: { state: 'read_only' } } }, CLI);
 
-    // 1. Version: which reads this console supports.
-    const probe = await new VersionProber({
-      consoles,
-      executor: guard,
-      registry,
-      specs: [PROTECT_VERSION_PROBE],
-    }).probe(view.id, 'protect');
-    if (!probe.ok) {
-      report['probe'] = probe.code;
-      outcomes.push({ operationId: 'protect.info.get', outcome: probe.code });
-      expect.fail(`The Protect version probe failed: ${probe.code}: ${probe.message}`);
-    }
-    const version = probe.version;
-    report['applicationVersion'] = version;
-    report['supported'] = satisfies(version, PROTECT_VERSION_RANGE);
-    // The record belongs to the newest contract revision the console reaches.
-    report['revision'] =
-      [...PROTECT_CONTRACT_REVISIONS].reverse().find((r) => satisfies(version, `>=${r}`)) ??
-      PROTECT_CONTRACT_REVISIONS[0];
-    expect(report['supported'], `Protect ${version} is outside ${PROTECT_VERSION_RANGE}`).toBe(
-      true,
-    );
+      const address = isIP(HOST) === 0 ? (await lookup(HOST)).address : HOST;
+      const egress = new EgressGuard({ allow: [`${address}/${isIP(address) === 6 ? 128 : 32}`] });
+      const guard = new ReadOnlyGuard(new UnifiExecutor({ consoles, egress, logger }));
+      const inventory = await loadContractInventory(join(import.meta.dirname, '../../api-specs'));
+      const registry = new OperationRegistry(inventory);
+      for (const descriptor of PROTECT_READS) registry.register(descriptor);
+      registry.seal();
+      const descriptorOf = (operationId: string): OperationDescriptor => {
+        const descriptor = registry.get(operationId);
+        if (descriptor === undefined) throw new Error(`${operationId} is not registered.`);
+        return descriptor;
+      };
 
-    const client = ClientPolicySchema.parse({
-      clientId: PRINCIPAL.clientId,
-      consoles: { [view.id]: { sites: '*' } },
-      allow: ['protect.*.read'],
-      sensitive: ['personal_identifier', 'location', 'camera_image'],
-    });
-    const dispatcher = new Dispatcher({
-      registry,
-      executor: guard,
-      security: {
-        clientPolicy: (id) => (id === client.clientId ? client : undefined),
-        consolePolicy: (id) => consoles.policy(id),
-        capability: (id, descriptor) => consoles.capability(id, descriptor),
-      },
-      policyStore,
-      deployment: { forceReadOnly: true },
-      audit,
-      executions: new ExecutionStore(storage.db),
-      logger,
-    });
-
-    const run = async (operationId: string, args: Record<string, unknown> = {}) => {
-      const descriptor = descriptorOf(operationId);
-      if (!satisfies(version, descriptor.apiVersionRange)) {
-        outcomes.push({ operationId, outcome: `skipped: needs ${descriptor.apiVersionRange}` });
-        return undefined;
-      }
-      let envelope;
-      for (let attempt = 0; ; attempt++) {
-        envelope = await dispatcher.execute(PRINCIPAL, {
-          operationId,
-          consoleId: view.id,
-          arguments: args,
+      /** Asks again for a response that missed its schema, and says where it missed. */
+      const diagnose = async (
+        descriptor: OperationDescriptor,
+        args: Record<string, unknown>,
+      ): Promise<string[]> => {
+        const input = descriptor.inputSchema.safeParse(args);
+        if (!input.success) return ['(the test sent arguments outside the contract)'];
+        const outcome = await guard.execute({
+          descriptor,
+          arguments: input.data,
+          target: { consoleId: view.id },
+          signal: AbortSignal.timeout(descriptor.timeoutMs),
+          correlationId: 'live-diagnose',
+          attempt: 1,
         });
-        if (envelope.error?.code !== 'rate_limited' || attempt >= 10) break;
-        const wait = (envelope.error as { retryAfterMs?: number }).retryAfterMs ?? 1000;
-        await new Promise((resolve) => setTimeout(resolve, Math.min(wait + 50, 5000)));
+        if (!outcome.ok) return [`(the second request failed: ${outcome.error.code})`];
+        const output = descriptor.outputSchema.safeParse(outcome.data);
+        return output.success
+          ? ['(the second response matched)']
+          : mismatchSummary(output.error.issues);
+      };
+
+      // 1. Version: which reads this console supports.
+      const probe = await new VersionProber({
+        consoles,
+        executor: guard,
+        registry,
+        specs: [PROTECT_VERSION_PROBE],
+      }).probe(view.id, 'protect');
+      if (!probe.ok) {
+        report['probe'] = probe.code;
+        outcomes.push({ operationId: 'protect.info.get', outcome: probe.code });
+        expect.fail(`The Protect version probe failed: ${probe.code}: ${probe.message}`);
       }
-      const outcome =
-        envelope.status === 'ok'
-          ? okOutcome(envelope.data)
-          : (envelope.error?.code ?? envelope.status);
-      const mismatches =
-        outcome === 'upstream_contract_mismatch' ? await diagnose(descriptor, args) : [];
-      outcomes.push({ operationId, outcome, ...(mismatches.length === 0 ? {} : { mismatches }) });
-      return envelope.status === 'ok' ? envelope : undefined;
-    };
-    const skip = (operationId: string, why = 'nothing to read'): void => {
-      outcomes.push({ operationId, outcome: `skipped: ${why}` });
-    };
-    const firstId = (envelope: unknown): string | undefined => {
-      const data = (envelope as { data?: unknown } | undefined)?.data;
-      const first = Array.isArray(data) ? (data[0] as { id?: unknown } | undefined) : undefined;
-      return typeof first?.id === 'string' ? first.id : undefined;
-    };
+      const version = probe.version;
+      report['applicationVersion'] = version;
+      report['supported'] = satisfies(version, PROTECT_VERSION_RANGE);
+      // The record belongs to the newest contract revision the console reaches.
+      report['revision'] =
+        [...PROTECT_CONTRACT_REVISIONS].reverse().find((r) => satisfies(version, `>=${r}`)) ??
+        PROTECT_CONTRACT_REVISIONS[0];
+      expect(report['supported'], `Protect ${version} is outside ${PROTECT_VERSION_RANGE}`).toBe(
+        true,
+      );
 
-    // 2. Console-level reads.
-    await run('protect.nvrs.list');
-    await run('protect.alarm.list_arm_profiles');
-    await run('protect.files.list', { fileType: 'animations' });
+      const client = ClientPolicySchema.parse({
+        clientId: PRINCIPAL.clientId,
+        consoles: { [view.id]: { sites: '*' } },
+        allow: ['protect.*.read'],
+        sensitive: ['personal_identifier', 'location', 'camera_image'],
+      });
+      const dispatcher = new Dispatcher({
+        registry,
+        executor: guard,
+        security: {
+          clientPolicy: (id) => (id === client.clientId ? client : undefined),
+          consolePolicy: (id) => consoles.policy(id),
+          capability: (id, descriptor) => consoles.capability(id, descriptor),
+        },
+        policyStore,
+        deployment: { forceReadOnly: true },
+        audit,
+        executions: new ExecutionStore(storage.db),
+        logger,
+      });
 
-    // 3. Each list, then a get of its first item.
-    const firsts = new Map<string, string>();
-    for (const [list, get] of PAIRS) {
-      const page = await run(list);
-      const id = firstId(page);
-      if (id !== undefined) firsts.set(list, id);
-      if (!satisfies(version, descriptorOf(get).apiVersionRange)) {
-        skip(get, `needs ${descriptorOf(get).apiVersionRange}`);
-      } else if (id === undefined) skip(get);
-      else await run(get, { id });
-    }
+      const run = async (operationId: string, args: Record<string, unknown> = {}) => {
+        const descriptor = descriptorOf(operationId);
+        if (!satisfies(version, descriptor.apiVersionRange)) {
+          outcomes.push({ operationId, outcome: `skipped: needs ${descriptor.apiVersionRange}` });
+          return undefined;
+        }
+        let envelope;
+        for (let attempt = 0; ; attempt++) {
+          envelope = await dispatcher.execute(PRINCIPAL, {
+            operationId,
+            consoleId: view.id,
+            arguments: args,
+          });
+          if (envelope.error?.code !== 'rate_limited' || attempt >= 10) break;
+          const wait = (envelope.error as { retryAfterMs?: number }).retryAfterMs ?? 1000;
+          await new Promise((resolve) => setTimeout(resolve, Math.min(wait + 50, 5000)));
+        }
+        const outcome =
+          envelope.status === 'ok'
+            ? okOutcome(envelope.data)
+            : (envelope.error?.code ?? envelope.status);
+        const mismatches =
+          outcome === 'upstream_contract_mismatch' ? await diagnose(descriptor, args) : [];
+        outcomes.push({ operationId, outcome, ...(mismatches.length === 0 ? {} : { mismatches }) });
+        return envelope.status === 'ok' ? envelope : undefined;
+      };
+      const skip = (operationId: string, why = 'nothing to read'): void => {
+        outcomes.push({ operationId, outcome: `skipped: ${why}` });
+      };
+      const firstId = (envelope: unknown): string | undefined => {
+        const data = (envelope as { data?: unknown } | undefined)?.data;
+        const first = Array.isArray(data) ? (data[0] as { id?: unknown } | undefined) : undefined;
+        return typeof first?.id === 'string' ? first.id : undefined;
+      };
 
-    // 4. Camera extras: stream qualities, and a snapshot only when asked for.
-    const camera = firsts.get('protect.cameras.list');
-    if (camera === undefined) {
-      skip('protect.cameras.get_rtsps_streams');
-      skip('protect.cameras.get_snapshot');
-    } else {
-      await run('protect.cameras.get_rtsps_streams', { id: camera });
-      if (SNAPSHOT) await run('protect.cameras.get_snapshot', { id: camera });
-      else skip('protect.cameras.get_snapshot', 'not requested (UNIFI_LIVE_PROTECT_SNAPSHOT=1)');
-    }
+      // 2. Console-level reads.
+      await run('protect.nvrs.list');
+      await run('protect.alarm.list_arm_profiles');
+      await run('protect.files.list', { fileType: 'animations' });
 
-    // 5. How WebSocket subscriptions authenticate (provenance: unverified): an upgrade of
-    //    the documented events subscription with the key, and with a random key.
-    const connection = consoles.connection(view.id, 'protect');
-    if (connection === undefined) throw new Error('No Protect connection.');
-    const withKey = await upgradeStatus({
-      connection,
-      egress,
-      path: '/v1/subscribe/events',
-      credential: key,
-    });
-    const withRandomKey = await upgradeStatus({
-      connection,
-      egress,
-      path: '/v1/subscribe/events',
-      credential: randomBytes(24).toString('base64url'),
-    });
-    report['websocketAuth'] = { withKey, withRandomKey };
-    report['websocketAcceptsApiKey'] =
-      withKey === 101 && withRandomKey === 401
-        ? 'yes'
-        : withKey === 101
-          ? `inconclusive (random key: ${String(withRandomKey)})`
-          : `no (${String(withKey)})`;
+      // 3. Each list, then a get of its first item.
+      const firsts = new Map<string, string>();
+      for (const [list, get] of PAIRS) {
+        const page = await run(list);
+        const id = firstId(page);
+        if (id !== undefined) firsts.set(list, id);
+        if (!satisfies(version, descriptorOf(get).apiVersionRange)) {
+          skip(get, `needs ${descriptorOf(get).apiVersionRange}`);
+        } else if (id === undefined) skip(get);
+        else await run(get, { id });
+      }
 
-    close();
+      // 4. Camera extras: stream qualities, and a snapshot only when asked for.
+      const camera = firsts.get('protect.cameras.list');
+      if (camera === undefined) {
+        skip('protect.cameras.get_rtsps_streams');
+        skip('protect.cameras.get_snapshot');
+      } else {
+        await run('protect.cameras.get_rtsps_streams', { id: camera });
+        if (SNAPSHOT) await run('protect.cameras.get_snapshot', { id: camera });
+        else skip('protect.cameras.get_snapshot', 'not requested (UNIFI_LIVE_PROTECT_SNAPSHOT=1)');
+      }
 
-    // 6. The report holds no free text (no URLs, no e-mail addresses), only GETs were sent,
-    //    and every read either worked or was skipped.
-    expect(JSON.stringify({ ...report, results: outcomes })).not.toMatch(/:\/\/|@/);
-    expect(guard.sent.every((request) => request.startsWith('GET '))).toBe(true);
-    const failed = outcomes.filter(
-      (o) => !o.outcome.startsWith('ok') && !o.outcome.startsWith('skipped'),
-    );
-    expect(failed, 'reads that failed against the live console').toEqual([]);
-  }, 120_000);
+      // 5. How WebSocket subscriptions authenticate (provenance: unverified): an upgrade of
+      //    the documented events subscription with the key, and with a random key.
+      const connection = consoles.connection(view.id, 'protect');
+      if (connection === undefined) throw new Error('No Protect connection.');
+      const withKey = await upgradeStatus({
+        connection,
+        egress,
+        path: '/v1/subscribe/events',
+        credential: key,
+      });
+      const withRandomKey = await upgradeStatus({
+        connection,
+        egress,
+        path: '/v1/subscribe/events',
+        credential: randomBytes(24).toString('base64url'),
+      });
+      report['websocketAuth'] = { withKey, withRandomKey };
+      report['websocketAcceptsApiKey'] =
+        withKey === 101 && withRandomKey === 401
+          ? 'yes'
+          : withKey === 101
+            ? `inconclusive (random key: ${String(withRandomKey)})`
+            : `no (${String(withKey)})`;
+
+      // 6. Events and device changes: both subscriptions at once, for a bounded time.
+      const connector = new UnifiEventConnector({ consoles, egress, logger });
+      const listen = async (stream: EventStreamDescriptor): Promise<void> => {
+        const { operationId } = stream;
+        if (LISTEN_SECONDS === 0) {
+          outcomes.push({ operationId, outcome: 'skipped: not requested' });
+          return;
+        }
+        if (!satisfies(version, stream.apiVersionRange)) {
+          outcomes.push({ operationId, outcome: `skipped: needs ${stream.apiVersionRange}` });
+          return;
+        }
+        guard.sent.push(`GET ${stream.pathTemplate}`);
+        const controller = new AbortController();
+        let socket;
+        try {
+          socket = await connector.connect({ consoleId: view.id, stream }, controller.signal);
+        } catch (error) {
+          const code = (error as { code?: unknown }).code;
+          outcomes.push({ operationId, outcome: identifier(code, 'connect_failed') });
+          return;
+        }
+        const seen = { messages: 0, matched: 0, notJson: 0, notDelivered: 0 };
+        const kinds: Record<string, number> = {};
+        const mismatches = new Set<string>();
+        socket.onMessage((text) => {
+          seen.messages++;
+          let value: unknown;
+          try {
+            value = JSON.parse(text) as unknown;
+          } catch {
+            seen.notJson++;
+            return;
+          }
+          // An event names its type in `item.type`, a device change its kind in
+          // `item.modelKey`; the action (`add`, `update`, `remove`) is the message's `type`.
+          const { type, item } = (value ?? {}) as { type?: unknown; item?: unknown };
+          const named = (item ?? {}) as { type?: unknown; modelKey?: unknown };
+          const kind = `${identifier(stream.streamId === 'events' ? named.type : named.modelKey)}_${identifier(type)}`;
+          kinds[kind] = (kinds[kind] ?? 0) + 1;
+          const parsed = stream.messageSchema.safeParse(value);
+          if (!parsed.success) {
+            for (const line of mismatchSummary(parsed.error.issues)) mismatches.add(line);
+            return;
+          }
+          seen.matched++;
+          if (stream.classify(parsed.data) === undefined) seen.notDelivered++;
+        });
+        const ended = await Promise.race([
+          socket.closed,
+          new Promise<undefined>((resolve) => {
+            setTimeout(() => {
+              resolve(undefined);
+            }, LISTEN_SECONDS * 1000);
+          }),
+        ]);
+        socket.close();
+        controller.abort();
+        (report['streams'] as Record<string, unknown>)[stream.streamId] = {
+          seconds: LISTEN_SECONDS,
+          ...seen,
+          kinds,
+          ...(ended === undefined ? {} : { closedEarly: identifier(ended.code) }),
+        };
+        const outcome =
+          mismatches.size > 0
+            ? 'upstream_contract_mismatch'
+            : seen.notJson > 0
+              ? 'upstream_not_json'
+              : ended !== undefined
+                ? identifier(ended.code, 'closed')
+                : seen.messages === 0
+                  ? `skipped: no messages in ${String(LISTEN_SECONDS)} s`
+                  : 'ok';
+        outcomes.push({
+          operationId,
+          outcome,
+          ...(mismatches.size === 0 ? {} : { mismatches: [...mismatches].slice(0, 20) }),
+        });
+      };
+      report['streams'] = {};
+      if (LISTEN_SECONDS > 0) {
+        console.info(
+          `Reading Protect events and device changes for ${String(LISTEN_SECONDS)} s. ` +
+            'Walk in front of a camera now, so that it reports motion.',
+        );
+      }
+      await Promise.all(PROTECT_EVENT_STREAMS.map(listen));
+
+      close();
+
+      // 7. The report holds no free text (no URLs, no e-mail addresses), only GETs were sent,
+      //    and every read either worked or was skipped.
+      expect(JSON.stringify({ ...report, results: outcomes })).not.toMatch(/:\/\/|@/);
+      expect(guard.sent.every((request) => request.startsWith('GET '))).toBe(true);
+      const failed = outcomes.filter(
+        (o) => !o.outcome.startsWith('ok') && !o.outcome.startsWith('skipped'),
+      );
+      expect(failed, 'reads that failed against the live console').toEqual([]);
+    },
+    120_000 + LISTEN_SECONDS * 1000,
+  );
 });
 
 describe.runIf(!ENABLED)('live read-only: UniFi Protect (not configured)', () => {

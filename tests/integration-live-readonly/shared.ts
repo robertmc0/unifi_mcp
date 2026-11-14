@@ -37,6 +37,13 @@ export class ReadOnlyGuard implements OperationExecutor {
 export const category = (value: unknown): string =>
   typeof value === 'string' && /^[A-Z][A-Z_]{0,31}$/.test(value) ? value : 'other';
 
+/**
+ * A short identifier such as `motion`, `camera` or `connection_lost`, or `fallback`; never
+ * free text. Event types, device kinds, actions and our own close codes look like this.
+ */
+export const identifier = (value: unknown, fallback = 'other'): string =>
+  typeof value === 'string' && /^[a-z][A-Za-z_]{0,39}$/.test(value) ? value : fallback;
+
 /** ` (HTTP 500, code …)` from an executor message, which carries only a vetted code. */
 export const httpDetail = (message: string): string => {
   const match = /\(HTTP (\d{3})(?:, code ([A-Za-z0-9][A-Za-z0-9_.-]{0,63}))?\)/.exec(message);

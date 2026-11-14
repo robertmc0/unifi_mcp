@@ -3,13 +3,15 @@
  * need a real one (tests only). It answers every documented Network and Protect read with
  * a sample from the response schema (a JPEG for the snapshot), reports Network 11.0.97 and
  * Protect 7.3.74, accepts a WebSocket upgrade of a Protect subscription only with the
- * expected key, refuses everything else, and records each request. Used to check the
- * opt-in live tests themselves (ADR 0018 §7, ADR 0019).
+ * expected key and then sends a few messages sampled from that subscription's schema,
+ * refuses everything else, and records each request. Used to check the opt-in live tests
+ * themselves (ADR 0018 §7, ADR 0019, ADR 0020 §6).
  */
 import type { OperationDescriptor } from '@unifi-local-mcp/core';
 import { NETWORK_READS } from '@unifi-local-mcp/unifi-network';
-import { PROTECT_READS } from '@unifi-local-mcp/unifi-protect';
+import { PROTECT_EVENT_STREAMS, PROTECT_READS } from '@unifi-local-mcp/unifi-protect';
 import { MockConsole, sendJson } from './mock-console.ts';
+import { ServerWebSocket } from './ws-server.ts';
 import { sample } from './zod-samples.ts';
 
 const BASE = '/proxy/network/integration';
@@ -24,10 +26,20 @@ function matcher(template: string, base = BASE): RegExp {
   return new RegExp(`^${base}${pattern}(\\?.*)?$`);
 }
 
+/** Three messages sampled from the schema of the subscription at `path`, if it has one. */
+export function sampleMessages(path: string): unknown[] {
+  const stream = PROTECT_EVENT_STREAMS.find((s) => path.endsWith(s.pathTemplate));
+  return stream === undefined
+    ? []
+    : [0, 1, 2].map((variant) => sample(stream.messageSchema, { variant }));
+}
+
 export async function startNetworkConsole(
   tls: { key: string; cert: string },
   /** The key a Protect WebSocket upgrade must carry to be accepted. */
   protectKey?: string,
+  /** The messages an accepted subscription sends, by request path (without the query). */
+  messages: (path: string) => unknown[] = sampleMessages,
 ): Promise<MockConsole> {
   const placeholders = (t: string): number => (t.match(/\{/g) ?? []).length;
   const routes = [
@@ -72,11 +84,21 @@ export async function startNetworkConsole(
       req.url.startsWith(`${PROTECT}/v1/subscribe/`) &&
       protectKey !== undefined &&
       req.headers['x-api-key'] === protectKey;
-    socket.end(
-      accepted
-        ? 'HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n\r\n'
-        : 'HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\n\r\n',
-    );
+    if (!accepted) {
+      socket.end('HTTP/1.1 401 Unauthorized\r\nContent-Length: 0\r\n\r\n');
+      return;
+    }
+    const ws = new ServerWebSocket(req, socket);
+    // The client drops messages that arrive before it listens, so they follow a moment later.
+    const timer = setTimeout(() => {
+      for (const message of messages(req.url.split('?')[0] ?? '')) {
+        if (!ws.isClosed)
+          ws.sendText(typeof message === 'string' ? message : JSON.stringify(message));
+      }
+    }, 500);
+    void ws.closed.then(() => {
+      clearTimeout(timer);
+    });
   };
   return mock;
 }
