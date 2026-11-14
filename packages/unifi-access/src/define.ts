@@ -69,6 +69,21 @@ export function consoleLock(name: string): (args: unknown, target: Target) => st
   return (_args, target) => `console:${target.consoleId}/access/${name}`;
 }
 
+/** A lock on one object, named by the argument that identifies it (writes to it run in turn). */
+export function objectLock(
+  kind: string,
+  field: string,
+): (args: Record<string, unknown>, target: Target) => string {
+  return (args, target) => `console:${target.consoleId}/access/${kind}/${String(args[field])}`;
+}
+
+/**
+ * Review shorthands for writes (ADR 0023 §4). High risk always needs human approval; medium
+ * risk runs with an explicit write grant.
+ */
+export const HIGH = { effect: 'write', risk: 'high', approvalRequired: true } as const;
+export const MEDIUM = { effect: 'write', risk: 'medium', approvalRequired: false } as const;
+
 const READ_TIMEOUT_MS = 15_000;
 const WRITE_TIMEOUT_MS = 30_000;
 
@@ -113,6 +128,7 @@ export function accessOperation<K extends AccessKey>(
   const contract = OPERATIONS[key];
   const write = review.effect === 'write' ? review : undefined;
   const input = contract.input as In<K>;
+  const inputSchema = review.narrowInput === undefined ? input : review.narrowInput(input);
   return defineOperation<In<K>, Out<K>>({
     operationId: review.operationId,
     moduleId: 'access',
@@ -132,8 +148,9 @@ export function accessOperation<K extends AccessKey>(
     httpMethod: contract.method,
     pathTemplate: contract.path,
     queryParameters: contract.queryParameters,
-    ...(contract.hasBody ? { requestBody: 'json' as const } : {}),
-    inputSchema: review.narrowInput === undefined ? input : review.narrowInput(input),
+    // A reviewed narrowing may remove the body; then none is sent.
+    ...(contract.hasBody && 'body' in inputSchema.shape ? { requestBody: 'json' as const } : {}),
+    inputSchema,
     outputSchema: contract.output as Out<K>,
     retryClass: write?.retryClass ?? 'safe-read',
     timeoutMs: review.timeoutMs ?? (write === undefined ? READ_TIMEOUT_MS : WRITE_TIMEOUT_MS),

@@ -660,14 +660,25 @@ command and its storage are built with the adapter.
      entries, PIN hashes and webhook secrets and headers removed, field versions enforced
      by the dispatcher, the PIN generator not offered. Operator guide started:
      [applications-access.md](applications-access.md).
-   - Writes: next.
+   - ✅ **Writes** (2026-11-14, [ADR 0023](adr/0023-access-adapter.md) §4): 58 writes, 51
+     high risk with human approval (everything that opens, locks or rings a door or
+     changes who may open which door, when or with what; every deletion; webhooks,
+     invitations, Identity grants, purchases, the certificate), 7 medium (creations that
+     grant nothing yet, a card rename, ending enrollment), 7 off by default (both PIN
+     assignments, the emergency state, webhook create and update, Touch Pass purchase,
+     certificate removal). Door control has its own permission (`access.doors.write`); the
+     unlock refuses `actor_id` and `actor_name` and sends no body. Negative tests in
+     `tests/integration-mock/access-writes.test.ts`; writes section of
+     [applications-access.md](applications-access.md). Coverage: 97 of 107.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
 
-**Next:** step 6, the Access writes (physical access always high risk), with negative
-tests, and the writes section of the operator guide.
+**Next:** step 7, the nine operations not generated (ADR 0022 §5) and the §11.1
+notifications, decided one by one; then the Phase 4 gate review. The gate still needs
+verified installed-version evidence (A or C above), which needs an installed Access.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [ ] Physical-access writes always high risk; sensitive events handled; negative tests
+      Writes done (2026-11-14, ADR 0023 §4); Access events (§11.1, webhooks) open with step 7.
 - [ ] Other applications: adapter scaffolds only, reported as `unavailable: official_local_api_not_documented`
 
 ## Phase 5 — Production and release hardening

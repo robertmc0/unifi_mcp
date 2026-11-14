@@ -6,14 +6,16 @@ APIs** of UniFi applications (Network, Protect, Access). AI clients connect to t
 server, never to UniFi. UniFi credentials never leave the server.
 
 > **Status: Phase 1 (secure platform core), Phase 2 (UniFi Network) and Phase 3 (UniFi
-> Protect) are complete; Phase 4 (UniFi Access) is next. The service serves MCP over Streamable HTTP and,
+> Protect) are complete; Phase 4 (UniFi Access) is in progress. The service serves MCP over Streamable HTTP and,
 > through the stdio bridge, over stdio, is administered with the host-only `unifi-mcp`
 > CLI, and implements all 73 documented UniFi Network operations
-> ([docs/applications-network.md](docs/applications-network.md)) and 73 of the 74 UniFi
+> ([docs/applications-network.md](docs/applications-network.md)), 73 of the 74 UniFi
 > Protect 7.3.74 operations, including its event subscriptions
 > ([docs/applications-protect.md](docs/applications-protect.md),
-> [docs/events.md](docs/events.md)). All are tested against synthetic consoles; reads
-> were also checked on a real console (Network 11.0.99, Protect 7.3.74).** See [docs/phase-checklist.md](docs/phase-checklist.md),
+> [docs/events.md](docs/events.md)), and 97 of the 107 UniFi Access operations
+> ([docs/applications-access.md](docs/applications-access.md)). All are tested against
+> synthetic consoles; Network and Protect reads were also checked on a real console
+> (Network 11.0.99, Protect 7.3.74). Access has not run on a real console.** See [docs/phase-checklist.md](docs/phase-checklist.md),
 > [docs/installation.md](docs/installation.md) and [docs/administration.md](docs/administration.md).
 
 ## Design principles

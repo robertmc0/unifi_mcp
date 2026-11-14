@@ -68,7 +68,7 @@ const EVIDENCE: Record<
       'tests/integration-mock/access-transport.test.ts',
     ],
     read: ['tests/integration-mock/access-reads.test.ts'],
-    write: [],
+    write: ['tests/integration-mock/access-writes.test.ts'],
   },
 };
 

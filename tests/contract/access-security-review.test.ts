@@ -31,6 +31,7 @@ type Row = [
 ];
 
 const PERSON = ['biometric_or_access_identity', 'personal_identifier'];
+const CARD = ['biometric_or_access_identity'];
 const P = '/api/v1/developer';
 
 /** Reviewed 2026-11-13 against the transcription of the 2026-03-23 PDF, by inventory key. */
@@ -76,7 +77,122 @@ const REVIEW: Record<string, Row> = {
   [`POST ${P}/system/logs`]: ['access.logs.list', 'read', 'low', false, ['access_log', 'personal_identifier'], false, null],
   [`GET ${P}/system/logs/resource/{id}`]: ['access.logs.get_resource', 'read', 'low', false, ['access_log', 'recording'], false, null],
   [`GET ${P}/webhooks/endpoints`]: ['access.webhooks.list_endpoints', 'read', 'low', false, [], false, null],
+
+  // Writes, reviewed 2026-11-14 (ADR 0023 §4). Anything that can change who opens which
+  // door, when or with what, that acts on a door or reader, deletes, sends data or
+  // invitations away, costs money or touches the API server certificate: high, with
+  // approval. Medium only where nothing changes for anyone yet (an unassigned policy,
+  // schedule, holiday group, door group, an empty user group) or a label changes.
+  [`POST ${P}/users`]: ['access.users.create', 'write', 'high', true, PERSON, false, null],
+  [`PUT ${P}/users/{id}`]: ['access.users.update', 'write', 'high', true, ['personal_identifier'], false, null],
+  [`DELETE ${P}/users/{id}`]: ['access.users.delete', 'write', 'high', true, [], false, null],
+  [`PUT ${P}/users/{id}/access_policies`]: ['access.users.assign_access_policies', 'write', 'high', true, [], false, null],
+  [`PUT ${P}/users/{id}/nfc_cards`]: ['access.users.assign_nfc_card', 'write', 'high', true, CARD, false, null],
+  [`PUT ${P}/users/{id}/nfc_cards/delete`]: ['access.users.unassign_nfc_card', 'write', 'high', true, CARD, false, null],
+  [`PUT ${P}/users/{id}/pin_codes`]: ['access.users.assign_pin', 'write', 'high', true, CARD, true, null],
+  [`DELETE ${P}/users/{id}/pin_codes`]: ['access.users.unassign_pin', 'write', 'high', true, CARD, false, null],
+  [`PUT ${P}/users/{id}/license_plates`]: ['access.users.assign_license_plates', 'write', 'high', true, CARD, false, null],
+  [`DELETE ${P}/users/{user_id}/license_plates/{license_plate_id}`]: ['access.users.unassign_license_plate', 'write', 'high', true, CARD, false, null],
+  [`PUT ${P}/users/{user_id}/touch_passes/{touch_pass_id}`]: ['access.users.assign_touch_pass', 'write', 'high', true, PERSON, false, null],
+  [`DELETE ${P}/users/{user_id}/touch_passes/{touch_pass_id}`]: ['access.users.unassign_touch_pass', 'write', 'high', true, PERSON, false, null],
+  [`PUT ${P}/users/touch_passes/assign`]: ['access.users.assign_touch_passes', 'write', 'high', true, PERSON, false, null],
+  [`POST ${P}/user_groups`]: ['access.user_groups.create', 'write', 'medium', false, [], false, null],
+  [`PUT ${P}/user_groups/{id}`]: ['access.user_groups.update', 'write', 'high', true, [], false, null],
+  [`DELETE ${P}/user_groups/{id}`]: ['access.user_groups.delete', 'write', 'high', true, [], false, null],
+  [`POST ${P}/user_groups/{id}/users`]: ['access.user_groups.add_users', 'write', 'high', true, [], false, null],
+  [`POST ${P}/user_groups/{id}/users/delete`]: ['access.user_groups.remove_users', 'write', 'high', true, [], false, null],
+  [`PUT ${P}/user_groups/{id}/access_policies`]: ['access.user_groups.assign_access_policies', 'write', 'high', true, [], false, null],
+  [`POST ${P}/users/identity/invitations`]: ['access.identity.send_invitations', 'write', 'high', true, ['personal_identifier'], false, null],
+  [`POST ${P}/users/{id}/identity/assignments`]: ['access.identity.assign_user_resources', 'write', 'high', true, [], false, null],
+  [`POST ${P}/user_groups/{id}/identity/assignments`]: ['access.identity.assign_group_resources', 'write', 'high', true, [], false, null],
+  [`POST ${P}/visitors`]: ['access.visitors.create', 'write', 'high', true, PERSON, false, null],
+  [`PUT ${P}/visitors/{id}`]: ['access.visitors.update', 'write', 'high', true, ['personal_identifier'], false, null],
+  [`DELETE ${P}/visitors/{id}`]: ['access.visitors.delete', 'write', 'high', true, [], false, null],
+  [`PUT ${P}/visitors/{id}/nfc_cards`]: ['access.visitors.assign_nfc_card', 'write', 'high', true, CARD, false, null],
+  [`PUT ${P}/visitors/{id}/nfc_cards/delete`]: ['access.visitors.unassign_nfc_card', 'write', 'high', true, CARD, false, null],
+  [`PUT ${P}/visitors/{id}/pin_codes`]: ['access.visitors.assign_pin', 'write', 'high', true, CARD, true, null],
+  [`DELETE ${P}/visitors/{id}/pin_codes`]: ['access.visitors.unassign_pin', 'write', 'high', true, CARD, false, null],
+  [`PUT ${P}/visitors/{id}/qr_codes`]: ['access.visitors.assign_qr_code', 'write', 'high', true, CARD, false, null],
+  [`DELETE ${P}/visitors/{id}/qr_codes`]: ['access.visitors.unassign_qr_code', 'write', 'high', true, CARD, false, null],
+  [`DELETE ${P}/visitors/{visitor_id}/license_plates/{license_plate_id}`]: ['access.visitors.unassign_license_plate', 'write', 'high', true, CARD, false, null],
+  [`POST ${P}/access_policies`]: ['access.policies.create', 'write', 'medium', false, [], false, null],
+  [`PUT ${P}/access_policies/{id}`]: ['access.policies.update', 'write', 'high', true, [], false, null],
+  [`DELETE ${P}/access_policies/{id}`]: ['access.policies.delete', 'write', 'high', true, [], false, null],
+  [`POST ${P}/access_policies/holiday_groups`]: ['access.policies.create_holiday_group', 'write', 'medium', false, [], false, null],
+  [`PUT ${P}/access_policies/holiday_groups/{id}`]: ['access.policies.update_holiday_group', 'write', 'high', true, [], false, null],
+  [`DELETE ${P}/access_policies/holiday_groups/{id}`]: ['access.policies.delete_holiday_group', 'write', 'high', true, [], false, null],
+  [`POST ${P}/access_policies/schedules`]: ['access.policies.create_schedule', 'write', 'medium', false, [], false, null],
+  [`PUT ${P}/access_policies/schedules/{id}`]: ['access.policies.update_schedule', 'write', 'high', true, [], false, null],
+  [`DELETE ${P}/access_policies/schedules/{id}`]: ['access.policies.delete_schedule', 'write', 'high', true, [], false, null],
+  [`POST ${P}/credentials/nfc_cards/sessions`]: ['access.credentials.start_nfc_enrollment', 'write', 'high', true, CARD, false, null],
+  [`DELETE ${P}/credentials/nfc_cards/sessions/{id}`]: ['access.credentials.cancel_nfc_enrollment', 'write', 'medium', false, [], false, null],
+  [`PUT ${P}/credentials/nfc_cards/tokens/{token}`]: ['access.credentials.update_nfc_card', 'write', 'medium', false, CARD, false, null],
+  [`DELETE ${P}/credentials/nfc_cards/tokens/{token}`]: ['access.credentials.delete_nfc_card', 'write', 'high', true, CARD, false, null],
+  [`POST ${P}/credentials/touch_passes`]: ['access.credentials.purchase_touch_passes', 'write', 'high', true, PERSON, true, null],
+  [`PUT ${P}/credentials/touch_passes/{id}`]: ['access.credentials.update_touch_pass', 'write', 'high', true, PERSON, false, null],
+  [`PUT ${P}/doors/{id}/unlock`]: ['access.doors.unlock', 'write', 'high', true, [], false, null],
+  [`PUT ${P}/doors/{id}/lock_rule`]: ['access.doors.set_lock_rule', 'write', 'high', true, [], false, null],
+  [`PUT ${P}/doors/settings/emergency`]: ['access.doors.set_emergency', 'write', 'high', true, [], true, null],
+  [`POST ${P}/door_groups`]: ['access.spaces.create_door_group', 'write', 'medium', false, [], false, null],
+  [`PUT ${P}/door_groups/{id}`]: ['access.spaces.update_door_group', 'write', 'high', true, [], false, null],
+  [`DELETE ${P}/door_groups/{id}`]: ['access.spaces.delete_door_group', 'write', 'high', true, [], false, null],
+  [`POST ${P}/devices/{device_id}/doorbell`]: ['access.devices.ring_doorbell', 'write', 'high', true, [], false, null],
+  [`POST ${P}/webhooks/endpoints`]: ['access.webhooks.create_endpoint', 'write', 'high', true, [], true, null],
+  [`PUT ${P}/webhooks/endpoints/{id}`]: ['access.webhooks.update_endpoint', 'write', 'high', true, [], true, null],
+  [`DELETE ${P}/webhooks/endpoints/{id}`]: ['access.webhooks.delete_endpoint', 'write', 'high', true, [], false, null],
+  [`DELETE ${P}/api_server/certificates`]: ['access.api_server.delete_certificate', 'write', 'high', true, [], true, null],
 };
+
+/**
+ * Physical-access writes (spec §6.3, Phase 4 gate): whatever their method, these open,
+ * lock or ring a door, or change who may open which door, when, or with what credential.
+ * Each must be high risk with human approval.
+ */
+const PHYSICAL_ACCESS = [
+  'access.doors.unlock',
+  'access.doors.set_lock_rule',
+  'access.doors.set_emergency',
+  'access.devices.ring_doorbell',
+  'access.users.create',
+  'access.users.update',
+  'access.users.delete',
+  'access.users.assign_access_policies',
+  'access.users.assign_nfc_card',
+  'access.users.unassign_nfc_card',
+  'access.users.assign_pin',
+  'access.users.unassign_pin',
+  'access.users.assign_license_plates',
+  'access.users.unassign_license_plate',
+  'access.users.assign_touch_pass',
+  'access.users.unassign_touch_pass',
+  'access.users.assign_touch_passes',
+  'access.user_groups.update',
+  'access.user_groups.delete',
+  'access.user_groups.add_users',
+  'access.user_groups.remove_users',
+  'access.user_groups.assign_access_policies',
+  'access.visitors.create',
+  'access.visitors.update',
+  'access.visitors.delete',
+  'access.visitors.assign_nfc_card',
+  'access.visitors.unassign_nfc_card',
+  'access.visitors.assign_pin',
+  'access.visitors.unassign_pin',
+  'access.visitors.assign_qr_code',
+  'access.visitors.unassign_qr_code',
+  'access.visitors.unassign_license_plate',
+  'access.policies.update',
+  'access.policies.delete',
+  'access.policies.update_holiday_group',
+  'access.policies.delete_holiday_group',
+  'access.policies.update_schedule',
+  'access.policies.delete_schedule',
+  'access.credentials.start_nfc_enrollment',
+  'access.credentials.delete_nfc_card',
+  'access.credentials.update_touch_pass',
+  'access.spaces.update_door_group',
+  'access.spaces.delete_door_group',
+];
 
 /** Documented operations deliberately not offered, and why (ADR 0023 §3). */
 const NOT_OFFERED: Record<string, string> = {
@@ -159,6 +275,49 @@ describe('Access security review', () => {
     }
     expect(generated[`GET ${P}/user_groups/{id}/identity/assignments`]?.minimumVersion).toBe(
       '2.2.6',
+    );
+  });
+
+  it('makes every physical-access write high risk with human approval (spec §6.3)', () => {
+    const byId = new Map(ACCESS_OPERATIONS.map((d) => [d.operationId, d]));
+    for (const operationId of PHYSICAL_ACCESS) {
+      const descriptor = byId.get(operationId);
+      expect(descriptor, operationId).toBeDefined();
+      expect(descriptor?.effect, operationId).toBe('write');
+      expect(descriptor?.risk, operationId).toBe('high');
+      expect(descriptor?.approvalRequired, operationId).toBe(true);
+    }
+    // Door control has a permission of its own: door-group edits do not grant it.
+    for (const operationId of PHYSICAL_ACCESS.filter((id) => id.startsWith('access.doors.'))) {
+      expect(byId.get(operationId)?.permission, operationId).toBe('access.doors.write');
+    }
+    // The only medium writes change nobody's access by themselves.
+    expect(
+      ACCESS_OPERATIONS.filter((d) => d.risk === 'medium')
+        .map((d) => d.operationId)
+        .sort(),
+    ).toEqual([
+      'access.credentials.cancel_nfc_enrollment',
+      'access.credentials.update_nfc_card',
+      'access.policies.create',
+      'access.policies.create_holiday_group',
+      'access.policies.create_schedule',
+      'access.spaces.create_door_group',
+      'access.user_groups.create',
+    ]);
+  });
+
+  it('never lets the model name the actor of a remote unlock', () => {
+    const unlock = ACCESS_OPERATIONS.find((d) => d.operationId === 'access.doors.unlock');
+    expect(Object.keys(unlock?.inputSchema.shape ?? {}).sort()).toEqual([
+      'control_cmd',
+      'entry_method',
+      'id',
+      'reader_id',
+    ]);
+    expect(unlock?.requestBody).toBeUndefined();
+    expect(unlock?.inputSchema.safeParse({ id: 'd1', body: { actor_name: 'x' } }).success).toBe(
+      false,
     );
   });
 

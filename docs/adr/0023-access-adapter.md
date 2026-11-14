@@ -133,6 +133,77 @@ ADR 0021 §5 (B2): Access reports no version, so a host administrator declares i
 - **Registration.** `ADAPTERS` lists Access without a version probe; the coverage matrix
   matches an Access operation by its contract revision (a date, not a version).
 
+## 4. Writes (step 6)
+
+58 of the 60 generated writes are offered (reviewed 2026-11-14 against the
+transcription): 51 high risk with human approval, 7 medium, 7 of them off by default. The
+PIN generator (§6.1, §3) is not offered, and the system-log query is a read.
+
+- **The rule.** Access controls physical doors, so the review starts from spec §6.3:
+  physical-access actions are high risk whatever their HTTP method. **High**: every write
+  that can open, lock or ring a door (remote unlock, lock rules, emergency state, the
+  doorbell), or change who may open which door, when, or with what credential (users and
+  their status, NFC cards, PINs, QR codes, license plates, Touch Passes, policies,
+  schedules, holiday groups, door groups, user-group membership and parents, visitors,
+  NFC enrollment, which can also reset a UniFi card); every deletion; anything that sends
+  data or invitations away from the console (webhook endpoints, UniFi Identity invitations)
+  or grants network resources (UniFi Identity Wi-Fi and VPN assignments); buying Touch
+  Passes; and removing the API server certificate. **Medium**: only writes that change
+  nobody's access by themselves: creating an access policy, schedule, holiday group or
+  door group (nothing uses it until a high-risk assignment or update refers to it),
+  creating an empty user group, renaming an NFC card, ending an enrollment session.
+- **Worst case where the PDF is silent.** It does not say whether a new user starts with
+  any access, what a user group inherits from its parent, or what deleting a policy,
+  schedule or group in use does. Creating a user and changing a group's parent are
+  therefore high risk, and deletions carry approval cautions that members "may" lose
+  access.
+- **Door control has its own permission.** The unlock, lock rules and emergency state use
+  category `doors` (`access.doors.write`), although the vendor's scope for them is
+  `edit:space`, like door groups. A client can then manage door groups
+  (`access.spaces.write`) without being able to open a door.
+- **Off by default** (listed in `enabledOperations` before any client can use them): the
+  two PIN assignments, because the client chose the PIN and knows it while the approver
+  cannot see it (it is redacted); the emergency state, which acts on every door at once;
+  creating and changing webhook endpoints, because the console then sends events, including
+  who opened which door, to any address outside this service's egress controls; buying
+  Touch Passes, which charges the payment method configured in Access (§6.17); and removing
+  the API server certificate, after which the pinned connection fails until an
+  administrator pins the new certificate, which the service cannot undo.
+- **The unlock names no actor (reviewed narrowing).** §7.9 accepts `actor_id` and
+  `actor_name`, which the console records as who unlocked the door. Identity comes only
+  from the verified token (AGENTS.md), so a model must not write a name into the
+  console's access log: the operation does not accept the body, and none is sent. The
+  generic rule in `accessOperation`: a narrowing that removes `body` sends no body.
+- **Approval cautions** state the consequence the approver must weigh: an unlock opens a
+  physical door or moves a gate; lock rules can keep a door unlocked; evacuation and
+  lockdown act on every door; the doorbell may get someone to open the door; a status
+  change can reactivate a user; `force_add` moves a card from someone else; an invitation
+  lets its recipient join as the user; Identity grants can reach the local network; policy,
+  schedule, holiday-group and door-group changes affect everyone who uses them; PINs are
+  known to the requester; webhooks send events outside the egress controls; purchases are
+  charged; the certificate must be re-pinned.
+- **Sensitivity.** Writes that take or return names and contact details need
+  `personal_identifier` (user and visitor create and update, invitations); writes that
+  take or return a credential need `biometric_or_access_identity` (cards, PINs, plates,
+  QR codes, enrollment); Touch Pass writes, whose results name the holder, need both, as
+  the matching reads do.
+- **Credentials.** A PIN in a request is sent to the console as given; the redactor treats
+  any field named `pin…` as secret, so it never reaches a log, an audit entry, an approval
+  summary or a result, and approval arguments are stored encrypted (ADR 0011). Results are
+  minimised like reads: webhook `secret` and `headers` and PIN hashes are removed, also
+  from the results of creating a user or a webhook endpoint. Approvers also see NFC card
+  tokens as `[REDACTED]` (the redactor's `token` rule), although they are not secrets.
+- **Retry classes and locks.** Creations and actions (the unlock, the doorbell, enrollment,
+  invitations, QR codes, purchases, batch Touch Pass assignment, Identity assignments) are
+  not idempotent; updates, assignments that set a state, and deletions are. Writes are
+  never retried once they may have reached the console, whatever the class (ADR 0010).
+  Locks: one per object (`console/access/<kind>/<id>`: a user, visitor, group, door,
+  policy, schedule, device, card, endpoint), and one per console for creations of a kind,
+  the emergency state, batch Touch Pass assignment, invitations and the certificate.
+- **Results.** A console refusal (a result code other than `SUCCESS`) is a failed write,
+  neither retried nor uncertain; a success status without a code and `CODE_SYSTEM_ERROR`
+  are uncertain (§1). Writes the PDF answers with `"data": "success"` return `null`.
+
 ## Evidence
 
 - `tests/unit/unifi-api/executor.test.ts`, "result envelope": success only with
@@ -174,16 +245,38 @@ ADR 0021 §5 (B2): Access reports no version, so a host administrator declares i
   a body path). Mutation checks, each making a test fail: credentials not removed; PIN
   hashes kept; people untagged; the log window not bounded; the bound widened to 4.3.24;
   field versions dropped; a permission renamed.
+- Step 6, writes: `tests/contract/access-security-review.test.ts` (every write's row; the
+  physical-access list, each high risk with approval; door control under
+  `access.doors.write`; exactly the seven reviewed medium writes; the unlock without
+  `body`); `tests/integration-mock/access-writes.test.ts` (every write and body variant
+  through the dispatcher, approval service and executor with a declared version: nothing
+  sent before approval, then exactly one request with the documented method, path, query,
+  token and body, and no second request on a repeated resumption; a PIN sentinel sent to
+  the console but never in a result, approval summary, audit entry or log; webhook secrets,
+  PIN hashes, undocumented fields and the vendor `msg` never returned; the declared-version
+  notice on approvals and results. Negative tests, each sending nothing: read-only grants,
+  the hard lock, a read-only module, no declared version, 4.3.x, default-disabled
+  operations, missing sensitive grants, door-group rights used to unlock, the unlock's
+  actor fields, `control_cmd` before 4.2.16, and a policy that tries to lower the unlock's
+  risk (it can only raise, shown on a medium write). A console refusal is failed with one
+  request; a missing result code and `CODE_SYSTEM_ERROR` are uncertain with one request;
+  an idempotency key runs once). Mutation checks, each making a test fail: the unlock
+  without approval; the unlock with its actor fields; the unlock under `access.spaces`;
+  a PIN assignment on by default; the webhook secret or a PIN hash returned; user creation
+  without its sensitivity tags; a body declared although the narrowing removed it.
 - Not verified: how a real Access console sets the HTTP status of an error, and whether
   its tokens' scopes match the permission keys (provenance `unverified`). Both need an
-  installed Access (ADR 0021, evidence C).
+  installed Access (ADR 0021, evidence C). No Access write has run against a console.
 
 ## Consequences
 
-- Access operations can run through the existing dispatcher and executor; nothing about
-  the console registry, the CLI or the storage changes.
-- The declared version (step 5) and the reviewed operation metadata (step 6) are still
-  needed before any Access operation is registered.
+- Access operations run through the existing dispatcher, approval service and executor;
+  nothing about the console registry, the CLI or the storage changes.
+- 97 of 107 documented Access operations are offered. The rest are the PIN generator (not
+  offered) and the nine operations ADR 0022 §5 leaves to step 7.
+- Access writes are the first whose consequences are physical. Their review assumes the
+  worst case wherever the PDF is silent; a live run (evidence C) may show that some can be
+  lowered, which would be a reviewed change to this ADR and the review table.
 
 ## Re-evaluation triggers
 
@@ -191,3 +284,6 @@ ADR 0021 §5 (B2): Access reports no version, so a host administrator declares i
 - Ubiquiti documents HTTP statuses for Access errors, or changes the envelope.
 - Pinning both certificates on one console proves inadequate (for example, different
   hosts for the console and Access).
+- A console shows that a write this review classed by its worst case is harmless (for
+  example, that new users start without access), or that an actor-free unlock is
+  recorded in a way operators cannot use.
