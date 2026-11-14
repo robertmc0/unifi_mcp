@@ -81,6 +81,7 @@ export {
   type OperationDescriptor,
   type ResponseType,
   type RetryClass,
+  type ReviewedOmission,
   type Target,
   type VersionedField,
 } from './registry.ts';

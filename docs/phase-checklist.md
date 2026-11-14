@@ -671,9 +671,19 @@ command and its storage are built with the adapter.
      `tests/integration-mock/access-writes.test.ts`; writes section of
      [applications-access.md](applications-access.md). Coverage: 97 of 107.
 7. Non-JSON operations and the §11.1 notifications: decided one by one (ADR 0022 §5).
+   - ✅ **Omissions** (2026-11-14, [ADR 0023](adr/0023-access-adapter.md) §5): refused
+     (shown as `unsupported` with the reason): the PIN generator, the QR code download,
+     the certificate upload, the CSV log export, the NFC card import, the profile picture
+     upload. Deferred until a console or the contract shows more: static files, a
+     visitor's license plates, a reader's access methods. Recorded in code
+     (`ACCESS_OMISSIONS`, and `PROTECT_OMISSIONS` for Protect's two); the coverage report
+     shows every reason. Fixed: `unifi-mcp api coverage` counted 0 Access operations
+     (date revisions); it now shares the coverage report's rule and counts refused
+     operations.
+   - §11.1 notifications as an event stream: next.
 
-**Next:** step 7, the nine operations not generated (ADR 0022 §5) and the §11.1
-notifications, decided one by one; then the Phase 4 gate review. The gate still needs
+**Next:** step 7, the §11.1 notification WebSocket: transcribe its messages and review it
+as an event stream; then the Phase 4 gate review. The gate still needs
 verified installed-version evidence (A or C above), which needs an installed Access.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port

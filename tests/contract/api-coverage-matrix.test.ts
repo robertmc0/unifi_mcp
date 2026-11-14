@@ -7,6 +7,7 @@ import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { ADAPTERS } from '@unifi-local-mcp/mcp-server';
 import { buildCoverageFiles } from '../../scripts/lib/coverage-report.ts';
 
 const ROOT = join(import.meta.dirname, '../..');
@@ -50,6 +51,34 @@ describe('API coverage matrix', () => {
     for (const op of network?.operations ?? []) {
       expect(op.status).toBe('implemented');
       expect(op.evidence.length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('shows each reviewed omission with its reason: refused as unsupported', async () => {
+    const files = await buildCoverageFiles();
+    const matrix = JSON.parse(files.get('docs/api-coverage/api-coverage.json') ?? '{}') as {
+      modules: {
+        application: string;
+        operations: { key: string; status: string; statusReason: string | null }[];
+      }[];
+    };
+    for (const adapter of ADAPTERS) {
+      const modules = matrix.modules.filter((m) => m.application === adapter.moduleId);
+      for (const [key, omission] of Object.entries(adapter.omissions)) {
+        const rows = modules.flatMap((m) => m.operations.filter((op) => op.key === key));
+        expect(rows.length, key).toBeGreaterThan(0);
+        for (const row of rows) {
+          expect(row, key).toEqual({
+            ...row,
+            status: omission.decision === 'refused' ? 'unsupported' : 'not_implemented',
+            statusReason: omission.reason,
+          });
+        }
+      }
+      // Everything else has no reason: implemented, or simply not implemented yet.
+      for (const op of modules.flatMap((m) => m.operations)) {
+        if (adapter.omissions[op.key] === undefined) expect(op.statusReason, op.key).toBeNull();
+      }
     }
   });
 

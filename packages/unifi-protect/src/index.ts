@@ -115,6 +115,7 @@ export {
   subscribeDevices,
   subscribeEvents,
 } from './streams.ts';
+export { PROTECT_OMISSIONS } from './omissions.ts';
 export { PROTECT_VERSION_PROBE } from './probe.ts';
 
 /** Every documented Protect HTTP read (38), reviewed 2026-11-11 (ADR 0019 §5). */

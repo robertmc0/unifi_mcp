@@ -12,6 +12,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   ACCESS_MAX_VERSION,
+  ACCESS_OMISSIONS,
   ACCESS_OPERATIONS,
   ALWAYS_REMOVED,
   MAX_LOG_PAGE_SIZE,
@@ -194,9 +195,20 @@ const PHYSICAL_ACCESS = [
   'access.spaces.delete_door_group',
 ];
 
-/** Documented operations deliberately not offered, and why (ADR 0023 §3). */
-const NOT_OFFERED: Record<string, string> = {
-  [`POST ${P}/credentials/pin_codes`]: 'its result is a PIN, a credential (spec §6.4)',
+/**
+ * Documented operations not offered (ADR 0023 §5): refused by review, or deferred until
+ * the evidence their reason names exists. The reasons live in ACCESS_OMISSIONS.
+ */
+const OMITTED: Record<string, 'refused' | 'deferred'> = {
+  [`POST ${P}/credentials/pin_codes`]: 'refused', // returns a PIN
+  [`GET ${P}/credentials/qr_codes/download/{visitor_id}`]: 'refused', // returns a QR credential
+  [`POST ${P}/api_server/certificates`]: 'refused', // a private key through an AI client
+  [`POST ${P}/system/logs/export`]: 'refused', // a bulk dump of logs
+  [`POST ${P}/credentials/nfc_cards/import`]: 'refused', // bulk credentials from a file
+  [`POST ${P}/users/{id}/avatar`]: 'refused', // a person's picture
+  [`GET ${P}/system/static/{path}`]: 'deferred', // free-form path, unknown files
+  [`PUT ${P}/visitors/{id}/license_plates`]: 'deferred', // no body table in the PDF
+  [`PUT ${P}/devices/{device_id}/settings`]: 'deferred', // table and samples disagree
 };
 
 interface Inventory {
@@ -215,7 +227,23 @@ describe('Access security review', () => {
   it('records every implemented operation, and only those', () => {
     const implemented = ACCESS_OPERATIONS.map((d) => `${d.httpMethod} ${d.pathTemplate}`);
     expect(implemented.sort()).toEqual(Object.keys(REVIEW).sort());
-    for (const key of Object.keys(NOT_OFFERED)) expect(implemented).not.toContain(key);
+  });
+
+  it('records why each documented operation that is not offered is left out', () => {
+    expect(
+      Object.fromEntries(Object.entries(ACCESS_OMISSIONS).map(([k, o]) => [k, o.decision])),
+    ).toEqual(OMITTED);
+    for (const [key, omission] of Object.entries(ACCESS_OMISSIONS)) {
+      expect(byKey.has(key), key).toBe(true);
+      expect(REVIEW[key], key).toBeUndefined();
+      expect(omission.reason.length, key).toBeLessThanOrEqual(200);
+    }
+    // Every documented operation is implemented or a reviewed omission, except the
+    // notification WebSocket, which waits for its stream review.
+    const undecided = inventory.operations
+      .map((op) => op.key)
+      .filter((key) => REVIEW[key] === undefined && ACCESS_OMISSIONS[key] === undefined);
+    expect(undecided).toEqual([`GET ${P}/devices/notifications`]);
   });
 
   it('matches the reviewed metadata exactly', () => {

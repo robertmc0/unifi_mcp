@@ -10,6 +10,8 @@ export {
   ADAPTER_OPERATIONS,
   ADAPTER_PROBES,
   ADAPTERS,
+  implementsRevision,
+  type Implementation,
   type ModuleAdapter,
 } from './adapters.ts';
 export {

@@ -96,6 +96,17 @@ export interface OperationDescriptor<
   versionedFields?: readonly VersionedField[];
 }
 
+/**
+ * A documented operation an adapter does not offer, with its reviewed reason (shown in the
+ * coverage report). `refused`: deliberately not offered; reversing it needs a new security
+ * review. `deferred`: not offered until the evidence the reason names exists.
+ */
+export interface ReviewedOmission {
+  decision: 'refused' | 'deferred';
+  /** One sentence in our own words. */
+  reason: string;
+}
+
 export interface VersionedField {
   field: string;
   minimum: string;

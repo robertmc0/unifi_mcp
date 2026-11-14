@@ -6,14 +6,15 @@
  * Inputs: the committed api-specs/<app>/<revision>/{provenance,operations}.json and the
  * reviewed module adapters registered by the service (ADAPTERS). An operation is
  * `implemented` exactly when an adapter registers a descriptor for its method and path in
- * that revision; its reviewed metadata and test evidence come from there. The output is
+ * that revision; its reviewed metadata and test evidence come from there. Otherwise it is
+ * `unsupported` when the adapter refuses it in a reviewed omission, and `not_implemented`
+ * when not (yet); an omission's reason is its `statusReason`. The output is
  * deterministic (no timestamps): `npm run api:reconcile` regenerates it and fails when the
  * committed files differ.
  */
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { satisfies } from '@unifi-local-mcp/core';
-import { ADAPTERS } from '@unifi-local-mcp/mcp-server';
+import { ADAPTERS, implementsRevision } from '@unifi-local-mcp/mcp-server';
 import {
   COVERAGE_DIR,
   listSpecRevisions,
@@ -296,22 +297,12 @@ export async function buildCoverageFiles(
       stream: true,
     })),
   ]);
-  /**
-   * The registered operation implementing a documented one in a revision: same module,
-   * method and path, and a verified version range that includes the revision (an
-   * operation built from an older revision covers later ones it stays valid for,
-   * ADR 0019 §7).
-   */
+  /** The registered operation implementing a documented one in a revision (ADR 0019 §7). */
   const implementing = (application: string, revision: string, method: string, path: string) =>
-    registered.find(
-      (d) =>
-        d.moduleId === application &&
-        d.httpMethod === method &&
-        d.pathTemplate === path &&
-        // Its own revision, or a later one its range includes. Access revisions are dates,
-        // not versions, so only the first applies to them.
-        (d.contractRevision === revision || satisfies(revision, d.apiVersionRange)),
-    );
+    registered.find((d) => implementsRevision(d, application, revision, method, path));
+  /** Reviewed omissions by module, and those seen in some revision's inventory. */
+  const omissions = new Map(ADAPTERS.map((adapter) => [adapter.moduleId, adapter.omissions]));
+  const omissionsSeen = new Set<string>();
   const matched = new Set<Implementation>();
   for (const rev of await listSpecRevisions()) {
     const p = rev.provenance;
@@ -331,6 +322,13 @@ export async function buildCoverageFiles(
     const ops: CoverageOperation[] = inventory.operations.map((op) => {
       const d = implementing(p.application, p.revision, op.method, op.path);
       if (d !== undefined) matched.add(d);
+      const omission = omissions.get(p.application)?.[op.key];
+      if (omission !== undefined) {
+        omissionsSeen.add(`${p.application} ${op.key}`);
+        if (d !== undefined) {
+          throw new Error(`${op.key} is implemented and also listed as a reviewed omission.`);
+        }
+      }
       return {
         key: op.key,
         method: op.method,
@@ -342,8 +340,13 @@ export async function buildCoverageFiles(
         minimumApplicationVersion: op.minimumApplicationVersion ?? null,
         vendorPermission: op.vendorPermission ?? null,
         transport: op.transport,
-        status: d === undefined ? 'not_implemented' : 'implemented',
-        statusReason: null,
+        status:
+          d !== undefined
+            ? 'implemented'
+            : omission?.decision === 'refused'
+              ? 'unsupported'
+              : 'not_implemented',
+        statusReason: d === undefined ? (omission?.reason ?? null) : null,
         operationId: d?.operationId ?? null,
         exposure:
           d === undefined
@@ -394,6 +397,14 @@ export async function buildCoverageFiles(
     .map((d) => `${d.moduleId} ${d.contractRevision} ${d.httpMethod} ${d.pathTemplate}`);
   if (unmatched.length > 0) {
     throw new Error(`Registered operations missing from api-specs/: ${unmatched.join(', ')}`);
+  }
+  const stray = ADAPTERS.flatMap((adapter) =>
+    Object.keys(adapter.omissions)
+      .filter((key) => !omissionsSeen.has(`${adapter.moduleId} ${key}`))
+      .map((key) => `${adapter.moduleId} ${key}`),
+  );
+  if (stray.length > 0) {
+    throw new Error(`Reviewed omissions of undocumented operations: ${stray.join(', ')}`);
   }
   files.set(
     'docs/api-coverage/api-coverage.json',

@@ -3,12 +3,12 @@
  */
 import { readdir, readFile, statfs } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { satisfies } from '@unifi-local-mcp/core';
 import {
   defaultApiSpecsDir,
   isLoopbackBind,
   loadServiceConfig,
   ADAPTERS,
+  implementsRevision,
 } from '@unifi-local-mcp/mcp-server';
 import type { ConsoleModuleView } from '@unifi-local-mcp/unifi-api';
 import { requireString, string, type Command, type RunContext } from '../cli.ts';
@@ -285,8 +285,13 @@ export const apiCoverageCommand: Command = {
   usage: '',
   run: async (ctx) => {
     const dir = ctx.env['UNIFI_MCP_API_SPECS_DIR']?.trim() || defaultApiSpecsDir();
-    const rows: { module: string; revision: string; documented: number; implemented: number }[] =
-      [];
+    const rows: {
+      module: string;
+      revision: string;
+      documented: number;
+      implemented: number;
+      notOffered: number;
+    }[] = [];
     let entries;
     try {
       entries = await readdir(dir, { withFileTypes: true });
@@ -302,35 +307,49 @@ export const apiCoverageCommand: Command = {
           operations: { method: string; path: string }[];
         };
         // Implemented for this revision: a registered operation or event stream (ADR 0020)
-        // with the same method and path whose verified version range includes the revision
-        // (ADR 0019 §7).
-        const registered = ADAPTERS.filter((a) => a.moduleId === app.name).flatMap((a) => [
+        // that implements it (`implementsRevision`, the coverage report's rule). Not offered:
+        // a reviewed omission that the adapter refuses (ADR 0023 §5).
+        const adapters = ADAPTERS.filter((a) => a.moduleId === app.name);
+        const registered = adapters.flatMap((a) => [
           ...a.operations,
           ...a.eventStreams.map((stream) => ({ ...stream, httpMethod: 'GET' })),
         ]);
+        const refused = new Set(
+          adapters.flatMap((a) =>
+            Object.entries(a.omissions)
+              .filter(([, omission]) => omission.decision === 'refused')
+              .map(([key]) => key),
+          ),
+        );
         rows.push({
           module: app.name,
           revision: revision.name,
           documented: inventory.operations.length,
           implemented: inventory.operations.filter((op) =>
-            registered.some(
-              (d) =>
-                d.httpMethod === op.method &&
-                d.pathTemplate === op.path &&
-                satisfies(revision.name, d.apiVersionRange),
+            registered.some((d) =>
+              implementsRevision(d, app.name, revision.name, op.method, op.path),
             ),
           ).length,
+          notOffered: inventory.operations.filter((op) => refused.has(`${op.method} ${op.path}`))
+            .length,
         });
       }
     }
     ctx.print(rows, () => [
       ...formatTable([
-        ['MODULE', 'REVISION', 'DOCUMENTED', 'IMPLEMENTED'],
-        ...rows.map((r) => [r.module, r.revision, String(r.documented), String(r.implemented)]),
+        ['MODULE', 'REVISION', 'DOCUMENTED', 'IMPLEMENTED', 'NOT OFFERED'],
+        ...rows.map((r) => [
+          r.module,
+          r.revision,
+          String(r.documented),
+          String(r.implemented),
+          String(r.notOffered),
+        ]),
       ]),
       '',
-      'Implemented: reviewed operations this service registers. Full matrix with test',
-      'evidence: docs/api-coverage/.',
+      'Implemented: reviewed operations this service registers. Not offered: documented',
+      'operations refused by review, with reasons. Full matrix with test evidence:',
+      'docs/api-coverage/.',
     ]);
     return 0;
   },

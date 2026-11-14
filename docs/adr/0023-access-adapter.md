@@ -204,6 +204,42 @@ PIN generator (§6.1, §3) is not offered, and the system-log query is a read.
   neither retried nor uncertain; a success status without a code and `CODE_SYSTEM_ERROR`
   are uncertain (§1). Writes the PDF answers with `"data": "success"` return `null`.
 
+## 5. Operations not offered (step 7)
+
+ADR 0022 §5 left nine operations to be decided one by one; the PIN generator was decided
+with the reads (§3). Each decision is recorded in code (`ACCESS_OMISSIONS`), never derived
+from the PDF, and the coverage report shows it with its reason: a refused operation is
+`unsupported`, a deferred one stays `not_implemented`. The coverage report fails if an
+omission names an undocumented or implemented operation, and Protect's two omissions
+(the upload, ADR 0019 §2; the 7.4.96 update subscription, ADR 0020 §6) are recorded the
+same way.
+
+- **Refused** (a new security review is needed to change one):
+  - the PIN generator (§6.1) and the visitor QR code download (§6.18): each result is a
+    credential that opens doors, which no client may receive (spec §6.4);
+  - the certificate upload (§12.1): the TLS private key would pass through an AI client;
+  - the CSV log export (§9.3): a bulk dump, which spec §6.4 rules out; the bounded paged
+    read (§3) reads the same logs;
+  - the NFC card import (§6.19): door credentials created in bulk from a file that no
+    person reviews in this flow;
+  - the profile picture upload (§3.30): a person's picture, which Access may use for face
+    recognition; the PDF does not say.
+- **Deferred** (waiting for evidence):
+  - static files (§9.5): avatars, previews and recording videos from a free-form path
+    with slashes, with no documented media type or size. A narrow read (fixed prefixes,
+    images only, a size cap, the `recording` grant) can be reviewed once a console shows
+    the paths and types;
+  - a visitor's license plates (§4.13): the PDF prints no field table for the body, so
+    ADR 0022 §3 allows no request field;
+  - a reader's access methods (§8.3): the table and the samples disagree on the body.
+- **The notification WebSocket (§11.1)** is decided separately (§6, when its messages are
+  transcribed).
+
+The CLI's `api coverage` showed 0 implemented Access operations: it matched operations to
+revisions by version range only, and Access revisions are dates. The CLI and the coverage
+report now share one rule (`implementsRevision`), and the CLI also counts the refused
+operations.
+
 ## Evidence
 
 - `tests/unit/unifi-api/executor.test.ts`, "result envelope": success only with
@@ -264,6 +300,13 @@ PIN generator (§6.1, §3) is not offered, and the system-log query is a read.
   without approval; the unlock with its actor fields; the unlock under `access.spaces`;
   a PIN assignment on by default; the webhook secret or a PIN hash returned; user creation
   without its sensitivity tags; a body declared although the narrowing removed it.
+- Step 7, omissions: `tests/contract/access-security-review.test.ts` (each omission's
+  decision, its key in the inventory and not implemented; every documented operation
+  implemented or omitted except the §11.1 WebSocket); `tests/contract/api-coverage-matrix.test.ts`
+  (every adapter's omissions shown with their status and reason, no reason anywhere else);
+  `tests/unit/cli/cli.test.ts` (`api coverage`: Access 97 implemented, 6 not offered).
+  Mutation checks, each making a test fail: date revisions not matched; reasons dropped;
+  refused omissions shown as not implemented.
 - Not verified: how a real Access console sets the HTTP status of an error, and whether
   its tokens' scopes match the permission keys (provenance `unverified`). Both need an
   installed Access (ADR 0021, evidence C). No Access write has run against a console.

@@ -198,8 +198,8 @@ Writes marked **Sensitive** need the same grants as the matching reads
 - A webhook endpoint's `secret` and its forwarded `headers`: removed, also from the
   results of creating or changing an endpoint, so no MCP client learns a receiver's
   signing secret.
-- The PIN generator (`POST /api/v1/developer/credentials/pin_codes`) is not offered: its
-  result is a PIN.
+- Operations whose result is itself a credential are not offered: the PIN generator and
+  the visitor QR code download ([Not offered](#not-offered)).
 
 NFC card tokens are returned (they address cards in the API and are not the card's
 secret); they need the `biometric_or_access_identity` grant.
@@ -223,6 +223,26 @@ secret); they need the `biometric_or_access_identity` grant.
   whether a new user starts with any access, what a user group inherits from its parent,
   or what deleting a policy, schedule or group in use does; the risk review assumes the
   worst case (ADR 0023 §4).
-- Not offered: changing a reader's access methods (§8.3, its body is not verified), the
-  notification WebSocket (§11.1), and the downloads and uploads (QR code images, CSV export
-  and import, static files, profile pictures, certificates, a visitor's license plates).
+- The notification WebSocket (§11.1) is not offered yet.
+
+## Not offered
+
+Ten of the 107 documented operations are not offered. The coverage matrix
+([api-coverage/access/2026-03-23.md](api-coverage/access/2026-03-23.md)) shows each with
+its reason, and `unifi-mcp api coverage` counts the refused ones as "not offered".
+
+| Operation                                  | Decision | Why                                                                                                      |
+| ------------------------------------------ | -------- | -------------------------------------------------------------------------------------------------------- |
+| Generate PIN code (§6.1)                   | refused  | Its result is a new PIN, a credential no client may receive.                                             |
+| Download a visitor's QR code (§6.18)       | refused  | Its result is a credential that opens doors.                                                             |
+| Upload an HTTPS certificate (§12.1)        | refused  | It sends a TLS private key, which would pass through an AI client. Install certificates in UniFi Access. |
+| Export system logs as CSV (§9.3)           | refused  | A bulk dump; `access.logs.list` reads the same logs in bounded pages.                                    |
+| Import third-party NFC cards (§6.19)       | refused  | Creates door credentials in bulk from a file. Import cards in UniFi Access.                              |
+| Upload a profile picture (§3.30)           | refused  | A person's picture, which Access may use to recognise faces (not documented).                            |
+| Fetch static files (§9.5)                  | deferred | Pictures of people and recording videos from a free-form path, with no documented type or size.          |
+| Assign license plates to a visitor (§4.13) | deferred | The PDF prints no field table for the body. Plates can still be removed from visitors.                   |
+| Change a reader's access methods (§8.3)    | deferred | The PDF's field table and samples disagree on the body.                                                  |
+| Fetch notifications, a WebSocket (§11.1)   | pending  | Its messages are being transcribed for an event stream (Phase 4 step 7).                                 |
+
+"Refused" needs a new security review to change. "Deferred" waits for the evidence named,
+mostly a real Access console ([ADR 0023](adr/0023-access-adapter.md) §5).

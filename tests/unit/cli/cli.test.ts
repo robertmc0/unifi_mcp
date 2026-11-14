@@ -515,18 +515,25 @@ describe('doctor and api coverage', () => {
   it('lists the documented official operations', async () => {
     const h = await setup();
     const rows = await h.json<
-      { module: string; revision: string; documented: number; implemented: number }[]
+      {
+        module: string;
+        revision: string;
+        documented: number;
+        implemented: number;
+        notOffered: number;
+      }[]
     >(['api', 'coverage']);
     expect(
       Object.fromEntries(
-        rows.map((r) => [`${r.module}/${r.revision}`, [r.documented, r.implemented]]),
+        rows.map((r) => [`${r.module}/${r.revision}`, [r.documented, r.implemented, r.notOffered]]),
       ),
     ).toEqual({
-      'access/2026-03-23': [107, 0],
-      'network/11.0.97': [73, 73],
+      // Access revisions are dates: operations match by their own revision (ADR 0023).
+      'access/2026-03-23': [107, 97, 6],
+      'network/11.0.97': [73, 73, 0],
       // Operations of the official release also cover the newer revision (ADR 0019 §7).
-      'protect/7.3.74': [74, 73],
-      'protect/7.4.96': [83, 81],
+      'protect/7.3.74': [74, 73, 0],
+      'protect/7.4.96': [83, 81, 0],
     });
   });
 });
