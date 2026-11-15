@@ -11,6 +11,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
+  ACCESS_EVENT_STREAMS,
   ACCESS_MAX_VERSION,
   ACCESS_OMISSIONS,
   ACCESS_OPERATIONS,
@@ -238,12 +239,19 @@ describe('Access security review', () => {
       expect(REVIEW[key], key).toBeUndefined();
       expect(omission.reason.length, key).toBeLessThanOrEqual(200);
     }
-    // Every documented operation is implemented or a reviewed omission, except the
-    // notification WebSocket, which waits for its stream review.
+    // Every documented operation is implemented (an operation or the notification
+    // stream, ADR 0023 §6) or a reviewed omission.
+    const streams = ACCESS_EVENT_STREAMS.map((s) => `GET ${s.pathTemplate}`);
+    expect(streams).toEqual([`GET ${P}/devices/notifications`]);
     const undecided = inventory.operations
       .map((op) => op.key)
-      .filter((key) => REVIEW[key] === undefined && ACCESS_OMISSIONS[key] === undefined);
-    expect(undecided).toEqual([`GET ${P}/devices/notifications`]);
+      .filter(
+        (key) =>
+          REVIEW[key] === undefined &&
+          ACCESS_OMISSIONS[key] === undefined &&
+          !streams.includes(key),
+      );
+    expect(undecided).toEqual([]);
   });
 
   it('matches the reviewed metadata exactly', () => {

@@ -529,7 +529,7 @@ describe('doctor and api coverage', () => {
       ),
     ).toEqual({
       // Access revisions are dates: operations match by their own revision (ADR 0023).
-      'access/2026-03-23': [107, 97, 6],
+      'access/2026-03-23': [107, 98, 6],
       'network/11.0.97': [73, 73, 0],
       // Operations of the official release also cover the newer revision (ADR 0019 §7).
       'protect/7.3.74': [74, 73, 0],

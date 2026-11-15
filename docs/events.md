@@ -1,10 +1,10 @@
 # Events
 
-> **Status: Phase 3.** UniFi Protect event subscriptions are available. Network documents
-> no local event subscription, so none is offered for it. Access documents one (WebSocket
-> `GET /api/v1/developer/devices/notifications`), but the Access adapter does not exist
-> yet (Phase 4, [ADR 0021](adr/0021-access-contract-version-evidence.md)), so none is
-> offered. Design and evidence: [ADR 0020](adr/0020-event-subscriptions.md).
+> **Status: Phase 4.** UniFi Protect event subscriptions and the UniFi Access notification
+> WebSocket are available. Network documents no local event subscription, so none is
+> offered for it. Access notifications are tested against a synthetic Access API only.
+> Design and evidence: [ADR 0020](adr/0020-event-subscriptions.md),
+> [ADR 0023](adr/0023-access-adapter.md) §6.
 
 The service offers a console's events only where its application documents a local
 subscription. It never polls to imitate events, keeps no history, and needs no message
@@ -13,10 +13,11 @@ something changed, and reads the resource to get the events it may see.
 
 ## What is available
 
-| Resource                                       | Needs                                          | Contains                                                                                                  |
-| ---------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `unifi://consoles/<consoleId>/protect/events`  | `protect.events.read`                          | Doorbell rings, motion and smart detections, sensor and alarm hub events, NFC card and fingerprint scans. |
-| `unifi://consoles/<consoleId>/protect/devices` | `protect.devices.read`, plus the device's read | Protect devices added, updated or removed, with the changed fields.                                       |
+| Resource                                            | Needs                                          | Contains                                                                                                  |
+| --------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `unifi://consoles/<consoleId>/protect/events`       | `protect.events.read`                          | Doorbell rings, motion and smart detections, sensor and alarm hub events, NFC card and fingerprint scans. |
+| `unifi://consoles/<consoleId>/protect/devices`      | `protect.devices.read`, plus the device's read | Protect devices added, updated or removed, with the changed fields.                                       |
+| `unifi://consoles/<consoleId>/access/notifications` | `access.notifications.read`                    | Doorbell calls and how they ended; doors unlocked remotely by an administrator.                           |
 
 Some events need more than the stream's permission, because they carry the same data as
 an ordinary read:
@@ -28,11 +29,18 @@ an ordinary read:
   (`protect.nvrs.read`, `chimes`, `viewers`, `speakers`, `bridges`, `sensors`, `sirens`,
   `relays`, `link_stations`). A fob change also needs `location`, like reading the fob.
 - AI ports and AI processors have no documented read, so their changes are never shown.
+- **Remote unlocks** (Access) are entries in a door's access history, so they also need
+  `access.spaces.read` (the door read) and the `access_log` grant. Doorbell calls need
+  only the stream's permission. A doorbell call's `token` is never shown.
 - Event types and device kinds newer than the reviewed contract are not shown either.
+  Access's §11.2 webhook events (for example every door unlock) are sent to webhook
+  receivers, not over this WebSocket, so they are not offered as events.
 
 The console must run a supported Protect version
 ([applications-protect.md](applications-protect.md#supported-versions)), and its `protect`
-module must be enabled; read-only is enough. The 7.4.96 model update subscription is not
+module must be enabled; read-only is enough. For Access notifications, the `access` module
+must be enabled and its version declared, from 1.20.11 up to 4.2.16
+([applications-access.md](applications-access.md#supported-versions)). The 7.4.96 model update subscription is not
 offered yet ([Limitations](applications-protect.md#limitations)).
 
 For example, a client that sees all events, and camera and floodlight changes:

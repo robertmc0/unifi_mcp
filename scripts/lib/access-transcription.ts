@@ -347,6 +347,14 @@ function walkOperation(walk: Walk, key: string, op: Schema, requestComponents: S
     return;
   }
   if (media.type !== 'application/json') return;
+  // A WebSocket's messages are not enveloped (§11.1 samples): its schema is a component,
+  // walked with the others.
+  if (op['x-transport'] === 'websocket') {
+    if (!isObject(media.schema) || typeof media.schema['$ref'] !== 'string') {
+      walk.problems.push(`${key}: a WebSocket's message schema must be a component reference.`);
+    }
+    return;
+  }
   // The envelope without code and msg (ADR 0022 §4): data, pagination, and siblings of
   // data that a sample shows (§9.2's page and total).
   const envelope = media.schema;
@@ -569,6 +577,17 @@ export function structuralProblems(
   for (const key of transcribed) {
     if (!expected.has(key)) problems.push(`${key}: transcribed but not in operations.json.`);
   }
+  // A WebSocket is marked on its operation, exactly where the inventory records one.
+  const transports = new Map(inventory.map((op) => [op.key, op.transport]));
+  for (const [key, op] of transcribedOperations(doc)) {
+    const marked = op['x-transport'];
+    if (marked !== undefined && marked !== 'websocket') {
+      problems.push(`${key}: x-transport may only be "websocket".`);
+    }
+    if ((marked === 'websocket') !== (transports.get(key) === 'websocket')) {
+      problems.push(`${key}: x-transport disagrees with the inventory's transport.`);
+    }
+  }
   for (const key of expected) {
     if (!transcribed.has(key) && !(pending as string[]).includes(key)) {
       problems.push(`${key}: in operations.json but neither transcribed nor pending.`);
@@ -698,6 +717,31 @@ export function pdfProblems(
   for (const code of listed) {
     if (!printed.includes(code as string)) {
       problems.push(`${String(code)}: in x-error-codes, not printed in the PDF.`);
+    }
+  }
+
+  // A discriminator value must be printed as that property's value in the sample of the
+  // message it selects (§11.1: `"event": "access.remote_view"`).
+  for (const [name, schema] of Object.entries(schemas)) {
+    const discriminator = schema['discriminator'];
+    if (!isObject(discriminator)) continue;
+    const property = discriminator['propertyName'];
+    const mapping = isObject(discriminator['mapping']) ? discriminator['mapping'] : {};
+    for (const [value, ref] of Object.entries(mapping)) {
+      const variant = typeof ref === 'string' ? COMPONENT_REF.exec(ref)?.[1] : undefined;
+      const properties = variant === undefined ? undefined : schemas[variant]?.['properties'];
+      const cited = isObject(properties) ? properties[String(property)] : undefined;
+      const pdf = isObject(cited) ? cited['x-pdf'] : undefined;
+      const page = isObject(pdf) && typeof pdf['page'] === 'number' ? pdf['page'] : undefined;
+      const printed = new RegExp(
+        `"${escapeRegExp(String(property))}"\\s*:\\s*"${escapeRegExp(value)}"`,
+      );
+      if (page === undefined || !printed.test(pageText(pages, page))) {
+        problems.push(
+          `components.${name}: "${value}" is not printed as ${String(property)} in the sample ` +
+            `its variant cites.`,
+        );
+      }
     }
   }
 

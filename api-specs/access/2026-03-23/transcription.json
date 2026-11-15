@@ -5749,10 +5749,19 @@
     },
     "/api/v1/developer/devices/notifications": {
       "get": {
-        "x-note": "A WebSocket (Protocol: WebSocket). Its messages are shown only as samples (§11.1); they are transcribed when the event stream is decided (ADR 0020, ADR 0022 §5). Not generated.",
+        "x-note": "A WebSocket (Protocol: WebSocket). Its messages are not enveloped: each is one of the three shown as samples on pp.171-172, selected by event as each heading names it. work_time is a string, as the sample prints it.",
         "responses": {
-          "200": {}
-        }
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notification"
+                }
+              }
+            }
+          }
+        },
+        "x-transport": "websocket"
       }
     },
     "/api/v1/developer/webhooks/endpoints": {
@@ -9279,6 +9288,369 @@
           }
         },
         "required": ["id", "endpoint", "name", "secret", "events"]
+      },
+      "Notification": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/DoorbellNotification"
+          },
+          {
+            "$ref": "#/components/schemas/DoorbellStatusNotification"
+          },
+          {
+            "$ref": "#/components/schemas/RemoteUnlockNotification"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "event",
+          "mapping": {
+            "access.remote_view": "#/components/schemas/DoorbellNotification",
+            "access.remote_view.change": "#/components/schemas/DoorbellStatusNotification",
+            "access.data.device.remote_unlock": "#/components/schemas/RemoteUnlockNotification"
+          }
+        }
+      },
+      "DoorbellNotification": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "x-pdf": {
+              "page": 171,
+              "sample": true
+            }
+          },
+          "receiver_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 171,
+              "sample": true
+            }
+          },
+          "event_object_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 171,
+              "sample": true
+            }
+          },
+          "save_to_history": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 171,
+              "sample": true
+            }
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "channel": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "token": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "device_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "device_type": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "device_name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "door_name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "controller_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "floor_name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "request_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "clear_request_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "in_or_out": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "create_time": {
+                "type": "integer",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "reason_code": {
+                "type": "integer",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "door_guard_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "connected_uah_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "room_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              },
+              "host_device_mac": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 171,
+                  "sample": true
+                }
+              }
+            },
+            "x-pdf": {
+              "page": 171,
+              "sample": true
+            }
+          }
+        }
+      },
+      "DoorbellStatusNotification": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          },
+          "receiver_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          },
+          "event_object_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          },
+          "save_to_history": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "reason_code": {
+                "type": "integer",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "remote_call_request_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              }
+            },
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          }
+        }
+      },
+      "RemoteUnlockNotification": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          },
+          "receiver_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          },
+          "event_object_id": {
+            "type": "string",
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          },
+          "save_to_history": {
+            "type": "boolean",
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "unique_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "up_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "timezone": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "location_type": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "extra_type": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "full_name": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "level": {
+                "type": "integer",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "work_time": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "work_time_id": {
+                "type": "string",
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              },
+              "extras": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "x-pdf": {
+                  "page": 172,
+                  "sample": true
+                }
+              }
+            },
+            "x-pdf": {
+              "page": 172,
+              "sample": true
+            }
+          }
+        }
       }
     }
   }

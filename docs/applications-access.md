@@ -1,7 +1,7 @@
 # UniFi Access
 
-> **Status: Phase 4, in progress.** All 39 Access reads and 58 writes are available and
-> tested against a synthetic Access API. Access has not been tested against a real console:
+> **Status: Phase 4, in progress.** All 39 Access reads, 58 writes and the notification
+> WebSocket are available and tested against a synthetic Access API. Access has not been tested against a real console:
 > the project's test console has no Access, and the contract is a PDF transcribed by this
 > project ([Limitations](#limitations)). What is carried forward:
 > [phase-checklist.md](phase-checklist.md#phase-4--access-and-other-documented-modules).
@@ -191,6 +191,26 @@ Writes marked **Sensitive** need the same grants as the matching reads
 ([Sensitive reads](#sensitive-reads)): `personal_identifier` for names and contact details,
 `biometric_or_access_identity` for credentials.
 
+## Notifications
+
+Access documents one WebSocket (§11.1), offered as the event resource
+`unifi://consoles/<consoleId>/access/notifications` ([events.md](events.md)). It needs
+`access.notifications.read` (the API token needs `view:device`) and a declared version
+from 1.20.11.
+
+| Event (as Access names it)         | Shown as          | Needs, besides the stream's permission          | Contains                                                                                        |
+| ---------------------------------- | ----------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `access.remote_view`               | `doorbell_ring`   | —                                               | A doorbell call: door, reader, floor, request ID, the IDs of the door guards.                   |
+| `access.remote_view.change`        | `doorbell_status` | —                                               | How the call ended (reason code: timed out, declined, unlocked, cancelled, answered elsewhere). |
+| `access.data.device.remote_unlock` | `remote_unlock`   | `access.spaces.read` and the `access_log` grant | A door unlocked remotely by an administrator: the door's location record.                       |
+
+- A doorbell call's `token` is removed: next to the call's `channel` it reads as the
+  credential for answering the call (the PDF does not say). Credential fields are removed
+  as from reads.
+- Events not in this table, from a newer Access, are never shown. Access's §11.2 webhook
+  events (every door unlock, door position, emergency, schedules, visitors) go to webhook
+  receivers only.
+
 ## Credentials are never returned
 
 - A user's or visitor's `pin_code.token`, the hash of their PIN: removed. An empty
@@ -223,11 +243,13 @@ secret); they need the `biometric_or_access_identity` grant.
   whether a new user starts with any access, what a user group inherits from its parent,
   or what deleting a policy, schedule or group in use does; the risk review assumes the
   worst case (ADR 0023 §4).
-- The notification WebSocket (§11.1) is not offered yet.
+- **Notifications are not tested on a console.** The three messages follow the PDF's
+  samples; a console may send other fields, which are dropped, or other events, which are
+  never shown.
 
 ## Not offered
 
-Ten of the 107 documented operations are not offered. The coverage matrix
+Nine of the 107 documented operations are not offered. The coverage matrix
 ([api-coverage/access/2026-03-23.md](api-coverage/access/2026-03-23.md)) shows each with
 its reason, and `unifi-mcp api coverage` counts the refused ones as "not offered".
 
@@ -242,7 +264,6 @@ its reason, and `unifi-mcp api coverage` counts the refused ones as "not offered
 | Fetch static files (§9.5)                  | deferred | Pictures of people and recording videos from a free-form path, with no documented type or size.          |
 | Assign license plates to a visitor (§4.13) | deferred | The PDF prints no field table for the body. Plates can still be removed from visitors.                   |
 | Change a reader's access methods (§8.3)    | deferred | The PDF's field table and samples disagree on the body.                                                  |
-| Fetch notifications, a WebSocket (§11.1)   | pending  | Its messages are being transcribed for an event stream (Phase 4 step 7).                                 |
 
 "Refused" needs a new security review to change. "Deferred" waits for the evidence named,
 mostly a real Access console ([ADR 0023](adr/0023-access-adapter.md) §5).

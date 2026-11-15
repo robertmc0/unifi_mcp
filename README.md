@@ -12,7 +12,7 @@ server, never to UniFi. UniFi credentials never leave the server.
 > ([docs/applications-network.md](docs/applications-network.md)), 73 of the 74 UniFi
 > Protect 7.3.74 operations, including its event subscriptions
 > ([docs/applications-protect.md](docs/applications-protect.md),
-> [docs/events.md](docs/events.md)), and 97 of the 107 UniFi Access operations
+> [docs/events.md](docs/events.md)), and 98 of the 107 UniFi Access operations
 > ([docs/applications-access.md](docs/applications-access.md)). All are tested against
 > synthetic consoles; Network and Protect reads were also checked on a real console
 > (Network 11.0.99, Protect 7.3.74). Access has not run on a real console.** See [docs/phase-checklist.md](docs/phase-checklist.md),

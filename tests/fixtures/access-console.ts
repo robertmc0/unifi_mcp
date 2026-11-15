@@ -15,6 +15,7 @@ export interface GeneratedAccessOperation {
   path: string;
   queryParameters: readonly string[];
   hasBody: boolean;
+  transport: 'http' | 'websocket';
   responseType: string;
   input: Parameters<typeof sample>[0];
   output: Parameters<typeof sample>[0];

@@ -45,8 +45,13 @@ async function harness() {
 describe('Access transport against a synthetic Access API', () => {
   it('sends every generated operation as documented and reads its response schema', async () => {
     const h = await harness();
-    const keys = Object.keys(ACCESS_OPERATIONS);
-    expect(keys.length).toBe(98);
+    const all = Object.keys(ACCESS_OPERATIONS);
+    expect(all.length).toBe(99);
+    // The notification WebSocket is an event stream, not a request (ADR 0023 §6).
+    const keys = all.filter((key) => ACCESS_OPERATIONS[key]?.transport === 'http');
+    expect(all.filter((key) => !keys.includes(key))).toEqual([
+      'GET /api/v1/developer/devices/notifications',
+    ]);
     for (const key of keys) {
       const op = ACCESS_OPERATIONS[key];
       if (op === undefined) continue;

@@ -18,10 +18,12 @@
  *   console was observed to leave out (`optionalResponseProperties`).
  *
  * A hand transcription of a PDF contract (`transcription`, ADR 0022) is translated by the
- * same rules, with three differences: the citation extensions (`x-pdf`, `x-note`,
+ * same rules, with these differences: the citation extensions (`x-pdf`, `x-note`,
  * `x-minimum-version`) are accepted as annotations; a response property that cites the PDF
- * is optional and nullable, because the PDF states neither; and each operation lists the
- * request fields that need a later application version than the operation itself.
+ * is optional and nullable, because the PDF states neither, except a discriminator, whose
+ * values the PDF names for each message (ADR 0022 §3); each operation lists the request
+ * fields that need a later application version than the operation itself; and a WebSocket
+ * is marked by `x-transport: "websocket"` on its operation, not recognised by its path.
  *
  * Anything the translator does not understand throws, so nothing is translated silently
  * wrong. The vendor document must not contain cycles.
@@ -546,8 +548,15 @@ export class OpenApiZodGenerator {
             : `z.enum([${values.map(literal).join(', ')}])`;
       // `where` is the component name for a component's own object (ADR 0019 §8).
       const reviewed = `${where}.${name}`;
-      if (flavour === 'out' && this.#transcription && schema['x-pdf'] !== undefined) {
+      if (
+        flavour === 'out' &&
+        this.#transcription &&
+        schema['x-pdf'] !== undefined &&
+        values === undefined &&
+        !fallback
+      ) {
         // The PDF marks no response field required and states no nullability (ADR 0022 §3).
+        // A discriminator stays required: each of its values selects a documented message.
         if (!code.endsWith('.nullable()')) code += '.nullable()';
         code += '.optional()';
       } else if (flavour === 'out' && this.#absentAllowed.has(reviewed)) {
@@ -993,7 +1002,15 @@ export class OpenApiZodGenerator {
       `export const ${operationId} = {`,
       `  method: ${literal(info.method)},`,
       `  path: ${literal(pathTemplate)},`,
-      `  transport: ${literal(WEBSOCKET_PATH.test(pathTemplate) ? 'websocket' : 'http')},`,
+      `  transport: ${literal(
+        (
+          this.#transcription
+            ? op['x-transport'] === 'websocket'
+            : WEBSOCKET_PATH.test(pathTemplate)
+        )
+          ? 'websocket'
+          : 'http',
+      )},`,
       `  queryParameters: [${queryParameters.map(literal).join(', ')}],`,
       `  hasBody: ${String(hasBody)},`,
       `  responseType: ${literal(responseType)},`,

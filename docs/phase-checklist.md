@@ -680,15 +680,26 @@ command and its storage are built with the adapter.
      shows every reason. Fixed: `unifi-mcp api coverage` counted 0 Access operations
      (date revisions); it now shares the coverage report's rule and counts refused
      operations.
-   - §11.1 notifications as an event stream: next.
+   - ✅ **Notifications** (2026-11-15, [ADR 0023](adr/0023-access-adapter.md) §6,
+     [ADR 0022](adr/0022-access-contract-transcription.md) §5 amendment): the three §11.1
+     messages transcribed from their samples (a required `event` discriminator, checked
+     against the PDF; `x-transport` marks the WebSocket); offered as
+     `unifi://consoles/<id>/access/notifications` with `access.notifications.read`.
+     Doorbell calls need nothing more and lose their `token`; remote unlocks also need the
+     door read and `access_log`. Coverage: 98 of 107 (6 refused, 3 deferred).
 
-**Next:** step 7, the §11.1 notification WebSocket: transcribe its messages and review it
-as an event stream; then the Phase 4 gate review. The gate still needs
-verified installed-version evidence (A or C above), which needs an installed Access.
+**Next:** the "other applications" item below (adapter scaffolds reported as
+`unavailable: official_local_api_not_documented`), then the Phase 4 gate review. The gate
+still needs verified installed-version evidence (A or C above), which needs an installed
+Access.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
-- [ ] Physical-access writes always high risk; sensitive events handled; negative tests
-      Writes done (2026-11-14, ADR 0023 §4); Access events (§11.1, webhooks) open with step 7.
+- [x] Physical-access writes always high risk; sensitive events handled; negative tests
+      Writes: 51 high with approval, the physical-access list pinned by
+      `tests/contract/access-security-review.test.ts` (ADR 0023 §4). Events: §11.1
+      notifications with per-event grants, the doorbell token removed (ADR 0023 §6).
+      Negative tests: `tests/integration-mock/access-writes.test.ts`,
+      `access-events.test.ts`. Synthetic API only (see the first item).
 - [ ] Other applications: adapter scaffolds only, reported as `unavailable: official_local_api_not_documented`
 
 ## Phase 5 — Production and release hardening

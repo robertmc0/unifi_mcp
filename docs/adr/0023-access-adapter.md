@@ -232,13 +232,38 @@ same way.
   - a visitor's license plates (§4.13): the PDF prints no field table for the body, so
     ADR 0022 §3 allows no request field;
   - a reader's access methods (§8.3): the table and the samples disagree on the body.
-- **The notification WebSocket (§11.1)** is decided separately (§6, when its messages are
-  transcribed).
+- **The notification WebSocket (§11.1)** is offered as an event stream (§6).
 
 The CLI's `api coverage` showed 0 implemented Access operations: it matched operations to
 revisions by version range only, and Access revisions are dates. The CLI and the coverage
 report now share one rule (`implementsRevision`), and the CLI also counts the refused
 operations.
+
+## 6. Notifications (step 7)
+
+§11.1 is offered as the event resource `unifi://consoles/<id>/access/notifications`
+(reviewed 2026-11-15), over the same egress check, verified TLS and bearer token as the
+requests, through the event hub of ADR 0020. Its three documented messages are transcribed
+from their samples (ADR 0022 §5 amendment).
+
+- **Stream.** `access.notifications.subscribe`, permission `access.notifications.read`
+  (the vendor scope is `view:device`), low risk, range `>=1.20.11 <=4.2.16`, the declared
+  version as for every Access operation: without a declaration the resource is not offered.
+  Messages of at most 256 KiB.
+- **Classes**, by `event`:
+  - `access.remote_view` → `doorbell_ring`: no extra grant (like Protect's `ring`). It
+    names a door, reader and floor, and the IDs (not names) of the door guards.
+  - `access.remote_view.change` → `doorbell_status`: no extra grant; a reason code.
+  - `access.data.device.remote_unlock` → `remote_unlock`: a door's location record, the
+    data `access.spaces.get_door` returns, whose permission it also needs; and an entry in
+    the door's access history, so it also needs `access_log` (spec §6.4).
+  - Any other event (a newer console) is never delivered.
+- **Credentials.** `withoutCredentials` applies as for reads, and a doorbell call's
+  `token` is removed. The PDF does not say what the token grants; next to the call's
+  `channel` it reads as the credential for answering the call (seeing and hearing whoever
+  is at the door). That is our inference, so it is treated as a credential.
+- **Not offered as events:** the §11.2 webhook events, which Access sends only to webhook
+  receivers (creating those is off by default, §4).
 
 ## Evidence
 
@@ -307,6 +332,16 @@ operations.
   `tests/unit/cli/cli.test.ts` (`api coverage`: Access 97 implemented, 6 not offered).
   Mutation checks, each making a test fail: date revisions not matched; reasons dropped;
   refused omissions shown as not implemented.
+- Step 7, notifications: `tests/contract/access-streams.test.ts` (the stream's metadata; a
+  reviewed class for exactly the documented events; messages kept apart by `event`, a
+  malformed documented one refused; the token and credential fields removed);
+  `tests/integration-mock/access-events.test.ts` (the real service, a synthetic Access
+  WebSocket with the bearer token on its own port, real MCP clients: all three classes
+  delivered with the door and history grants, remote unlocks withheld without either, a
+  newer event dropped as unclassified, a malformed one as a contract mismatch, no
+  sentinel, token or Access token in any read; with no declared version the resource is
+  not offered and nothing connects). Mutation checks, each making a test fail: the token
+  kept; the remote unlock without `access_log`; without the door read's permission.
 - Not verified: how a real Access console sets the HTTP status of an error, and whether
   its tokens' scopes match the permission keys (provenance `unverified`). Both need an
   installed Access (ADR 0021, evidence C). No Access write has run against a console.
@@ -315,8 +350,8 @@ operations.
 
 - Access operations run through the existing dispatcher, approval service and executor;
   nothing about the console registry, the CLI or the storage changes.
-- 97 of 107 documented Access operations are offered. The rest are the PIN generator (not
-  offered) and the nine operations ADR 0022 §5 leaves to step 7.
+- 98 of 107 documented Access operations are offered (97 operations and the notification
+  stream); 6 are refused and 3 deferred (§5).
 - Access writes are the first whose consequences are physical. Their review assumes the
   worst case wherever the PDF is silent; a live run (evidence C) may show that some can be
   lowered, which would be a reviewed change to this ADR and the review table.
@@ -324,6 +359,8 @@ operations.
 ## Re-evaluation triggers
 
 - A real Access console reports errors in a way the envelope rule misreads.
+- A console sends notifications that differ from the §11.1 samples, or Ubiquiti documents
+  what a doorbell call's `token` grants or adds events to the WebSocket.
 - Ubiquiti documents HTTP statuses for Access errors, or changes the envelope.
 - Pinning both certificates on one console proves inadequate (for example, different
   hosts for the console and Access).

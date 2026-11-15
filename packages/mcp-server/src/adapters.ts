@@ -10,6 +10,7 @@ import {
 } from '@unifi-local-mcp/core';
 import {
   ACCESS_CONTRACT_REVISION,
+  ACCESS_EVENT_STREAMS,
   ACCESS_OMISSIONS,
   ACCESS_OPERATIONS,
 } from '@unifi-local-mcp/unifi-access';
@@ -62,8 +63,8 @@ export const ADAPTERS: readonly ModuleAdapter[] = [
     moduleId: 'access',
     contractRevisions: [ACCESS_CONTRACT_REVISION],
     operations: ACCESS_OPERATIONS,
-    // The §11.1 notification WebSocket waits for its own decision (ADR 0022 §5).
-    eventStreams: [],
+    // The §11.1 notification WebSocket (ADR 0023 §6).
+    eventStreams: ACCESS_EVENT_STREAMS,
     omissions: ACCESS_OMISSIONS,
     // Access documents no version read: its version is declared (ADR 0021 §5).
   },

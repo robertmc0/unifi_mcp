@@ -468,3 +468,122 @@ describe('checks against the PDF text', () => {
     expect(problems).toContain('CODE_NOT_PRINTED: in x-error-codes, not printed in the PDF.');
   });
 });
+
+describe('WebSocket messages (§11.1)', () => {
+  const WATCH: InventoryOperation = {
+    key: 'GET /api/things/watch',
+    method: 'GET',
+    path: '/api/things/watch',
+    vendorOperationId: null,
+    category: 'Thing',
+    summary: 'Watch Things',
+    documentationUrl: null,
+    vendorPermission: 'view:thing',
+    transport: 'websocket',
+    sourceRef: 'PDF §3.5 p.4',
+  };
+  const inventory = [...INVENTORY, WATCH];
+  const pages = [
+    ...PAGES,
+    [
+      '3.5 Watch Things [WebSocket]',
+      'Request URL: /api/things/watch',
+      'Permission Key: view:thing',
+      'Protocol: WebSocket',
+      'Method: GET',
+      '"event": "thing.moved",',
+      '"where": "hall"',
+      '"event": "thing.gone",',
+    ],
+  ];
+  const sampled = (type: string) => ({ type, 'x-pdf': { page: 4, sample: true } });
+  function withWatch(edit: (doc: Doc) => void = () => undefined): Doc {
+    return variant((d) => {
+      (d['paths'] as Doc)['/api/things/watch'] = {
+        get: {
+          'x-transport': 'websocket',
+          responses: {
+            '200': {
+              content: {
+                'application/json': { schema: { $ref: '#/components/schemas/Message' } },
+              },
+            },
+          },
+        },
+      };
+      Object.assign((d['components'] as Doc)['schemas'] as Doc, {
+        Message: {
+          oneOf: [{ $ref: '#/components/schemas/Moved' }, { $ref: '#/components/schemas/Gone' }],
+          discriminator: {
+            propertyName: 'event',
+            mapping: {
+              'thing.moved': '#/components/schemas/Moved',
+              'thing.gone': '#/components/schemas/Gone',
+            },
+          },
+        },
+        Moved: {
+          type: 'object',
+          properties: { event: sampled('string'), where: sampled('string') },
+        },
+        Gone: { type: 'object', properties: { event: sampled('string') } },
+      });
+      edit(d);
+    });
+  }
+  const watch = (doc: Doc): Doc =>
+    ((doc['paths'] as Doc)['/api/things/watch'] as Doc)['get'] as Doc;
+
+  it('accept un-enveloped messages selected by a printed discriminator', () => {
+    expect(structuralProblems(withWatch(), inventory, CONTRACT)).toEqual([]);
+    expect(pdfProblems(withWatch(), pages, inventory)).toEqual([]);
+  });
+
+  it('require x-transport exactly where the inventory records a WebSocket', () => {
+    const unmarked = withWatch((d) => {
+      delete watch(d)['x-transport'];
+    });
+    expect(structuralProblems(unmarked, inventory, CONTRACT)).toContain(
+      "GET /api/things/watch: x-transport disagrees with the inventory's transport.",
+    );
+    const http = withWatch((d) => {
+      put(d)['x-transport'] = 'websocket';
+    });
+    expect(structuralProblems(http, inventory, CONTRACT)).toContain(
+      "PUT /api/things/{id}: x-transport disagrees with the inventory's transport.",
+    );
+    const other = withWatch((d) => {
+      watch(d)['x-transport'] = 'sse';
+    });
+    expect(structuralProblems(other, inventory, CONTRACT)).toContain(
+      'GET /api/things/watch: x-transport may only be "websocket".',
+    );
+  });
+
+  it('require the message schema to be a component', () => {
+    const inline = withWatch((d) => {
+      const response = (watch(d)['responses'] as Doc)['200'] as Doc;
+      response['content'] = {
+        'application/json': {
+          schema: { type: 'object', properties: { event: sampled('string') } },
+        },
+      };
+    });
+    expect(structuralProblems(inline, inventory, CONTRACT)).toContain(
+      "GET /api/things/watch: a WebSocket's message schema must be a component reference.",
+    );
+  });
+
+  it('find a discriminator value that its sample does not print', () => {
+    const renamed = withWatch((d) => {
+      const message = ((d['components'] as Doc)['schemas'] as Doc)['Message'] as Doc;
+      (message['discriminator'] as Doc)['mapping'] = {
+        'thing.moved': '#/components/schemas/Moved',
+        'thing.vanished': '#/components/schemas/Gone',
+      };
+    });
+    expect(pdfProblems(renamed, pages, inventory)).toContain(
+      'components.Message: "thing.vanished" is not printed as event in the sample its variant cites.',
+    );
+  });
+});

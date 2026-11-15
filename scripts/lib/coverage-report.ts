@@ -70,6 +70,10 @@ const EVIDENCE: Record<
     ],
     read: ['tests/integration-mock/access-reads.test.ts'],
     write: ['tests/integration-mock/access-writes.test.ts'],
+    stream: [
+      'tests/contract/access-streams.test.ts',
+      'tests/integration-mock/access-events.test.ts',
+    ],
   },
 };
 

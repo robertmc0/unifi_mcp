@@ -1058,4 +1058,71 @@ describe('hand transcriptions of a PDF contract (ADR 0022)', () => {
     const source = generate(document, options);
     expect(source).not.toMatch(/x-pdf|x-note|our own words|"page"/);
   });
+
+  it('mark a WebSocket by x-transport and keep its message discriminator required', () => {
+    const sampled = { type: 'string', 'x-pdf': { page: 5, sample: true } };
+    const messages = doc(
+      {
+        Message: {
+          oneOf: [{ $ref: '#/components/schemas/Moved' }, { $ref: '#/components/schemas/Gone' }],
+          discriminator: {
+            propertyName: 'event',
+            mapping: {
+              'thing.moved': '#/components/schemas/Moved',
+              'thing.gone': '#/components/schemas/Gone',
+            },
+          },
+        },
+        Moved: { type: 'object', properties: { event: sampled, where: sampled } },
+        Gone: { type: 'object', properties: { event: sampled } },
+      },
+      {
+        '/api/things/watch': {
+          get: {
+            'x-transport': 'websocket',
+            responses: {
+              '200': {
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/Message' } },
+                },
+              },
+            },
+          },
+        },
+      },
+    );
+    const facts = {
+      'GET /api/things/watch': {
+        minimumVersion: '1.20.11',
+        documentationUrl: 'https://example.invalid/reference.pdf#page=5',
+        vendorPermission: 'view:thing',
+      },
+    };
+    const op = load(generate(messages, { ...options, operationFacts: facts }))[
+      'getApiThingsWatch'
+    ] as unknown as { transport: string; output: z.ZodType };
+    expect(op.transport).toBe('websocket');
+    // The event selects the message: required, never null; other sampled fields optional.
+    expect(op.output.parse({ event: 'thing.moved', where: 'hall' })).toEqual({
+      event: 'thing.moved',
+      where: 'hall',
+    });
+    expect(op.output.parse({ event: 'thing.moved' })).toEqual({ event: 'thing.moved' });
+    expect(op.output.safeParse({ where: 'hall' }).success).toBe(false);
+    expect(op.output.safeParse({ event: null }).success).toBe(false);
+    // A documented event must match its own message; an unknown one keeps only its name.
+    expect(op.output.safeParse({ event: 'thing.moved', where: 7 }).success).toBe(false);
+    expect(op.output.parse({ event: 'thing.new', where: 'hall' })).toEqual({ event: 'thing.new' });
+    // Without the mark, the path alone does not make an operation a WebSocket.
+    const unmarked = structuredClone(messages);
+    const paths = unmarked['paths'] as Record<string, { get: Record<string, unknown> }>;
+    delete paths['/api/things/watch']?.get['x-transport'];
+    expect(
+      (
+        load(generate(unmarked, { ...options, operationFacts: facts }))[
+          'getApiThingsWatch'
+        ] as unknown as { transport: string }
+      ).transport,
+    ).toBe('http');
+  });
 });

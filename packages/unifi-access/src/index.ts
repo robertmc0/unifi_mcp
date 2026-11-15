@@ -119,6 +119,13 @@ export { ACCESS_CONTRACT_REVISION, ACCESS_MAX_VERSION, pageOf } from './define.t
 export { ALWAYS_REMOVED, withoutCredentials } from './credentials.ts';
 export { MAX_LOG_PAGE_SIZE, MAX_LOG_WINDOW_SECONDS } from './operations/logs.ts';
 export { ACCESS_OMISSIONS } from './omissions.ts';
+export {
+  ACCESS_EVENT_STREAMS,
+  classifyNotification,
+  NOTIFICATION_EVENTS,
+  projectNotification,
+  subscribeNotifications,
+} from './streams.ts';
 
 /** Every documented Access read (39), reviewed 2026-11-13 (ADR 0023 §3). */
 export const ACCESS_READS: readonly OperationDescriptor[] = [

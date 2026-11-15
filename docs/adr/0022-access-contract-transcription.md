@@ -172,7 +172,26 @@ Multipart uploads, file downloads and the WebSocket are transcribed with their d
 media types and fields, so the transcription stays complete. The translator refuses them,
 so each one is listed in the generator configuration as an omitted operation, with a
 reason, as Protect's upload is (ADR 0019). Whether and how each is offered is a security
-decision for the adapter. For example, §12.1 sends a TLS private key.
+decision for the adapter. For example, §12.1 sends a TLS private key. The decisions are
+recorded in ADR 0023 §5 and §6.
+
+**WebSocket messages (amended 2026-11-15).** §11.1 shows its messages only as samples,
+each under a heading that names its `event` (`[access.remote_view]`). They are transcribed
+like response fields from samples (optional and nullable, `x-pdf` with `sample: true`),
+with three additions:
+
+- The operation carries `x-transport: "websocket"`. The check requires it exactly where
+  the inventory records a WebSocket, and the translator takes the transport from it, not
+  from the path (Protect's `/v1/subscribe/` rule does not apply to Access).
+- Messages are not enveloped: the response schema is a component reference, not
+  `{data, …}`.
+- The messages are a `oneOf` with a `discriminator` on `event` and an explicit mapping.
+  The discriminator stays **required and not nullable**, the one exception to the
+  optional-and-nullable rule: without it, a union of all-optional messages cannot tell
+  them apart and would read every message as the first. The PDF check confirms that each
+  mapping value is printed as `"event": "<value>"` on the page its message's `event` cites.
+  An undocumented event keeps only its name (the translator's tolerant fallback) and a
+  documented event that misses its own shape is refused, as for Protect.
 
 ### 6. Checked against the PDF in both directions
 
@@ -400,6 +419,19 @@ The transcription as a whole (2026-11-13):
 - 98 operations are generated. Nine are not, each with its reason in the generator
   configuration: five non-JSON (§3.30, §6.18, §6.19, §9.3, §12.1), the WebSocket (§11.1),
   the static files (§9.5), §4.13 (no body table) and §8.3 (body disputed by the samples).
+
+§11.1 messages (2026-11-15, §5 amendment): the three samples on pp.171-172
+(`access.remote_view`, `access.remote_view.change`, `access.data.device.remote_unlock`)
+are transcribed as four components (`Notification` and one per message, 45 cited fields),
+and the WebSocket is generated: 99 operations, eight not generated. `api:reconcile` finds
+every field and all three `event` values on the cited pages. Tests:
+`tests/unit/scripts/access-transcription.test.ts` (the `x-transport` mark against the
+inventory, both ways and its value; a message schema that is not a component; a mapping
+value its sample does not print), `tests/unit/scripts/openapi-zod.test.ts` (the transport
+from the mark, not the path; a required, non-nullable discriminator with the other
+sampled fields optional; a documented event that misses its shape refused, an unknown one
+kept by name). Mutation checks, each making a test fail: the discriminator optional; the
+mark unchecked; the mapping values unchecked.
 
 ## Consequences
 

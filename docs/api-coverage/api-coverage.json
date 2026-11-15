@@ -11,9 +11,9 @@
       "localBaseUrlTemplate": "https://{consoleHost}:12445",
       "totals": {
         "documented": 107,
-        "implemented": 97,
+        "implemented": 98,
         "unsupported": 6,
-        "notImplemented": 4
+        "notImplemented": 3
       },
       "operations": [
         {
@@ -1574,19 +1574,29 @@
           "minimumApplicationVersion": "1.20.11",
           "vendorPermission": "view:device",
           "transport": "websocket",
-          "status": "not_implemented",
+          "status": "implemented",
           "statusReason": null,
-          "operationId": null,
-          "exposure": null,
-          "permission": null,
-          "risk": null,
-          "approvalRequired": null,
-          "defaultDisabled": null,
-          "sensitivity": null,
-          "schemaValidation": false,
-          "mockTests": false,
+          "operationId": "access.notifications.subscribe",
+          "exposure": {
+            "namedTool": null,
+            "generic": false,
+            "resource": "unifi://consoles/{consoleId}/access/notifications"
+          },
+          "permission": "access.notifications.read",
+          "risk": "low",
+          "approvalRequired": false,
+          "defaultDisabled": false,
+          "sensitivity": [],
+          "schemaValidation": true,
+          "mockTests": true,
           "liveReadValidation": false,
-          "evidence": [],
+          "evidence": [
+            "tests/contract/access-transcription.test.ts",
+            "tests/contract/access-security-review.test.ts",
+            "tests/integration-mock/access-transport.test.ts",
+            "tests/contract/access-streams.test.ts",
+            "tests/integration-mock/access-events.test.ts"
+          ],
           "provisional": {
             "effect": "read",
             "risk": "low",
