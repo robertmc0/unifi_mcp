@@ -101,10 +101,11 @@ publication, checked on one date. It is not a statement by Ubiquiti that none ex
 will exist. The InnerSpace OpenAPI document itself was not fetched again; its local
 base URL is the Phase 0 record in ADR 0005.
 
-One finding outside this decision: the portal now documents **Protect v7.4.99**. The
-newest revision in `api-specs/` is 7.4.96 (ADR 0019 §7). Both cached Protect artefacts
-are still served at their recorded sizes. The new revision is recorded as a follow-up in
-the phase checklist.
+One finding outside this decision: the portal now labels the Protect API **v7.4.99**.
+Its `openapi.json` is byte-identical to the 7.4.96 document in `api-specs/` (same
+SHA-256, 558,984 bytes), and its `llms.txt` differs only in the version label. No new
+revision record is needed (ADR 0019 §7, note of 2026-11-15). Both cached Protect
+artefacts are still served at their recorded sizes.
 
 ## Consequences
 

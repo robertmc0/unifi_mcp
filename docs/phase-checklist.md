@@ -737,9 +737,10 @@ labelled so in every guide. Nothing else in Phase 4 is waiting.
 - InnerSpace: eligible under spec §4.1 (six documented reads with a local server), not
   planned since Phase 0 (ADR 0005). Implement it, or leave it unavailable.
 
-**Found during the review, not done:** the developer portal now documents **Protect
-v7.4.99** (2026-11-15). The newest revision here is 7.4.96. Adding it follows
-"Adding a new vendor revision" in [api-specs/README.md](../api-specs/README.md) and
+**Found during the review, and closed:** the developer portal now labels the Protect API
+**v7.4.99** (2026-11-15). Its `openapi.json` is byte-identical to the 7.4.96 one recorded
+here (same SHA-256), and its `llms.txt` differs only in the version label. No new
+revision was needed; the fact is noted in `api-specs/protect/7.4.96/provenance.json` and
 ADR 0019 §7.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port

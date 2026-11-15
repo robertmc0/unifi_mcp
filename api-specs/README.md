@@ -86,8 +86,11 @@ reports Talk, Connect, Drive and InnerSpace as unavailable, each with its reason
 exists only for an implemented module; `tests/contract/module-slots.test.ts` checks this.
 
 On the same date the portal root index listed **Protect v7.4.99** as the newest
-documented revision. It is not in this baseline yet (newest here: 7.4.96). Both cached
-Protect revisions were still served at their recorded sizes.
+documented revision. Its `openapi.json` is byte-identical to the 7.4.96 one recorded here
+(same SHA-256), and its `llms.txt` differs only in the version label, so no new revision
+record is needed: `api-specs/protect/7.4.96/` is the contract published under both labels
+(noted in its `provenance.json`). Both cached Protect revisions were still served at
+their recorded sizes.
 
 ## Workflow
 

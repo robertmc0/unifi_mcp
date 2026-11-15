@@ -238,6 +238,14 @@ have been refused on current consoles, so both revisions are supported:
   operation with the same method and path has a version range that includes it: 7.3.74
   71/74, 7.4.96 79/83.
 
+**Note, 2026-11-15: the portal label moved to v7.4.99, the contract did not.** The
+portal root index now lists the Protect API as v7.4.99. The `openapi.json` published under
+that label is byte-identical to the 7.4.96 one (SHA-256 `21e24ef3…`, 558,984 bytes), and
+the `llms.txt` differs only in the version label. `api-specs/protect/7.4.96/` therefore
+stays the newest revision record, with this recorded in its `provenance.json`. Nothing
+was regenerated. The ranges `>=7.3.74 <8` and `>=7.4.96 <8` already include 7.4.99. A new
+record is needed only when a published document differs.
+
 ### 8. Live evidence (2026-11-12) and a reviewed response exception
 
 The owner ran the opt-in live read-only test against a console with Protect 7.3.74. The
