@@ -5,7 +5,12 @@ import { consoleCommands } from './consoles.ts';
 import { approvalCommands, policyCommands } from './governance.ts';
 import { adminCommands, clientCommands } from './identities.ts';
 import { cryptoCommands, dbCommands } from './maintenance.ts';
-import { apiCoverageCommand, configCommands, doctorCommand } from './operations.ts';
+import {
+  apiCoverageCommand,
+  apiModulesCommand,
+  configCommands,
+  doctorCommand,
+} from './operations.ts';
 
 export const COMMANDS: CommandTable = {
   admin: adminCommands,
@@ -18,5 +23,5 @@ export const COMMANDS: CommandTable = {
   db: dbCommands,
   audit: auditCommands,
   doctor: { '': doctorCommand },
-  api: { coverage: apiCoverageCommand },
+  api: { coverage: apiCoverageCommand, modules: apiModulesCommand },
 };

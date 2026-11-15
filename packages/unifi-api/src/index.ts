@@ -48,9 +48,14 @@ export {
   isModuleId,
   MODULE_ENDPOINTS,
   MODULE_IDS,
+  MODULE_SLOTS,
+  moduleSlot,
+  slotStatus,
   type EnvelopeErrorClass,
   type ModuleEndpoint,
   type ModuleId,
+  type ModuleSlot,
+  type ModuleSlotReason,
   type ResultEnvelope,
 } from './modules.ts';
 export {

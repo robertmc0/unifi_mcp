@@ -6,7 +6,9 @@
 > Network operations, 73 of the 74 Protect 7.3.74 operations, including both event
 > subscriptions, and 98 of the 107 Access operations ([applications-access.md](applications-access.md)),
 > tested against synthetic consoles. Network and Protect reads were also checked on a real
-> console (Network 11.0.99, Protect 7.3.74); Access has not run on a real console.**
+> console (Network 11.0.99, Protect 7.3.74); Access has not run on a real console. Other
+> applications are reported as unavailable, with the reason
+> ([applications-other.md](applications-other.md)).**
 > See [phase-checklist.md](phase-checklist.md) for what is implemented and what is next.
 
 ## Design and decisions
@@ -45,6 +47,7 @@
 | [runbook-protect-writes.md](runbook-protect-writes.md) (optional manual write validation on a real console)         | 3               |
 | [events.md](events.md) (Protect events: subscriptions, reads, guarantees, reconnects, limits, troubleshooting)      | 3               |
 | [applications-access.md](applications-access.md) (versions, setup, reads, sensitive data, credentials, limitations) | 4 (started)     |
+| [applications-other.md](applications-other.md) (Talk, Connect, Drive, InnerSpace: unavailable, and why)             | 4               |
 | release.md, development.md                                                                                          | 5               |
 
 ## Contributing

@@ -38,6 +38,40 @@ All notable changes to this project are documented here. The format follows
   values): ten networks, paging, empty strings in DHCP lists, missing optional fields,
   every management type, UUIDs rather than VLAN ids, and a failing references read.
 
+### Added — Phase 4: UniFi Access and other applications (gate open)
+
+The gate is open: Access has not run on a real console, and no version-labelled Access
+contract has been verified (`docs/phase-checklist.md`).
+
+- Access contract: the vendor's PDF API reference (2026-03-23, 107 operations) is
+  transcribed by hand into `api-specs/access/2026-03-23/transcription.json`, every field
+  citing its page and row, and checked against the PDF text in both directions by
+  `npm run api:reconcile` (ADR 0022). Schemas are generated from it for 98 operations.
+- Access transport: its own port (12445), bearer token and `{code, msg, data}` result
+  envelope, where only `SUCCESS` is a success; the certificate is pinned beside the
+  console's (ADR 0023 §1).
+- Declared version: Access reports no version, so an administrator declares it with
+  `unifi-mcp console declare-version`. It is shown as "declared, not observed", audited,
+  valid for 30 days and accepted up to 4.2.16 (ADR 0021 §5, ADR 0023 §2).
+- 39 Access reads and 58 writes with reviewed security metadata. 51 writes are high risk
+  and need human approval, 7 are off by default, and door control has its own permission
+  (ADR 0023 §3, §4). 6 documented operations are refused with reasons and 3 are deferred
+  (ADR 0023 §5).
+- Access notifications (the documented WebSocket) as the event stream
+  `unifi://consoles/<id>/access/notifications` (ADR 0023 §6).
+- Operator guide `docs/applications-access.md`.
+- Other applications as disabled slots (ADR 0024): UniFi Talk, UniFi Connect and UniFi
+  Drive are reported as `unavailable: official_local_api_not_documented`, InnerSpace as
+  `unavailable: adapter_not_implemented`. `unifi_list_modules` gains a `status` for every
+  module and lists these four with their `reason`; `unifi_list_operations` explains an
+  empty list for one of them. New `unifi-mcp api modules`. `--module`, console policies
+  and bootstrap files that name one are refused with the status instead of "unknown".
+  They have no endpoint, credential or operation, and nothing about them is sent to a
+  console. Guide: `docs/applications-other.md`.
+- `docs/api-coverage/api-coverage.json` lists these applications under
+  `unavailableModules`. The summary table in `docs/api-coverage/README.md` was out of
+  date (it showed 0 Access operations) and is now checked against the generated matrix.
+
 ### Added — Phase 3: UniFi Protect (gate passed 2026-11-12)
 
 - Protect contract baseline moved to v7.4.96 (83 operations; ADR 0019). The live

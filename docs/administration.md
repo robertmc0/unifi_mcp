@@ -192,6 +192,7 @@ See [monitoring.md](monitoring.md#audit-trail).
 | `admin list`                          | Lists administrators.                                                                                                                                                                                                                                        |
 | `doctor`                              | Checks configuration, key, database, audit chain, policy, hard lock, listener, egress, consoles, clients, administrators and disk space. Exits 1 if a check fails.                                                                                           |
 | `api coverage`                        | Shows the official operations per module, how many this service implements, and how many it refuses to offer after review. The full matrix, with reviewed metadata, test evidence and the reason for each operation not offered, is in `docs/api-coverage/`. |
+| `api modules`                         | Shows every application module: the supported ones with their contract revisions and operation counts, and the applications without an adapter as `unavailable: <reason>` ([applications-other.md](applications-other.md)).                                  |
 
 Passwords must have at least 12 characters, must not contain the username, and need at
 least 4 different characters. They are stored as Argon2id hashes. `admin reset-password`

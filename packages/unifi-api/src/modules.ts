@@ -84,3 +84,43 @@ export const MODULE_ENDPOINTS: Readonly<Record<ModuleId, ModuleEndpoint>> = {
 export function isModuleId(value: string): value is ModuleId {
   return (MODULE_IDS as readonly string[]).includes(value);
 }
+
+/**
+ * Why an application has no adapter (spec §4.1, ADR 0024):
+ * - `official_local_api_not_documented`: Ubiquiti publishes no official local API for it.
+ * - `adapter_not_implemented`: an official local API is published, but this project has
+ *   not reviewed it or built an adapter.
+ */
+export type ModuleSlotReason = 'official_local_api_not_documented' | 'adapter_not_implemented';
+
+/**
+ * An application without an adapter: a disabled plugin slot. It has no endpoint,
+ * credential, operation or event stream and cannot be enabled on a console. It exists so
+ * that asking for the application gets a stated reason instead of "unknown".
+ */
+export interface ModuleSlot {
+  moduleId: string;
+  title: string;
+  reason: ModuleSlotReason;
+}
+
+/**
+ * The slots (ADR 0024, evidence of 2026-11-15). Moving an application out of this list
+ * means adding a verified contract under `api-specs/`, an ADR and a reviewed adapter;
+ * tests/contract/module-slots.test.ts fails when a slot gains any of them by itself.
+ */
+export const MODULE_SLOTS: readonly ModuleSlot[] = [
+  { moduleId: 'talk', title: 'UniFi Talk', reason: 'official_local_api_not_documented' },
+  { moduleId: 'connect', title: 'UniFi Connect', reason: 'official_local_api_not_documented' },
+  { moduleId: 'drive', title: 'UniFi Drive', reason: 'official_local_api_not_documented' },
+  { moduleId: 'innerspace', title: 'InnerSpace', reason: 'adapter_not_implemented' },
+];
+
+export function moduleSlot(value: string): ModuleSlot | undefined {
+  return MODULE_SLOTS.find((slot) => slot.moduleId === value);
+}
+
+/** The status shown for a slot, e.g. `unavailable: official_local_api_not_documented`. */
+export function slotStatus(slot: ModuleSlot): string {
+  return `unavailable: ${slot.reason}`;
+}

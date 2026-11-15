@@ -538,6 +538,76 @@ describe('doctor and api coverage', () => {
   });
 });
 
+describe('applications without an adapter (ADR 0024)', () => {
+  it('lists every module with its status, and refuses to configure a slot', async () => {
+    const h = await setup();
+    const rows = await h.json<
+      { moduleId: string; status: string; reason?: string; operations: number }[]
+    >(['api', 'modules']);
+    expect(rows.map((r) => [r.moduleId, r.status, r.reason])).toEqual([
+      ['network', 'supported', undefined],
+      ['protect', 'supported', undefined],
+      ['access', 'supported', undefined],
+      ['talk', 'unavailable', 'official_local_api_not_documented'],
+      ['connect', 'unavailable', 'official_local_api_not_documented'],
+      ['drive', 'unavailable', 'official_local_api_not_documented'],
+      ['innerspace', 'unavailable', 'adapter_not_implemented'],
+    ]);
+    expect(rows.filter((r) => r.status === 'unavailable').every((r) => r.operations === 0)).toBe(
+      true,
+    );
+    const text = await h.run(['api', 'modules']);
+    expect(text.code).toBe(0);
+    expect(text.out).toMatch(/talk\s+unavailable: official_local_api_not_documented\s+-\s+0\s+0/);
+    expect(text.out).toMatch(/network\s+supported\s+11\.0\.97\s+73\s+0/);
+
+    await h.run(['console', 'add', '--alias', 'lab', '--host', '192.0.2.10']);
+    await writeFile(join(h.dir, 'key'), 'synthetic-key-1');
+    for (const args of [
+      ['console', 'enable-module', 'lab', '--module', 'talk'],
+      ['console', 'set-credential', 'lab', '--module', 'talk', '--key-file', join(h.dir, 'key')],
+      ['console', 'declare-version', 'lab', '--module', 'talk', '--version', '1.0.0'],
+    ]) {
+      const refused = await h.run(args);
+      expect(refused.code, args.join(' ')).toBe(2);
+      expect(refused.err).toContain(
+        '--module talk is unavailable: official_local_api_not_documented',
+      );
+    }
+    const unknown = await h.run(['console', 'enable-module', 'lab', '--module', 'teleport']);
+    expect(unknown.code).toBe(2);
+    expect(unknown.err).toContain('--module must be network, protect or access.');
+    expect(unknown.err).not.toContain('unavailable');
+
+    await writeFile(join(h.dir, 'slot.yaml'), 'modules: { innerspace: { state: read_only } }\n');
+    const policy = await h.run([
+      'console',
+      'set-policy',
+      'lab',
+      '--file',
+      join(h.dir, 'slot.yaml'),
+    ]);
+    expect(policy.code).not.toBe(0);
+    expect(policy.err).toContain('innerspace (unavailable: adapter_not_implemented)');
+    const bootstrap = join(h.dir, 'slot-bootstrap.yaml');
+    await writeFile(
+      bootstrap,
+      'version: 1\nconsoles:\n  - alias: lab\n    host: 192.0.2.10\n    modules: { talk: {} }\n',
+    );
+    const applied = await h.run(['config', 'apply', '--file', bootstrap, '--yes']);
+    expect(applied.code).not.toBe(0);
+    expect(applied.err).toContain(
+      'consoles.0.modules: talk is unavailable: official_local_api_not_documented',
+    );
+    const view = await h.json<{ policy: { modules: Record<string, unknown> } }>([
+      'console',
+      'show',
+      'lab',
+    ]);
+    expect(view.policy.modules).toEqual({});
+  });
+});
+
 describe('console check', () => {
   it('verifies TLS and shows the pin without sending a request', async () => {
     const pki = testPki();

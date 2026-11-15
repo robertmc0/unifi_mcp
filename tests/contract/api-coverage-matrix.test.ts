@@ -30,11 +30,67 @@ async function liveRecords(): Promise<{ file: string; text: string; record: Live
   );
 }
 
+/** The cells of every Markdown table row of a page. */
+function tableRows(markdown: string): string[][] {
+  return markdown
+    .split('\n')
+    .filter((line) => line.startsWith('|') && !/^\|[\s|:-]+\|$/.test(line))
+    .map((line) =>
+      line
+        .slice(1, -1)
+        .split('|')
+        .map((cell) => cell.trim()),
+    );
+}
+
 describe('API coverage matrix', () => {
   it('is current (npm run api:coverage-report)', async () => {
     for (const [path, content] of await buildCoverageFiles()) {
       expect(await readFile(join(ROOT, path), 'utf8'), path).toBe(content);
     }
+  });
+
+  it('has a hand-written summary that equals the generated totals', async () => {
+    const readme = tableRows(await readFile(join(ROOT, 'docs/api-coverage/README.md'), 'utf8'));
+    const matrix = JSON.parse(
+      (await buildCoverageFiles()).get('docs/api-coverage/api-coverage.json') ?? '{}',
+    ) as {
+      modules: {
+        application: string;
+        revision: string;
+        totals: {
+          documented: number;
+          implemented: number;
+          unsupported: number;
+          notImplemented: number;
+        };
+      }[];
+      unavailableModules: { application: string; title: string; reason: string }[];
+    };
+    const summary = readme
+      .filter((row) => /^\[[a-z]+\/[^\]]+\.md\]/.test(row.at(-1) ?? ''))
+      .map((row) => [(row.at(-1) ?? '').replace(/^\[([^\]]+)\.md\].*$/, '$1'), ...row.slice(2, 6)]);
+    const byPage = (a: string[], b: string[]): number => (a[0] ?? '').localeCompare(b[0] ?? '');
+    expect(summary.sort(byPage)).toEqual(
+      matrix.modules
+        .map((m) => [
+          `${m.application}/${m.revision}`,
+          String(m.totals.documented),
+          String(m.totals.implemented),
+          String(m.totals.unsupported),
+          String(m.totals.notImplemented),
+        ])
+        .sort(byPage),
+    );
+    // Applications without an adapter, with the status they show (ADR 0024).
+    expect(matrix.unavailableModules.length).toBeGreaterThan(0);
+    expect(readme.filter((row) => row[2]?.startsWith('`unavailable: ') === true)).toEqual(
+      matrix.unavailableModules.map((m) => [
+        m.title,
+        `\`${m.application}\``,
+        `\`unavailable: ${m.reason}\``,
+      ]),
+    );
   });
 
   it('reports every Network operation as implemented with evidence', async () => {

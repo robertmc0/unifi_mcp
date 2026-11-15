@@ -195,6 +195,80 @@ describe('per-client discovery', () => {
     ).toEqual([]);
     expect((await t.service.health.readiness()).ready).toBe(true);
   });
+
+  it('lists applications without an adapter as unavailable, with the reason (ADR 0024)', async () => {
+    const t = await startTestService({ dir: await tempDir() });
+    const client = await connect(t.mcpUrl, t.token('reader', ['*.*.read']));
+    const modules = structured(
+      await client.callTool({ name: 'unifi_list_modules', arguments: {} }),
+    )['modules'] as {
+      moduleId: string;
+      status: string;
+      reason?: string;
+      availableOperations: number;
+    }[];
+    expect(modules.map((m) => [m.moduleId, m.status, m.reason])).toEqual([
+      ['network', 'supported', undefined],
+      ['protect', 'supported', undefined],
+      ['access', 'supported', undefined],
+      ['talk', 'unavailable', 'official_local_api_not_documented'],
+      ['connect', 'unavailable', 'official_local_api_not_documented'],
+      ['drive', 'unavailable', 'official_local_api_not_documented'],
+      ['innerspace', 'unavailable', 'adapter_not_implemented'],
+    ]);
+    expect(modules.find((m) => m.moduleId === 'network')?.availableOperations).toBeGreaterThan(0);
+    for (const module of modules.filter((m) => m.status === 'unavailable')) {
+      expect(module).toMatchObject({ registeredOperations: 0, availableOperations: 0 });
+      // The empty list says why; nothing can be described or run for the application.
+      expect(
+        structured(
+          await client.callTool({
+            name: 'unifi_list_operations',
+            arguments: { moduleId: module.moduleId },
+          }),
+        ),
+      ).toEqual({
+        status: 'ok',
+        operations: [],
+        total: 0,
+        module: { moduleId: module.moduleId, status: 'unavailable', reason: module.reason },
+      });
+      const id = `${module.moduleId}.info.get`;
+      expect(
+        structured(
+          await client.callTool({
+            name: 'unifi_describe_operation',
+            arguments: { operationId: id },
+          }),
+        ),
+      ).toMatchObject({ status: 'error', error: { code: 'unknown_operation' } });
+      const run = structured(
+        await client.callTool({
+          name: 'unifi_execute',
+          arguments: { operationId: id, consoleId: t.consoleId },
+        }),
+      );
+      expect(run['status']).not.toBe('ok');
+    }
+    // Nothing about these applications ever reaches the console.
+    expect(
+      t.mock.requests.filter((r) => /talk|connect|drive|innerspace/.test(r.url)).map((r) => r.url),
+    ).toEqual([]);
+    const supported = structured(
+      await client.callTool({ name: 'unifi_list_operations', arguments: { moduleId: 'network' } }),
+    );
+    expect(supported).not.toHaveProperty('module');
+
+    // A grant that names such an application is accepted and grants nothing.
+    const granted = await connect(t.mcpUrl, t.token('talker', ['talk.*.read', 'innerspace.*.*']));
+    const seen = structured(await granted.callTool({ name: 'unifi_list_modules', arguments: {} }))[
+      'modules'
+    ] as { availableOperations: number }[];
+    expect(seen.map((m) => m.availableOperations)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+    expect(
+      structured(await granted.callTool({ name: 'unifi_list_operations', arguments: {} }))['total'],
+    ).toBe(0);
+  });
 });
 
 describe('writes through MCP', () => {

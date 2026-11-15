@@ -29,6 +29,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0021](0021-access-contract-version-evidence.md)            | UniFi Access contract: version evidence and binding                              | Accepted (B2 with U1, 2026-11-13)        |
 | [0022](0022-access-contract-transcription.md)               | UniFi Access: transcribing the PDF contract into adapter schemas                 | Accepted                                 |
 | [0023](0023-access-adapter.md)                              | UniFi Access adapter                                                             | Accepted (extended in Phase 4)           |
+| [0024](0024-other-applications-as-disabled-slots.md)        | Other applications as disabled module slots                                      | Accepted                                 |
 
 ## Template
 

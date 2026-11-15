@@ -25,7 +25,12 @@ import {
   type PolicyStore,
 } from '@unifi-local-mcp/policy';
 import { AuditUnavailableError, type AuditLog } from '@unifi-local-mcp/telemetry';
-import { MODULE_IDS, type ConsoleRegistry } from '@unifi-local-mcp/unifi-api';
+import {
+  MODULE_IDS,
+  MODULE_SLOTS,
+  moduleSlot,
+  type ConsoleRegistry,
+} from '@unifi-local-mcp/unifi-api';
 import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod';
 import { registerEventResources, type EventServices } from './events.ts';
@@ -216,18 +221,32 @@ export function buildMcpServer(ctx: ToolContext): McpServer {
     'unifi_list_modules',
     {
       title: 'List application modules',
-      description: 'UniFi application modules and how many operations this client can use in each.',
+      description:
+        'UniFi application modules and how many operations this client can use in each. ' +
+        'Applications without an adapter are listed as unavailable, with the reason.',
       inputSchema: z.strictObject({}),
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
     () =>
       audited('unifi_list_modules', () => {
         const all = ctx.registry.list();
-        const modules = MODULE_IDS.map((moduleId) => ({
-          moduleId,
-          registeredOperations: all.filter((d) => d.moduleId === moduleId).length,
-          availableOperations: discovered.filter((d) => d.descriptor.moduleId === moduleId).length,
-        }));
+        const modules = [
+          ...MODULE_IDS.map((moduleId) => ({
+            moduleId,
+            status: 'supported',
+            registeredOperations: all.filter((d) => d.moduleId === moduleId).length,
+            availableOperations: discovered.filter((d) => d.descriptor.moduleId === moduleId)
+              .length,
+          })),
+          // Applications without an adapter: the same for every client (spec §4.1, ADR 0024).
+          ...MODULE_SLOTS.map((slot) => ({
+            moduleId: slot.moduleId,
+            status: 'unavailable',
+            reason: slot.reason,
+            registeredOperations: 0,
+            availableOperations: 0,
+          })),
+        ];
         return toToolResult({ status: 'ok', modules });
       }),
   );
@@ -274,10 +293,15 @@ export function buildMcpServer(ctx: ToolContext): McpServer {
             ...(descriptor.namedTool === undefined ? {} : { namedTool: descriptor.namedTool }),
           }));
         const next = offset + limit < matching.length ? String(offset + limit) : undefined;
+        // A filter on an application without an adapter says why the list is empty.
+        const slot = args.moduleId === undefined ? undefined : moduleSlot(args.moduleId);
         return toToolResult({
           status: 'ok',
           operations: page,
           total: matching.length,
+          ...(slot === undefined
+            ? {}
+            : { module: { moduleId: slot.moduleId, status: 'unavailable', reason: slot.reason } }),
           ...(next === undefined ? {} : { nextCursor: next }),
         });
       }),

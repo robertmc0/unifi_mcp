@@ -34,6 +34,8 @@ import type { AuditEvent, AuditLog, Logger } from '@unifi-local-mcp/telemetry';
 import {
   DECLARATION_TTL_MS,
   isModuleId,
+  moduleSlot,
+  slotStatus,
   MODULE_ENDPOINTS,
   MODULE_IDS,
   type ModuleEndpoint,
@@ -275,6 +277,15 @@ export class ConsoleRegistry {
     if (!parsed.success)
       throw invalid(`The console policy is invalid:\n${describeValidationError(parsed.error)}`);
     const unknownModules = Object.keys(parsed.data.modules).filter((id) => !isModuleId(id));
+    // An application without an adapter gets its stated reason, not "unknown" (ADR 0024).
+    const slots = unknownModules.flatMap((id) => moduleSlot(id) ?? []);
+    if (slots.length > 0) {
+      throw invalid(
+        `Modules without an adapter cannot be configured: ${slots
+          .map((slot) => `${slot.moduleId} (${slotStatus(slot)})`)
+          .join(', ')}.`,
+      );
+    }
     if (unknownModules.length > 0) throw invalid(`Unknown modules: ${unknownModules.join(', ')}.`);
     return parsed.data;
   }

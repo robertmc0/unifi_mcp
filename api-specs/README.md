@@ -79,6 +79,16 @@ Protect and Access have official local APIs. InnerSpace has a local server in it
 but is not in the roadmap. Site Manager, Mobility and Carrier Fabric are cloud-only and
 excluded. No official local API was found for Talk, Connect or Drive.
 
+The check was repeated on 2026-11-15 with the same result
+([ADR 0024](../docs/adr/0024-other-applications-as-disabled-slots.md)). The service
+reports Talk, Connect, Drive and InnerSpace as unavailable, each with its reason
+([applications-other.md](../docs/applications-other.md)). A directory under `api-specs/`
+exists only for an implemented module; `tests/contract/module-slots.test.ts` checks this.
+
+On the same date the portal root index listed **Protect v7.4.99** as the newest
+documented revision. It is not in this baseline yet (newest here: 7.4.96). Both cached
+Protect revisions were still served at their recorded sizes.
+
 ## Workflow
 
 ```sh

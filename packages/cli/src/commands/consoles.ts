@@ -6,6 +6,8 @@ import { satisfies } from '@unifi-local-mcp/core';
 import {
   checkConsoleConnection,
   isModuleId,
+  moduleSlot,
+  slotStatus,
   type ModuleId,
   type TlsTrustInput,
 } from '@unifi-local-mcp/unifi-api';
@@ -52,8 +54,16 @@ function dn(name: string): string {
 
 function moduleOption(ctx: RunContext): ModuleId {
   const value = string(ctx.values, 'module') ?? 'network';
-  if (!isModuleId(value)) throw new CliError('--module must be network, protect or access.', 2);
-  return value;
+  if (isModuleId(value)) return value;
+  // An application without an adapter gets its stated reason (ADR 0024).
+  const slot = moduleSlot(value);
+  throw new CliError(
+    slot === undefined
+      ? '--module must be network, protect or access.'
+      : `--module ${slot.moduleId} is ${slotStatus(slot)}. There is no adapter for ` +
+          `${slot.title}; --module must be network, protect or access.`,
+    2,
+  );
 }
 
 export const consoleCommands: Record<string, Command> = {

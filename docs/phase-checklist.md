@@ -688,10 +688,59 @@ command and its storage are built with the adapter.
      Doorbell calls need nothing more and lose their `token`; remote unlocks also need the
      door read and `access_log`. Coverage: 98 of 107 (6 refused, 3 deferred).
 
-**Next:** the "other applications" item below (adapter scaffolds reported as
-`unavailable: official_local_api_not_documented`), then the Phase 4 gate review. The gate
-still needs verified installed-version evidence (A or C above), which needs an installed
-Access.
+8. ✅ **Other applications** (2026-11-15, [ADR 0024](adr/0024-other-applications-as-disabled-slots.md)):
+   disabled slots in one table (`MODULE_SLOTS`), with no endpoint, credential, contract,
+   operation or event stream. Talk, Connect and Drive show
+   `unavailable: official_local_api_not_documented`; InnerSpace, which has a published
+   local API but no adapter (ADR 0005), shows `unavailable: adapter_not_implemented`.
+   Shown by `unifi_list_modules`, `unifi_list_operations`, the new `unifi-mcp api modules`,
+   and the refusals of `--module`, console policies and bootstrap files; listed in the
+   coverage matrix (`unavailableModules`). `tests/contract/module-slots.test.ts` keeps a
+   slot from gaining an endpoint, an operation or a contract by itself. Vendor
+   publications checked again on 2026-11-15 (evidence in the ADR). Guide:
+   [applications-other.md](applications-other.md). Also corrected: the summary table of
+   `docs/api-coverage/README.md` (it showed 0 Access operations) is now tested against the
+   generated matrix, and `CHANGELOG.md` gained its missing Phase 4 section.
+
+### Gate review (2026-11-15): open
+
+Spec §16 gate: "verified source contracts, special treatment of physical-access writes
+and sensitive events, full coverage report and negative tests; no unsupported API
+assumptions."
+
+| Gate part                                | State    | Evidence                                                                                                                                                                             |
+| ---------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Verified source contracts                | **Open** | The PDF is pinned by SHA-256 and transcribed with two-way checks (ADR 0022), but it has no version label, and no installed Access has confirmed it (evidence A and C above).         |
+| Physical-access writes, sensitive events | Met      | 51 writes high risk with approval, pinned by `tests/contract/access-security-review.test.ts`; per-event grants and the doorbell token removed (ADR 0023 §4, §6). Synthetic API only. |
+| Full coverage report                     | Met      | `docs/api-coverage/access/2026-03-23.md`: 98 of 107 implemented, 6 refused and 3 deferred, each with its reason. Other applications listed as unavailable.                           |
+| Negative tests                           | Met      | `tests/integration-mock/access-writes.test.ts`, `access-events.test.ts`; for the other applications, `tests/contract/module-slots.test.ts`.                                          |
+| No unsupported API assumptions           | Met\*    | Every operation traces to a PDF page; Access versions above 4.2.16 are refused. \*The version binding itself is a declared assumption (ADR 0021 §5), which is why the gate is open.  |
+| Operator documentation (milestone rule)  | Met      | [applications-access.md](applications-access.md), [applications-other.md](applications-other.md).                                                                                    |
+
+**The gate cannot pass without an installed UniFi Access.** It needs one of:
+
+- (A) the in-app "Download API documentation" of an installed Access, compared with the
+  hosted PDF by SHA-256, or
+- (C) a live read-only run against an installed Access, with a declared version.
+
+Until then Access stays as it is: implemented, tested against a synthetic API only, and
+labelled so in every guide. Nothing else in Phase 4 is waiting.
+
+**Open, owner's choices:**
+
+- How to get evidence A or C (install Access on the test console, or use another
+  console), or to accept the phase as "complete on synthetic evidence" with the gate
+  item recorded as not met. The second is a deviation from the milestone rule and would
+  need an ADR.
+- Whether Phase 5 work may start while this gate is open. Most Phase 5 tasks do not
+  depend on Access.
+- InnerSpace: eligible under spec §4.1 (six documented reads with a local server), not
+  planned since Phase 0 (ADR 0005). Implement it, or leave it unavailable.
+
+**Found during the review, not done:** the developer portal now documents **Protect
+v7.4.99** (2026-11-15). The newest revision here is 7.4.96. Adding it follows
+"Adding a new vendor revision" in [api-specs/README.md](../api-specs/README.md) and
+ADR 0019 §7.
 
 - [ ] Verified installed-version contract (machine-readable if available), distinct auth and port
 - [x] Physical-access writes always high risk; sensitive events handled; negative tests
@@ -700,7 +749,9 @@ Access.
       notifications with per-event grants, the doorbell token removed (ADR 0023 §6).
       Negative tests: `tests/integration-mock/access-writes.test.ts`,
       `access-events.test.ts`. Synthetic API only (see the first item).
-- [ ] Other applications: adapter scaffolds only, reported as `unavailable: official_local_api_not_documented`
+- [x] Other applications: adapter scaffolds only, reported as `unavailable: official_local_api_not_documented`
+      Disabled slots for Talk, Connect and Drive; InnerSpace as
+      `unavailable: adapter_not_implemented` (ADR 0024).
 
 ## Phase 5 — Production and release hardening
 

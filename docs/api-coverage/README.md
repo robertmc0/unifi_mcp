@@ -5,14 +5,33 @@ Each entry shows whether it is supported, how it is exposed, its permission, ris
 sensitivity, schema validation, mock tests and optional live read validation. Coverage is
 measured against the vendor contract, not by counting hand-written tools.
 
-| Module  | Revision         | Documented | Implemented | Page                                         |
-| ------- | ---------------- | ---------: | ----------: | -------------------------------------------- |
-| Network | 11.0.97          |         73 |          73 | [network/11.0.97.md](network/11.0.97.md)     |
-| Protect | 7.3.74           |         74 |          71 | [protect/7.3.74.md](protect/7.3.74.md)       |
-| Protect | 7.4.96           |         83 |          79 | [protect/7.4.96.md](protect/7.4.96.md)       |
-| Access  | 2026-03-23 (PDF) |        107 |           0 | [access/2026-03-23.md](access/2026-03-23.md) |
+| Module  | Revision         | Documented | Implemented | Refused | Not yet | Page                                         |
+| ------- | ---------------- | ---------: | ----------: | ------: | ------: | -------------------------------------------- |
+| Network | 11.0.97          |         73 |          73 |       0 |       0 | [network/11.0.97.md](network/11.0.97.md)     |
+| Protect | 7.3.74           |         74 |          73 |       0 |       1 | [protect/7.3.74.md](protect/7.3.74.md)       |
+| Protect | 7.4.96           |         83 |          81 |       0 |       2 | [protect/7.4.96.md](protect/7.4.96.md)       |
+| Access  | 2026-03-23 (PDF) |        107 |          98 |       6 |       3 | [access/2026-03-23.md](access/2026-03-23.md) |
+
+"Refused" operations are documented but not offered, by review (`unsupported`, with the
+reason on the page). "Not yet" are neither implemented nor refused. This table is written
+by hand; `tests/contract/api-coverage-matrix.test.ts` fails when it differs from the
+generated matrix.
 
 Machine-readable: [`api-coverage.json`](api-coverage.json).
+
+## Applications without an adapter
+
+They have no contract here and therefore no operations
+([ADR 0024](../adr/0024-other-applications-as-disabled-slots.md),
+[applications-other.md](../applications-other.md)). `api-coverage.json` lists them under
+`unavailableModules`.
+
+| Application   | Module id    | Status                                           |
+| ------------- | ------------ | ------------------------------------------------ |
+| UniFi Talk    | `talk`       | `unavailable: official_local_api_not_documented` |
+| UniFi Connect | `connect`    | `unavailable: official_local_api_not_documented` |
+| UniFi Drive   | `drive`      | `unavailable: official_local_api_not_documented` |
+| InnerSpace    | `innerspace` | `unavailable: adapter_not_implemented`           |
 
 ## How it is produced
 

@@ -13875,5 +13875,31 @@
         }
       ]
     }
+  ],
+  "unavailableModules": [
+    {
+      "application": "talk",
+      "title": "UniFi Talk",
+      "status": "unavailable",
+      "reason": "official_local_api_not_documented"
+    },
+    {
+      "application": "connect",
+      "title": "UniFi Connect",
+      "status": "unavailable",
+      "reason": "official_local_api_not_documented"
+    },
+    {
+      "application": "drive",
+      "title": "UniFi Drive",
+      "status": "unavailable",
+      "reason": "official_local_api_not_documented"
+    },
+    {
+      "application": "innerspace",
+      "title": "InnerSpace",
+      "status": "unavailable",
+      "reason": "adapter_not_implemented"
+    }
   ]
 }

@@ -71,9 +71,17 @@ describe('ConsoleRegistry', () => {
     h.consoles.setPolicy(h.consoleId, { modules: { network: { state: 'read_only' } } }, CLI);
     expect(h.policyStore.current().version).toBe(before + 1);
     expect(h.consoles.policy(h.consoleId)?.modules['network']?.state).toBe('read_only');
+    // An application without an adapter is refused with its reason (ADR 0024).
     expect(() => h.consoles.setPolicy(h.consoleId, { modules: { talk: {} } }, CLI)).toThrow(
-      /Unknown modules/,
+      /without an adapter cannot be configured: talk \(unavailable: official_local_api_not_documented\)/,
     );
+    expect(() =>
+      h.consoles.setPolicy(h.consoleId, { modules: { innerspace: {}, teleport: {} } }, CLI),
+    ).toThrow(/innerspace \(unavailable: adapter_not_implemented\)/);
+    expect(() => h.consoles.setPolicy(h.consoleId, { modules: { teleport: {} } }, CLI)).toThrow(
+      /Unknown modules: teleport/,
+    );
+    expect(Object.keys(h.consoles.policy(h.consoleId)?.modules ?? {})).toEqual(['network']);
     expect(() => h.consoles.setPolicy(h.consoleId, { state: 'on' }, CLI)).toThrow(/invalid/);
     await h.close();
   });

@@ -26,6 +26,11 @@ unverified assumptions.
 | Carrier Fabric               | No: cloud only (`https://api.ui.com`) | —                                           | —                                                       | —                               | Excluded                                                                                 |
 | Talk, Connect, Drive, others | None published                        | —                                           | —                                                       | —                               | `unavailable: official_local_api_not_documented`                                         |
 
+Since 2026-11-15 the service itself reports the last two kinds of row: Talk, Connect and
+Drive as `unavailable: official_local_api_not_documented`, InnerSpace as
+`unavailable: adapter_not_implemented` ([ADR 0024](0024-other-applications-as-disabled-slots.md),
+which also repeats the availability check on that date).
+
 Adapters must use only the local base URLs above. Every vendor OpenAPI also lists the
 **cloud connector** server `https://api.ui.com/v1/connector/consoles/{consoleId}/proxy/<app>/integration`,
 and the onboarding material advertises it as a way to reach consoles "without a VPN". This

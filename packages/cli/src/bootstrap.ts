@@ -16,7 +16,13 @@ import {
   describeValidationError,
   GlobalPolicySchema,
 } from '@unifi-local-mcp/policy';
-import { MODULE_IDS, type ModuleId, type TlsTrustInput } from '@unifi-local-mcp/unifi-api';
+import {
+  MODULE_IDS,
+  moduleSlot,
+  slotStatus,
+  type ModuleId,
+  type TlsTrustInput,
+} from '@unifi-local-mcp/unifi-api';
 import * as z from 'zod';
 import type { Services } from './context.ts';
 import { CliError } from './io.ts';
@@ -100,10 +106,33 @@ export interface Prepared {
   consoles: PreparedConsole[];
 }
 
+/** Why a console's `modules` entry was refused, when it names an application without an adapter. */
+function slotProblems(document: unknown): string[] {
+  const consoles = (document as { consoles?: unknown } | null)?.consoles;
+  if (!Array.isArray(consoles)) return [];
+  return consoles.flatMap((entry: unknown, index) => {
+    const modules = (entry as { modules?: unknown } | null)?.modules;
+    if (typeof modules !== 'object' || modules === null) return [];
+    return Object.keys(modules).flatMap((id) => {
+      const slot = moduleSlot(id);
+      return slot === undefined
+        ? []
+        : [`consoles.${String(index)}.modules: ${slot.moduleId} is ${slotStatus(slot)}`];
+    });
+  });
+}
+
 export function parseBootstrap(document: unknown): BootstrapFile {
   const parsed = BootstrapSchema.safeParse(document);
-  if (!parsed.success)
-    throw new CliError(`The bootstrap file is invalid:\n${describeValidationError(parsed.error)}`);
+  if (!parsed.success) {
+    throw new CliError(
+      [
+        'The bootstrap file is invalid:',
+        describeValidationError(parsed.error),
+        ...slotProblems(document),
+      ].join('\n'),
+    );
+  }
   return parsed.data;
 }
 

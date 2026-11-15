@@ -1,6 +1,8 @@
 /**
  * Builds the API coverage matrix (spec §4.5, §16 Phase 2):
- *   docs/api-coverage/api-coverage.json                    machine-readable, all modules
+ *   docs/api-coverage/api-coverage.json                    machine-readable, all modules,
+ *                                                          and the applications without an
+ *                                                          adapter (ADR 0024)
  *   docs/api-coverage/<application>/<revision>.md          human-readable, per module
  *
  * Inputs: the committed api-specs/<app>/<revision>/{provenance,operations}.json and the
@@ -15,6 +17,7 @@
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ADAPTERS, implementsRevision } from '@unifi-local-mcp/mcp-server';
+import { MODULE_SLOTS } from '@unifi-local-mcp/unifi-api';
 import {
   COVERAGE_DIR,
   listSpecRevisions,
@@ -413,7 +416,18 @@ export async function buildCoverageFiles(
   files.set(
     'docs/api-coverage/api-coverage.json',
     `${JSON.stringify(
-      { schemaVersion: 1, generatedBy: 'scripts/generate-coverage-report.ts', modules },
+      {
+        schemaVersion: 1,
+        generatedBy: 'scripts/generate-coverage-report.ts',
+        modules,
+        // Applications without an adapter and therefore without operations (ADR 0024).
+        unavailableModules: MODULE_SLOTS.map((slot) => ({
+          application: slot.moduleId,
+          title: slot.title,
+          status: 'unavailable',
+          reason: slot.reason,
+        })),
+      },
       null,
       2,
     )}\n`,

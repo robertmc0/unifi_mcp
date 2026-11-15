@@ -10,7 +10,7 @@ import {
   ADAPTERS,
   implementsRevision,
 } from '@unifi-local-mcp/mcp-server';
-import type { ConsoleModuleView } from '@unifi-local-mcp/unifi-api';
+import { MODULE_SLOTS, type ConsoleModuleView } from '@unifi-local-mcp/unifi-api';
 import { requireString, string, type Command, type RunContext } from '../cli.ts';
 import {
   apply,
@@ -349,7 +349,59 @@ export const apiCoverageCommand: Command = {
       '',
       'Implemented: reviewed operations this service registers. Not offered: documented',
       'operations refused by review, with reasons. Full matrix with test evidence:',
-      'docs/api-coverage/.',
+      'docs/api-coverage/. Applications without an adapter: unifi-mcp api modules.',
+    ]);
+    return 0;
+  },
+};
+
+export const apiModulesCommand: Command = {
+  summary: 'Show every application module: supported, or unavailable with the reason',
+  usage: '',
+  run: (ctx) => {
+    const rows: {
+      moduleId: string;
+      title?: string;
+      status: 'supported' | 'unavailable';
+      reason?: string;
+      contractRevisions: string[];
+      operations: number;
+      eventStreams: number;
+    }[] = [
+      ...ADAPTERS.map((adapter) => ({
+        moduleId: adapter.moduleId,
+        status: 'supported' as const,
+        contractRevisions: [...adapter.contractRevisions],
+        operations: adapter.operations.length,
+        eventStreams: adapter.eventStreams.length,
+      })),
+      // Disabled slots: no endpoint, credential, operation or event stream (ADR 0024).
+      ...MODULE_SLOTS.map((slot) => ({
+        moduleId: slot.moduleId,
+        title: slot.title,
+        status: 'unavailable' as const,
+        reason: slot.reason,
+        contractRevisions: [],
+        operations: 0,
+        eventStreams: 0,
+      })),
+    ];
+    ctx.print(rows, () => [
+      ...formatTable([
+        ['MODULE', 'STATUS', 'CONTRACT', 'OPERATIONS', 'EVENT STREAMS'],
+        ...rows.map((r) => [
+          r.moduleId,
+          r.reason === undefined ? r.status : `${r.status}: ${r.reason}`,
+          r.contractRevisions.join(', ') || '-',
+          String(r.operations),
+          String(r.eventStreams),
+        ]),
+      ]),
+      '',
+      'Unavailable applications have no adapter and cannot be enabled on a console:',
+      'official_local_api_not_documented means Ubiquiti publishes no official local API;',
+      'adapter_not_implemented means one is published but this project has no adapter.',
+      'See docs/applications-other.md.',
     ]);
     return 0;
   },
