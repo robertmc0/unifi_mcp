@@ -1,9 +1,10 @@
 # Configuration
 
-> **Status: Phase 1 complete.** This page covers the settings implemented so far: the
-> hard lock, the MCP listener, audit retention, the egress allowlist, the data directory,
-> logging and the master encryption key. The bootstrap YAML file, policy and runtime mode
-> are managed with the CLI ([administration.md](administration.md)).
+> **Status:** this page covers every deployment setting the service reads: the hard
+> lock, the three listeners (MCP, admin, metrics), limits, audit retention, the egress
+> allowlist, the data directory, logging and the master encryption key. The bootstrap
+> YAML file, policy and runtime mode are managed with the CLI
+> ([administration.md](administration.md)).
 
 Configuration precedence (spec §8.1): immutable deployment overrides first, then settings
 stored in the database, then YAML/environment bootstrap values. The settings on this page
@@ -141,6 +142,16 @@ Requirements:
   [administration.md](administration.md)).
 - The service creates the directory with mode 0700 and the database with mode 0600 if
   they do not exist. Keep the volume readable only by the service user.
+
+## Operation inventories
+
+| Variable                  | Default                                                                  | Meaning                                                                                                                                                                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_API_SPECS_DIR` | `/app/api-specs` in the image; the repository's `api-specs/` from source | Where the service, `unifi-mcp console probe` and `unifi-mcp api coverage` read the reviewed operation inventories (`<application>/<revision>/operations.json`). Leave it alone: the image sets it, and it exists for the image and for tests. |
+
+The inventories list what the vendors document. They never add an operation: the service
+offers only the operations its adapters implement and review in code, and refuses to
+start if one of them is missing from its inventory.
 
 ## Logging
 

@@ -1,12 +1,13 @@
 # Security model
 
-> **Status: Phase 1 complete.** This page currently covers the permission model
-> (`packages/policy`, ADR 0009), write safety (`packages/core`, ADR 0010), client tokens
-> (`packages/mcp-server`, ADR 0013) and connections to consoles (`packages/unifi-api`,
-> ADR 0012). The approval workflow is in [approval-workflow.md](approval-workflow.md) and
-> host administration in [administration.md](administration.md) (ADR 0015). How the
-> Network adapter applies it is in [applications-network.md](applications-network.md)
-> (ADR 0018). Network isolation examples are Phase 5.
+> **Status:** this page covers the permission model (`packages/policy`, ADR 0009), write
+> safety (`packages/core`, ADR 0010), client tokens (`packages/mcp-server`, ADR 0013), the
+> admin web interface (ADR 0016, ADR 0026, ADR 0027) and connections to consoles
+> (`packages/unifi-api`, ADR 0012). The approval workflow is in
+> [approval-workflow.md](approval-workflow.md), host administration in
+> [administration.md](administration.md) (ADR 0015), and network isolation in
+> [networking.md](networking.md) (ADR 0028). How each adapter applies the model is on its
+> application page.
 
 ## Principles
 

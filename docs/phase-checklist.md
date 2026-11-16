@@ -877,6 +877,18 @@ backups, `client-codex.md`, `development.md` and `release.md`.
 9. **Manual completeness** (spec §18): `development.md` (contributor workflow and the
    adapter guide), `release.md`, `client-codex.md` (needs the owner's trial of Codex), and
    every page checked against the commands and the interface.
+   - ✅ **Names checked against the code** (2026-11-16): `tests/contract/doc-interface.test.ts`
+     checks that every variable the service, CLI and bridge read is documented, that every
+     `UNIFI_MCP_*` name in the manual, `.env.example`, the Dockerfile and the Compose files
+     is read by the code or is a Compose variable, and that every tool the manual names
+     exists and the client guide lists them all (5 mutation checks). With
+     `doc-commands.test.ts` and `doc-links.test.ts`, the commands, links, variables and
+     tools of the manual are now checked on every `npm run check`. Found and fixed:
+     `.env.example` set `UNIFI_MCP_ONLINE_CHECKS_ENABLED`, which nothing reads, and
+     lacked the Phase 5 settings; `UNIFI_MCP_API_SPECS_DIR` was undocumented; the client
+     guide listed only the Network named tools; status notes on seven pages still
+     described Phase 5 work as future, and `approval-workflow.md` said MFA was to come;
+     the index was a table by phase and now groups pages by task.
 10. **ARM64 on hardware or a native runner** (spec §14, §17).
 11. **Gate review**: every §17 item mapped to its evidence.
 

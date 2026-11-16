@@ -1,10 +1,11 @@
 # Installation
 
-> **Status: Phase 1 complete.** The container image and the single-host Compose example
-> are implemented and tested on `linux/amd64` ([ADR 0017](adr/0017-container-image-and-compose.md)).
-> `linux/arm64` is tested under emulation only, not yet on arm64 hardware. Images are
-> built locally; no registry images are published yet. Dual-network and TLS Compose
-> examples are Phase 5.
+> **Status:** the container image and the Compose examples are implemented and tested on
+> `linux/amd64` ([ADR 0017](adr/0017-container-image-and-compose.md),
+> [ADR 0028](adr/0028-compose-examples-and-container-tests.md)). `linux/arm64` is tested
+> under emulation only, not yet on arm64 hardware. Images are built locally; no registry
+> images are published yet ([release.md](release.md)). The two-network and HTTPS
+> examples are in [networking.md](networking.md).
 
 ## Requirements
 

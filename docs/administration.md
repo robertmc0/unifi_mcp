@@ -1,10 +1,13 @@
 # Administration with the `unifi-mcp` CLI
 
-> **Status: Phase 1 complete.** The CLI ([ADR 0015](adr/0015-host-administration-cli.md))
-> and the admin web interface's sign-in, dashboard, approvals and audit pages
-> ([ADR 0016](adr/0016-admin-listener-sessions-and-ui.md)) are implemented and tested.
-> Editing consoles, clients and policy in the browser, and MFA, are Phase 5. The container
-> image has `unifi-mcp` on the `PATH` ([installation.md](installation.md)).
+> **Status:** the CLI ([ADR 0015](adr/0015-host-administration-cli.md)) and the admin web
+> interface ([ADR 0016](adr/0016-admin-listener-sessions-and-ui.md)) are implemented and
+> tested, including two-step sign-in ([ADR 0026](adr/0026-admin-two-step-sign-in.md)) and
+> the pages for consoles, clients, policy and settings, which can also make changes when
+> a deployment allows it ([ADR 0027](adr/0027-admin-pages-for-consoles-clients-policy.md)).
+> The pages are tested as HTTP requests and HTML; nobody has yet clicked through them in
+> a browser. The container image has `unifi-mcp` on the `PATH`
+> ([installation.md](installation.md)).
 
 `unifi-mcp` is the host administrator's tool. It manages MCP clients and their tokens,
 consoles and their credentials, policy, approvals, the bootstrap file, the master key,

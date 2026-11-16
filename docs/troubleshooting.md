@@ -1,9 +1,9 @@
 # Troubleshooting
 
-> **Status: Phase 3 complete.** Covers the service, the CLI, the admin interface,
-> client connections, UniFi Network and Protect operations and Protect events
-> ([events.md](events.md#troubleshooting)). Access follows with its adapter; metrics
-> arrive in Phase 5.
+> **Status:** covers the service, the CLI, the admin interface, client connections,
+> metrics, UniFi Network, Protect and Access operations, and events
+> ([events.md](events.md#troubleshooting)). Access has been tested against a synthetic
+> API only ([applications-access.md](applications-access.md#limitations)).
 
 ## Start here
 

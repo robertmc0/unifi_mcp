@@ -25,32 +25,59 @@
 - [API coverage matrix](api-coverage/README.md): [Network 11.0.97](api-coverage/network/11.0.97.md),
   [Protect 7.3.74](api-coverage/protect/7.3.74.md), [Protect 7.4.96](api-coverage/protect/7.4.96.md), [Access 2026-03-23](api-coverage/access/2026-03-23.md)
 
-## Operator manual (written with each phase)
+## Operator manual
 
-| Page                                                                                                                | Phase           |
-| ------------------------------------------------------------------------------------------------------------------- | --------------- |
-| [configuration.md](configuration.md) (hard lock, listener, egress, data, logging, master key, retention)            | 1 (started)     |
-| [backup-restore.md](backup-restore.md) (backup, restore, key rotation)                                              | 1 (started)     |
-| [monitoring.md](monitoring.md) (logs, audit trail, health, Prometheus metrics)                                      | 1 / 5           |
-| [security.md](security.md) (permissions, write safety, client tokens, console connections)                          | 1 (started)     |
-| [installation.md](installation.md) (Docker Compose, from source, maintenance, upgrades)                             | 1 (started)     |
-| [quickstart.md](quickstart.md) (one Docker host, loopback, hard lock on)                                            | 1               |
-| [approval-workflow.md](approval-workflow.md)                                                                        | 1 (started)     |
-| [administration.md](administration.md) (the `unifi-mcp` CLI, bootstrap file, maintenance)                           | 1 (started)     |
-| [client-generic-mcp.md](client-generic-mcp.md) (HTTP and stdio connection, tools, results)                          | 1 (started)     |
-| [client-claude-code.md](client-claude-code.md) (bridge and HTTP; verified with Claude Code 2.1.322)                 | 1               |
-| client-codex.md                                                                                                     | 1               |
-| [networking.md](networking.md) (MCP listener, egress)                                                               | 1 (started) / 5 |
-| [troubleshooting.md](troubleshooting.md) (startup, connections, refusals, consoles, admin)                          | 1 / 5           |
-| [applications-network.md](applications-network.md) (versions, reads, sensitive data, limitations)                   | 2 (started)     |
-| [runbook-network-writes.md](runbook-network-writes.md) (optional manual write validation on a real console)         | 2               |
-| [applications-protect.md](applications-protect.md) (versions, reads, events, writes, credentials, limitations)      | 3               |
-| [runbook-protect-writes.md](runbook-protect-writes.md) (optional manual write validation on a real console)         | 3               |
-| [events.md](events.md) (Protect events: subscriptions, reads, guarantees, reconnects, limits, troubleshooting)      | 3               |
-| [applications-access.md](applications-access.md) (versions, setup, reads, sensitive data, credentials, limitations) | 4 (started)     |
-| [applications-other.md](applications-other.md) (Talk, Connect, Drive, InnerSpace: unavailable, and why)             | 4               |
-| [release.md](release.md) (pre-release checks, secret scan, SBOM, tagging, publishing switch, what is not done)      | 5               |
-| development.md                                                                                                      | 5               |
+Getting started:
+
+- [quickstart.md](quickstart.md): one Docker host, the MCP endpoint on loopback, the hard
+  lock on, a first read-only tool
+- [installation.md](installation.md): requirements, Docker Compose, from source,
+  maintenance, upgrades, uninstalling
+- [configuration.md](configuration.md): every deployment setting (hard lock, listeners,
+  limits, egress, data, logging, master key, retention)
+- [networking.md](networking.md): the three listeners, egress to consoles, one-host,
+  HTTPS and two-network Compose examples, reverse proxy
+
+Security and administration:
+
+- [security.md](security.md): the security model, permissions, write safety, client
+  tokens, the admin interface, connections to consoles
+- [administration.md](administration.md): the `unifi-mcp` CLI, the admin web interface,
+  two-step sign-in, the bootstrap file
+- [approval-workflow.md](approval-workflow.md): high-risk writes and their approval
+- [threat-model.md](threat-model.md): threats and their mitigations
+
+Connecting clients:
+
+- [client-claude-code.md](client-claude-code.md): Claude Code, over HTTP or the stdio bridge
+- [client-generic-mcp.md](client-generic-mcp.md): any MCP client; tools, discovery,
+  results, approval and resume
+- client-codex.md: not written yet. It waits for a verified trial with the current
+  Codex release (spec §18); until then, follow the generic guide.
+
+UniFi applications:
+
+- [applications-network.md](applications-network.md) and the optional
+  [runbook-network-writes.md](runbook-network-writes.md)
+- [applications-protect.md](applications-protect.md) and the optional
+  [runbook-protect-writes.md](runbook-protect-writes.md)
+- [applications-access.md](applications-access.md)
+- [applications-other.md](applications-other.md): Talk, Connect, Drive, InnerSpace, and
+  why they are unavailable
+- [events.md](events.md): Protect event subscriptions and Access notifications
+
+Running it:
+
+- [monitoring.md](monitoring.md): logs, the audit trail, health checks, Prometheus metrics
+- [backup-restore.md](backup-restore.md): backup, restore, key rotation, drills
+- [troubleshooting.md](troubleshooting.md): startup, connections, refusals, consoles,
+  administration
+
+Releasing:
+
+- [release.md](release.md): pre-release checks, secret scan, SBOM, tagging, the
+  publishing switch, what is not done
+- [SECURITY.md](../SECURITY.md): reporting a vulnerability
 
 ## Contributing
 

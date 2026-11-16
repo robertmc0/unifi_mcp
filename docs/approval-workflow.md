@@ -1,8 +1,8 @@
 # Approval workflow
 
-> **Status: Phase 2 complete.** The workflow is implemented and tested in
-> `packages/approvals` and the dispatcher (ADR 0011), with the MCP tools (ADR 0013) and
-> the CLI commands (ADR 0015) and the admin web interface (ADR 0016).
+> **Status:** the workflow is implemented and tested in `packages/approvals` and the
+> dispatcher (ADR 0011), with the MCP tools (ADR 0013), the CLI commands (ADR 0015) and
+> the admin web interface (ADR 0016, with two-step sign-in from ADR 0026).
 
 High-risk operations, such as changing firewall rules, rebooting a gateway or unlocking a
 door, never run just because an AI client asks. A human approves each one.
@@ -44,13 +44,19 @@ uses it, because the console cannot list that for networks in use
 ([applications-network.md](applications-network.md#limitations)). The full arguments are stored encrypted with the master key and deleted as
 soon as the request is approved and used, rejected, expired or invalidated.
 
-Administrators must have signed in within the last 5 minutes to approve. A deployment can
-also require a verified second factor (MFA arrives in Phase 5).
+Administrators must have signed in within the last 5 minutes to approve. An administrator
+with two-step sign-in also enters a code from the authenticator app with every approval,
+and a deployment can require two-step sign-in for every account
+([administration.md](administration.md#two-step-sign-in)).
+
+When the target console has TLS verification turned off, the request says so: the
+service cannot check that it is talking to the real console
+([security.md](security.md#connections-to-consoles)).
 
 ### Approving in the admin web interface
 
 The approval page asks for your password on every approval, even within an active
-session. That re-authentication is what the 5-minute rule checks. The page shows the
+session, and for a code when your account has two-step sign-in. That re-authentication is what the 5-minute rule checks. The page shows the
 client, operation, risk, console and site, the times, and the redacted arguments. Text in
 them is escaped, and control and bidirectional-text characters are shown as `\uXXXX`. The
 decision is recorded as `admin:<username>`. See
