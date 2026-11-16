@@ -41,7 +41,8 @@ Getting started:
 Security and administration:
 
 - [security.md](security.md): the security model, permissions, write safety, client
-  tokens, the admin interface, connections to consoles
+  tokens, the admin interface, connections to consoles, and
+  [stopping writes in an emergency](security.md#stopping-writes-in-an-emergency)
 - [administration.md](administration.md): the `unifi-mcp` CLI, the admin web interface,
   two-step sign-in, the bootstrap file
 - [approval-workflow.md](approval-workflow.md): high-risk writes and their approval

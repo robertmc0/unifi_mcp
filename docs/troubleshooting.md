@@ -7,6 +7,9 @@
 
 ## Start here
 
+If an agent is changing things you did not expect, stop writes first and investigate
+afterwards: [Stopping writes in an emergency](security.md#stopping-writes-in-an-emergency).
+
 Inside the container, prefix each command with `docker compose exec unifi-mcp`. From a
 source checkout, use `npm run unifi-mcp --` ([administration.md](administration.md)).
 

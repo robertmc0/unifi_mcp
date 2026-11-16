@@ -7,7 +7,7 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { COMMANDS, runCli, type CliIo } from '@unifi-local-mcp/cli';
 import { describe, expect, it } from 'vitest';
-import { RULE } from '../unit/core/fixtures.ts';
+import { DEVICE_A, RULE } from '../unit/core/fixtures.ts';
 import { testKeyText, useTempDirs } from '../unit/storage/fixtures.ts';
 import { connect, startTestService, structured } from './fixtures.ts';
 
@@ -71,6 +71,59 @@ describe('CLI beside the service', () => {
         await writer.callTool({ name: 'unifi_resume_approved', arguments: { approvalId } }),
       ),
     ).toMatchObject({ status: 'denied', error: { code: 'approval_already_used' } });
+  });
+
+  it('switching to read-only with the CLI stops new writes and approved ones (emergency stop)', async () => {
+    const dir = await tempDir();
+    const t = await startTestService({ dir });
+    const writer = await connect(t.mcpUrl, t.token('writer', ['network.*.*']));
+    const proposed = structured(
+      await writer.callTool({
+        name: 'unifi_execute',
+        arguments: {
+          operationId: 'network.firewall.update_rule',
+          consoleId: t.consoleId,
+          siteId: 'site-1',
+          arguments: { ruleId: RULE, body: { action: 'block' } },
+        },
+      }),
+    );
+    const approvalId = String(proposed['approvalId']);
+    expect(
+      await cli(dir, ['approvals', 'approve', approvalId], [approvalId.slice(0, 8)]),
+    ).toMatchObject({ code: 0 });
+
+    expect(await cli(dir, ['policy', 'set-runtime-mode', 'read_only'])).toMatchObject({ code: 0 });
+
+    const restart = structured(
+      await writer.callTool({
+        name: 'unifi_execute',
+        arguments: {
+          operationId: 'network.devices.restart',
+          consoleId: t.consoleId,
+          siteId: 'site-1',
+          arguments: { deviceId: DEVICE_A },
+        },
+      }),
+    );
+    expect(restart).toMatchObject({ status: 'denied', error: { code: 'runtime_read_only' } });
+    // Without writes the resume tool is not offered at all; the approval is not used.
+    await expect(
+      writer.callTool({ name: 'unifi_resume_approved', arguments: { approvalId } }),
+    ).rejects.toThrow(/unifi_resume_approved not found/);
+    expect(t.mock.requests.filter((r) => r.method !== 'GET')).toEqual([]);
+    // Reads go on.
+    expect((await writer.callTool({ name: 'unifi_list_consoles', arguments: {} })).isError).toBe(
+      false,
+    );
+    // Writes back on: the approval given before the stop does not come back.
+    expect(await cli(dir, ['policy', 'set-runtime-mode', 'read_write'])).toMatchObject({ code: 0 });
+    expect(
+      structured(
+        await writer.callTool({ name: 'unifi_resume_approved', arguments: { approvalId } }),
+      ),
+    ).toMatchObject({ status: 'denied', error: { code: 'approval_invalidated' } });
+    expect(t.mock.requests.filter((r) => r.method !== 'GET')).toEqual([]);
   });
 
   it('revoking with the CLI refuses new calls and closes open responses', async () => {

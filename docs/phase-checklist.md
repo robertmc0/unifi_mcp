@@ -894,6 +894,24 @@ backups, `client-codex.md`, `development.md` and `release.md`.
      contract revisions and applications, the test folders and synthetic consoles,
      documentation and commits. Linked from the index, `README.md` and `CONTRIBUTING.md`;
      the README's repository map no longer calls the adapters skeletons.
+   - ✅ **Emergency stop** (2026-11-16; spec §18 item 12, "emergency read-only
+     response"): [security.md](security.md#stopping-writes-in-an-emergency), linked from
+     troubleshooting and the index: runtime mode `read_only`, revoking the client, the
+     hard lock across restarts, replacing a console key, the audit trail, a compromised
+     host. New test in `tests/integration-mock/cli-beside-service.test.ts`: the CLI
+     switches a running service to read-only; the next write is refused, the resume tool
+     is withdrawn, reads go on, and an approval given before the stop stays invalid after
+     writes are switched on again (1 mutation check: the runtime-mode gate disabled).
+   - Spec §18 coverage, checked item by item: 1 quickstart and installation; 2 security
+     and threat model; 3 the application pages and the quickstart (keys, their scope,
+     rotation with `console set-credential`); 4 configuration and administration; 5
+     networking; 6 administration; 7 the two client guides, **Codex open**; 8 the generic
+     client guide and approval workflow; 9 the application pages; 10 events; 11
+     monitoring and troubleshooting; 12 backup and restore, installation (upgrades),
+     security (emergency stop); 13 development; 14 release and `SECURITY.md`.
+   - **Open:** `client-codex.md`, waiting for the owner's trial of Codex 0.161.0 (the
+     guide must be checked against the release, spec §18); a click-through of the admin
+     pages in a browser.
 10. **ARM64 on hardware or a native runner** (spec §14, §17).
 11. **Gate review**: every §17 item mapped to its evidence.
 

@@ -53,6 +53,44 @@ Writes are off at five independent levels, and all five must be changed on purpo
 The hard lock cannot be changed from the database, the admin UI or an MCP client. While it
 is on, no write runs through any path, including actions that were already approved.
 
+## Stopping writes in an emergency
+
+If an agent does something you did not expect, or a client token or console key may have
+leaked, stop writes first and find out what happened afterwards. On the Docker host (from
+a source checkout, run the same commands as `npm run unifi-mcp -- …`):
+
+1. **Stop every write now**, without a restart:
+
+   ```sh
+   docker compose exec unifi-mcp unifi-mcp policy set-runtime-mode read_only
+   ```
+
+   The running service refuses the next write with `runtime_read_only`, including writes
+   still waiting in its queue, and stops offering `unifi_resume_approved`. Every approval,
+   pending or given, is invalidated and stays invalid when writes are switched on again:
+   the client has to ask again. Reads go on. A write already sent to a console cannot be
+   recalled. Where the web interface may make changes, its Policy page does the same.
+
+2. **Revoke the client** you suspect: `unifi-mcp client revoke <id>`. Its next call is
+   refused, and its open responses and event subscriptions are closed.
+3. **Keep writes off across restarts** with the hard lock: set
+   `UNIFI_MCP_FORCE_READ_ONLY=true` (or remove the variable) and restart the service. No
+   command, page or client can then allow a write.
+4. **Replace a console key that may have leaked**: create a new key in the UniFi
+   application, delete the old one there, and store the new one with
+   `unifi-mcp console set-credential <alias> --module <module> --key-file <file>`.
+5. **Find out what happened**: `unifi-mcp audit list --actor <id> --since <time>` shows
+   what a client did, and `unifi-mcp audit verify` checks that the audit trail was not
+   altered ([monitoring.md](monitoring.md#audit-trail)).
+
+If the host itself may be compromised, treat the master key and everything it protects
+as exposed: every console key and client token. Replace them, and rotate the master key
+([backup-restore.md](backup-restore.md#master-key-rotation)).
+
+Switching writes back on is the reverse of steps 3 and 1, and is again deliberate.
+`tests/integration-mock/cli-beside-service.test.ts` runs steps 1 and 2 from the CLI
+beside a running service.
+
 ## Scopes and rules
 
 Operations are identified by a **permission** of the form `<module>.<category>.<read|write>`,
