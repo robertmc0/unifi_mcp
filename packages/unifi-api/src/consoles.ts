@@ -30,7 +30,7 @@ import {
   type SecretValue,
   type SqliteDatabase,
 } from '@unifi-local-mcp/storage';
-import type { AuditEvent, AuditLog, Logger } from '@unifi-local-mcp/telemetry';
+import type { AuditEvent, AuditLog, HealthCheck, Logger } from '@unifi-local-mcp/telemetry';
 import {
   DECLARATION_TTL_MS,
   isModuleId,
@@ -669,6 +669,41 @@ export class ConsoleRegistry {
       consoleId,
       moduleId,
     ]);
+  }
+
+  /** Consoles in use whose certificate is not verified (explicit insecure override). */
+  unverified(): { id: string; alias: string }[] {
+    return this.list()
+      .filter((view) => view.tls.mode === 'insecure' && view.policy?.state !== 'disabled')
+      .map((view) => ({ id: view.id, alias: view.alias }));
+  }
+
+  /** What an approver is told about a console whose certificate is not verified. */
+  trustNotice(consoleId: string): string | undefined {
+    const row = this.#db.get('SELECT tls_mode FROM consoles WHERE id = ?', [consoleId]);
+    return row !== undefined && columnText(row, 'tls_mode') === 'insecure'
+      ? 'TLS verification is DISABLED for this console: the service cannot check that it is talking to the real console.'
+      : undefined;
+  }
+
+  /**
+   * Degraded while a console in use has TLS verification disabled, so the override stays
+   * visible on the dashboard, in `doctor` and in metrics (spec §4.4). Never critical.
+   */
+  tlsHealthCheck(): HealthCheck {
+    return {
+      name: 'console_tls',
+      critical: false,
+      run: () => {
+        const unverified = this.unverified();
+        return unverified.length === 0
+          ? { status: 'ok' }
+          : {
+              status: 'degraded',
+              detail: `TLS verification disabled: ${unverified.map((c) => c.alias).join(', ')}`,
+            };
+      },
+    };
   }
 
   #warnIfInsecure(consoleId: string, mode: TlsTrust['mode']): void {

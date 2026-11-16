@@ -87,6 +87,13 @@ async function readTokenFile(path: string, warnings: string[]): Promise<string> 
 export async function loadBridgeConfig(env: NodeJS.ProcessEnv): Promise<BridgeConfig> {
   const warnings: string[] = [];
   const url = parseServiceUrl(env[URL_ENV]);
+  // Node.js would then accept any certificate, and the token would go to whoever answers.
+  if (url.protocol === 'https:' && env['NODE_TLS_REJECT_UNAUTHORIZED']?.trim() === '0') {
+    throw new BridgeConfigError(
+      'Refusing to send the client token while NODE_TLS_REJECT_UNAUTHORIZED=0 disables ' +
+        'certificate verification. Remove it, and set NODE_EXTRA_CA_CERTS for a private CA.',
+    );
+  }
   const file = env[TOKEN_FILE_ENV]?.trim() ?? '';
   const inline = env[TOKEN_ENV] ?? '';
   Reflect.deleteProperty(env, TOKEN_ENV);

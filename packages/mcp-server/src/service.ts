@@ -199,6 +199,13 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
     now,
   });
 
+  if ((options.env ?? process.env)['NODE_TLS_REJECT_UNAUTHORIZED']?.trim() === '0') {
+    // Console connections set verification explicitly, per console (spec §4.4): this
+    // process-wide switch does not reach them. Say so, because someone set it on purpose.
+    logger.warn(
+      'NODE_TLS_REJECT_UNAUTHORIZED=0 is set and is ignored: console certificates are verified per console, and only an explicit insecure override for one console disables that',
+    );
+  }
   // Read before anything is opened: an unusable token stops the start (fail closed).
   const metricsToken =
     config.metrics === undefined ? undefined : loadMetricsToken(config.metrics.tokenFile);
@@ -258,6 +265,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       moduleVersion: (consoleId, moduleId) => consoles.moduleVersion(consoleId, moduleId),
       declaresVersion: (moduleId) =>
         isModuleId(moduleId) && MODULE_ENDPOINTS[moduleId].versionSource === 'declared',
+      consoleNotice: (consoleId) => consoles.trustNotice(consoleId),
     };
     const egress = new EgressGuard(config.egress, options.lookup);
     const executor =
@@ -294,6 +302,14 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       ...options.versionMonitor,
     });
     health.register(versions.healthCheck());
+    // An insecure TLS override stays visible: at every start, and as a degraded check.
+    health.register(consoles.tlsHealthCheck());
+    for (const unverified of consoles.unverified()) {
+      logger.warn('TLS verification is DISABLED for this console (explicit insecure override)', {
+        consoleId: unverified.id,
+        alias: unverified.alias,
+      });
+    }
 
     // Event subscriptions (ADR 0020): reviewed streams, one authorisation point, on-demand feeds.
     const streams = new EventStreamRegistry(inventory);

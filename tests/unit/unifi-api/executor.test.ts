@@ -165,6 +165,34 @@ describe('TLS trust', () => {
     await wrong.close();
   });
 
+  it('is not switched off by the process-wide Node.js setting (never inherited globally)', async () => {
+    // NODE_TLS_REJECT_UNAUTHORIZED=0 makes Node.js accept any certificate by default. The
+    // transport sets verification per console, so it has no effect here (spec §4.4).
+    const previous = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+    try {
+      const verify = await setup({ serverCert: 'self-signed', tls: { mode: 'verify' } });
+      expect(errorOf(await verify.executor.execute(call(getInfo, verify.consoleId)))).toMatchObject(
+        { code: 'tls_verification_failed', requestNotSent: true },
+      );
+      expect(verify.mock.requests).toEqual([]);
+      await verify.close();
+      const pinned = await setup({
+        serverCert: 'self-signed',
+        tls: { mode: 'pinned', pins: ['sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='] },
+      });
+      expect(errorOf(await pinned.executor.execute(call(getInfo, pinned.consoleId)))).toMatchObject(
+        { code: 'tls_pin_mismatch', requestNotSent: true },
+      );
+      expect(pinned.mock.requests).toEqual([]);
+      await pinned.close();
+    } finally {
+      if (previous === undefined)
+        Reflect.deleteProperty(process.env, 'NODE_TLS_REJECT_UNAUTHORIZED');
+      else process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = previous;
+    }
+  });
+
   it('allows the explicit insecure override with a warning', async () => {
     const h = await setup({ serverCert: 'self-signed', tls: { mode: 'insecure' } });
     expect((await h.executor.execute(call(getInfo, h.consoleId))).ok).toBe(true);

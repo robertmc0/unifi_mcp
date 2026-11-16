@@ -829,8 +829,14 @@ backups, `client-codex.md`, `development.md` and `release.md`.
    commands.
    **Not verified:** ipvlan on two physical interfaces, IPv6, the host's own forwarding
    and firewall, the nginx illustration.
-5. **TLS trust review** (spec §4.4, §17): pins and CA by default, the insecure override
-   explicit per console, warned about and audited everywhere it is used.
+5. ✅ **TLS trust review** (2026-11-16, [ADR 0012](adr/0012-unifi-transport-egress-and-console-registry.md),
+   review section; spec §4.4, §17): verify by default and the per-console override were
+   in place. Added: a warning at every start, the `console_tls` health check (degraded,
+   never critical), a notice on approval requests for such a console, a warning from the
+   bootstrap commands, and tests that Node.js's `NODE_TLS_REJECT_UNAUTHORIZED=0` does not
+   reach console connections; the stdio bridge refuses to start with it over HTTPS.
+   Tests: `tests/integration-mock/tls-override.test.ts`, `tests/unit/unifi-api/`,
+   `tests/unit/stdio-bridge/config.test.ts`. Docs: security, monitoring, troubleshooting.
 6. **Backup and restore drills** (spec §8, §17): restart, migration, key rotation,
    backup and restore run against the image; retention of automatic backups.
 7. **Performance and queue tests** (spec §10, §17): concurrency and rate limits, queue

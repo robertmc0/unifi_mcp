@@ -43,6 +43,14 @@ async function loadPlan(ctx: RunContext) {
   const file = parseBootstrap(await readDocument(path));
   const services = await ctx.services();
   const prepared = await prepare(file, dirname(path));
+  // The override is per console and never quiet (spec §4.4).
+  for (const entry of prepared.consoles) {
+    if (entry.tls.mode === 'insecure') {
+      ctx.io.err(
+        `warning: console "${entry.entry.alias}": TLS verification will be DISABLED. Prefer "mode: pinned".`,
+      );
+    }
+  }
   return { services, prepared, result: plan(services, prepared) };
 }
 

@@ -37,6 +37,33 @@ describe('parseServiceUrl', () => {
   });
 });
 
+describe('certificate verification', () => {
+  it('cannot be switched off for the connection that carries the token', async () => {
+    const https = { UNIFI_MCP_URL: 'https://mcp.example.invalid/mcp', UNIFI_MCP_TOKEN: TOKEN };
+    await expect(loadBridgeConfig({ ...https, NODE_TLS_REJECT_UNAUTHORIZED: '0' })).rejects.toThrow(
+      /NODE_TLS_REJECT_UNAUTHORIZED=0 disables certificate verification/,
+    );
+    await expect(
+      loadBridgeConfig({ ...https, NODE_TLS_REJECT_UNAUTHORIZED: '1' }),
+    ).resolves.toBeDefined();
+    await expect(loadBridgeConfig({ ...https })).resolves.toBeDefined();
+    // On loopback HTTP there is no certificate, so the setting changes nothing.
+    await expect(
+      loadBridgeConfig({
+        UNIFI_MCP_URL: URL_LOCAL,
+        UNIFI_MCP_TOKEN: TOKEN,
+        NODE_TLS_REJECT_UNAUTHORIZED: '0',
+      }),
+    ).resolves.toBeDefined();
+    // The refusal names no token.
+    const error = await loadBridgeConfig({ ...https, NODE_TLS_REJECT_UNAUTHORIZED: '0' }).catch(
+      (e: unknown) => e as Error,
+    );
+    expect(error).toBeInstanceOf(BridgeConfigError);
+    expect((error as Error).message).not.toContain(TOKEN);
+  });
+});
+
 describe('loadBridgeConfig', () => {
   it('reads the token from the environment and removes it from there', async () => {
     const env: NodeJS.ProcessEnv = { UNIFI_MCP_URL: URL_LOCAL, UNIFI_MCP_TOKEN: TOKEN };

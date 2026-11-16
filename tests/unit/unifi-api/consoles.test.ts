@@ -331,3 +331,62 @@ describe('egress policy', () => {
     await expect(empty.resolve('empty.invalid')).rejects.toMatchObject({ code: 'dns_failed' });
   });
 });
+
+describe('unverified TLS stays visible (spec §4.4)', () => {
+  it('is a degraded health check, a notice for approvers, and gone when the override is', async () => {
+    const h = await unifiHarness({ dir: await tempDir() });
+    const check = h.consoles.tlsHealthCheck();
+    expect(check).toMatchObject({ name: 'console_tls', critical: false });
+    expect(await check.run()).toEqual({ status: 'ok' });
+    expect(h.consoles.unverified()).toEqual([]);
+    expect(h.consoles.trustNotice(h.consoleId)).toBeUndefined();
+
+    h.consoles.setTls(h.consoleId, { mode: 'insecure' }, CLI);
+    expect(h.consoles.unverified()).toEqual([{ id: h.consoleId, alias: 'lab' }]);
+    expect(await check.run()).toEqual({
+      status: 'degraded',
+      detail: 'TLS verification disabled: lab',
+    });
+    expect(h.consoles.trustNotice(h.consoleId)).toMatch(/TLS verification is DISABLED/);
+    expect(h.consoles.trustNotice('00000000-0000-4000-8000-000000000000')).toBeUndefined();
+    // The change is audited with its mode.
+    expect(h.audit.list({ limit: 1 })[0]).toMatchObject({
+      action: 'console.tls_update',
+      details: { tlsMode: 'insecure' },
+    });
+
+    // A disabled console is not in use: no health warning, but the notice stays true.
+    h.consoles.setPolicy(h.consoleId, { state: 'disabled' }, CLI);
+    expect(await check.run()).toEqual({ status: 'ok' });
+    expect(h.consoles.trustNotice(h.consoleId)).toBeDefined();
+    h.consoles.setPolicy(h.consoleId, { state: 'enabled' }, CLI);
+    expect((await check.run()).status).toBe('degraded');
+
+    h.consoles.setTls(
+      h.consoleId,
+      { mode: 'pinned', pins: ['sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='] },
+      CLI,
+    );
+    expect(await check.run()).toEqual({ status: 'ok' });
+    expect(h.consoles.trustNotice(h.consoleId)).toBeUndefined();
+    await h.close();
+  });
+
+  it('is never the default and has no global form', async () => {
+    const h = await unifiHarness({ dir: await tempDir() });
+    const added = h.consoles.add(
+      { alias: 'second', host: '192.0.2.20', tls: { mode: 'verify' } },
+      CLI,
+    );
+    expect(added.tls.mode).toBe('verify');
+    // One console's override does not touch another.
+    h.consoles.setTls(h.consoleId, { mode: 'insecure' }, CLI);
+    expect(h.consoles.get('second')?.tls.mode).toBe('verify');
+    expect(h.consoles.connection(added.id, 'network')?.trust.mode).toBe('verify');
+    // An unknown mode is refused, not treated as "no verification".
+    expect(() => h.consoles.setTls(added.id, { mode: 'none' } as never, CLI)).toThrow(
+      /Unknown TLS mode/,
+    );
+    await h.close();
+  });
+});

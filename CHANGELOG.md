@@ -77,6 +77,13 @@ All notable changes to this project are documented here. The format follows
   tests of binding, isolation, no forwarding, no proxying and egress. The image also
   declares the metrics port.
 
+- TLS trust review (ADR 0012, review of 2026-11-16): a console with TLS verification
+  disabled is announced in the log at every start, degrades a new `console_tls` health
+  check (dashboard, `doctor`, metrics), and puts a notice on approval requests for it;
+  `config import` and `config apply` warn about it. Node.js's process-wide
+  `NODE_TLS_REJECT_UNAUTHORIZED=0` has no effect on console connections (tested, and
+  logged as ignored), and the stdio bridge refuses to start with it over `https://`.
+
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 
 The gate is open: Access has not run on a real console, and no version-labelled Access

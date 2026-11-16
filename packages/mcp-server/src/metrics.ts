@@ -38,7 +38,14 @@ const HTTP_CODES = [
   'no_response',
   'other',
 ];
-const HEALTH_CHECKS = ['database', 'audit', 'disk_space', 'console_versions', 'other'];
+const HEALTH_CHECKS = [
+  'database',
+  'audit',
+  'disk_space',
+  'console_versions',
+  'console_tls',
+  'other',
+];
 
 /** The current state the collectors read at each scrape. All values are counts or flags. */
 export interface MetricsSources {

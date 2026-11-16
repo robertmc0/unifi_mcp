@@ -264,6 +264,8 @@ export class ApprovalService implements ApprovalGate {
       ...(approvalCaution === undefined ? {} : { caution: approvalCaution }),
       // A version declared by an administrator, not observed (ADR 0021 §5).
       ...(context.versionNotice === undefined ? {} : { versionNotice: context.versionNotice }),
+      // A warning about the console itself, such as unverified TLS (spec §4.4).
+      ...(context.consoleNotice === undefined ? {} : { consoleNotice: context.consoleNotice }),
     };
     let summaryJson = JSON.stringify(
       redact({ ...reviewed, arguments: context.arguments }, SUMMARY_LIMITS),

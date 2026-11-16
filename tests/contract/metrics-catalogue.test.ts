@@ -65,7 +65,7 @@ const CATALOGUE: Record<string, [string, Record<string, string[] | { code: true;
     unifi_mcp_health_check_status: [
       'gauge',
       {
-        check: ['database', 'audit', 'disk_space', 'console_versions', 'other'],
+        check: ['database', 'audit', 'disk_space', 'console_versions', 'console_tls', 'other'],
         status: ['ok', 'degraded', 'fail'],
       },
     ],

@@ -38,12 +38,12 @@ env:     UNIFI_MCP_URL=http://127.0.0.1:3000/mcp
          UNIFI_MCP_TOKEN_FILE=/home/you/.config/unifi-mcp/token
 ```
 
-| Variable                     | Meaning                                                                                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `UNIFI_MCP_URL`              | The service's MCP URL. `http://` is accepted only for loopback addresses; use `https://` otherwise (with `NODE_EXTRA_CA_CERTS` for a private CA). |
-| `UNIFI_MCP_TOKEN_FILE`       | File containing the client token (mode 0600). Preferred.                                                                                          |
-| `UNIFI_MCP_TOKEN`            | The token itself, if a file is not possible. Removed from the bridge's environment once read.                                                     |
-| `UNIFI_MCP_BRIDGE_LOG_LEVEL` | `debug`, `info`, `warn` (default) or `error`. Logs go to stderr.                                                                                  |
+| Variable                     | Meaning                                                                                                                                                                                                                                                                      |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_URL`              | The service's MCP URL. `http://` is accepted only for loopback addresses; use `https://` otherwise (with `NODE_EXTRA_CA_CERTS` for a private CA). The bridge refuses to start with `NODE_TLS_REJECT_UNAUTHORIZED=0`, which would send the token without checking the server. |
+| `UNIFI_MCP_TOKEN_FILE`       | File containing the client token (mode 0600). Preferred.                                                                                                                                                                                                                     |
+| `UNIFI_MCP_TOKEN`            | The token itself, if a file is not possible. Removed from the bridge's environment once read.                                                                                                                                                                                |
+| `UNIFI_MCP_BRIDGE_LOG_LEVEL` | `debug`, `info`, `warn` (default) or `error`. Logs go to stderr.                                                                                                                                                                                                             |
 
 The bridge needs Node.js 26. It exits with code 1 if the service rejects the token and
 with code 2 if its configuration is invalid; in both cases the reason is on stderr.

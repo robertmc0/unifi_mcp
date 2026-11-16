@@ -1028,6 +1028,39 @@ describe('maintenance beside a running service', () => {
 });
 
 describe('example bootstrap file', () => {
+  it('warns for every console whose bootstrap entry disables TLS verification', async () => {
+    const h = await setup();
+    const file = join(h.dir, 'insecure-bootstrap.yaml');
+    await writeFile(
+      file,
+      [
+        'version: 1',
+        'consoles:',
+        '  - alias: checked',
+        '    host: 192.0.2.40',
+        '  - alias: unchecked',
+        '    host: 192.0.2.41',
+        '    tls: { mode: insecure }',
+        '',
+      ].join('\n'),
+    );
+    const planned = await h.run(['config', 'import', '--file', file]);
+    expect(planned.code).toBe(0);
+    expect(planned.err).toContain(
+      'warning: console "unchecked": TLS verification will be DISABLED. Prefer "mode: pinned".',
+    );
+    expect(planned.err).not.toContain('"checked"');
+    const applied = await h.run(['config', 'apply', '--file', file, '--yes']);
+    expect(applied.code).toBe(0);
+    expect(applied.err).toContain('warning: console "unchecked"');
+    const doctor = await h.json<{ check: string; status: string; detail: string }[]>(['doctor']);
+    expect(doctor.find((c) => c.check === 'console unchecked')).toMatchObject({
+      status: 'warn',
+      detail: expect.stringContaining('TLS verification disabled') as string,
+    });
+    expect(doctor.find((c) => c.check === 'console checked')?.detail).not.toContain('TLS');
+  });
+
   it('deploy/example-bootstrap.yaml is valid, and validate checks embedded policies', async () => {
     const h = await setup();
     const example = join(import.meta.dirname, '../../../deploy/example-bootstrap.yaml');

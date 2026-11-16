@@ -73,6 +73,35 @@ option. Setting `agent: false` makes Node ignore `createConnection` and open its
 unvalidated connection; this was found while building the transport tests, and the code
 documents it.
 
+**Review, 2026-11-16 (Phase 5 step 5; spec §4.4, §17).** The rule is "verify by default;
+the insecure override is per-console, audited, conspicuously warned and never inherited
+globally". Found in place: `verify` is the default everywhere a console is created; the
+override exists only per console; it is audited; the CLI warns before setting it; the log
+warns when it is set and when the console is first used; `doctor` and the dashboard show
+it. Added by the review:
+
+- A warning in the service log at **every start**, for each console in use with the
+  override.
+- A `console_tls` health check, degraded while such a console is in use: visible on the
+  dashboard, in `doctor` and in metrics. It never affects readiness.
+- A notice on **approval requests** for a console with the override
+  (`consoleNotice` in the request summary), through a new optional
+  `SecurityContextProvider.consoleNotice`.
+- A warning from `config import` and `config apply` for a bootstrap entry with
+  `mode: insecure`.
+- "Never inherited globally" is now tested against Node.js's own global switch: with
+  `NODE_TLS_REJECT_UNAUTHORIZED=0` in the environment, `verify` still refuses a
+  self-signed console and `pinned` still refuses a wrong pin, because the transport sets
+  `rejectUnauthorized` itself for every connection. The service logs that the variable is
+  ignored. The stdio bridge, which uses Node.js's default verification for the service's
+  certificate, refuses to start with that variable when its URL is `https://`.
+
+Evidence: `tests/unit/unifi-api/executor.test.ts` ("is not switched off by the
+process-wide Node.js setting"), `tests/unit/unifi-api/consoles.test.ts` ("unverified TLS
+stays visible"), `tests/integration-mock/tls-override.test.ts`,
+`tests/unit/stdio-bridge/config.test.ts`, `tests/unit/cli/cli.test.ts` (bootstrap
+warning).
+
 ### Response mapping
 
 | Condition                                                     | Error code                                                                      | Not sent | Transient    | Write uncertain |

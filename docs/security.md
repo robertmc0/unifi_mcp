@@ -214,10 +214,23 @@ documented local API of each module (ADR 0012).
   addresses are always refused.
 - **Verified TLS.** By default the console certificate must be valid for the configured
   host and issued by a trusted CA, or by a CA you configure for that console. For consoles
-  with self-signed certificates, configure a **pin** instead (see below). Turning
-  verification off is possible only per console, is recorded in the audit trail and is
-  logged as a warning. The certificate is checked before anything, including the API key,
-  is sent.
+  with self-signed certificates, configure a **pin** instead (see below). The certificate
+  is checked before anything, including the API key, is sent.
+- **Turning verification off** is possible only for one console at a time
+  (`--tls insecure`), never as a default or for all consoles, and it never stays quiet:
+  - the command, the bootstrap file and the web form warn before it is set, and the web
+    form needs the word `insecure` typed;
+  - the change is in the audit trail (`console.tls_update`);
+  - the service log warns at every start, when the setting changes and when the console
+    is first used;
+  - the `console_tls` health check is degraded while such a console is in use, which
+    shows on the dashboard, in `unifi-mcp doctor` and in metrics;
+  - whoever approves a write to that console is told on the approval request.
+
+  Node.js has a process-wide switch that disables certificate checks
+  (`NODE_TLS_REJECT_UNAUTHORIZED=0`). The service ignores it for consoles and logs that it
+  does. The stdio bridge refuses to start with it when its URL is `https://`.
+
 - **Fixed requests.** Method, path, query parameters and body come from the reviewed
   operation; argument values are encoded and cannot change the host, path or headers.
   Redirects are never followed. Responses are size-limited.

@@ -111,6 +111,8 @@ identifiers, never complete sensitive responses, images or credentials.
 - An unreachable optional console makes the service _degraded_, never not ready, so it does
   not cause restarts. The `console_versions` check is degraded while a console module's
   version probe fails, and names the console and the error code.
+- The `console_tls` check is degraded while a console in use has TLS verification
+  disabled ([security.md](security.md#connections-to-consoles)), and names it.
 - Free space below 512 MiB on the data volume makes the service degraded; below 64 MiB it
   is not ready.
 - The endpoints are unauthenticated and therefore return only the overall status. Check
@@ -179,35 +181,35 @@ something else protects it.
 All values are counts, durations, sizes or flags of the service process. Counters start
 at zero when the service starts.
 
-| Metric                                        | Type      | Labels                       | Meaning                                                                                                                                |
-| --------------------------------------------- | --------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `unifi_mcp_http_requests_total`               | counter   | `path`, `code`               | Requests finished on the MCP listener. `path` is `mcp`, `health` or `other`; `code` is the HTTP status, for example `401`.             |
-| `unifi_mcp_operations_total`                  | counter   | `module`, `effect`, `status` | Operation requests: `status` is `ok`, `pending`, `denied`, `approval_required` or `error`.                                             |
-| `unifi_mcp_operation_failures_total`          | counter   | `status`, `code`             | Denied and failed operation requests by the service's error code, for example `rate_limited`.                                          |
-| `unifi_mcp_operation_duration_seconds`        | histogram | `module`, `effect`           | Time from an operation request to its result, including queueing and retries.                                                          |
-| `unifi_mcp_upstream_requests_total`           | counter   | `module`, `result`           | Requests sent to consoles: `result` is `2xx`, `3xx`, `4xx`, `5xx`, or `no_response` when the console did not answer.                   |
-| `unifi_mcp_upstream_request_duration_seconds` | histogram | `module`                     | Duration of one request to a console, including connecting.                                                                            |
-| `unifi_mcp_build_info`                        | gauge     | `version`                    | Always 1; the label is the service version.                                                                                            |
-| `process_start_time_seconds`                  | gauge     |                              | When the service process started (Unix time).                                                                                          |
-| `process_resident_memory_bytes`               | gauge     |                              | Memory of the service process.                                                                                                         |
-| `unifi_mcp_ready`                             | gauge     |                              | 1 when the service is ready (as `/readyz`), otherwise 0.                                                                               |
-| `unifi_mcp_health_check_status`               | gauge     | `check`, `status`            | 1 for the current status (`ok`, `degraded`, `fail`) of `database`, `audit`, `disk_space` and `console_versions`; 0 otherwise.          |
-| `unifi_mcp_hard_lock`                         | gauge     |                              | 1 when `UNIFI_MCP_FORCE_READ_ONLY` is on.                                                                                              |
-| `unifi_mcp_runtime_mode`                      | gauge     | `mode`                       | 1 for the policy's runtime mode (`read_only` or `read_write`), 0 for the other.                                                        |
-| `unifi_mcp_policy_version`                    | gauge     |                              | Rises with every change to the security policy, consoles or clients.                                                                   |
-| `unifi_mcp_operations_running`                | gauge     |                              | Operations being executed now.                                                                                                         |
-| `unifi_mcp_operations_queued`                 | gauge     |                              | Operation requests waiting for a free slot.                                                                                            |
-| `unifi_mcp_clients_connected`                 | gauge     |                              | MCP clients with at least one open request or stream.                                                                                  |
-| `unifi_mcp_open_responses`                    | gauge     |                              | Open MCP responses, including event streams.                                                                                           |
-| `unifi_mcp_clients_configured`                | gauge     |                              | MCP clients that exist, whatever their status.                                                                                         |
-| `unifi_mcp_event_subscriptions`               | gauge     |                              | Open event subscriptions of MCP clients.                                                                                               |
-| `unifi_mcp_event_feeds`                       | gauge     | `module`, `state`            | Event connections to consoles: `connecting`, `connected`, `retrying` or `unavailable`.                                                 |
-| `unifi_mcp_event_messages_dropped`            | gauge     | `module`, `reason`           | Messages the current event connections dropped: `contract_mismatch` or `unclassified`. It falls when a connection is no longer needed. |
-| `unifi_mcp_consoles`                          | gauge     | `state`                      | Configured consoles: `enabled`, `read_only`, `disabled`, or `invalid` (stored policy unusable).                                        |
-| `unifi_mcp_console_modules`                   | gauge     | `module`, `state`, `version` | Console modules by mode (`read_only`, `read_write`, `disabled`) and whether their application version is `known` or `unknown`.         |
-| `unifi_mcp_approvals_pending`                 | gauge     |                              | Approval requests waiting for a person (at most 500 are counted).                                                                      |
-| `unifi_mcp_database_size_bytes`               | gauge     |                              | Size of the database file.                                                                                                             |
-| `unifi_mcp_data_volume_free_bytes`            | gauge     |                              | Free space on the data volume.                                                                                                         |
+| Metric                                        | Type      | Labels                       | Meaning                                                                                                                                      |
+| --------------------------------------------- | --------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unifi_mcp_http_requests_total`               | counter   | `path`, `code`               | Requests finished on the MCP listener. `path` is `mcp`, `health` or `other`; `code` is the HTTP status, for example `401`.                   |
+| `unifi_mcp_operations_total`                  | counter   | `module`, `effect`, `status` | Operation requests: `status` is `ok`, `pending`, `denied`, `approval_required` or `error`.                                                   |
+| `unifi_mcp_operation_failures_total`          | counter   | `status`, `code`             | Denied and failed operation requests by the service's error code, for example `rate_limited`.                                                |
+| `unifi_mcp_operation_duration_seconds`        | histogram | `module`, `effect`           | Time from an operation request to its result, including queueing and retries.                                                                |
+| `unifi_mcp_upstream_requests_total`           | counter   | `module`, `result`           | Requests sent to consoles: `result` is `2xx`, `3xx`, `4xx`, `5xx`, or `no_response` when the console did not answer.                         |
+| `unifi_mcp_upstream_request_duration_seconds` | histogram | `module`                     | Duration of one request to a console, including connecting.                                                                                  |
+| `unifi_mcp_build_info`                        | gauge     | `version`                    | Always 1; the label is the service version.                                                                                                  |
+| `process_start_time_seconds`                  | gauge     |                              | When the service process started (Unix time).                                                                                                |
+| `process_resident_memory_bytes`               | gauge     |                              | Memory of the service process.                                                                                                               |
+| `unifi_mcp_ready`                             | gauge     |                              | 1 when the service is ready (as `/readyz`), otherwise 0.                                                                                     |
+| `unifi_mcp_health_check_status`               | gauge     | `check`, `status`            | 1 for the current status (`ok`, `degraded`, `fail`) of `database`, `audit`, `disk_space`, `console_versions` and `console_tls`; 0 otherwise. |
+| `unifi_mcp_hard_lock`                         | gauge     |                              | 1 when `UNIFI_MCP_FORCE_READ_ONLY` is on.                                                                                                    |
+| `unifi_mcp_runtime_mode`                      | gauge     | `mode`                       | 1 for the policy's runtime mode (`read_only` or `read_write`), 0 for the other.                                                              |
+| `unifi_mcp_policy_version`                    | gauge     |                              | Rises with every change to the security policy, consoles or clients.                                                                         |
+| `unifi_mcp_operations_running`                | gauge     |                              | Operations being executed now.                                                                                                               |
+| `unifi_mcp_operations_queued`                 | gauge     |                              | Operation requests waiting for a free slot.                                                                                                  |
+| `unifi_mcp_clients_connected`                 | gauge     |                              | MCP clients with at least one open request or stream.                                                                                        |
+| `unifi_mcp_open_responses`                    | gauge     |                              | Open MCP responses, including event streams.                                                                                                 |
+| `unifi_mcp_clients_configured`                | gauge     |                              | MCP clients that exist, whatever their status.                                                                                               |
+| `unifi_mcp_event_subscriptions`               | gauge     |                              | Open event subscriptions of MCP clients.                                                                                                     |
+| `unifi_mcp_event_feeds`                       | gauge     | `module`, `state`            | Event connections to consoles: `connecting`, `connected`, `retrying` or `unavailable`.                                                       |
+| `unifi_mcp_event_messages_dropped`            | gauge     | `module`, `reason`           | Messages the current event connections dropped: `contract_mismatch` or `unclassified`. It falls when a connection is no longer needed.       |
+| `unifi_mcp_consoles`                          | gauge     | `state`                      | Configured consoles: `enabled`, `read_only`, `disabled`, or `invalid` (stored policy unusable).                                              |
+| `unifi_mcp_console_modules`                   | gauge     | `module`, `state`, `version` | Console modules by mode (`read_only`, `read_write`, `disabled`) and whether their application version is `known` or `unknown`.               |
+| `unifi_mcp_approvals_pending`                 | gauge     |                              | Approval requests waiting for a person (at most 500 are counted).                                                                            |
+| `unifi_mcp_database_size_bytes`               | gauge     |                              | Size of the database file.                                                                                                                   |
+| `unifi_mcp_data_volume_free_bytes`            | gauge     |                              | Free space on the data volume.                                                                                                               |
 
 `module` is `network`, `protect`, `access` or `unknown`; `effect` is `read`, `write` or
 `unknown`. `unknown` counts requests for operation ids that do not exist. A series

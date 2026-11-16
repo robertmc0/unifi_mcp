@@ -119,6 +119,11 @@ export interface SecurityContextProvider {
   moduleVersion?(consoleId: string, moduleId: string): ModuleVersionInfo | undefined;
   /** Whether the module's version is declared by an administrator rather than probed. */
   declaresVersion?(moduleId: string): boolean;
+  /**
+   * Something an approver must know about the console itself, for example that its
+   * certificate is not verified (spec §4.4). Reviewed text, never upstream data.
+   */
+  consoleNotice?(consoleId: string): string | undefined;
 }
 
 export interface ModuleVersionInfo {
@@ -183,6 +188,8 @@ export interface ProposalContext {
   correlationId: string;
   /** Set when the module's version was declared, not observed: the approver is told. */
   versionNotice?: string;
+  /** Set when the console itself needs a warning, such as unverified TLS. */
+  consoleNotice?: string;
 }
 
 /** A human-approved request that may now be resumed by its original client. */
@@ -697,6 +704,7 @@ export class Dispatcher {
       if (this.#deps.approvals === undefined)
         return reject('denied', 'approval_unavailable', 'denied');
       const versionNotice = this.#versionNotice(context);
+      const consoleNotice = this.#deps.security.consoleNotice?.(context.target.consoleId);
       return this.#withNotice(
         this.#deps.approvals.propose({
           principal,
@@ -708,6 +716,7 @@ export class Dispatcher {
           effectiveRisk: decision.effectiveRisk,
           correlationId: base.correlationId,
           ...(versionNotice === undefined ? {} : { versionNotice }),
+          ...(consoleNotice === undefined ? {} : { consoleNotice }),
         }),
         versionNotice,
       );
