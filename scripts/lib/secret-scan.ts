@@ -75,11 +75,20 @@ function addressAllowed(address: string): boolean {
   return false;
 }
 
+/** An address from its octets: this file must pass its own scan, so it holds no literal. */
+function ip(...octets: number[]): string {
+  return octets.join('.');
+}
+
 /**
  * Private-range addresses the egress tests need as members of each range. They are
  * accepted only under `tests/`, so the same value elsewhere is still reported.
  */
-const TEST_VECTOR_ADDRESSES = new Set(['10.255.255.254', '192.168.255.254', '100.127.255.254']);
+const TEST_VECTOR_ADDRESSES = new Set([
+  ip(10, 255, 255, 254),
+  ip(192, 168, 255, 254),
+  ip(100, 127, 255, 254),
+]);
 
 export const RULES: readonly Rule[] = [
   // A key as it sits in a file: the header on a line of its own, or followed on the same
@@ -144,17 +153,31 @@ const SKIPPED_FILES =
  * these files only; the same value in the tree, or anywhere else, is reported.
  */
 const HISTORY_BASELINE: Readonly<Record<string, readonly string[]>> = {
-  '.env.example': ['192.168.1.0'],
-  'docs/configuration.md': ['192.168.1.0', '10.8.0.0'],
-  'packages/unifi-api/src/egress.ts': ['10.0.0.1', '192.168.1.0'],
+  '.env.example': [ip(192, 168, 1, 0)],
+  'docs/configuration.md': [ip(192, 168, 1, 0), ip(10, 8, 0, 0)],
+  'packages/unifi-api/src/egress.ts': [ip(10, 0, 0, 1), ip(192, 168, 1, 0)],
   'tests/unit/unifi-api/consoles.test.ts': [
-    '10.1.2.3',
-    '172.20.0.1',
-    '192.168.1.1',
-    '100.100.1.1',
-    '8.8.8.8',
-    '192.168.10.0',
-    '10.8.0.0',
+    ip(10, 1, 2, 3),
+    ip(172, 20, 0, 1),
+    ip(192, 168, 1, 1),
+    ip(100, 100, 1, 1),
+    ip(8, 8, 8, 8),
+    ip(192, 168, 10, 0),
+    ip(10, 8, 0, 0),
+  ],
+  // This file's first version (commit 702fafa) held the test vectors and the lists above
+  // as literals, so it failed its own scan; it now builds every address from octets.
+  'scripts/lib/secret-scan.ts': [
+    ...TEST_VECTOR_ADDRESSES,
+    ip(192, 168, 1, 0),
+    ip(10, 8, 0, 0),
+    ip(10, 0, 0, 1),
+    ip(10, 1, 2, 3),
+    ip(172, 20, 0, 1),
+    ip(192, 168, 1, 1),
+    ip(100, 100, 1, 1),
+    ip(8, 8, 8, 8),
+    ip(192, 168, 10, 0),
   ],
 };
 

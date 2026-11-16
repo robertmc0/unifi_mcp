@@ -88,6 +88,11 @@ Run on 2026-11-16 on the development machine:
   network, members of the private ranges, a public resolver) in documentation and in
   the egress tests. None was a real address. They were replaced by documentation
   addresses; in the history they are accepted by an explicit list, for those files only.
+  Fixed afterwards (2026-11-16): the scanner's first version held that list and its test
+  vectors as literal addresses, so it failed its own scan, and `npm run check` at the
+  step 8 commit (702fafa) did not pass. The scanner now builds every address from its
+  octets, and its own first version joined the history list. Run again after the fix:
+  410 tracked files and the added lines of 88 commits, no finding.
 - `npm run release:verify`: all checks pass at version 0.0.0.
 - `tests/unit/scripts/secret-scan.test.ts`: 13 kinds of secret or address are reported,
   13 kinds of harmless text are not, a finding never contains its value, and a value

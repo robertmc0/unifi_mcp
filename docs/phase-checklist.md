@@ -864,7 +864,8 @@ backups, `client-codex.md`, `development.md` and `release.md`.
 8. ✅ **Supply chain and CI** (2026-11-16, [ADR 0029](adr/0029-supply-chain-and-release.md);
    spec §14): a secret, pin and address scanner (`scripts/lib/secret-scan.ts`) over the
    tracked files in `npm run check` and over the whole history in `npm run scan:secrets`
-   (395 files, 87 commits, clean); static release checks (`npm run release:verify`);
+   (clean; a fix after the step's commit made the scanner pass its own scan, see the
+   ADR); static release checks (`npm run release:verify`);
    SBOM in CycloneDX and SPDX (`npm run sbom`, 17 production components); `npm audit`
    (0 vulnerabilities) and `npm audit signatures`; CI jobs for all of these, and the
    container tests and image smoke test on amd64 and arm64 runners; `release.yml`, which

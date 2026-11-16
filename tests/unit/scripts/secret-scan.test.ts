@@ -119,6 +119,21 @@ describe('what is left alone', () => {
     expect(rules(`'${vector}',`, 'docs/networking.md')).toEqual(['ip-address']);
   });
 
+  it('accepts a reviewed example address in the history of its own file only', () => {
+    const reviewed = ['192', '168', '1', '0'].join('.');
+    const added = (file: string): string =>
+      [
+        'commit 0123456789abcdef0123456789abcdef01234567',
+        `+++ b/${file}`,
+        '@@ -0,0 +1 @@',
+        `+'${reviewed}',`,
+      ].join('\n');
+    expect(scanHistory(added('.env.example'))).toEqual([]);
+    expect(scanHistory(added('scripts/lib/secret-scan.ts'))).toEqual([]);
+    expect(scanHistory(added('docs/networking.md'))).toHaveLength(1);
+    expect(rules(`'${reviewed}',`, '.env.example')).toEqual(['ip-address']);
+  });
+
   it('does not read lock files and licences, which hold identifiers of other projects', () => {
     expect(rules(`host: ${HOME_ADDRESS}`, 'package-lock.json')).toEqual([]);
     expect(rules(`host: ${HOME_ADDRESS}`, 'packages/x/package-lock.json')).toEqual([]);
