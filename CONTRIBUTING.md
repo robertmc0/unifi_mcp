@@ -1,7 +1,8 @@
 # Contributing
 
 Thanks for your interest. Read [AGENTS.md](AGENTS.md) first: its rules apply to human
-and AI contributors alike.
+and AI contributors alike. [docs/development.md](docs/development.md) explains the
+workflow, how an operation is added to an adapter, and how it is tested.
 
 ## Workflow
 

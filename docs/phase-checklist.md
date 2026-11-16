@@ -889,6 +889,11 @@ backups, `client-codex.md`, `development.md` and `release.md`.
      guide listed only the Network named tools; status notes on seven pages still
      described Phase 5 work as future, and `approval-workflow.md` said MFA was to come;
      the index was a table by phase and now groups pages by task.
+   - ✅ **`development.md`** (2026-11-16; spec §18 item 13): setup, commands, layout, what
+     may be implemented, adding an operation step by step (the adapter guide), new
+     contract revisions and applications, the test folders and synthetic consoles,
+     documentation and commits. Linked from the index, `README.md` and `CONTRIBUTING.md`;
+     the README's repository map no longer calls the adapters skeletons.
 10. **ARM64 on hardware or a native runner** (spec §14, §17).
 11. **Gate review**: every §17 item mapped to its evidence.
 

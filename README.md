@@ -33,15 +33,15 @@ server, never to UniFi. UniFi credentials never leave the server.
 
 ## Repository map
 
-| Path                                                   | Contents                                                                |
-| ------------------------------------------------------ | ----------------------------------------------------------------------- |
-| [`unifi-mcp-design-spec.md`](unifi-mcp-design-spec.md) | The design specification (source of truth)                              |
-| [`docs/`](docs/index.md)                               | Manual, ADRs, threat model, API coverage                                |
-| [`api-specs/`](api-specs/README.md)                    | Vendor contract provenance and operation inventories                    |
-| `packages/`                                            | Workspace packages (the module adapters are still skeletons)            |
-| `deploy/`                                              | Deployment examples: single-host Compose file, bootstrap file           |
-| `scripts/`                                             | API contract tooling (fetch, reconcile, coverage report)                |
-| `tests/`                                               | Contract, unit and security tests (later integration and compatibility) |
+| Path                                                   | Contents                                                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| [`unifi-mcp-design-spec.md`](unifi-mcp-design-spec.md) | The design specification (source of truth)                                               |
+| [`docs/`](docs/index.md)                               | Manual, ADRs, threat model, API coverage                                                 |
+| [`api-specs/`](api-specs/README.md)                    | Vendor contract provenance and operation inventories                                     |
+| `packages/`                                            | Workspace packages: the service, CLI, bridge and the three adapters                      |
+| `deploy/`                                              | Compose examples (one host, HTTPS, two networks), bootstrap file                         |
+| `scripts/`                                             | Contract tooling, schema generation, secret scan, release checks                         |
+| `tests/`                                               | Unit, contract, security, mock integration, performance, container and opt-in live tests |
 
 ## Development
 
@@ -57,6 +57,9 @@ npm run unifi-mcp -- --help  # the host administration CLI from a source checkou
 
 Never run `npx unifi-mcp`: that name on the public npm registry belongs to an unrelated
 package, which `npx` would download and run.
+
+The contributor guide, including how to add an operation to an adapter, is
+[docs/development.md](docs/development.md).
 
 ## Licence
 

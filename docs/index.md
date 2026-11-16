@@ -73,8 +73,10 @@ Running it:
 - [troubleshooting.md](troubleshooting.md): startup, connections, refusals, consoles,
   administration
 
-Releasing:
+Developing and releasing:
 
+- [development.md](development.md): contributor workflow, adding an operation, new
+  contract revisions and applications, tests
 - [release.md](release.md): pre-release checks, secret scan, SBOM, tagging, the
   publishing switch, what is not done
 - [SECURITY.md](../SECURITY.md): reporting a vulnerability
