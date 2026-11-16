@@ -913,11 +913,71 @@ backups, `client-codex.md`, `development.md` and `release.md`.
      guide must be checked against the release, spec §18); a click-through of the admin
      pages in a browser.
 10. **ARM64 on hardware or a native runner** (spec §14, §17).
-11. **Gate review**: every §17 item mapped to its evidence.
+11. **Gate review** (2026-11-16): every §17 item mapped to its evidence, below. Two
+    items had no direct test and got one: two consoles behind one service
+    (`tests/integration-mock/multi-console.test.ts`, 2 mutation checks: the console
+    permission check and routing to the named console), and health and shutdown while a
+    console is unavailable (`tests/integration-mock/console-unavailable.test.ts`, 1
+    mutation check: connections left open at shutdown). The gate is **not passed**: the
+    open items are listed under it.
+
+### Spec §17 review (2026-11-16)
+
+✅ met, with the evidence named; ◐ partly met, with what is missing; local runs only, as
+no workflow has run on GitHub yet.
+
+Functional:
+
+| §17 item                                                                                        |     | Evidence                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Two or more consoles, console and site targeting                                                | ✅  | `tests/integration-mock/multi-console.test.ts` (each request reaches only the named console with its own key; a client reaches only its consoles and sites; a refusal sends nothing); `tests/unit/policy/engine.test.ts`                                                                  |
+| stdio and Streamable HTTP; tested with Claude Code, Codex and a generic client                  | ◐   | `tests/integration-mock/mcp-http.test.ts`, `stdio-bridge.test.ts` with the MCP SDK v2 client; Claude Code 2.1.322 connected over both ([client-claude-code.md](client-claude-code.md)). **Open:** Codex (the owner's trial); tool use inside a Claude Code session; no MCP Inspector run. |
+| 2025-era and 2026-era clients                                                                   | ✅  | `tests/integration-mock/mcp-http.test.ts` (both modes), `stdio-bridge.test.ts`, `tests/contract/mcp-sdk-v2-eras.test.ts`                                                                                                                                                                  |
+| Every documented operation in the coverage matrix                                               | ✅  | `tests/contract/api-coverage-matrix.test.ts`, `npm run api:reconcile`; [api-coverage](api-coverage/README.md) lists every operation with its status or reason                                                                                                                             |
+| Every operation has schemas, version range, permission, risk, sensitivity, timeout, retry class | ✅  | The registry refuses a descriptor without them (`packages/core/src/registry.ts`; `tests/unit/core/primitives.test.ts`); the review tables in `tests/contract/*-security-review.test.ts`; the generated-schema tests                                                                       |
+| No cloud endpoint                                                                               | ✅  | `tests/contract/module-endpoints.test.ts` (local base URLs equal `provenance.json`), `tests/security/unifi-transport-gates.test.ts`, `dispatcher-gates.test.ts` (no URL can be smuggled in)                                                                                               |
+| Events only through documented APIs; failures visible; safe recovery                            | ✅  | `tests/contract/protect-streams.test.ts`, `access-streams.test.ts`; `tests/integration-mock/events.test.ts`, `protect-events.test.ts`, `access-events.test.ts`; feed state in the logs, a resource read and metrics. Access only against a synthetic API.                                 |
+
+Security:
+
+| §17 item                                                                              |     | Evidence                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------- | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The hard lock blocks generic, named, resumed and queued writes                        | ✅  | `tests/security/policy-invariants.test.ts` (every write variant), `tests/integration-mock/mcp-http.test.ts` (every path; write tools hidden), `tests/security/approval-gates.test.ts` (approved actions denied); evaluation at enqueue, dispatch and resume (`dispatcher-gates.test.ts`) |
+| A read-only client sees no write tool and cannot guess one                            | ✅  | `tests/integration-mock/mcp-http.test.ts` (tool lists per token; a hidden operation is `unknown_operation`)                                                                                                                                                                              |
+| Isolated scopes and audit identities; revocation                                      | ✅  | `tests/integration-mock/mcp-http.test.ts`, `cli-beside-service.test.ts` (revoke, rotate, disable close open responses), `stdio-bridge.test.ts`, `tests/unit/mcp-server/clients.test.ts`                                                                                                  |
+| Sensitive data minimised; credentials never returned                                  | ✅  | The adapter read tests with credential sentinels (`network-reads`, `protect-reads`, `access-reads`), sensitive grants, `tests/security/telemetry-redaction.test.ts`, the admin pages (`admin-http.test.ts`)                                                                              |
+| Human approval independent of the agent                                               | ✅  | `tests/security/approval-gates.test.ts`, `tests/integration-mock/cli-beside-service.test.ts` (terminal and confirmation), `admin-http.test.ts` (password, and code, again)                                                                                                               |
+| Approval bound, expiring, single-use; resumption re-checks                            | ✅  | `tests/security/approval-gates.test.ts` (reuse, double resume, expiry, altered arguments, wrong client, policy change)                                                                                                                                                                   |
+| No arbitrary destination, path, header or method; no SSRF                             | ✅  | `tests/security/dispatcher-gates.test.ts`, `unifi-transport-gates.test.ts`, the egress checks in `tests/unit/unifi-api/consoles.test.ts` and `executor.test.ts`; `tests/container-network/dual-network.test.ts` (no proxy or tunnel)                                                     |
+| No plaintext remote tokens; verified TLS by default; explicit per-console override    | ✅  | `tests/unit/mcp-server/clients.test.ts` (plaintext on a non-loopback bind refused), `stdio-bridge.test.ts`, `tests/integration-mock/tls-override.test.ts`, `unifi-transport-gates.test.ts`                                                                                               |
+| Separate admin authentication, optional MFA, CSRF, no default credentials             | ✅  | `tests/integration-mock/admin-http.test.ts`, `tests/unit/admin-api/`; the first administrator is created on the host only (`admins.test.ts`). **Not verified:** a real authenticator app; the pages in a browser.                                                                        |
+| Master key outside the database; fails closed; secrets out of repository, logs, audit | ✅  | `tests/security/storage-master-key.test.ts`, `telemetry-redaction.test.ts`, `tests/contract/release-readiness.test.ts` and `npm run scan:secrets` (tree and history clean)                                                                                                               |
+| Two networks: no routing or forwarding, services bound to their interface             | ◐   | `tests/container-network/dual-network.test.ts` on Docker bridge networks. **Not verified:** ipvlan on two physical interfaces, IPv6 ([networking.md](networking.md)).                                                                                                                    |
+
+Reliability and operations:
+
+| §17 item                                                              |     | Evidence                                                                                                                                                                                                            |
+| --------------------------------------------------------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Limits, queue caps, safe retries, unknown outcomes are deterministic  | ✅  | `tests/performance/`, `tests/unit/core/dispatcher.test.ts`, `primitives.test.ts`                                                                                                                                    |
+| Restart, migration, key rotation, backup and restore tested           | ✅  | `tests/integration-mock/backup-restore-drill.test.ts`, `tests/container-network/drill.test.ts`, `tests/unit/storage/`. Not drilled on the image: an upgrade across a migration (no older image exists).             |
+| Logs and audit redacted and correlatable; metrics without identifiers | ✅  | `tests/security/telemetry-redaction.test.ts` (correlation fields kept), `tests/integration-mock/metrics-http.test.ts` (scrape free of the setup's identifiers), `tests/contract/metrics-catalogue.test.ts`          |
+| Health and graceful shutdown with unavailable consoles                | ✅  | `tests/integration-mock/console-unavailable.test.ts`, `tests/unit/telemetry/health.test.ts`, `tls-override.test.ts`, `tests/container-network/single-host.test.ts` (SIGTERM)                                        |
+| Offline operation with the internet blocked                           | ✅  | The two-network container test runs the service on Docker networks marked `internal` (no route out) and reads through MCP (`tests/container-network/compose.dual.test.yml`); the service fetches nothing (ADR 0006) |
+| AMD64 and ARM64 images build and run with the same features           | ◐   | amd64: the container tests and the image smoke test. arm64: built and run under QEMU only (ADR 0017); the CI matrix with an arm64 runner has never run. **Open:** step 10.                                          |
+| Compose examples runnable and secure by default                       | ✅  | `npm run test:containers` runs all three shipped Compose files; `tests/contract/packaging.test.ts`                                                                                                                  |
+| The manual matches the commands and has passed a user walkthrough     | ◐   | Commands, links, variables and tools checked on every `npm run check` (`doc-commands`, `doc-links`, `doc-interface`). **Open:** a walkthrough by a user; the Codex guide.                                           |
 
 ### Gate (spec §16)
 
-- [ ] All §17 invariants pass; public-repo secret scan clean
-- [ ] AMD64 and ARM64 images build and boot; single- and dual-network modes tested
-- [ ] TLS pinning/CA, admin MFA, Prometheus metrics, backup/restore drills, SBOM, optional GHCR workflow
-- [ ] Manual matches actual commands and UI
+- [ ] All §17 invariants pass; public-repo secret scan clean. Every security item is met
+      except the two-network check on physical interfaces. The project's own scan of the
+      tree and history is clean; a general-purpose scanner has not been run (ADR 0029).
+- [ ] AMD64 and ARM64 images build and boot; single- and dual-network modes tested.
+      amd64 and both network modes on Docker networks: yes. arm64 on hardware or a
+      native runner: open (step 10).
+- [ ] TLS pinning/CA, admin MFA, Prometheus metrics, backup/restore drills, SBOM, optional
+      GHCR workflow. All implemented and tested locally. Not verified: a real Prometheus
+      server, a real authenticator app, any workflow run on GitHub (including GHCR
+      publishing).
+- [ ] Manual matches actual commands and UI. Checked mechanically; open: a user
+      walkthrough, a browser click-through of the admin pages, and the Codex guide.

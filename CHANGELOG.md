@@ -109,6 +109,11 @@ All notable changes to this project are documented here. The format follows
   workflow that publishes to GHCR only when the repository variable `PUBLISH_IMAGE` is
   `true`; Dependabot; issue templates. No third-party action was added. Example
   addresses in documentation and tests now come from the documentation ranges.
+- Manual completeness (spec §18): `docs/development.md`, the contributor and adapter
+  guide; a procedure for stopping writes in an emergency (`docs/security.md`); the
+  manual's environment variables and tool names are checked against the code on every
+  `npm run check`, beside its commands and links. `.env.example` no longer sets
+  `UNIFI_MCP_ONLINE_CHECKS_ENABLED`, which nothing read, and shows the Phase 5 settings.
 
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 
