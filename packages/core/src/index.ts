@@ -11,6 +11,7 @@ export {
   type ApprovalGate,
   type ApprovalRefusal,
   type DispatcherDependencies,
+  type OperationObservation,
   type DispatcherLimits,
   type EnvelopeError,
   type EnvelopeStatus,

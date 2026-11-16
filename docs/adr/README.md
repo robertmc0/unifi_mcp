@@ -30,6 +30,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0022](0022-access-contract-transcription.md)               | UniFi Access: transcribing the PDF contract into adapter schemas                 | Accepted                                 |
 | [0023](0023-access-adapter.md)                              | UniFi Access adapter                                                             | Accepted (extended in Phase 4)           |
 | [0024](0024-other-applications-as-disabled-slots.md)        | Other applications as disabled module slots                                      | Accepted                                 |
+| [0025](0025-prometheus-metrics.md)                          | Prometheus metrics                                                               | Accepted                                 |
 
 ## Template
 

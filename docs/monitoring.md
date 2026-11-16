@@ -1,9 +1,9 @@
-# Logs, audit trail and health checks
+# Logs, audit trail, health checks and metrics
 
-> **Status: Phase 1 complete.** Logging, the audit trail and the health checks are
-> implemented (ADR 0008) and served by the MCP listener (ADR 0013). The CLI reads and
-> verifies the audit trail (`unifi-mcp audit list|verify`, ADR 0015). Prometheus metrics
-> are Phase 5.
+> **Status:** logging, the audit trail and the health checks are implemented (ADR 0008)
+> and served by the MCP listener (ADR 0013). The CLI reads and verifies the audit trail
+> (`unifi-mcp audit list|verify`, ADR 0015). Optional Prometheus metrics have their own
+> listener (ADR 0025).
 
 ## Runtime logs
 
@@ -119,3 +119,149 @@ identifiers, never complete sensitive responses, images or credentials.
 - Responses are `Cache-Control: no-store` and accept only `GET` and `HEAD`.
 - The container image's Docker `HEALTHCHECK` probes `/livez` every 30 seconds (every 2
   seconds while starting), so `docker compose ps` shows `healthy` (ADR 0017).
+
+## Metrics
+
+The service can publish metrics in the Prometheus text format. They are **off by
+default**, served on their own port, and only to a scraper that presents a token
+([ADR 0025](adr/0025-prometheus-metrics.md)). Prometheus does not run inside the
+container; you point your own at it.
+
+### Enabling
+
+1. Create a token file. It opens the metrics page and nothing else.
+
+   ```sh
+   unifi-mcp crypto generate-token --out secrets/unifi_mcp_metrics_token
+   ```
+
+   Any file with one line of at least 32 letters and digits works, for example from
+   `openssl rand -hex 32`.
+
+2. Set `UNIFI_MCP_METRICS_ENABLED=true` and `UNIFI_MCP_METRICS_TOKEN_FILE` to the file
+   ([configuration.md](configuration.md#metrics-listener)). With Docker Compose, uncomment
+   the metrics lines in `deploy/compose.single.yml`
+   ([networking.md](networking.md#the-metrics-listener)).
+3. Restart the service. `unifi-mcp doctor` shows a `metrics` line, and the log says
+   `metrics listening`.
+4. Check it on the host:
+
+   ```sh
+   curl -sS -H @<(printf 'Authorization: Bearer %s\n' "$(cat secrets/unifi_mcp_metrics_token)") \
+     http://127.0.0.1:9464/metrics
+   ```
+
+The listener answers `GET /metrics` and nothing else. Without the token it answers
+`401`; after repeated failures from one address, `429` for a while. Refused attempts are
+in the audit trail (`metrics.auth`); successful scrapes are not, because there is one
+every few seconds. To change the token, replace the file and restart the service.
+
+### Scrape configuration
+
+```yaml
+scrape_configs:
+  - job_name: unifi-local-mcp
+    scheme: http # https with UNIFI_MCP_METRICS_TLS_CERT_FILE and UNIFI_MCP_METRICS_TLS_KEY_FILE
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/unifi_mcp_metrics_token
+    static_configs:
+      - targets: ['127.0.0.1:9464']
+```
+
+Give Prometheus a copy of the token file. Over a network, use HTTPS: the service refuses
+to serve the listener in plaintext on a non-loopback address unless you tell it that
+something else protects it.
+
+### What is published
+
+All values are counts, durations, sizes or flags of the service process. Counters start
+at zero when the service starts.
+
+| Metric                                        | Type      | Labels                       | Meaning                                                                                                                                |
+| --------------------------------------------- | --------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `unifi_mcp_http_requests_total`               | counter   | `path`, `code`               | Requests finished on the MCP listener. `path` is `mcp`, `health` or `other`; `code` is the HTTP status, for example `401`.             |
+| `unifi_mcp_operations_total`                  | counter   | `module`, `effect`, `status` | Operation requests: `status` is `ok`, `pending`, `denied`, `approval_required` or `error`.                                             |
+| `unifi_mcp_operation_failures_total`          | counter   | `status`, `code`             | Denied and failed operation requests by the service's error code, for example `rate_limited`.                                          |
+| `unifi_mcp_operation_duration_seconds`        | histogram | `module`, `effect`           | Time from an operation request to its result, including queueing and retries.                                                          |
+| `unifi_mcp_upstream_requests_total`           | counter   | `module`, `result`           | Requests sent to consoles: `result` is `2xx`, `3xx`, `4xx`, `5xx`, or `no_response` when the console did not answer.                   |
+| `unifi_mcp_upstream_request_duration_seconds` | histogram | `module`                     | Duration of one request to a console, including connecting.                                                                            |
+| `unifi_mcp_build_info`                        | gauge     | `version`                    | Always 1; the label is the service version.                                                                                            |
+| `process_start_time_seconds`                  | gauge     |                              | When the service process started (Unix time).                                                                                          |
+| `process_resident_memory_bytes`               | gauge     |                              | Memory of the service process.                                                                                                         |
+| `unifi_mcp_ready`                             | gauge     |                              | 1 when the service is ready (as `/readyz`), otherwise 0.                                                                               |
+| `unifi_mcp_health_check_status`               | gauge     | `check`, `status`            | 1 for the current status (`ok`, `degraded`, `fail`) of `database`, `audit`, `disk_space` and `console_versions`; 0 otherwise.          |
+| `unifi_mcp_hard_lock`                         | gauge     |                              | 1 when `UNIFI_MCP_FORCE_READ_ONLY` is on.                                                                                              |
+| `unifi_mcp_runtime_mode`                      | gauge     | `mode`                       | 1 for the policy's runtime mode (`read_only` or `read_write`), 0 for the other.                                                        |
+| `unifi_mcp_policy_version`                    | gauge     |                              | Rises with every change to the security policy, consoles or clients.                                                                   |
+| `unifi_mcp_operations_running`                | gauge     |                              | Operations being executed now.                                                                                                         |
+| `unifi_mcp_operations_queued`                 | gauge     |                              | Operation requests waiting for a free slot.                                                                                            |
+| `unifi_mcp_clients_connected`                 | gauge     |                              | MCP clients with at least one open request or stream.                                                                                  |
+| `unifi_mcp_open_responses`                    | gauge     |                              | Open MCP responses, including event streams.                                                                                           |
+| `unifi_mcp_clients_configured`                | gauge     |                              | MCP clients that exist, whatever their status.                                                                                         |
+| `unifi_mcp_event_subscriptions`               | gauge     |                              | Open event subscriptions of MCP clients.                                                                                               |
+| `unifi_mcp_event_feeds`                       | gauge     | `module`, `state`            | Event connections to consoles: `connecting`, `connected`, `retrying` or `unavailable`.                                                 |
+| `unifi_mcp_event_messages_dropped`            | gauge     | `module`, `reason`           | Messages the current event connections dropped: `contract_mismatch` or `unclassified`. It falls when a connection is no longer needed. |
+| `unifi_mcp_consoles`                          | gauge     | `state`                      | Configured consoles: `enabled`, `read_only`, `disabled`, or `invalid` (stored policy unusable).                                        |
+| `unifi_mcp_console_modules`                   | gauge     | `module`, `state`, `version` | Console modules by mode (`read_only`, `read_write`, `disabled`) and whether their application version is `known` or `unknown`.         |
+| `unifi_mcp_approvals_pending`                 | gauge     |                              | Approval requests waiting for a person (at most 500 are counted).                                                                      |
+| `unifi_mcp_database_size_bytes`               | gauge     |                              | Size of the database file.                                                                                                             |
+| `unifi_mcp_data_volume_free_bytes`            | gauge     |                              | Free space on the data volume.                                                                                                         |
+
+`module` is `network`, `protect`, `access` or `unknown`; `effect` is `read`, `write` or
+`unknown`. `unknown` counts requests for operation ids that do not exist. A series
+appears when it first has a value.
+
+Changes made with the CLI in another process (for example `unifi-mcp client revoke`) are
+not counted by the counters. The gauges read the database and show them.
+
+### What is never published
+
+Metrics carry no console alias, host name, address or id, no client id or name, no site,
+device or operation id, no argument, no token id and no text from a console. This is
+enforced, not only intended: every label has a fixed list of values, and anything else is
+recorded as `unknown` or `other`. The one open label, `code` of
+`unifi_mcp_operation_failures_total`, accepts only the service's own lower-case error
+codes and at most 64 different ones. To see _which_ console or client is behind a number,
+use the runtime log and the audit trail, which need host access.
+
+The page still describes your deployment in outline: how many consoles and clients
+exist, which modules are in use, whether writes are possible, and how busy it is. That
+is why it needs a token.
+
+### Example queries
+
+```promql
+# Share of operation requests that failed, over 5 minutes
+sum(rate(unifi_mcp_operations_total{status="error"}[5m])) / sum(rate(unifi_mcp_operations_total[5m]))
+
+# 95th percentile of operation duration per module
+histogram_quantile(0.95, sum by (le, module) (rate(unifi_mcp_operation_duration_seconds_bucket[5m])))
+
+# Consoles not answering, or answering with server errors, per module
+sum by (module) (rate(unifi_mcp_upstream_requests_total{result=~"no_response|5xx"}[5m]))
+
+# Refused MCP sign-ins (wrong or missing client token)
+rate(unifi_mcp_http_requests_total{path="mcp",code="401"}[5m])
+
+# Not ready, or a health check that is not ok
+unifi_mcp_ready == 0
+unifi_mcp_health_check_status{status!="ok"} == 1
+
+# Writes are possible: the hard lock is off and the runtime mode is read_write
+unifi_mcp_hard_lock == 0 and on() unifi_mcp_runtime_mode{mode="read_write"} == 1
+
+# Requests are queueing, approvals are waiting, event connections are failing
+unifi_mcp_operations_queued > 0
+unifi_mcp_approvals_pending > 0
+sum(unifi_mcp_event_feeds{state=~"retrying|unavailable"}) > 0
+
+# Less than 1 GiB free on the data volume
+unifi_mcp_data_volume_free_bytes < 1073741824
+```
+
+They are written for Grafana panels and alert rules. The names and labels in them are
+checked against the service by a test. The scrape configuration and these queries have
+not yet been run against a Prometheus server
+([ADR 0025](adr/0025-prometheus-metrics.md), "Not verified").

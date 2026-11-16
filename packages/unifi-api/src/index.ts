@@ -31,7 +31,7 @@ export {
   type Lookup,
   type ResolvedAddress,
 } from './egress.ts';
-export { UnifiExecutor, type UnifiExecutorOptions } from './executor.ts';
+export { UnifiExecutor, type UnifiExecutorOptions, type UpstreamObservation } from './executor.ts';
 export { loadContractInventory } from './inventory.ts';
 export {
   PLAUSIBLE_VERSION,

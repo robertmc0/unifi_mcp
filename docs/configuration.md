@@ -49,6 +49,23 @@ normal operation.
 | `UNIFI_MCP_ADMIN_SESSION_IDLE_MINUTES`                          | `30`        | A session unused for this long ends (5–480).                                                        |
 | `UNIFI_MCP_ADMIN_SESSION_MAX_HOURS`                             | `12`        | A session ends this long after sign-in (1–72).                                                      |
 
+## Metrics listener
+
+Optional Prometheus metrics (ADR 0025, [monitoring.md](monitoring.md#metrics)). Off by
+default.
+
+| Variable                                                            | Default     | Meaning                                                                                                                                                                      |
+| ------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_METRICS_ENABLED`                                         | `false`     | Start the metrics listener.                                                                                                                                                  |
+| `UNIFI_MCP_METRICS_TOKEN_FILE`                                      | unset       | **Required when enabled.** A file with the token a scraper must present: one line, at least 32 characters. Create it with `unifi-mcp crypto generate-token --out <path>`.    |
+| `UNIFI_MCP_METRICS_BIND`                                            | `127.0.0.1` | Listener address (an IP address or `localhost`).                                                                                                                             |
+| `UNIFI_MCP_METRICS_PORT`                                            | `9464`      | Listener port. Must differ from the MCP and admin ports.                                                                                                                     |
+| `UNIFI_MCP_METRICS_TLS_CERT_FILE`, `UNIFI_MCP_METRICS_TLS_KEY_FILE` | unset       | Serve HTTPS with this certificate and key (PEM).                                                                                                                             |
+| `UNIFI_MCP_METRICS_ALLOW_PLAINTEXT`                                 | `false`     | Allow plaintext HTTP on a non-loopback bind (Docker with host-loopback publishing, or a TLS proxy). Without it the service refuses to start the listener in plaintext there. |
+
+The service does not start when metrics are enabled and the token file is missing,
+unreadable or too short (`METRICS_TOKEN_INVALID`).
+
 ## Audit retention
 
 | Variable                         | Default | Meaning                                                                  |

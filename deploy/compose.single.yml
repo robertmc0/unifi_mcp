@@ -47,13 +47,22 @@ services:
       UNIFI_MCP_ADMIN_ENABLED: 'false'
       UNIFI_MCP_ADMIN_BIND: 0.0.0.0
       UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT: 'true'
+      # Optional Prometheus metrics (docs/monitoring.md#metrics). To enable them: create the
+      # token file (see the secret below), set this to true, and uncomment the 9464 port
+      # line, the secret under "secrets:" here and the secret at the end of this file.
+      UNIFI_MCP_METRICS_ENABLED: 'false'
+      UNIFI_MCP_METRICS_BIND: 0.0.0.0
+      UNIFI_MCP_METRICS_ALLOW_PLAINTEXT: 'true'
+      UNIFI_MCP_METRICS_TOKEN_FILE: /run/secrets/unifi_mcp_metrics_token
     ports:
       - '127.0.0.1:${UNIFI_MCP_HTTP_HOST_PORT:-3000}:3000'
       # - '127.0.0.1:${UNIFI_MCP_ADMIN_HOST_PORT:-3001}:3001'
+      # - '127.0.0.1:${UNIFI_MCP_METRICS_HOST_PORT:-9464}:9464'
     volumes:
       - ./data:/data
     secrets:
       - unifi_mcp_master_key
+      # - unifi_mcp_metrics_token
     logging:
       driver: json-file
       options:
@@ -63,3 +72,7 @@ services:
 secrets:
   unifi_mcp_master_key:
     file: ./secrets/unifi_mcp_master_key
+  # The scrape token for the metrics endpoint. Create it before enabling metrics:
+  #   (umask 077 && openssl rand -hex 32 > secrets/unifi_mcp_metrics_token)
+  # unifi_mcp_metrics_token:
+  #   file: ./secrets/unifi_mcp_metrics_token

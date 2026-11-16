@@ -215,6 +215,17 @@ describe('configuration errors in the runtime log', () => {
     { UNIFI_MCP_HTTP_ALLOWED_HOSTS: 'https://x' },
     { UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_ADMIN_BIND: '0.0.0.0' },
     { UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_ADMIN_PORT: '3000' },
+    { UNIFI_MCP_METRICS_ENABLED: 'true' },
+    {
+      UNIFI_MCP_METRICS_ENABLED: 'true',
+      UNIFI_MCP_METRICS_TOKEN_FILE: '/run/secrets/metrics_token',
+      UNIFI_MCP_METRICS_BIND: '0.0.0.0',
+    },
+    {
+      UNIFI_MCP_METRICS_ENABLED: 'true',
+      UNIFI_MCP_METRICS_TOKEN_FILE: '/run/secrets/metrics_token',
+      UNIFI_MCP_METRICS_PORT: '3000',
+    },
   ])('survive redaction unchanged: %j', (env) => {
     let message = '';
     try {
@@ -224,6 +235,58 @@ describe('configuration errors in the runtime log', () => {
     }
     expect(message).not.toBe('');
     expect(redactString(message)).toBe(message);
+  });
+});
+
+describe('metrics listener configuration (ADR 0025)', () => {
+  const TOKEN = { UNIFI_MCP_METRICS_TOKEN_FILE: '/run/secrets/metrics_token' };
+
+  it('is disabled by default, and loopback on its own port with a token when enabled', () => {
+    expect(loadServiceConfig({}).metrics).toBeUndefined();
+    expect(loadServiceConfig({ ...TOKEN }).metrics).toBeUndefined();
+    expect(loadServiceConfig({ UNIFI_MCP_METRICS_ENABLED: 'true', ...TOKEN }).metrics).toEqual({
+      bind: '127.0.0.1',
+      port: 9464,
+      tls: undefined,
+      allowPlaintext: false,
+      tokenFile: '/run/secrets/metrics_token',
+    });
+    expect(
+      loadServiceConfig({
+        UNIFI_MCP_METRICS_ENABLED: 'true',
+        ...TOKEN,
+        UNIFI_MCP_METRICS_BIND: '0.0.0.0',
+        UNIFI_MCP_METRICS_ALLOW_PLAINTEXT: 'true',
+        UNIFI_MCP_METRICS_PORT: '9100',
+      }).metrics,
+    ).toMatchObject({ bind: '0.0.0.0', port: 9100, allowPlaintext: true });
+    expect(
+      loadServiceConfig({
+        UNIFI_MCP_METRICS_ENABLED: 'true',
+        ...TOKEN,
+        UNIFI_MCP_METRICS_BIND: '0.0.0.0',
+        UNIFI_MCP_METRICS_TLS_CERT_FILE: '/run/secrets/cert.pem',
+        UNIFI_MCP_METRICS_TLS_KEY_FILE: '/run/secrets/key.pem',
+      }).metrics?.tls,
+    ).toEqual({ certFile: '/run/secrets/cert.pem', keyFile: '/run/secrets/key.pem' });
+  });
+
+  it.each([
+    [{}, /needs UNIFI_MCP_METRICS_TOKEN_FILE/],
+    [{ ...TOKEN, UNIFI_MCP_METRICS_PORT: '3000' }, /must differ/],
+    [{ ...TOKEN, UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_METRICS_PORT: '3001' }, /must differ/],
+    [{ ...TOKEN, UNIFI_MCP_METRICS_BIND: '0.0.0.0' }, /plaintext HTTP/],
+    [{ ...TOKEN, UNIFI_MCP_METRICS_BIND: 'metrics.example' }, /IP address/],
+    [{ ...TOKEN, UNIFI_MCP_METRICS_TLS_CERT_FILE: '/x.pem' }, /both/],
+    [{ ...TOKEN, UNIFI_MCP_METRICS_PORT: '0' }, /UNIFI_MCP_METRICS_PORT/],
+  ])('rejects %j', (env, pattern) => {
+    expect(() => loadServiceConfig({ UNIFI_MCP_METRICS_ENABLED: 'true', ...env })).toThrow(pattern);
+  });
+
+  it('rejects a malformed switch', () => {
+    expect(() => loadServiceConfig({ UNIFI_MCP_METRICS_ENABLED: 'maybe' })).toThrow(
+      /true" or "false/,
+    );
   });
 });
 

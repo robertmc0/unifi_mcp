@@ -81,6 +81,8 @@ export async function startTestService(options: {
   streamRecheckMs?: number;
   /** Enable the admin listener on an ephemeral loopback port. */
   admin?: boolean;
+  /** Enable the metrics listener on an ephemeral loopback port, with this token file. */
+  metricsTokenFile?: string;
   eventStreams?: EventStreamDescriptor[];
   eventHubLimits?: Partial<EventHubLimits>;
   listenLimits?: Partial<ListenLimits>;
@@ -105,6 +107,16 @@ export async function startTestService(options: {
             sessionMaxHours: 12,
           }
         : undefined,
+    metrics:
+      options.metricsTokenFile === undefined
+        ? undefined
+        : {
+            bind: '127.0.0.1',
+            port: 0,
+            tls: undefined,
+            allowPlaintext: false,
+            tokenFile: options.metricsTokenFile,
+          },
   };
   const service = await startService({
     config,

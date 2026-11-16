@@ -6,7 +6,7 @@
 import { parseArgs, type ParseArgsOptionsConfig } from 'node:util';
 import { AdminError } from '@unifi-local-mcp/admin-api';
 import { ApprovalError } from '@unifi-local-mcp/approvals';
-import { ClientError, ConfigError } from '@unifi-local-mcp/mcp-server';
+import { ClientError, ConfigError, MetricsTokenError } from '@unifi-local-mcp/mcp-server';
 import { PolicyError } from '@unifi-local-mcp/policy';
 import { StorageError } from '@unifi-local-mcp/storage';
 import { ConsoleError } from '@unifi-local-mcp/unifi-api';
@@ -46,6 +46,7 @@ const KNOWN_ERRORS = [
   ApprovalError,
   AdminError,
   ConfigError,
+  MetricsTokenError,
 ];
 
 function helpText(table: CommandTable): string[] {

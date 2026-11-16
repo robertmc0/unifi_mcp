@@ -2,7 +2,8 @@
  * @unifi-local-mcp/telemetry
  *
  * Structured JSON logging with redaction, the persistent hash-chained audit trail, and
- * liveness/readiness checks (ADR 0008). Prometheus metrics are Phase 5.
+ * liveness/readiness checks (ADR 0008), and a metrics registry with Prometheus text output
+ * (ADR 0025).
  */
 export {
   AUDIT_ACTOR_TYPES,
@@ -44,6 +45,19 @@ export {
   type LogLevel,
   type LogSink,
 } from './logger.ts';
+export {
+  codeLabel,
+  Counter,
+  Gauge,
+  Histogram,
+  MetricsRegistry,
+  PROMETHEUS_CONTENT_TYPE,
+  type CodeLabel,
+  type LabelSets,
+  type MetricDefinition,
+  type MetricFamily,
+  type MetricType,
+} from './metrics.ts';
 export {
   isSensitiveFieldName,
   LOG_LIMITS,

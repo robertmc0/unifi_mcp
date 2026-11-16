@@ -31,7 +31,7 @@
 | ------------------------------------------------------------------------------------------------------------------- | --------------- |
 | [configuration.md](configuration.md) (hard lock, listener, egress, data, logging, master key, retention)            | 1 (started)     |
 | [backup-restore.md](backup-restore.md) (backup, restore, key rotation)                                              | 1 (started)     |
-| [monitoring.md](monitoring.md) (logs, audit trail, health; metrics in Phase 5)                                      | 1 (started) / 5 |
+| [monitoring.md](monitoring.md) (logs, audit trail, health, Prometheus metrics)                                      | 1 / 5           |
 | [security.md](security.md) (permissions, write safety, client tokens, console connections)                          | 1 (started)     |
 | [installation.md](installation.md) (Docker Compose, from source, maintenance, upgrades)                             | 1 (started)     |
 | [quickstart.md](quickstart.md) (one Docker host, loopback, hard lock on)                                            | 1               |

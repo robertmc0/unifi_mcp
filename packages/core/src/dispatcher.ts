@@ -254,6 +254,19 @@ export const DEFAULT_DISPATCHER_LIMITS: DispatcherLimits = {
   maxRetryAfterMs: 5_000,
 };
 
+/**
+ * What one `execute` or `resume` call came to, for metrics (ADR 0025). It carries no
+ * identifier: the module and effect come from the registered descriptor, never from the
+ * request, and are undefined when the operation id is not registered.
+ */
+export interface OperationObservation {
+  moduleId: string | undefined;
+  effect: 'read' | 'write' | undefined;
+  status: EnvelopeStatus;
+  errorCode: string | undefined;
+  durationMs: number;
+}
+
 export interface DispatcherDependencies {
   registry: OperationRegistry;
   executor: OperationExecutor;
@@ -265,6 +278,8 @@ export interface DispatcherDependencies {
   logger: Logger;
   approvals?: ApprovalGate;
   limits?: DispatcherLimits;
+  /** Told the result of every call. It cannot change the result; its errors are ignored. */
+  observe?: (observation: OperationObservation) => void;
   now?: () => Date;
   random?: () => number;
 }
@@ -399,6 +414,38 @@ export class Dispatcher {
   }
 
   async execute(principal: Principal, request: ExecutionRequest): Promise<ExecutionEnvelope> {
+    const startedMs = performance.now();
+    const envelope = await this.#executeGuarded(principal, request);
+    this.#observe(envelope, startedMs);
+    return envelope;
+  }
+
+  /** Work in progress, for metrics: running operations and requests waiting for a slot. */
+  get load(): { running: number; queued: number } {
+    return { running: this.#scheduler.running, queued: this.#scheduler.queued };
+  }
+
+  #observe(envelope: ExecutionEnvelope, startedMs: number): void {
+    const observe = this.#deps.observe;
+    if (observe === undefined) return;
+    try {
+      const descriptor = this.#deps.registry.get(envelope.operationId);
+      observe({
+        moduleId: descriptor?.moduleId,
+        effect: descriptor?.effect,
+        status: envelope.status,
+        errorCode: envelope.error?.code,
+        durationMs: performance.now() - startedMs,
+      });
+    } catch {
+      // Metrics never affect an operation.
+    }
+  }
+
+  async #executeGuarded(
+    principal: Principal,
+    request: ExecutionRequest,
+  ): Promise<ExecutionEnvelope> {
     const correlationId = randomUUID();
     const raw = request as unknown as Partial<Record<string, unknown>>;
     const base = {
@@ -430,6 +477,13 @@ export class Dispatcher {
    * is consumed in the transaction that creates the execution, so it runs at most once.
    */
   async resume(principal: Principal, approvalId: string): Promise<ExecutionEnvelope> {
+    const startedMs = performance.now();
+    const envelope = await this.#resumeGuarded(principal, approvalId);
+    this.#observe(envelope, startedMs);
+    return envelope;
+  }
+
+  async #resumeGuarded(principal: Principal, approvalId: string): Promise<ExecutionEnvelope> {
     const correlationId = randomUUID();
     const base = { operationId: '', consoleId: null, siteId: null, correlationId };
     try {

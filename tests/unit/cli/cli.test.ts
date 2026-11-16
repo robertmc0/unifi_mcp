@@ -45,6 +45,63 @@ describe('crypto', () => {
     expect(again.err).toContain('MASTER_KEY_FILE_EXISTS');
   });
 
+  it('generates a metrics token file, and doctor and the effective configuration show metrics', async () => {
+    const h = await setup();
+    const path = join(h.dir, 'metrics.token');
+    const created = await h.run(['crypto', 'generate-token', '--out', path]);
+    expect(created.code).toBe(0);
+    expect((await stat(path)).mode & 0o777).toBe(0o400);
+    const token = (await readFile(path, 'utf8')).trim();
+    expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    // The token is written to the file only, never to the terminal.
+    expect(created.out + created.err).not.toContain(token);
+    const again = await h.run(['crypto', 'generate-token', '--out', path]);
+    expect(again.code).toBe(1);
+    expect(again.err).toContain('METRICS_TOKEN_FILE_EXISTS');
+    expect((await readFile(path, 'utf8')).trim()).toBe(token);
+
+    const json = async <T>(argv: string[], env: NodeJS.ProcessEnv = {}): Promise<T> =>
+      JSON.parse((await h.run([...argv, '--json'], { env })).out) as T;
+    const metricsCheck = async (env: NodeJS.ProcessEnv = {}) =>
+      (await json<{ check: string; status: string; detail: string }[]>(['doctor'], env)).find(
+        (c) => c.check === 'metrics',
+      );
+    expect(await metricsCheck()).toEqual({ check: 'metrics', status: 'ok', detail: 'off' });
+    const env = { UNIFI_MCP_METRICS_ENABLED: 'true', UNIFI_MCP_METRICS_TOKEN_FILE: path };
+    expect(await metricsCheck(env)).toEqual({
+      check: 'metrics',
+      status: 'ok',
+      detail: 'http on 127.0.0.1:9464',
+    });
+    const effective = await json<{ metrics: Record<string, unknown> }>(
+      ['config', 'show-effective'],
+      env,
+    );
+    expect(effective.metrics).toEqual({
+      enabled: true,
+      bind: '127.0.0.1',
+      port: 9464,
+      tls: false,
+      allowPlaintext: false,
+      tokenFile: path,
+    });
+    expect(JSON.stringify(effective)).not.toContain(token);
+    expect(
+      await metricsCheck({
+        ...env,
+        UNIFI_MCP_METRICS_BIND: '0.0.0.0',
+        UNIFI_MCP_METRICS_ALLOW_PLAINTEXT: 'true',
+      }),
+    ).toMatchObject({ status: 'warn' });
+    await writeFile(join(h.dir, 'short.token'), 'short\n');
+    const broken = { ...env, UNIFI_MCP_METRICS_TOKEN_FILE: join(h.dir, 'short.token') };
+    expect(await metricsCheck(broken)).toMatchObject({ status: 'fail' });
+    expect((await h.run(['doctor'], { env: broken })).code).toBe(1);
+    expect((await json<{ metrics: unknown }>(['config', 'show-effective'])).metrics).toEqual({
+      enabled: false,
+    });
+  });
+
   it('rotates the master key after taking a backup', async () => {
     const h = await setup();
     await h.run(['console', 'add', '--alias', 'lab', '--host', '192.0.2.10']);

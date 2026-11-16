@@ -2,7 +2,7 @@
  * `crypto …` and `db …` commands (spec §13.2, §8.2; ADR 0007).
  */
 import { join } from 'node:path';
-import { loadServiceConfig } from '@unifi-local-mcp/mcp-server';
+import { loadServiceConfig, writeNewMetricsToken } from '@unifi-local-mcp/mcp-server';
 import {
   acquireInstanceLock,
   backupDatabase,
@@ -54,6 +54,22 @@ export const cryptoCommands: Record<string, Command> = {
       ctx.print({ path, keyId }, () => [
         `Master key written to ${path} (key id ${keyId}).`,
         'Back it up separately from database backups. Never generate a new key for an existing database.',
+      ]);
+      return 0;
+    },
+  },
+  'generate-token': {
+    summary:
+      'Write a new random token file for the metrics endpoint (mode 0400; refuses to overwrite)',
+    usage: '--out <path>',
+    options: { out: { type: 'string' } },
+    run: async (ctx) => {
+      const path = requireString(ctx.values, 'out');
+      await writeNewMetricsToken(path);
+      ctx.print({ path }, () => [
+        `Token written to ${path}.`,
+        'Set UNIFI_MCP_METRICS_TOKEN_FILE to this file, and give the same token to the scraper',
+        '(Prometheus: authorization.credentials_file). It opens the metrics endpoint only.',
       ]);
       return 0;
     },

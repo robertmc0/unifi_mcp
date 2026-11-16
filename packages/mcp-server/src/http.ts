@@ -63,7 +63,16 @@ export interface McpHttpOptions {
   allowedOrigins: string[];
   events?: EventServices;
   listen?: Partial<ListenLimits>;
+  /** Told the path class and status of every finished request (ADR 0025). */
+  observe?: (observation: HttpObservation) => void;
   now?: () => number;
+}
+
+/** One request on the MCP listener, for metrics: no address, token or client. */
+export interface HttpObservation {
+  path: 'mcp' | 'health' | 'other';
+  /** The status sent, or undefined when the connection closed before any answer. */
+  status: number | undefined;
 }
 
 interface ClientHandler {
@@ -308,11 +317,31 @@ export class McpHttpService {
     return affected;
   }
 
+  /** Clients with an open MCP response, and how many responses are open. */
+  get connections(): { clients: number; responses: number } {
+    let responses = 0;
+    for (const open of this.#open.values()) responses += open.size;
+    return { clients: this.#open.size, responses };
+  }
+
+  #observe(res: ServerResponse, path: HttpObservation['path']): void {
+    const observe = this.#options.observe;
+    if (observe === undefined) return;
+    res.once('close', () => {
+      try {
+        observe({ path, status: res.headersSent ? res.statusCode : undefined });
+      } catch {
+        // Metrics never affect a request.
+      }
+    });
+  }
+
   async #handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const path = new URL(req.url ?? '/', 'http://listener.invalid').pathname;
     const health = await this.#health(
       new Request(`http://listener.invalid${path}`, { method: req.method ?? 'GET' }),
     );
+    this.#observe(res, health !== undefined ? 'health' : path === MCP_PATH ? 'mcp' : 'other');
     if (health !== undefined) {
       res.writeHead(health.status, Object.fromEntries(health.headers));
       res.end(Buffer.from(await health.arrayBuffer()));

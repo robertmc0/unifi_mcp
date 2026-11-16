@@ -35,11 +35,24 @@ const DEFAULT_CONNECT_TIMEOUT_MS = 5_000;
 const UPSTREAM_CODE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
 const UPSTREAM_REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/**
+ * One request sent to a console, for metrics (ADR 0025): the module, the HTTP status the
+ * console answered with (undefined when no answer arrived) and how long it took. No
+ * console, path or identifier.
+ */
+export interface UpstreamObservation {
+  moduleId: string;
+  status: number | undefined;
+  durationMs: number;
+}
+
 export interface UnifiExecutorOptions {
   consoles: ConsoleRegistry;
   egress: EgressGuard;
   logger: Logger;
   connectTimeoutMs?: number;
+  /** Told about every request that was attempted. Its errors are ignored. */
+  observe?: (observation: UpstreamObservation) => void;
 }
 
 function failure(error: UpstreamError): ExecutorOutcome {
@@ -116,6 +129,7 @@ export class UnifiExecutor implements OperationExecutor {
   readonly #egress: EgressGuard;
   readonly #logger: Logger;
   readonly #connectTimeoutMs: number;
+  readonly #observe: ((observation: UpstreamObservation) => void) | undefined;
   readonly #insecureWarned = new Set<string>();
 
   constructor(options: UnifiExecutorOptions) {
@@ -123,6 +137,7 @@ export class UnifiExecutor implements OperationExecutor {
     this.#egress = options.egress;
     this.#logger = options.logger;
     this.#connectTimeoutMs = options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS;
+    this.#observe = options.observe;
   }
 
   async execute(call: ExecutionCall): Promise<ExecutorOutcome> {
@@ -249,6 +264,15 @@ export class UnifiExecutor implements OperationExecutor {
         ...(status === undefined ? {} : { status }),
         durationMs: Math.round(performance.now() - started),
       });
+      try {
+        this.#observe?.({
+          moduleId: connection.moduleId,
+          status,
+          durationMs: performance.now() - started,
+        });
+      } catch {
+        // Metrics never affect a request.
+      }
     }
     return this.#interpret(
       response,

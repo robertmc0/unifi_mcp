@@ -56,8 +56,12 @@ describe('deploy/compose.single.yml', () => {
     expect(environment['UNIFI_MCP_FORCE_READ_ONLY']).toBe('true');
     expect(environment['UNIFI_MCP_ADMIN_ENABLED']).toBe('false');
     expect(environment['UNIFI_MCP_MASTER_KEY_FILE']).toMatch(/^\/run\/secrets\//);
+    // Metrics are off, and their token is a secret file too, never a value (ADR 0025).
+    expect(environment['UNIFI_MCP_METRICS_ENABLED']).toBe('false');
+    expect(environment['UNIFI_MCP_METRICS_TOKEN_FILE']).toMatch(/^\/run\/secrets\//);
+    // No secret value in the environment: only paths of secret files (`…_FILE`).
     expect(JSON.stringify(environment)).not.toMatch(
-      /UNIFI_MCP_MASTER_KEY"|_API_KEY|PASSWORD|TOKEN/,
+      /UNIFI_MCP_MASTER_KEY"|_API_KEY|PASSWORD|TOKEN(?!_FILE")/,
     );
   });
 

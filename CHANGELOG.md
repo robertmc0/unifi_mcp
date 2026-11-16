@@ -38,6 +38,17 @@ All notable changes to this project are documented here. The format follows
   values): ten networks, paging, empty strings in DHCP lists, missing optional fields,
   every management type, UUIDs rather than VLAN ids, and a failing references read.
 
+### Added — Phase 5: release hardening (in progress)
+
+- Prometheus metrics (ADR 0025): optional, off by default, on their own listener
+  (`UNIFI_MCP_METRICS_*`, default `127.0.0.1:9464`), served only to a scraper that
+  presents the token in `UNIFI_MCP_METRICS_TOKEN_FILE`. 27 metrics: requests, operations
+  and their durations, console requests, queue, clients, event subscriptions, consoles,
+  approvals, health, database and disk. Labels have fixed value lists, so no console,
+  client, site, address or operation id can appear. New
+  `unifi-mcp crypto generate-token`; `doctor` and `config show-effective` show the
+  listener. Scrape configuration and example queries in `docs/monitoring.md`.
+
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 
 The gate is open: Access has not run on a real console, and no version-labelled Access

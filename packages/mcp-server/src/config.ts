@@ -44,6 +44,19 @@ export interface AdminListenerConfig {
   sessionMaxHours: number;
 }
 
+/**
+ * The metrics listener (spec §12, §7.3; ADR 0025). Separate bind, port and credential;
+ * disabled unless UNIFI_MCP_METRICS_ENABLED=true.
+ */
+export interface MetricsListenerConfig {
+  bind: string;
+  port: number;
+  tls: { certFile: string; keyFile: string } | undefined;
+  allowPlaintext: boolean;
+  /** File holding the scrape token. Read at startup; never in the environment itself. */
+  tokenFile: string;
+}
+
 export interface ServiceConfig {
   dataDir: string;
   databasePath: string;
@@ -53,6 +66,8 @@ export interface ServiceConfig {
   http: HttpConfig;
   /** Undefined when the admin interface is disabled (the default). */
   admin: AdminListenerConfig | undefined;
+  /** Undefined when metrics are disabled (the default). */
+  metrics: MetricsListenerConfig | undefined;
   auditRetentionDays: number;
   apiSpecsDir: string;
 }
@@ -159,6 +174,42 @@ function loadAdminConfig(
   };
 }
 
+function loadMetricsConfig(
+  env: NodeJS.ProcessEnv,
+  http: HttpConfig,
+  admin: AdminListenerConfig | undefined,
+): MetricsListenerConfig | undefined {
+  if (!flag(env, 'UNIFI_MCP_METRICS_ENABLED')) return undefined;
+  const bind = env['UNIFI_MCP_METRICS_BIND']?.trim() || '127.0.0.1';
+  if (bind !== 'localhost' && isIP(bind) === 0) {
+    throw new ConfigError('UNIFI_MCP_METRICS_BIND must be an IP address (or localhost).');
+  }
+  const port = integer(env, 'UNIFI_MCP_METRICS_PORT', 9464, 1, 65535);
+  if (port === http.port || port === admin?.port) {
+    throw new ConfigError(
+      'UNIFI_MCP_METRICS_PORT must differ from the MCP and admin ports: the listeners are separate.',
+    );
+  }
+  const tokenFile = env['UNIFI_MCP_METRICS_TOKEN_FILE']?.trim() ?? '';
+  if (tokenFile === '') {
+    throw new ConfigError(
+      'UNIFI_MCP_METRICS_ENABLED needs UNIFI_MCP_METRICS_TOKEN_FILE: metrics are served only ' +
+        'to a scraper that presents this token (create one with "unifi-mcp crypto generate-token").',
+    );
+  }
+  const tls = tlsFiles(env, 'UNIFI_MCP_METRICS');
+  const allowPlaintext = flag(env, 'UNIFI_MCP_METRICS_ALLOW_PLAINTEXT');
+  if (tls === undefined && !isLoopbackBind(bind) && !allowPlaintext) {
+    throw new ConfigError(
+      `Refusing to accept the metrics token over plaintext HTTP on ${bind}. Configure ` +
+        'UNIFI_MCP_METRICS_TLS_CERT_FILE and UNIFI_MCP_METRICS_TLS_KEY_FILE, bind to a loopback ' +
+        'address, or set UNIFI_MCP_METRICS_ALLOW_PLAINTEXT=true when a TLS reverse proxy or a ' +
+        'host-loopback port publication protects it (docs/networking.md).',
+    );
+  }
+  return { bind, port, tls, allowPlaintext, tokenFile: resolve(tokenFile) };
+}
+
 export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
   const dataDir = resolve(env['UNIFI_MCP_DATA_DIR']?.trim() || '/data');
   const bind = env['UNIFI_MCP_HTTP_BIND']?.trim() || '127.0.0.1';
@@ -201,6 +252,7 @@ export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
       ],
     },
     admin: undefined,
+    metrics: undefined,
     auditRetentionDays: integer(
       env,
       'UNIFI_MCP_AUDIT_RETENTION_DAYS',
@@ -211,5 +263,6 @@ export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
     apiSpecsDir: env['UNIFI_MCP_API_SPECS_DIR']?.trim() || defaultApiSpecsDir(),
   };
   config.admin = loadAdminConfig(env, config.http);
+  config.metrics = loadMetricsConfig(env, config.http, config.admin);
   return config;
 }

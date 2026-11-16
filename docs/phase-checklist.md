@@ -768,11 +768,21 @@ backups, `client-codex.md`, `development.md` and `release.md`.
 
 ### Implementation order (plan)
 
-1. **Prometheus metrics** (spec §12, §7.3): an optional, authenticated endpoint that is
-   off by default; request counts and latencies, queue depth, error rates, console
-   connectivity, event subscriptions, active clients, database health; bounded labels,
-   no names, addresses or identifiers. Example scrape configuration and queries in
-   `monitoring.md`.
+1. ✅ **Prometheus metrics** (2026-11-16, [ADR 0025](adr/0025-prometheus-metrics.md);
+   spec §12, §7.3): a dependency-free registry whose labels have fixed value lists
+   (`packages/telemetry/src/metrics.ts`); 27 metrics from three observation hooks
+   (dispatcher, console executor, MCP HTTP gate) and scrape-time gauges
+   (`packages/mcp-server/src/metrics.ts`); a third listener, off by default, that serves
+   `GET /metrics` only to the token in `UNIFI_MCP_METRICS_TOKEN_FILE`
+   (`metrics-http.ts`); `unifi-mcp crypto generate-token`; `doctor` and
+   `config show-effective`. Tests: `tests/unit/telemetry/metrics.test.ts`,
+   `tests/contract/metrics-catalogue.test.ts` (pinned catalogue, manual in step),
+   `tests/integration-mock/metrics-http.test.ts` (authentication, throttling, counters
+   after real calls, a scrape free of the setup's identifiers). Docs:
+   [monitoring.md](monitoring.md#metrics), configuration, networking, Compose example.
+   **Open:** a run against a real Prometheus server. The scrape configuration and the
+   example queries are unverified; a Prometheus container could not be started from this
+   session.
 2. **Admin MFA** (spec §7.2): optional TOTP with encrypted secrets, hashed one-time
    recovery codes, `admin reset-mfa`, an operator setting to require MFA, and recent
    re-authentication for approvals and security changes.

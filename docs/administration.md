@@ -163,14 +163,15 @@ happens next.
 
 ### Master key (`crypto`) and database (`db`)
 
-| Command                                        | What it does                                                                                                                  |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `crypto generate-key --out <f>`                | Writes a new random key file (mode 0400). Never overwrites.                                                                   |
-| `crypto key-id --file <f>`                     | Shows a key file's identifier, to match key files to databases and backups.                                                   |
-| `crypto rotate-key --new-key-file <f> [--yes]` | Re-encrypts all credentials with a new key. **Service stopped.**                                                              |
-| `db backup [--out <f>]`                        | Writes a verified online backup. Safe while the service runs.                                                                 |
-| `db check [--backup <f>]`                      | Checks the live database read-only (integrity, key, every credential, audit chain), or a backup file. Exits 1 on any problem. |
-| `db restore <f> [--yes]`                       | Replaces the database with a validated backup. **Service stopped.**                                                           |
+| Command                                        | What it does                                                                                                                    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `crypto generate-key --out <f>`                | Writes a new random key file (mode 0400). Never overwrites.                                                                     |
+| `crypto key-id --file <f>`                     | Shows a key file's identifier, to match key files to databases and backups.                                                     |
+| `crypto generate-token --out <f>`              | Writes a new random token file (mode 0400) for the metrics endpoint ([monitoring.md](monitoring.md#metrics)). Never overwrites. |
+| `crypto rotate-key --new-key-file <f> [--yes]` | Re-encrypts all credentials with a new key. **Service stopped.**                                                                |
+| `db backup [--out <f>]`                        | Writes a verified online backup. Safe while the service runs.                                                                   |
+| `db check [--backup <f>]`                      | Checks the live database read-only (integrity, key, every credential, audit chain), or a backup file. Exits 1 on any problem.   |
+| `db restore <f> [--yes]`                       | Replaces the database with a validated backup. **Service stopped.**                                                             |
 
 Procedures are in [backup-restore.md](backup-restore.md).
 
@@ -190,7 +191,7 @@ See [monitoring.md](monitoring.md#audit-trail).
 | `admin bootstrap --username <u>`      | Creates the first administrator for the admin web interface. Refused once one exists.                                                                                                                                                                        |
 | `admin reset-password --username <u>` | Sets a new password and re-enables the account (local recovery).                                                                                                                                                                                             |
 | `admin list`                          | Lists administrators.                                                                                                                                                                                                                                        |
-| `doctor`                              | Checks configuration, key, database, audit chain, policy, hard lock, listener, egress, consoles, clients, administrators and disk space. Exits 1 if a check fails.                                                                                           |
+| `doctor`                              | Checks configuration, key, database, audit chain, policy, hard lock, listener, metrics, egress, consoles, clients, administrators and disk space. Exits 1 if a check fails.                                                                                  |
 | `api coverage`                        | Shows the official operations per module, how many this service implements, and how many it refuses to offer after review. The full matrix, with reviewed metadata, test evidence and the reason for each operation not offered, is in `docs/api-coverage/`. |
 | `api modules`                         | Shows every application module: the supported ones with their contract revisions and operation counts, and the applications without an adapter as `unavailable: <reason>` ([applications-other.md](applications-other.md)).                                  |
 

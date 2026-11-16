@@ -70,6 +70,8 @@ import { ClientStore } from './clients.ts';
 import type { AdminListenerConfig, ServiceConfig } from './config.ts';
 import { eventUri, type EventServices } from './events.ts';
 import { McpHttpService, type ListenLimits } from './http.ts';
+import { createServiceMetrics } from './metrics.ts';
+import { loadMetricsToken, MetricsHttpService } from './metrics-http.ts';
 import { buildMcpServer } from './tools.ts';
 
 export const SERVICE_VERSION = '0.0.0';
@@ -126,6 +128,8 @@ export interface RunningService {
   admins: AdminStore;
   /** The admin interface URL, or undefined when it is disabled (the default). */
   adminUrl: string | undefined;
+  /** The metrics URL (without path), or undefined when metrics are disabled (the default). */
+  metricsUrl: string | undefined;
   stop(): Promise<void>;
 }
 
@@ -185,6 +189,12 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
     now,
   });
 
+  // Read before anything is opened: an unusable token stops the start (fail closed).
+  const metricsToken =
+    config.metrics === undefined ? undefined : loadMetricsToken(config.metrics.tokenFile);
+  const startedAt = now();
+  const metrics = createServiceMetrics(SERVICE_VERSION);
+
   let masterKey = options.masterKey;
   if (masterKey === undefined) {
     const loaded = await loadMasterKey(options.env ?? process.env);
@@ -240,7 +250,9 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
         isModuleId(moduleId) && MODULE_ENDPOINTS[moduleId].versionSource === 'declared',
     };
     const egress = new EgressGuard(config.egress, options.lookup);
-    const executor = options.executor ?? new UnifiExecutor({ consoles, egress, logger });
+    const executor =
+      options.executor ??
+      new UnifiExecutor({ consoles, egress, logger, observe: metrics.observeUpstream });
     const dispatcher = new Dispatcher({
       registry,
       executor,
@@ -251,6 +263,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       executions: new ExecutionStore(storage.db, now),
       logger,
       approvals,
+      observe: metrics.observeOperation,
       now,
     });
     const recovered = dispatcher.recoverInterrupted();
@@ -329,6 +342,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       health,
       audit,
       logger,
+      observe: metrics.observeHttp,
       allowedHosts: config.http.allowedHosts,
       allowedOrigins: config.http.allowedOrigins,
     });
@@ -412,6 +426,63 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       logger.info('admin interface listening', { url: admin.url });
     }
 
+    // Metrics (ADR 0025): counts and flags only, on their own listener, off by default.
+    metrics.attach({
+      startedAt,
+      dataDir: config.dataDir,
+      databasePath: config.databasePath,
+      hardLock: config.deployment.forceReadOnly,
+      runtimeMode: () => policyStore.current().document.runtimeMode,
+      policyVersion: () => policyStore.current().version,
+      readiness: () => health.readiness(),
+      load: () => dispatcher.load,
+      connections: () => http.connections,
+      eventSubscriptions: () => http.openSubscriptions,
+      eventFeeds: () => hub.status(),
+      consoles: () => consoles.list().map((view) => ({ state: view.policy?.state ?? 'invalid' })),
+      consoleModules: () =>
+        consoles.list().flatMap((view) =>
+          view.modules.map((module) => ({
+            moduleId: module.moduleId,
+            state: view.policy?.modules[module.moduleId]?.state ?? 'disabled',
+            versionKnown: module.effectiveVersion !== null,
+          })),
+        ),
+      clients: () => clients.list().length,
+      pendingApprovals: () => approvals.list({ status: 'pending', limit: 500 }).length,
+    });
+    let metricsListener: { server: Server; url: string } | undefined;
+    if (config.metrics !== undefined && metricsToken !== undefined) {
+      const metricsHttp = new MetricsHttpService({
+        registry: metrics.registry,
+        tokenDigest: metricsToken,
+        audit,
+        logger,
+      });
+      const metricsServer = createListener(config.metrics.tls, metricsHttp.listener);
+      try {
+        metricsListener = {
+          server: metricsServer,
+          url: await listen(
+            metricsServer,
+            config.metrics.port,
+            config.metrics.bind,
+            config.metrics.tls !== undefined,
+          ),
+        };
+      } catch (error) {
+        await closeServer(server);
+        if (admin !== undefined) await closeServer(admin.server);
+        throw error;
+      }
+      if (config.metrics.tls === undefined && config.metrics.allowPlaintext) {
+        logger.warn(
+          'metrics listener uses plaintext HTTP (UNIFI_MCP_METRICS_ALLOW_PLAINTEXT); TLS must be provided in front of it',
+        );
+      }
+      logger.info('metrics listening', { url: metricsListener.url });
+    }
+
     // Revocations made by another process (the CLI) are stored in the database but do not
     // reach the in-process listener above: re-check open responses periodically.
     const recheck = setInterval(() => {
@@ -467,6 +538,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
         forceReadOnly: config.deployment.forceReadOnly,
         tls: config.http.tls !== undefined,
         adminInterface: admin !== undefined,
+        metrics: metricsListener !== undefined,
       },
     });
     logger.info('service started', {
@@ -495,12 +567,14 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       http,
       admins,
       adminUrl: admin?.url,
+      metricsUrl: metricsListener?.url,
       stop: async () => {
         if (stopped) return;
         stopped = true;
         await versions.stop();
         await hub.close();
         if (admin !== undefined) await closeServer(admin.server);
+        if (metricsListener !== undefined) await closeServer(metricsListener.server);
         clearInterval(recheck);
         clearInterval(sweep);
         clearInterval(pruneTimer);

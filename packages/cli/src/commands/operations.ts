@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import {
   defaultApiSpecsDir,
   isLoopbackBind,
+  loadMetricsToken,
   loadServiceConfig,
   ADAPTERS,
   implementsRevision,
@@ -76,6 +77,17 @@ export const configCommands: Record<string, Command> = {
           allowedHosts: config.http.allowedHosts,
           allowedOrigins: config.http.allowedOrigins,
         },
+        metrics:
+          config.metrics === undefined
+            ? { enabled: false }
+            : {
+                enabled: true,
+                bind: config.metrics.bind,
+                port: config.metrics.port,
+                tls: config.metrics.tls !== undefined,
+                allowPlaintext: config.metrics.allowPlaintext,
+                tokenFile: config.metrics.tokenFile,
+              },
         egressAllow: config.egress.allow,
         logLevel: config.logLevel,
         auditRetentionDays: config.auditRetentionDays,
@@ -220,6 +232,25 @@ export const doctorCommand: Command = {
           'ok',
           `${config.http.tls === undefined ? 'http' : 'https'} on ${config.http.bind}:${String(config.http.port)}`,
         );
+      }
+      if (config.metrics === undefined) {
+        add('metrics', 'ok', 'off');
+      } else {
+        const where = `${config.metrics.tls === undefined ? 'http' : 'https'} on ${config.metrics.bind}:${String(config.metrics.port)}`;
+        try {
+          loadMetricsToken(config.metrics.tokenFile);
+          add(
+            'metrics',
+            config.metrics.tls === undefined && !isLoopbackBind(config.metrics.bind)
+              ? 'warn'
+              : 'ok',
+            config.metrics.tls === undefined && !isLoopbackBind(config.metrics.bind)
+              ? `plaintext ${where}: make sure a TLS proxy or loopback publishing protects the token`
+              : where,
+          );
+        } catch (error) {
+          add('metrics', 'fail', describeFailure(error));
+        }
       }
       add('egress', 'ok', config.egress.allow.join(', '));
       const consoles = services.consoles.list();

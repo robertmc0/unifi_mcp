@@ -73,6 +73,26 @@ variables ([configuration.md](configuration.md#admin-listener)). In addition:
   the original `Host` and `Origin` headers.
 - Never expose the admin interface to the internet or to networks that MCP clients use.
 
+## The metrics listener
+
+Optional Prometheus metrics ([monitoring.md](monitoring.md#metrics)) have a third
+listener of their own. It is **off** unless `UNIFI_MCP_METRICS_ENABLED=true`, and then
+listens on `127.0.0.1:9464` by default. It serves one page, `GET /metrics`, to a scraper
+that presents the token from `UNIFI_MCP_METRICS_TOKEN_FILE`. MCP client tokens and admin
+sessions are not accepted on it, and its token is accepted nowhere else.
+
+- The same three setups as for the MCP listener apply, with the `UNIFI_MCP_METRICS_*`
+  variables ([configuration.md](configuration.md#metrics-listener)): loopback, built-in
+  TLS, or plaintext behind something that protects it.
+- **Docker:** as for the admin interface, bind the container to its interface
+  (`UNIFI_MCP_METRICS_BIND=0.0.0.0` with `UNIFI_MCP_METRICS_ALLOW_PLAINTEXT=true`) and
+  publish the port on the **host's** loopback only: `127.0.0.1:9464:9464`.
+  `deploy/compose.single.yml` has these lines, commented out until you enable metrics.
+- A Prometheus server on another machine needs built-in TLS
+  (`UNIFI_MCP_METRICS_TLS_CERT_FILE` and `UNIFI_MCP_METRICS_TLS_KEY_FILE`) or a TLS proxy:
+  the token must not cross a network in plaintext.
+- Put it on the management side. MCP clients have no use for it.
+
 ## Connections to consoles
 
 The service connects only to configured consoles, on addresses inside the egress

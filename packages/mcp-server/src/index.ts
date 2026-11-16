@@ -30,6 +30,7 @@ export {
   loadServiceConfig,
   type HttpConfig,
   type AdminListenerConfig,
+  type MetricsListenerConfig,
   type ServiceConfig,
 } from './config.ts';
 export {
@@ -47,9 +48,19 @@ export {
   DEFAULT_LISTEN_LIMITS,
   MCP_PATH,
   McpHttpService,
+  type HttpObservation,
   type ListenLimits,
   type McpHttpOptions,
 } from './http.ts';
+export { createServiceMetrics, type MetricsSources, type ServiceMetrics } from './metrics.ts';
+export {
+  loadMetricsToken,
+  METRICS_PATH,
+  MetricsHttpService,
+  MetricsTokenError,
+  writeNewMetricsToken,
+  type MetricsHttpOptions,
+} from './metrics-http.ts';
 export {
   SERVICE_VERSION,
   startService,
