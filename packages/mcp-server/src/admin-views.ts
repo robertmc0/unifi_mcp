@@ -112,6 +112,23 @@ function configuration(config: ServiceConfig): SettingsView['configuration'] {
     ['MCP allowed origins', config.http.allowedOrigins.join(', ')],
     ['Console addresses allowed (egress)', config.egress.allow.join(', ')],
     ['Log level', config.logLevel],
+    [
+      'Requests at once',
+      `${String(config.limits.scheduler.globalConcurrency)} in total, ${String(config.limits.scheduler.perKeyConcurrency)} per console module`,
+    ],
+    [
+      'Waiting requests',
+      `${String(config.limits.scheduler.globalQueue)} in total, ${String(config.limits.scheduler.perKeyQueue)} per console module, ${String(config.limits.scheduler.perClientQueued)} per client`,
+    ],
+    [
+      'Rate limits (per second / burst)',
+      (['client', 'console', 'module', 'global'] as const)
+        .map(
+          (scope) =>
+            `${scope} ${String(config.limits.rate[scope].ratePerSecond)}/${String(config.limits.rate[scope].burst)}`,
+        )
+        .join(', '),
+    ],
     ['Audit retention', `${String(config.auditRetentionDays)} days`],
   ];
   if (config.admin !== undefined) {

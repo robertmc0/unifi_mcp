@@ -87,6 +87,8 @@ export async function startTestService(options: {
   management?: boolean;
   /** A clock for the service (TOTP tests move it). */
   now?: () => Date;
+  /** Further deployment settings, as environment variables (for example limits). */
+  env?: NodeJS.ProcessEnv;
   /** Enable the metrics listener on an ephemeral loopback port, with this token file. */
   metricsTokenFile?: string;
   eventStreams?: EventStreamDescriptor[];
@@ -95,7 +97,10 @@ export async function startTestService(options: {
 }): Promise<TestService> {
   const pki = testPki();
   const logs: string[] = [];
-  const base = loadServiceConfig({ UNIFI_MCP_DATA_DIR: join(options.dir, 'data') });
+  const base = loadServiceConfig({
+    ...options.env,
+    UNIFI_MCP_DATA_DIR: join(options.dir, 'data'),
+  });
   const config = {
     ...base,
     deployment: { forceReadOnly: options.forceReadOnly ?? false },

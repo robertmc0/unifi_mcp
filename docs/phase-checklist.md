@@ -850,8 +850,17 @@ backups, `client-codex.md`, `development.md` and `release.md`.
    fixed: a second restore within one second replaced the first set-aside database.
    Not drilled on the image: an upgrade across a schema migration (covered by unit tests
    with synthetic migrations; there is no older released image to upgrade from).
-7. **Performance and queue tests** (spec §10, §17): concurrency and rate limits, queue
-   caps, retries and unknown write outcomes under load.
+7. ✅ **Performance and queue tests** (2026-11-16, [ADR 0010](adr/0010-operation-registry-and-dispatcher.md),
+   "Configuration and load tests"; spec §10, §17): `tests/performance/` runs the
+   dispatcher under hundreds of simultaneous requests (caps reached and never passed,
+   bounded queues, fairness, deadlines, rates, exactly-once writes, unknown outcomes,
+   cancellation) and the whole service over HTTP with its shipped limits (200 reads from
+   8 clients, all answered, metrics and audit adding up). Part of `npm run check`.
+   Also done here, open since Phase 1 step 4: the limits are deployment settings
+   (`UNIFI_MCP_RATE_*`, `UNIFI_MCP_CONCURRENCY_*`, `UNIFI_MCP_QUEUE_*`,
+   [configuration.md](configuration.md#limits)). One observation of throughput on the
+   development machine is in the ADR (about 500 audited reads per second); it is not a
+   benchmark, and nothing was measured against a real console.
 8. **Supply chain and CI** (spec §14): secret scan, dependency audit, container scan,
    SBOM, multi-architecture build, a release workflow that publishes nothing until it is
    configured, dependency update configuration, issue templates.

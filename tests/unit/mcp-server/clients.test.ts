@@ -9,6 +9,7 @@ import {
   loadServiceConfig,
   type ClientErrorCode,
 } from '@unifi-local-mcp/mcp-server';
+import { DEFAULT_DISPATCHER_LIMITS } from '@unifi-local-mcp/core';
 import { PolicyStore, type PolicyActor } from '@unifi-local-mcp/policy';
 import { databasePathFor, openStorage } from '@unifi-local-mcp/storage';
 import { AuditLog, redactString } from '@unifi-local-mcp/telemetry';
@@ -235,6 +236,59 @@ describe('configuration errors in the runtime log', () => {
     }
     expect(message).not.toBe('');
     expect(redactString(message)).toBe(message);
+  });
+});
+
+describe('limits configuration (spec §10; ADR 0010)', () => {
+  it('keeps the conservative defaults unless told otherwise', () => {
+    expect(loadServiceConfig({}).limits).toEqual(DEFAULT_DISPATCHER_LIMITS);
+  });
+
+  it('takes rates as "<per second>/<burst>" and sizes as whole numbers', () => {
+    const { limits } = loadServiceConfig({
+      UNIFI_MCP_RATE_PER_CLIENT: '2/5',
+      UNIFI_MCP_RATE_PER_CONSOLE: '0.5/1',
+      UNIFI_MCP_RATE_PER_MODULE: '30/60',
+      UNIFI_MCP_RATE_GLOBAL: '100/200',
+      UNIFI_MCP_CONCURRENCY_GLOBAL: '8',
+      UNIFI_MCP_CONCURRENCY_PER_MODULE: '2',
+      UNIFI_MCP_QUEUE_GLOBAL: '50',
+      UNIFI_MCP_QUEUE_PER_MODULE: '20',
+      UNIFI_MCP_QUEUE_PER_CLIENT: '0',
+    });
+    expect(limits.rate).toEqual({
+      client: { ratePerSecond: 2, burst: 5 },
+      console: { ratePerSecond: 0.5, burst: 1 },
+      module: { ratePerSecond: 30, burst: 60 },
+      global: { ratePerSecond: 100, burst: 200 },
+    });
+    expect(limits.scheduler).toEqual({
+      globalConcurrency: 8,
+      perKeyConcurrency: 2,
+      globalQueue: 50,
+      perKeyQueue: 20,
+      perClientQueued: 0,
+    });
+    // Everything else stays as reviewed.
+    expect(limits.readRetries).toBe(DEFAULT_DISPATCHER_LIMITS.readRetries);
+    expect(limits.maxMaxWaitMs).toBe(DEFAULT_DISPATCHER_LIMITS.maxMaxWaitMs);
+  });
+
+  it.each([
+    [{ UNIFI_MCP_RATE_PER_CLIENT: '10' }, /UNIFI_MCP_RATE_PER_CLIENT/],
+    [{ UNIFI_MCP_RATE_PER_CLIENT: '0/10' }, /UNIFI_MCP_RATE_PER_CLIENT/],
+    [{ UNIFI_MCP_RATE_PER_CLIENT: '10/0' }, /UNIFI_MCP_RATE_PER_CLIENT/],
+    [{ UNIFI_MCP_RATE_PER_CLIENT: '20/10' }, /not below the rate/],
+    [{ UNIFI_MCP_RATE_GLOBAL: 'unlimited' }, /UNIFI_MCP_RATE_GLOBAL/],
+    [{ UNIFI_MCP_RATE_GLOBAL: '5000/9000' }, /UNIFI_MCP_RATE_GLOBAL/],
+    [{ UNIFI_MCP_RATE_PER_MODULE: '-1/5' }, /UNIFI_MCP_RATE_PER_MODULE/],
+    [{ UNIFI_MCP_CONCURRENCY_GLOBAL: '0' }, /UNIFI_MCP_CONCURRENCY_GLOBAL/],
+    [{ UNIFI_MCP_CONCURRENCY_GLOBAL: '1000' }, /UNIFI_MCP_CONCURRENCY_GLOBAL/],
+    [{ UNIFI_MCP_CONCURRENCY_PER_MODULE: '32' }, /must not exceed/],
+    [{ UNIFI_MCP_QUEUE_GLOBAL: '-1' }, /UNIFI_MCP_QUEUE_GLOBAL/],
+    [{ UNIFI_MCP_QUEUE_PER_CLIENT: 'many' }, /UNIFI_MCP_QUEUE_PER_CLIENT/],
+  ])('rejects %j', (env, pattern) => {
+    expect(() => loadServiceConfig(env)).toThrow(pattern);
   });
 });
 

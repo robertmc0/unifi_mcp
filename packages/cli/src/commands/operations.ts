@@ -102,6 +102,7 @@ export const configCommands: Record<string, Command> = {
                 tokenFile: config.metrics.tokenFile,
               },
         egressAllow: config.egress.allow,
+        limits: { concurrencyAndQueues: config.limits.scheduler, rate: config.limits.rate },
         logLevel: config.logLevel,
         auditRetentionDays: config.auditRetentionDays,
         masterKeyId: services.masterKey.id,

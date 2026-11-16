@@ -107,6 +107,40 @@ evaluated first.
 | Rates (per second / burst) | client 10/20, console 20/40, console module 10/20, global 50/100 |
 | Wait for a slot            | 30 s default, 120 s maximum                                      |
 
+**Configuration and load tests, 2026-11-16 (Phase 5 step 7).** "Exposing them in
+configuration" was deferred here in Phase 1 and then not picked up; spec §10 asks for
+configurable limits. The rates, the two concurrency limits and the three queue sizes are
+now deployment settings (`UNIFI_MCP_RATE_*`, `UNIFI_MCP_CONCURRENCY_*`,
+`UNIFI_MCP_QUEUE_*`, [configuration.md](../configuration.md#limits)), validated at start,
+with the table above as defaults. Each rate applies to every client, console or console
+module alike; there is no per-client override. Wait times and retry counts stay in code.
+
+The rules above are also tested under volume (`tests/performance/`, part of
+`npm run check`):
+
+- 600 simultaneous reads from 10 clients to 4 consoles: the global and per-module
+  concurrency caps are reached and never passed; every read is answered once and audited
+  once; nothing stays queued.
+- Bounded queues: with a busy console, exactly the configured number of requests wait and
+  the rest are refused at once; one client cannot take more than its share.
+- Fairness: a client with one request is served before a backlog of 29 from another.
+- Deadlines: 50 waiting requests fail on time and none runs afterwards.
+- Rates: of 500 requests at once, a bucketful passes and the rest get a retry time; one
+  client's limit does not slow another.
+- Writes: 100 simultaneous requests with one idempotency key reach the console once; 80
+  writes to two devices each run exactly once, never two at a time on one device;
+  uncertain outcomes are recorded once and not retried.
+- Revocation cancels a client's 25 queued requests and only those.
+- The whole service over HTTP with the shipped limits: 200 reads from 8 clients are all
+  answered (`ok` or a stated limit), the console sees at most 4 at once, and the metrics
+  and the audit trail add up to 200. Limits set through the environment are applied.
+
+Measured on the development machine on 2026-11-16 (Node.js 26.13.0, linux/amd64, an
+instant synthetic console): about 500 audited reads per second through the dispatcher,
+one after another or all at once. The cost is the audit entry, a synchronous SQLite
+commit per request. This is a single observation, not a benchmark; the test asserts only
+a floor of 100 per second. The default global rate limit is 50 per second.
+
 Waiting clients are served round-robin within a key and keys round-robin overall. Queued
 work can be cancelled per client (revocation) or entirely (read-only switch, shutdown).
 `drain()` stops intake and waits for running operations.
@@ -145,8 +179,8 @@ runtime log), instead of hiding from the client a change that happened.
   processes race, but cross-process fairness and locking would need a different design.
 - The approval gate (step 5) plugs into `ApprovalGate` and resumes through the same
   dispatch path, so approved actions get the same dispatch check and hard lock.
-- Limits are code defaults for now. Exposing them in configuration is part of the service
-  configuration in step 7/9.
+- ~~Limits are code defaults for now. Exposing them in configuration is part of the service
+  configuration in step 7/9.~~ Done in Phase 5 step 7 (see "Limits").
 
 ## Re-evaluation triggers
 

@@ -281,6 +281,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       executions: new ExecutionStore(storage.db, now),
       logger,
       approvals,
+      limits: config.limits,
       observe: metrics.observeOperation,
       now,
     });

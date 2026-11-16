@@ -8,6 +8,11 @@
 import { isIP } from 'node:net';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  DEFAULT_DISPATCHER_LIMITS,
+  type DispatcherLimits,
+  type RateLimit,
+} from '@unifi-local-mcp/core';
 import { parseDeploymentOverrides, type DeploymentOverrides } from '@unifi-local-mcp/policy';
 import { databasePathFor } from '@unifi-local-mcp/storage';
 import {
@@ -72,6 +77,8 @@ export interface ServiceConfig {
   admin: AdminListenerConfig | undefined;
   /** Undefined when metrics are disabled (the default). */
   metrics: MetricsListenerConfig | undefined;
+  /** Rate limits, concurrency and queue sizes (spec §10; ADR 0010). */
+  limits: DispatcherLimits;
   auditRetentionDays: number;
   apiSpecsDir: string;
 }
@@ -180,6 +187,82 @@ function loadAdminConfig(
   };
 }
 
+/** `<requests per second>/<burst>`, for example `10/20`. */
+function rate(env: NodeJS.ProcessEnv, name: string, fallback: RateLimit): RateLimit {
+  const raw = env[name]?.trim() ?? '';
+  if (raw === '') return fallback;
+  const match = /^(\d{1,4}(?:\.\d{1,3})?)\/(\d{1,5})$/.exec(raw);
+  const ratePerSecond = Number(match?.[1]);
+  const burst = Number(match?.[2]);
+  if (
+    match === null ||
+    !(ratePerSecond >= 0.1 && ratePerSecond <= 1000) ||
+    !(burst >= 1 && burst <= 10_000) ||
+    burst < ratePerSecond
+  ) {
+    throw new ConfigError(
+      `${name} must be "<requests per second>/<burst>", for example 10/20: a rate from 0.1 ` +
+        'to 1000 and a burst from 1 to 10000 that is not below the rate.',
+    );
+  }
+  return { ratePerSecond, burst };
+}
+
+/**
+ * Limits of the dispatcher (spec §10: "configurable per-client, per-console,
+ * per-application and global rate limits"). Unset values keep the conservative defaults.
+ * A limit applies to each client, each console or each module of a console alike.
+ */
+function loadLimits(env: NodeJS.ProcessEnv): DispatcherLimits {
+  const defaults = DEFAULT_DISPATCHER_LIMITS;
+  const scheduler = {
+    globalConcurrency: integer(
+      env,
+      'UNIFI_MCP_CONCURRENCY_GLOBAL',
+      defaults.scheduler.globalConcurrency,
+      1,
+      256,
+    ),
+    perKeyConcurrency: integer(
+      env,
+      'UNIFI_MCP_CONCURRENCY_PER_MODULE',
+      defaults.scheduler.perKeyConcurrency,
+      1,
+      64,
+    ),
+    globalQueue: integer(env, 'UNIFI_MCP_QUEUE_GLOBAL', defaults.scheduler.globalQueue, 0, 10_000),
+    perKeyQueue: integer(
+      env,
+      'UNIFI_MCP_QUEUE_PER_MODULE',
+      defaults.scheduler.perKeyQueue,
+      0,
+      10_000,
+    ),
+    perClientQueued: integer(
+      env,
+      'UNIFI_MCP_QUEUE_PER_CLIENT',
+      defaults.scheduler.perClientQueued,
+      0,
+      10_000,
+    ),
+  };
+  if (scheduler.perKeyConcurrency > scheduler.globalConcurrency) {
+    throw new ConfigError(
+      'UNIFI_MCP_CONCURRENCY_PER_MODULE must not exceed UNIFI_MCP_CONCURRENCY_GLOBAL.',
+    );
+  }
+  return {
+    ...defaults,
+    scheduler,
+    rate: {
+      client: rate(env, 'UNIFI_MCP_RATE_PER_CLIENT', defaults.rate.client),
+      console: rate(env, 'UNIFI_MCP_RATE_PER_CONSOLE', defaults.rate.console),
+      module: rate(env, 'UNIFI_MCP_RATE_PER_MODULE', defaults.rate.module),
+      global: rate(env, 'UNIFI_MCP_RATE_GLOBAL', defaults.rate.global),
+    },
+  };
+}
+
 function loadMetricsConfig(
   env: NodeJS.ProcessEnv,
   http: HttpConfig,
@@ -259,6 +342,7 @@ export function loadServiceConfig(env: NodeJS.ProcessEnv): ServiceConfig {
     },
     admin: undefined,
     metrics: undefined,
+    limits: loadLimits(env),
     auditRetentionDays: integer(
       env,
       'UNIFI_MCP_AUDIT_RETENTION_DAYS',

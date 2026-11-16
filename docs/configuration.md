@@ -68,6 +68,35 @@ default.
 The service does not start when metrics are enabled and the token file is missing,
 unreadable or too short (`METRICS_TOKEN_INVALID`).
 
+## Limits
+
+How many requests the service accepts, runs at once and keeps waiting (ADR 0010). The
+defaults are deliberately low, because Ubiquiti documents no rate limits for its local
+APIs. Raise them only if clients are being refused and your consoles are not struggling.
+
+| Variable                           | Default  | Meaning                                                                                            |
+| ---------------------------------- | -------- | -------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_RATE_PER_CLIENT`        | `10/20`  | Requests per second and burst for **each** MCP client.                                             |
+| `UNIFI_MCP_RATE_PER_CONSOLE`       | `20/40`  | The same for each console, over all its applications and all clients.                              |
+| `UNIFI_MCP_RATE_PER_MODULE`        | `10/20`  | The same for each application on a console (for example Network on one console).                   |
+| `UNIFI_MCP_RATE_GLOBAL`            | `50/100` | The same for the whole service.                                                                    |
+| `UNIFI_MCP_CONCURRENCY_GLOBAL`     | `16`     | Requests sent to consoles at the same time, in total (1–256).                                      |
+| `UNIFI_MCP_CONCURRENCY_PER_MODULE` | `4`      | Requests sent at the same time to one application on one console (1–64, at most the global value). |
+| `UNIFI_MCP_QUEUE_GLOBAL`           | `256`    | Requests that may wait for a free slot, in total (0–10000).                                        |
+| `UNIFI_MCP_QUEUE_PER_MODULE`       | `64`     | Requests that may wait for one application on one console.                                         |
+| `UNIFI_MCP_QUEUE_PER_CLIENT`       | `16`     | Requests of one client that may wait. It keeps one busy client from filling the queue.             |
+
+A rate is written `<requests per second>/<burst>`: `10/20` lets 20 requests through at
+once and then 10 per second. The rate may be a fraction (`0.5/5`); the burst cannot be
+below the rate. A request has to pass all four rates.
+
+What a client sees when a limit is reached: `rate_limited` with a `retryAfterMs`,
+`queue_full` at once, or `deadline_exceeded` when its request could not start within its
+wait time (30 seconds unless it asks otherwise, 120 at most). Nothing is ever queued
+without bound. `unifi-mcp config show-effective` and the Settings page of the admin
+interface show the limits in force, and the metrics show how often they bite
+([monitoring.md](monitoring.md#example-queries)).
+
 ## Audit retention
 
 | Variable                         | Default | Meaning                                                                  |

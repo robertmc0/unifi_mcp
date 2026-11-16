@@ -133,7 +133,8 @@ Every operation, whatever tool started it, runs through one dispatcher (ADR 0010
   and globally, and queues are bounded. Excess requests get `rate_limited` (with a retry
   delay) or `queue_full` immediately, and requests that cannot start in time get
   `deadline_exceeded`. Defaults are conservative because Ubiquiti documents no local API
-  rate limits.
+  rate limits; they can be changed per deployment
+  ([configuration.md](configuration.md#limits)).
 - **Only documented operations.** An operation can be registered only if its method and
   path are in the official vendor contract recorded in `api-specs/`. Unknown arguments are
   rejected, and argument values can never change the request path, host, method or

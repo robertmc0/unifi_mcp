@@ -92,6 +92,15 @@ All notable changes to this project are documented here. The format follows
   line. The backup, restore and key-rotation procedures now run as drills through the CLI
   and against the container image (restore, hard kill, corrupted database, rotation).
 
+- Limits are configurable (spec §10; ADR 0010): `UNIFI_MCP_RATE_PER_CLIENT`,
+  `UNIFI_MCP_RATE_PER_CONSOLE`, `UNIFI_MCP_RATE_PER_MODULE`, `UNIFI_MCP_RATE_GLOBAL`,
+  `UNIFI_MCP_CONCURRENCY_GLOBAL`, `UNIFI_MCP_CONCURRENCY_PER_MODULE`,
+  `UNIFI_MCP_QUEUE_GLOBAL`, `UNIFI_MCP_QUEUE_PER_MODULE`, `UNIFI_MCP_QUEUE_PER_CLIENT`.
+  The defaults are unchanged. `config show-effective` and the Settings page show them.
+- Load tests (`tests/performance/`): concurrency caps, bounded queues, fairness,
+  deadlines, rate limits, exactly-once writes, unknown outcomes and cancellation under
+  hundreds of simultaneous requests, and a burst through the whole service.
+
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 
 The gate is open: Access has not run on a real console, and no version-labelled Access
