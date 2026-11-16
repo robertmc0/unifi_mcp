@@ -93,5 +93,8 @@ accepted. The steps, recorded in ADR 0024:
    for [Network](applications-network.md), [Protect](applications-protect.md) and
    [Access](applications-access.md).
 
+The files involved and the commands to run are in
+[development.md](development.md#a-new-contract-revision-or-application).
+
 InnerSpace already has the first requirement: a published API of six reads with a local
 server (ADR 0005). No adapter is planned. It is listed so that its status is true.

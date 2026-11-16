@@ -205,8 +205,7 @@ See [monitoring.md](monitoring.md#audit-trail).
 
 Passwords must have at least 12 characters, must not contain the username, and need at
 least 4 different characters. They are stored as Argon2id hashes. `admin reset-password`
-also ends all of the account's web sessions. `admin reset-mfa` arrives with MFA
-(Phase 5).
+also ends all of the account's web sessions.
 
 ## Admin web interface
 

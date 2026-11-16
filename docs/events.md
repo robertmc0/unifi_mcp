@@ -1,6 +1,6 @@
 # Events
 
-> **Status: Phase 4.** UniFi Protect event subscriptions and the UniFi Access notification
+> **Status:** UniFi Protect event subscriptions and the UniFi Access notification
 > WebSocket are available. Network documents no local event subscription, so none is
 > offered for it. Access notifications are tested against a synthetic Access API only.
 > Design and evidence: [ADR 0020](adr/0020-event-subscriptions.md),
@@ -200,9 +200,11 @@ The audit trail records every subscription (`events.subscribe`, with how many UR
 accepted and refused) and every read (`resource.read`, with the number of events and the
 state, or the reason it was denied). Event content is never logged or audited.
 
-There is no status page for event connections yet; the logs and a resource read show
-their state. Metrics for event subscriptions are planned with the Prometheus endpoint
-(Phase 5).
+There is no status page for event connections; the logs and a resource read show their
+state. With metrics enabled, `unifi_mcp_event_feeds` shows each connection's state,
+`unifi_mcp_event_subscriptions` the open subscriptions, and
+`unifi_mcp_event_messages_dropped` what the connections dropped
+([monitoring.md](monitoring.md#what-is-published)).
 
 ## Troubleshooting
 
