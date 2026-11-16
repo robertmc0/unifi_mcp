@@ -6,12 +6,14 @@
  */
 export { escapeHtml, html, SafeHtml } from './html.ts';
 export {
+  accountPage,
   approvalPage,
   approvalsPage,
   auditPage,
   dashboardPage,
   errorPage,
   loginPage,
+  type AccountView,
   type ApprovalDetail,
   type ApprovalRow,
   type AuditFilters,

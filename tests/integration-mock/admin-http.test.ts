@@ -7,6 +7,7 @@
  * - throttled sign-in; approvals need the password again and never execute anything.
  */
 import { describe, expect, it } from 'vitest';
+import { totpCode } from '@unifi-local-mcp/admin-api';
 import { requestDigest } from '@unifi-local-mcp/core';
 import { rebootGateway, RULE } from '../unit/core/fixtures.ts';
 import { useTempDirs } from '../unit/storage/fixtures.ts';
@@ -133,7 +134,7 @@ describe('admin sign-in and sessions', () => {
     expect((await b.get('/')).headers['location']).toBe('/login');
     const wrong = await b.post('/login', { username: 'alice', password: 'not the password' });
     expect(wrong.status).toBe(401);
-    expect(wrong.body).toContain('The username or password is wrong.');
+    expect(wrong.body).toContain('The username, password or code is wrong.');
     const login = await b.post('/login', { username: 'alice', password: PASSWORD });
     expect(login.status).toBe(303);
     const setCookie = String(login.headers['set-cookie']);
@@ -341,5 +342,234 @@ describe('admin audit page', () => {
     const older = /href="(\/audit\?[^"]*before=\d+[^"]*)"/.exec(first.body)?.[1];
     expect(older).toBeDefined();
     expect((await b.get((older ?? '').replaceAll('&amp;', '&'))).status).toBe(200);
+  });
+});
+
+describe('two-step sign-in (ADR 0026)', () => {
+  const STEP_MS = 30_000;
+
+  /** A service with a movable clock, and alice enrolled with a second step. */
+  async function withSecondStep(options: { requireMfa?: boolean; enrol?: boolean } = {}) {
+    const clock = { time: Date.parse('2026-11-16T10:00:15.000Z') };
+    const now = (): Date => new Date(clock.time);
+    const t = await startTestService({
+      dir: await tempDir(),
+      admin: true,
+      now,
+      ...(options.requireMfa === undefined ? {} : { requireMfa: options.requireMfa }),
+    });
+    t.service.admins.bootstrap('alice', PASSWORD, CLI);
+    let secret = '';
+    let codes: string[] = [];
+    if (options.enrol ?? true) {
+      secret = t.service.mfa.begin('alice', CLI).secret;
+      codes = t.service.mfa.confirm('alice', totpCode(secret, now()), CLI);
+      clock.time += STEP_MS; // the confirming code is used
+    }
+    const adminUrl = t.service.adminUrl ?? '';
+    return {
+      t,
+      b: browser(adminUrl),
+      adminUrl,
+      clock,
+      secret,
+      codes,
+      code: (): string => totpCode(secret, now()),
+      next: (): void => {
+        clock.time += STEP_MS;
+      },
+    };
+  }
+  const login = (b: Browser, extra: Record<string, string>) =>
+    b.post('/login', { username: 'alice', password: PASSWORD, ...extra });
+
+  it('asks for a code in the same form, and says only that something is wrong', async () => {
+    const { t, b, code, next } = await withSecondStep();
+    const page = await b.get('/login');
+    expect(page.body).toContain('name="code"');
+    expect(page.body).toContain('only if two-step sign-in is on');
+
+    const noCode = await login(b, {});
+    const wrongCode = await login(b, { code: '000000' });
+    const wrongPassword = await b.post('/login', {
+      username: 'alice',
+      password: 'not the password!',
+      code: code(),
+    });
+    for (const refused of [noCode, wrongCode, wrongPassword]) {
+      expect(refused.status).toBe(401);
+      expect(refused.body).toContain('The username, password or code is wrong.');
+      expect(refused.headers['set-cookie']).toBeUndefined();
+    }
+    expect(noCode.body).toBe(wrongPassword.body);
+    // The audit trail, which needs host access, does say which: the password was right.
+    const denied = t.service.audit.list({ eventType: 'admin.auth', outcome: 'denied', limit: 3 });
+    expect(denied.map((e) => [e.actorId, (e.details as { reason: string }).reason])).toEqual([
+      [null, 'invalid_credentials'],
+      ['alice', 'second_step_failed'],
+      ['alice', 'second_step_failed'],
+    ]);
+
+    // The wrong password with the right code did not use the code up.
+    const used = code();
+    const ok = await login(b, { code: used });
+    expect(ok.status).toBe(303);
+    expect(ok.headers['location']).toBe('/');
+    expect((await b.get('/')).status).toBe(200);
+    expect(t.service.audit.list({ eventType: 'admin.auth', limit: 1 })[0]).toMatchObject({
+      action: 'admin.login',
+      outcome: 'success',
+      actorId: 'alice',
+      details: { secondStep: 'totp' },
+    });
+
+    // A code works once: a second sign-in with it fails, the next code works.
+    const other = browser(t.service.adminUrl ?? '');
+    expect((await login(other, { code: used })).status).toBe(401);
+    next();
+    expect((await login(other, { code: code() })).status).toBe(303);
+  });
+
+  it('accepts a recovery code once, and tells the administrator how many are left', async () => {
+    const { t, b, codes } = await withSecondStep();
+    const recovery = codes[0] ?? '';
+    const ok = await login(b, { code: recovery.toLowerCase() });
+    expect(ok.status).toBe(303);
+    expect(ok.headers['location']).toBe('/account?recovery=used');
+    const account = await b.get('/account?recovery=used');
+    expect(account.status).toBe(200);
+    expect(account.body).toContain('You signed in with a recovery code');
+    expect(account.body).toContain('9 are left');
+    expect(account.body).toMatch(
+      /Two-step sign-in<\/th>\s*<td>\s*<span class="status-ok">on<\/span>/,
+    );
+    expect(account.body).toContain('unifi-mcp admin new-recovery-codes');
+    expect(account.body).not.toContain(recovery);
+    expect(t.service.audit.list({ eventType: 'admin.auth', limit: 1 })[0]).toMatchObject({
+      outcome: 'success',
+      details: { secondStep: 'recovery_code' },
+    });
+    expect(t.logs.join('\n')).toContain('an administrator signed in with a recovery code');
+    const again = browser(t.service.adminUrl ?? '');
+    expect((await login(again, { code: recovery })).status).toBe(401);
+  });
+
+  it('counts wrong codes towards the sign-in throttle', async () => {
+    const { b, code, next } = await withSecondStep();
+    for (let i = 0; i < 5; i++) expect((await login(b, { code: '000000' })).status).toBe(401);
+    next();
+    const blocked = await login(b, { code: code() });
+    expect(blocked.status).toBe(429);
+    expect(blocked.headers['set-cookie']).toBeUndefined();
+  });
+
+  it('approves only with the password and a code that was not used before', async () => {
+    const { t, b, code, next } = await withSecondStep();
+    const client = await connect(t.mcpUrl, t.token('writer', ['network.*.*']));
+    const proposed = structured(
+      await client.callTool({
+        name: 'unifi_execute',
+        arguments: {
+          operationId: 'network.firewall.update_rule',
+          consoleId: t.consoleId,
+          siteId: 'site-1',
+          arguments: { ruleId: RULE, body: { action: 'block' } },
+        },
+      }),
+    );
+    expect(proposed['status']).toBe('approval_required');
+    const approvalId = String(proposed['approvalId']);
+    const signInCode = code();
+    expect((await login(b, { code: signInCode })).status).toBe(303);
+    const page = await b.get(`/approvals/${approvalId}`);
+    expect(page.body).toContain('A new code from your authenticator app');
+    const csrf = await b.csrf(`/approvals/${approvalId}`);
+    const approve = (form: Record<string, string>) =>
+      b.post(`/approvals/${approvalId}/approve`, { csrf, ...form });
+
+    const passwordOnly = await approve({ password: PASSWORD });
+    const reusedCode = await approve({ password: PASSWORD, code: signInCode });
+    const codeOnly = await approve({ password: 'not the password!', code: signInCode });
+    for (const refused of [passwordOnly, reusedCode, codeOnly]) {
+      expect(refused.status).toBe(401);
+      expect(refused.body).toContain('The password or code is wrong; nothing was approved.');
+    }
+    expect(t.service.approvals.get(approvalId)?.status).toBe('pending');
+    next();
+    const approved = await approve({ password: PASSWORD, code: code() });
+    expect(approved.status).toBe(303);
+    expect(t.service.approvals.get(approvalId)).toMatchObject({
+      status: 'approved',
+      decidedBy: 'admin:alice',
+    });
+  });
+
+  it('can be required: an account without a second step cannot sign in', async () => {
+    const { t, b, clock } = await withSecondStep({ requireMfa: true, enrol: false });
+    const page = await b.get('/login');
+    expect(page.body).toMatch(/Code from your authenticator app\s*\(required\)/);
+    const refused = await login(b, {});
+    expect(refused.status).toBe(403);
+    expect(refused.body).toContain('requires two-step sign-in');
+    expect(refused.body).toContain('unifi-mcp admin enable-mfa');
+    expect(refused.headers['set-cookie']).toBeUndefined();
+    expect(t.service.audit.list({ eventType: 'admin.auth', limit: 1 })[0]).toMatchObject({
+      outcome: 'denied',
+      actorId: 'alice',
+      details: { reason: 'second_step_required' },
+    });
+    // A wrong password still gets the generic answer, whatever the requirement.
+    const wrong = await b.post('/login', { username: 'alice', password: 'not the password!' });
+    expect(wrong.status).toBe(401);
+    expect(wrong.body).not.toContain('requires two-step sign-in');
+
+    const secret = t.service.mfa.begin('alice', CLI).secret;
+    t.service.mfa.confirm('alice', totpCode(secret, new Date(clock.time)), CLI);
+    clock.time += STEP_MS;
+    const ok = await login(b, { code: totpCode(secret, new Date(clock.time)) });
+    expect(ok.status).toBe(303);
+  });
+
+  it('ends open sessions when the second step is set up or removed on the host', async () => {
+    const { t, b, clock } = await withSecondStep({ enrol: false });
+    expect((await login(b, {})).status).toBe(303);
+    const account = await b.get('/account');
+    expect(account.body).toMatch(/<span class="status-warn">off<\/span>/);
+    expect(account.body).not.toContain('Recovery codes left');
+    const secret = t.service.mfa.begin('alice', CLI).secret;
+    expect((await b.get('/account')).status).toBe(200); // pending changes nothing
+    t.service.mfa.confirm('alice', totpCode(secret, new Date(clock.time)), CLI);
+    expect((await b.get('/account')).status).toBe(303);
+    clock.time += STEP_MS;
+    expect((await login(b, {})).status).toBe(401);
+    expect((await login(b, { code: totpCode(secret, new Date(clock.time)) })).status).toBe(303);
+    t.service.mfa.reset('alice', CLI);
+    expect((await b.get('/account')).status).toBe(303);
+    // Password only again, as before it was set up.
+    expect((await login(b, {})).status).toBe(303);
+  });
+
+  it('never puts a code, the secret or a recovery code in a page, log or audit entry', async () => {
+    const { t, b, secret, codes, code } = await withSecondStep();
+    const used = code();
+    await login(b, { code: '123456' });
+    await login(b, { code: codes[1] ?? '' });
+    await login(browser(t.service.adminUrl ?? ''), { code: used });
+    const pages = [
+      (await b.get('/account')).body,
+      (await b.get('/')).body,
+      (await b.get('/audit')).body,
+    ].join('\n');
+    const records = `${t.logs.join('\n')}\n${JSON.stringify(t.service.audit.list({ limit: 500 }))}`;
+    for (const value of [secret, ...codes, ...codes.map((c) => c.replace(/-/g, ''))]) {
+      expect(pages, value).not.toContain(value);
+      expect(records, value).not.toContain(value);
+    }
+    // Six digits can occur by chance inside an id or a time: look for them standing alone.
+    for (const value of [used, '123456']) {
+      const alone = new RegExp(`(?<![0-9A-Za-z.:-])${value}(?![0-9A-Za-z.:-])`);
+      expect(pages, value).not.toMatch(alone);
+      expect(records, value).not.toMatch(alone);
+    }
   });
 });

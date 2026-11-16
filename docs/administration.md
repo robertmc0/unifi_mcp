@@ -186,14 +186,17 @@ See [monitoring.md](monitoring.md#audit-trail).
 
 ### Administrators, diagnostics and coverage
 
-| Command                               | What it does                                                                                                                                                                                                                                                 |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `admin bootstrap --username <u>`      | Creates the first administrator for the admin web interface. Refused once one exists.                                                                                                                                                                        |
-| `admin reset-password --username <u>` | Sets a new password and re-enables the account (local recovery).                                                                                                                                                                                             |
-| `admin list`                          | Lists administrators.                                                                                                                                                                                                                                        |
-| `doctor`                              | Checks configuration, key, database, audit chain, policy, hard lock, listener, metrics, egress, consoles, clients, administrators and disk space. Exits 1 if a check fails.                                                                                  |
-| `api coverage`                        | Shows the official operations per module, how many this service implements, and how many it refuses to offer after review. The full matrix, with reviewed metadata, test evidence and the reason for each operation not offered, is in `docs/api-coverage/`. |
-| `api modules`                         | Shows every application module: the supported ones with their contract revisions and operation counts, and the applications without an adapter as `unavailable: <reason>` ([applications-other.md](applications-other.md)).                                  |
+| Command                                   | What it does                                                                                                                                                                                                                                                 |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `admin bootstrap --username <u>`          | Creates the first administrator for the admin web interface. Refused once one exists.                                                                                                                                                                        |
+| `admin reset-password --username <u>`     | Sets a new password and re-enables the account (local recovery).                                                                                                                                                                                             |
+| `admin list`                              | Lists administrators, with whether two-step sign-in is on and how many recovery codes are left.                                                                                                                                                              |
+| `admin enable-mfa --username <u>`         | Sets up two-step sign-in (TOTP) for the admin web interface. Interactive only: it shows a key for your authenticator app, asks for a code from the app, then shows 10 recovery codes once ([two-step sign-in](#two-step-sign-in)).                           |
+| `admin new-recovery-codes --username <u>` | Replaces the recovery codes. The old ones stop working. Interactive only.                                                                                                                                                                                    |
+| `admin reset-mfa --username <u> [--yes]`  | Removes two-step sign-in and its recovery codes (for a lost device) and ends the account's sessions. Asks you to type "reset".                                                                                                                               |
+| `doctor`                                  | Checks configuration, key, database, audit chain, policy, hard lock, listener, metrics, egress, consoles, clients, administrators and disk space. Exits 1 if a check fails.                                                                                  |
+| `api coverage`                            | Shows the official operations per module, how many this service implements, and how many it refuses to offer after review. The full matrix, with reviewed metadata, test evidence and the reason for each operation not offered, is in `docs/api-coverage/`. |
+| `api modules`                             | Shows every application module: the supported ones with their contract revisions and operation counts, and the applications without an adapter as `unavailable: <reason>` ([applications-other.md](applications-other.md)).                                  |
 
 Passwords must have at least 12 characters, must not contain the username, and need at
 least 4 different characters. They are stored as Argon2id hashes. `admin reset-password`
@@ -216,18 +219,74 @@ off by default and never needed: the CLI does everything it does.
 | Dashboard | Hard lock, runtime mode, policy version, readiness and every health check, listeners, consoles and their modules, counts.                                   |
 | Approvals | Pending and recent requests. A request's page shows the client, operation, risk, target, times and the redacted arguments, with **Approve** and **Reject**. |
 | Audit     | The audit trail, newest first, filtered by actor, outcome and event type, with paging.                                                                      |
+| Account   | Your username, last sign-in, when the session ends, whether two-step sign-in is on and how many recovery codes are left.                                    |
 
-- **Approving needs your password every time**, on the approval form. Approving does not
-  run anything: the requesting client must resume the request before the time shown.
-  Rejecting needs no password.
+- **Approving needs your password every time**, on the approval form, and a new code
+  from your authenticator app when two-step sign-in is on. Approving does not run
+  anything: the requesting client must resume the request before the time shown.
+  Rejecting needs neither.
 - Sessions end after 30 minutes without use, 12 hours after sign-in, at **Sign out**,
-  when your password is reset on the host, or when the account is disabled.
+  when your password is reset on the host, when two-step sign-in is set up or removed, or
+  when the account is disabled.
 - After 5 failed sign-ins for a username (or 20 from one address) within 15 minutes,
   sign-in is refused for the rest of the 15 minutes.
 - Sign-ins, sign-outs and failures are in the audit trail (`admin.auth`), and your
   decisions too (`approval`).
 - Text from MCP clients and UniFi is shown escaped. Control and bidirectional-text
   characters appear as `\uXXXX`, so a request cannot hide or reorder what you read.
+
+### Two-step sign-in
+
+Optional, and recommended whenever the admin interface is reachable from more than the
+host itself ([ADR 0026](adr/0026-admin-two-step-sign-in.md)). It protects the web
+interface. The CLI does not use it: whoever can run the CLI on the host already controls
+the service.
+
+**Set it up** on the host, in a terminal:
+
+```sh
+unifi-mcp admin enable-mfa --username alice
+```
+
+1. The command shows a **key** (and the same key as an `otpauth://` link). In your
+   authenticator app, add an account and type the key in. The settings are the common
+   ones: time-based, SHA-1, 6 digits, 30 seconds. There is no QR code.
+2. Type the 6-digit code the app shows. A wrong code changes nothing; run the command
+   again for a new key.
+3. The command shows **10 recovery codes**, once. Store them away from the device. Each
+   replaces a code from the app one time.
+
+Setting it up ends the account's open sessions.
+
+**Signing in.** The sign-in form has a third field for the code. Leave it empty if
+two-step sign-in is off for your account. A wrong username, password or code gives the
+same message. A code works once: to sign in again, or to approve straight after signing
+in, wait for the app's next code (at most 30 seconds). The device's clock may differ from
+the server's by about 30 seconds.
+
+**A recovery code** goes in the same field. After signing in with one, the Account page
+says how many are left. Get new ones with `unifi-mcp admin new-recovery-codes`.
+
+**Lost device, no recovery code left:** on the host,
+
+```sh
+unifi-mcp admin reset-mfa --username alice
+```
+
+removes two-step sign-in from the account and ends its sessions. Set it up again
+afterwards. Like every recovery action, this needs access to the host and is audited
+(`admin.mfa_reset`).
+
+**Requiring it.** With `UNIFI_MCP_ADMIN_REQUIRE_MFA=true`, an account without two-step
+sign-in cannot sign in to the web interface at all, and is told to set it up on the host.
+`unifi-mcp doctor` warns when that locks an account out.
+
+| What                 | Where it is kept                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| The key              | Encrypted with the master key, in the database. Shown once at setup; no command shows it again.                           |
+| Recovery codes       | Only their SHA-256 digests. Shown once.                                                                                   |
+| Codes you type       | Nowhere. They are not logged or audited; the audit trail records that a code or a recovery code was used.                 |
+| Backups and restores | The database backup contains the encrypted key and the digests; they work again after a restore with the same master key. |
 
 ## Bootstrap file
 

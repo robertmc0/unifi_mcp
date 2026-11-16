@@ -9,9 +9,15 @@
  * sniffing protection. Every request must name an allowed Host (DNS rebinding). Every POST
  * must come from the same origin (`Origin` required) and, once signed in, carry the
  * session's CSRF token. Sign-in failures are throttled per username and per address.
+ *
+ * Two-step sign-in (ADR 0026): an account with an active second step signs in with its
+ * password and a code in one form, and approves with both. A failure says only that the
+ * username, password or code is wrong. With `requireMfa`, an account without a second
+ * step cannot sign in at all.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
+  accountPage,
   ADMIN_CSS,
   approvalPage,
   approvalsPage,
@@ -33,6 +39,7 @@ import type {
   Logger,
 } from '@unifi-local-mcp/telemetry';
 import type { AdminStore } from './admins.ts';
+import type { AdminMfa } from './mfa.ts';
 import { safeEqual, type AdminSession, type AdminSessionStore } from './sessions.ts';
 
 export const SESSION_COOKIE = '__Host-umcp_admin';
@@ -48,6 +55,10 @@ const CSP =
 export interface AdminHttpOptions {
   admins: AdminStore;
   sessions: AdminSessionStore;
+  /** Two-step sign-in (ADR 0026). */
+  mfa: AdminMfa;
+  /** Refuse sign-in to accounts without an active second step. */
+  requireMfa: boolean;
   approvals: ApprovalService;
   audit: AuditLog;
   logger: Logger;
@@ -219,7 +230,7 @@ export class AdminHttpService {
     if (path === '/login') {
       if (method === 'POST') await this.#login(req, res);
       else if (this.#session(req) !== undefined) this.#redirect(res, '/');
-      else this.#send(res, 200, loginPage({ title: 'Sign in' }));
+      else this.#send(res, 200, loginPage({ title: 'Sign in' }, this.#o.requireMfa));
       return;
     }
 
@@ -256,6 +267,38 @@ export class AdminHttpService {
       this.#send(res, 200, dashboardPage({ ...frame, title: 'Dashboard' }, await this.#o.status()));
       return;
     }
+    if (path === '/account' && form === undefined) {
+      const mfa = this.#o.mfa.status(session.admin.id);
+      const usedRecovery = url.searchParams.get('recovery') === 'used';
+      this.#send(
+        res,
+        200,
+        accountPage(
+          {
+            ...frame,
+            title: 'Account',
+            ...(usedRecovery
+              ? {
+                  notice: {
+                    kind: 'error' as const,
+                    text: `You signed in with a recovery code. It cannot be used again; ${String(mfa.recoveryCodesLeft)} are left.`,
+                  },
+                }
+              : {}),
+          },
+          {
+            username: session.admin.username,
+            lastLoginAt: session.admin.lastLoginAt,
+            sessionExpiresAt: session.expiresAt,
+            mfaState: mfa.state,
+            mfaConfirmedAt: mfa.confirmedAt,
+            recoveryCodesLeft: mfa.recoveryCodesLeft,
+            requireMfa: this.#o.requireMfa,
+          },
+        ),
+      );
+      return;
+    }
     if (path === '/approvals' && form === undefined) {
       const pending = this.#o.approvals.list({ status: 'pending' }).map(toRow);
       const recent = this.#o.approvals
@@ -278,6 +321,7 @@ export class AdminHttpService {
           { ...frame, ...(notice === undefined ? {} : { notice: { kind: 'ok', text: notice } }) },
           id,
           200,
+          session.admin.id,
         );
         return;
       }
@@ -366,49 +410,76 @@ export class AdminHttpService {
     const form = await readForm(req);
     const username = field(form, 'username', 64).trim().toLowerCase();
     const password = field(form, 'password', 1024);
+    const code = field(form, 'code', 64);
     const keys = [`user:${username}`, `addr:${this.#remote(req)}`];
+    const refuse = (status: number, text: string): void => {
+      this.#send(
+        res,
+        status,
+        loginPage({ title: 'Sign in', notice: { kind: 'error', text } }, this.#o.requireMfa),
+      );
+    };
     if (this.#blocked(keys)) {
       // The attempted username is not recorded: it may be a mistyped password.
       this.#audit('admin.login', 'denied', undefined, req, { reason: 'throttled' });
-      this.#send(
-        res,
-        429,
-        loginPage({
-          title: 'Sign in',
-          notice: {
-            kind: 'error',
-            text: 'Too many failed sign-ins. Wait 15 minutes and try again.',
-          },
-        }),
-      );
+      refuse(429, 'Too many failed sign-ins. Wait 15 minutes and try again.');
       return;
     }
     const admin = username === '' ? undefined : this.#o.admins.verify(username, password);
     if (admin === undefined) {
       this.#failed(keys);
       this.#audit('admin.login', 'denied', undefined, req, { reason: 'invalid_credentials' });
-      this.#send(
-        res,
-        401,
-        loginPage({
-          title: 'Sign in',
-          notice: { kind: 'error', text: 'The username or password is wrong.' },
-        }),
+      refuse(401, 'The username, password or code is wrong.');
+      return;
+    }
+    // The password is right. From here the audit names the account: a correct password
+    // with a wrong code is worth noticing.
+    let secondFactor: string | undefined;
+    if (this.#o.mfa.status(admin.id).state === 'active') {
+      secondFactor = this.#o.mfa.verify(admin.id, code);
+      if (secondFactor === undefined) {
+        this.#failed(keys);
+        this.#audit('admin.login', 'denied', admin.username, req, {
+          reason: 'second_step_failed',
+        });
+        refuse(401, 'The username, password or code is wrong.');
+        return;
+      }
+    } else if (this.#o.requireMfa) {
+      this.#failed(keys);
+      this.#audit('admin.login', 'denied', admin.username, req, { reason: 'second_step_required' });
+      refuse(
+        403,
+        'This service requires two-step sign-in, and this account has none. Set it up on ' +
+          'the host with "unifi-mcp admin enable-mfa".',
       );
       return;
     }
     this.#failures.delete(keys[0] ?? '');
     const { cookieValue } = this.#o.sessions.create(admin);
     this.#o.admins.recordLogin(admin.id);
-    this.#audit('admin.login', 'success', admin.username, req, {});
+    this.#audit('admin.login', 'success', admin.username, req, {
+      ...(secondFactor === undefined ? {} : { secondStep: secondFactor }),
+    });
+    if (secondFactor === 'recovery_code') {
+      this.#o.logger.warn('an administrator signed in with a recovery code', {
+        username: admin.username,
+      });
+    }
     this.#redirect(
       res,
-      '/',
+      secondFactor === 'recovery_code' ? '/account?recovery=used' : '/',
       `${SESSION_COOKIE}=${cookieValue}; Path=/; Secure; HttpOnly; SameSite=Strict`,
     );
   }
 
-  #showApproval(res: ServerResponse, frame: Frame, id: string, status: number): void {
+  #showApproval(
+    res: ServerResponse,
+    frame: Frame,
+    id: string,
+    status: number,
+    adminId: string,
+  ): void {
     const view = this.#o.approvals.get(id);
     if (view === undefined) {
       this.#send(res, 404, errorPage(frame, 'Not found', 'There is no such approval request.'));
@@ -417,7 +488,11 @@ export class AdminHttpService {
     this.#send(
       res,
       status,
-      approvalPage({ ...frame, title: 'Approval request' }, { ...toRow(view), ...view }),
+      approvalPage(
+        { ...frame, title: 'Approval request' },
+        { ...toRow(view), ...view },
+        this.#o.mfa.status(adminId).state === 'active',
+      ),
     );
   }
 
@@ -434,11 +509,15 @@ export class AdminHttpService {
     const username = session.admin.username;
     try {
       if (action === 'approve') {
-        // Recent re-authentication: every approval needs the password again.
+        // Recent re-authentication: every approval needs the password again, and a fresh
+        // code when the account has a second step (ADR 0026).
         const keys = [`user:${username}`, `addr:${this.#remote(req)}`];
+        const mfaActive = this.#o.mfa.status(session.admin.id).state === 'active';
         const verified =
           !this.#blocked(keys) &&
-          this.#o.admins.verify(username, field(form, 'password', 1024)) !== undefined;
+          this.#o.admins.verify(username, field(form, 'password', 1024)) !== undefined &&
+          (!mfaActive ||
+            this.#o.mfa.verify(session.admin.id, field(form, 'code', 64)) !== undefined);
         if (!verified) {
           this.#failed(keys);
           this.#audit('admin.reauthenticate', 'denied', username, req, { approvalId: id });
@@ -446,10 +525,16 @@ export class AdminHttpService {
             res,
             {
               ...frame,
-              notice: { kind: 'error', text: 'The password is wrong; nothing was approved.' },
+              notice: {
+                kind: 'error',
+                text: mfaActive
+                  ? 'The password or code is wrong; nothing was approved. A code works once: wait for the next one.'
+                  : 'The password is wrong; nothing was approved.',
+              },
             },
             id,
             401,
+            session.admin.id,
           );
           return;
         }
@@ -475,6 +560,7 @@ export class AdminHttpService {
         { ...frame, notice: { kind: 'error', text: `${error.message} (${error.code})` } },
         id,
         409,
+        session.admin.id,
       );
     }
   }

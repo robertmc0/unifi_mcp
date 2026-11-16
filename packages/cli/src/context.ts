@@ -4,7 +4,7 @@
  * audited as `cli:<operating-system user>`.
  */
 import { userInfo } from 'node:os';
-import { AdminStore } from '@unifi-local-mcp/admin-api';
+import { AdminMfa, AdminStore } from '@unifi-local-mcp/admin-api';
 import { ApprovalService } from '@unifi-local-mcp/approvals';
 import {
   ADAPTER_OPERATIONS,
@@ -36,6 +36,7 @@ export interface Services {
   clients: ClientStore;
   approvals: ApprovalService;
   admins: AdminStore;
+  mfa: AdminMfa;
   egress: EgressGuard;
   actor: PolicyActor;
   logger: Logger;
@@ -109,6 +110,7 @@ export async function openServices(env: NodeJS.ProcessEnv, io: CliIo): Promise<S
       policyStore,
     }),
     admins: new AdminStore({ db: storage.db, audit }),
+    mfa: new AdminMfa({ db: storage.db, audit, secrets: storage.secrets }),
     egress,
     actor: cliActor(),
     logger,

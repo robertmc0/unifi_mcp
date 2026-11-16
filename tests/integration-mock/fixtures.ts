@@ -81,6 +81,10 @@ export async function startTestService(options: {
   streamRecheckMs?: number;
   /** Enable the admin listener on an ephemeral loopback port. */
   admin?: boolean;
+  /** With `admin`: refuse sign-in to accounts without two-step sign-in. */
+  requireMfa?: boolean;
+  /** A clock for the service (TOTP tests move it). */
+  now?: () => Date;
   /** Enable the metrics listener on an ephemeral loopback port, with this token file. */
   metricsTokenFile?: string;
   eventStreams?: EventStreamDescriptor[];
@@ -105,6 +109,7 @@ export async function startTestService(options: {
             allowedHosts: ['localhost', '127.0.0.1', '[::1]'],
             sessionIdleMinutes: 30,
             sessionMaxHours: 12,
+            requireMfa: options.requireMfa ?? false,
           }
         : undefined,
     metrics:
@@ -124,6 +129,7 @@ export async function startTestService(options: {
     operations: OPERATIONS,
     inventory: EVENT_INVENTORY,
     logSink: { write: (line: string) => logs.push(line) },
+    ...(options.now === undefined ? {} : { now: options.now }),
     ...(options.eventStreams === undefined ? {} : { eventStreams: options.eventStreams }),
     ...(options.eventHubLimits === undefined ? {} : { eventHubLimits: options.eventHubLimits }),
     ...(options.listenLimits === undefined ? {} : { listenLimits: options.listenLimits }),

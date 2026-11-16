@@ -172,6 +172,12 @@ not open it, and its cookie does not open MCP.
   foreign form targets. Responses are never cached. All text is escaped, with control
   and bidirectional characters made visible.
 - Approving needs the password again, every time. Credentials are never shown on any page.
+- **Two-step sign-in** (optional, [ADR 0026](adr/0026-admin-two-step-sign-in.md)): a
+  time-based code from an authenticator app at sign-in and at every approval. A code works
+  once. The key is stored encrypted with the master key; recovery codes are stored as
+  digests and work once. It is set up, removed and recovered only on the host, so a stolen
+  session cannot turn it off. `UNIFI_MCP_ADMIN_REQUIRE_MFA=true` refuses accounts without
+  it ([administration.md](administration.md#two-step-sign-in)).
 
 ## Host administration
 

@@ -49,6 +49,13 @@ All notable changes to this project are documented here. The format follows
   `unifi-mcp crypto generate-token`; `doctor` and `config show-effective` show the
   listener. Scrape configuration and example queries in `docs/monitoring.md`.
 
+- Two-step sign-in for the admin web interface (ADR 0026): optional TOTP (SHA-1, 6
+  digits, 30 seconds) at sign-in and at every approval, with codes that work once, an
+  encrypted key and ten hashed one-time recovery codes. Set up, renewed and removed on
+  the host only: `unifi-mcp admin enable-mfa`, `admin new-recovery-codes`,
+  `admin reset-mfa`. `UNIFI_MCP_ADMIN_REQUIRE_MFA=true` refuses accounts without it. New
+  Account page; `admin list` and `doctor` show the state. Storage migration 11.
+
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 
 The gate is open: Access has not run on a real console, and no version-labelled Access

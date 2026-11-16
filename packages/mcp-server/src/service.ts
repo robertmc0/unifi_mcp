@@ -16,7 +16,12 @@ import {
 } from 'node:http';
 import { createServer as createHttpsServer } from 'node:https';
 import type { AddressInfo } from 'node:net';
-import { AdminHttpService, AdminSessionStore, AdminStore } from '@unifi-local-mcp/admin-api';
+import {
+  AdminHttpService,
+  AdminMfa,
+  AdminSessionStore,
+  AdminStore,
+} from '@unifi-local-mcp/admin-api';
 import type { DashboardView } from '@unifi-local-mcp/admin-ui';
 import { ApprovalService } from '@unifi-local-mcp/approvals';
 import {
@@ -126,6 +131,7 @@ export interface RunningService {
   events: EventServices;
   http: McpHttpService;
   admins: AdminStore;
+  mfa: AdminMfa;
   /** The admin interface URL, or undefined when it is disabled (the default). */
   adminUrl: string | undefined;
   /** The metrics URL (without path), or undefined when metrics are disabled (the default). */
@@ -373,12 +379,14 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
     }
 
     const admins = new AdminStore({ db: storage.db, audit, now });
+    const mfa = new AdminMfa({ db: storage.db, audit, secrets: storage.secrets, now });
     let admin: { server: Server; url: string; sessions: AdminSessionStore } | undefined;
     if (config.admin !== undefined) {
       try {
         admin = await startAdmin(config.admin, {
           db: storage.db,
           admins,
+          mfa,
           approvals,
           audit,
           logger,
@@ -566,6 +574,7 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
       events,
       http,
       admins,
+      mfa,
       adminUrl: admin?.url,
       metricsUrl: metricsListener?.url,
       stop: async () => {
@@ -618,6 +627,7 @@ async function startAdmin(
   deps: {
     db: Storage['db'];
     admins: AdminStore;
+    mfa: AdminMfa;
     approvals: ApprovalService;
     audit: AuditLog;
     logger: Logger;
@@ -638,6 +648,8 @@ async function startAdmin(
   const http = new AdminHttpService({
     admins: deps.admins,
     sessions,
+    mfa: deps.mfa,
+    requireMfa: config.requireMfa,
     approvals: deps.approvals,
     audit: deps.audit,
     logger: deps.logger,
@@ -648,6 +660,11 @@ async function startAdmin(
   });
   const server = createListener(config.tls, http.listener);
   url = await listen(server, config.port, config.bind, config.tls !== undefined);
+  if (!config.requireMfa) {
+    deps.logger.info(
+      'admin interface does not require two-step sign-in (UNIFI_MCP_ADMIN_REQUIRE_MFA is off)',
+    );
+  }
   if (config.tls === undefined && config.allowPlaintext) {
     deps.logger.warn(
       'admin interface uses plaintext HTTP (UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT); TLS must be provided in front of it',

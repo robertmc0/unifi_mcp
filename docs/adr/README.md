@@ -31,6 +31,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0023](0023-access-adapter.md)                              | UniFi Access adapter                                                             | Accepted (extended in Phase 4)           |
 | [0024](0024-other-applications-as-disabled-slots.md)        | Other applications as disabled module slots                                      | Accepted                                 |
 | [0025](0025-prometheus-metrics.md)                          | Prometheus metrics                                                               | Accepted                                 |
+| [0026](0026-admin-two-step-sign-in.md)                      | Two-step sign-in for administrators (TOTP)                                       | Accepted                                 |
 
 ## Template
 

@@ -13,7 +13,8 @@ export interface CliRun {
 }
 
 export interface RunOptions {
-  answers?: string[];
+  /** Answers to prompts, in order. A function gets what was printed so far (stderr). */
+  answers?: (string | ((printed: string) => string))[];
   interactive?: boolean;
   /** Environment overrides for this run only. */
   env?: NodeJS.ProcessEnv;
@@ -41,12 +42,16 @@ export async function cliHarness(
     const out: string[] = [];
     const err: string[] = [];
     const answers = [...(options.answers ?? [])];
+    const answer = (): string => {
+      const next = answers.shift() ?? '';
+      return typeof next === 'function' ? next(err.join('\n')) : next;
+    };
     const io: CliIo = {
       out: (line) => out.push(line),
       err: (line) => err.push(line),
       interactive: options.interactive ?? false,
-      prompt: () => Promise.resolve(answers.shift() ?? ''),
-      promptSecret: () => Promise.resolve(answers.shift() ?? ''),
+      prompt: () => Promise.resolve(answer()),
+      promptSecret: () => Promise.resolve(answer()),
     };
     const code = await runCli(COMMANDS, argv, io, { ...env, ...options.env });
     return { code, out: out.join('\n'), err: err.join('\n') };

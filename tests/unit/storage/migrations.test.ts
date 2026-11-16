@@ -60,6 +60,8 @@ describe('migrate', () => {
     expect(state.applied[0]?.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(userVersion(db)).toBe(MIGRATIONS.length);
     expect(tableNames(db)).toEqual([
+      'admin_mfa',
+      'admin_mfa_recovery',
       'admin_sessions',
       'admins',
       'approval_requests',

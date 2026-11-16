@@ -284,12 +284,20 @@ export const doctorCommand: Command = {
           ? 'none: unifi-mcp client create'
           : `${String(clients.length)} client(s)`,
       );
+      const admins = services.admins.list();
+      const twoStep = admins.filter((a) => services.mfa.status(a.id).state === 'active').length;
+      // With the requirement on, an account without a second step cannot sign in (ADR 0026).
+      const lockedOut = config.admin?.requireMfa === true && twoStep < admins.length;
       add(
         'administrators',
-        services.admins.count() === 0 ? 'warn' : 'ok',
-        services.admins.count() === 0
+        admins.length === 0 || lockedOut ? 'warn' : 'ok',
+        admins.length === 0
           ? 'none: unifi-mcp admin bootstrap (needed for the admin UI)'
-          : String(services.admins.count()),
+          : `${String(admins.length)}, two-step sign-in on for ${String(twoStep)}${
+              lockedOut
+                ? '; UNIFI_MCP_ADMIN_REQUIRE_MFA is on, so the others cannot sign in (unifi-mcp admin enable-mfa)'
+                : ''
+            }`,
       );
       const disk = await statfs(config.dataDir);
       const freeMiB = Math.floor((disk.bavail * disk.bsize) / (1024 * 1024));

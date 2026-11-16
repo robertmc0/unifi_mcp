@@ -5,12 +5,24 @@ import { ClientPolicySchema } from '@unifi-local-mcp/policy';
 import { requireString, string, strings, type Command, type RunContext } from '../cli.ts';
 import { CliError } from '../io.ts';
 import {
+  confirm,
   consoleId,
   formatTable,
   readDocument,
   resolveClientConsoles,
   printDryRun,
 } from './shared.ts';
+
+/** Recovery codes are shown once, on a terminal, never in a file or a pipe. */
+function recoveryCodeLines(codes: string[]): string[] {
+  return [
+    'Recovery codes (shown once). Each works one time, in place of a code from the app.',
+    'Keep them somewhere safe and separate from the device:',
+    '',
+    ...codes.map((code) => `  ${code}`),
+    '',
+  ];
+}
 
 async function newPassword(ctx: RunContext): Promise<string> {
   if (!ctx.io.interactive) {
@@ -55,17 +67,106 @@ export const adminCommands: Record<string, Command> = {
       return 0;
     },
   },
+  'enable-mfa': {
+    summary: 'Set up two-step sign-in (TOTP) for an administrator (interactive)',
+    usage: '--username <name>',
+    options: { username: { type: 'string' } },
+    run: async (ctx) => {
+      const username = requireString(ctx.values, 'username');
+      if (!ctx.io.interactive || ctx.json) {
+        throw new CliError(
+          'Two-step sign-in is set up interactively, from a terminal: its secret and recovery codes are shown once and never written to a file or a pipe.',
+        );
+      }
+      const services = await ctx.services();
+      const enrolment = services.mfa.begin(username, services.actor);
+      ctx.io.err('Add this account to an authenticator app (TOTP, SHA-1, 6 digits, 30 seconds).');
+      ctx.io.err('');
+      ctx.io.err(`  Key:  ${enrolment.secret.match(/.{4}/g)?.join(' ') ?? enrolment.secret}`);
+      ctx.io.err(`  Link: ${enrolment.uri}`);
+      ctx.io.err('');
+      const code = await ctx.io.prompt('Code shown by the app now: ');
+      let codes: string[];
+      try {
+        codes = services.mfa.confirm(username, code, services.actor);
+      } catch (error) {
+        // Nothing is left behind: the next attempt starts with a new key.
+        services.mfa.cancel(username, services.actor);
+        throw error;
+      }
+      for (const line of recoveryCodeLines(codes)) ctx.io.err(line);
+      ctx.io.out(
+        `Two-step sign-in is on for "${username.trim().toLowerCase()}". Open sessions of the account were ended.`,
+      );
+      return 0;
+    },
+  },
+  'new-recovery-codes': {
+    summary: 'Replace the recovery codes of an administrator (interactive; old codes stop working)',
+    usage: '--username <name>',
+    options: { username: { type: 'string' } },
+    run: async (ctx) => {
+      const username = requireString(ctx.values, 'username');
+      if (!ctx.io.interactive || ctx.json) {
+        throw new CliError(
+          'Recovery codes are shown once, on a terminal, and never written to a file or a pipe.',
+        );
+      }
+      const services = await ctx.services();
+      const codes = services.mfa.regenerateRecoveryCodes(username, services.actor);
+      for (const line of recoveryCodeLines(codes)) ctx.io.err(line);
+      ctx.io.out('The earlier recovery codes no longer work.');
+      return 0;
+    },
+  },
+  'reset-mfa': {
+    summary: 'Remove two-step sign-in from an administrator (host recovery for a lost device)',
+    usage: '--username <name> [--yes]',
+    options: { username: { type: 'string' }, yes: { type: 'boolean' } },
+    run: async (ctx) => {
+      const username = requireString(ctx.values, 'username');
+      const services = await ctx.services();
+      await confirm(
+        ctx.io,
+        `Remove two-step sign-in from "${username}"`,
+        'reset',
+        ctx.values['yes'] === true,
+      );
+      const result = services.mfa.reset(username, services.actor);
+      ctx.print({ username: username.trim().toLowerCase(), ...result }, () => [
+        result.wasActive
+          ? `Two-step sign-in removed from "${username}"; ${String(result.sessionsEnded)} session(s) ended. The account signs in with its password only until it is set up again ("admin enable-mfa").`
+          : `"${username}" had no two-step sign-in; nothing to remove.`,
+      ]);
+      return 0;
+    },
+  },
   list: {
     summary: 'List administrators',
     usage: '',
     run: async (ctx) => {
-      const admins = (await ctx.services()).admins.list();
+      const services = await ctx.services();
+      const admins = services.admins.list().map((admin) => {
+        const mfa = services.mfa.status(admin.id);
+        return {
+          ...admin,
+          mfa: mfa.state === 'active' ? 'on' : 'off',
+          recoveryCodesLeft: mfa.recoveryCodesLeft,
+        };
+      });
       ctx.print(admins, () =>
         admins.length === 0
           ? ['No administrators. Create one with "unifi-mcp admin bootstrap".']
           : formatTable([
-              ['USERNAME', 'STATUS', 'CREATED', 'LAST SIGN-IN'],
-              ...admins.map((a) => [a.username, a.status, a.createdAt, a.lastLoginAt ?? '-']),
+              ['USERNAME', 'STATUS', 'TWO-STEP', 'RECOVERY CODES', 'CREATED', 'LAST SIGN-IN'],
+              ...admins.map((a) => [
+                a.username,
+                a.status,
+                a.mfa,
+                a.mfa === 'on' ? String(a.recoveryCodesLeft) : '-',
+                a.createdAt,
+                a.lastLoginAt ?? '-',
+              ]),
             ]),
       );
       return 0;

@@ -42,6 +42,8 @@ export interface AdminListenerConfig {
   allowedHosts: string[];
   sessionIdleMinutes: number;
   sessionMaxHours: number;
+  /** Refuse sign-in to administrators without two-step sign-in (ADR 0026). */
+  requireMfa: boolean;
 }
 
 /**
@@ -171,6 +173,7 @@ function loadAdminConfig(
     allowedHosts: [...new Set([...LOCAL_NAMES, ...hostList(env, 'UNIFI_MCP_ADMIN_ALLOWED_HOSTS')])],
     sessionIdleMinutes: integer(env, 'UNIFI_MCP_ADMIN_SESSION_IDLE_MINUTES', 30, 5, 480),
     sessionMaxHours: integer(env, 'UNIFI_MCP_ADMIN_SESSION_MAX_HOURS', 12, 1, 72),
+    requireMfa: flag(env, 'UNIFI_MCP_ADMIN_REQUIRE_MFA'),
   };
 }
 

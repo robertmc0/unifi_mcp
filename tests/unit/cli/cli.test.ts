@@ -5,6 +5,7 @@ import { copyFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { X509Certificate } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { totpCode } from '@unifi-local-mcp/admin-api';
 import { acquireInstanceLock, SqliteDatabase } from '@unifi-local-mcp/storage';
 import { spkiSha256 } from '@unifi-local-mcp/unifi-api';
 import { MockConsole, sendJson } from '../../fixtures/mock-console.ts';
@@ -662,6 +663,124 @@ describe('applications without an adapter (ADR 0024)', () => {
       'lab',
     ]);
     expect(view.policy.modules).toEqual({});
+  });
+});
+
+describe('two-step sign-in for administrators (ADR 0026)', () => {
+  const key = (printed: string): string =>
+    (/Key: {2}([A-Z2-7 ]+)/.exec(printed)?.[1] ?? '').replace(/ /g, '');
+
+  it('is set up interactively with a code from the app, and shows recovery codes once', async () => {
+    const h = await setup();
+    await h.run(['admin', 'bootstrap', '--username', 'alice'], {
+      interactive: true,
+      answers: [PASSWORD, PASSWORD],
+    });
+    expect((await h.json<{ mfa: string }[]>(['admin', 'list']))[0]?.mfa).toBe('off');
+
+    // Never without a terminal, and never as JSON: the key and codes would land in a file.
+    const piped = await h.run(['admin', 'enable-mfa', '--username', 'alice']);
+    expect(piped.code).toBe(1);
+    expect(piped.err).toContain('interactively');
+    const asJson = await h.run(['admin', 'enable-mfa', '--username', 'alice', '--json'], {
+      interactive: true,
+    });
+    expect(asJson.code).toBe(1);
+    expect((await h.json<{ mfa: string }[]>(['admin', 'list']))[0]?.mfa).toBe('off');
+
+    // A wrong code leaves nothing behind.
+    const wrong = await h.run(['admin', 'enable-mfa', '--username', 'alice'], {
+      interactive: true,
+      answers: ['000000'],
+    });
+    expect(wrong.code).toBe(1);
+    expect(wrong.err).toContain('admin_mfa_code_invalid');
+    expect((await h.json<{ mfa: string }[]>(['admin', 'list']))[0]?.mfa).toBe('off');
+
+    let secret = '';
+    const enabled = await h.run(['admin', 'enable-mfa', '--username', 'alice'], {
+      interactive: true,
+      answers: [
+        (printed) => {
+          secret = key(printed);
+          return totpCode(secret, new Date());
+        },
+      ],
+    });
+    expect(enabled.code).toBe(0);
+    expect(secret).toMatch(/^[A-Z2-7]{32}$/);
+    expect(secret).not.toBe(key(wrong.err));
+    expect(enabled.err).toContain(`otpauth://totp/unifi-local-mcp:alice?secret=${secret}`);
+    const codes: string[] = enabled.err.match(/^ {2}[A-Z2-7]{4}(-[A-Z2-7]{4}){3}$/gm) ?? [];
+    expect(codes).toHaveLength(10);
+    expect(enabled.out).toContain('Two-step sign-in is on for "alice"');
+    // The key and the codes go to the terminal only, not to standard output.
+    expect(enabled.out).not.toContain(secret);
+    for (const code of codes) expect(enabled.out).not.toContain(code.trim());
+
+    const listed = await h.json<{ username: string; mfa: string; recoveryCodesLeft: number }[]>([
+      'admin',
+      'list',
+    ]);
+    expect(listed).toMatchObject([{ username: 'alice', mfa: 'on', recoveryCodesLeft: 10 }]);
+    expect(JSON.stringify(listed)).not.toContain(secret);
+    expect((await h.run(['admin', 'list'])).out).toMatch(/alice\s+active\s+on\s+10\s/);
+    const again = await h.run(['admin', 'enable-mfa', '--username', 'alice'], {
+      interactive: true,
+      answers: ['000000'],
+    });
+    expect(again.code).toBe(1);
+    expect(again.err).toContain('admin_mfa_active');
+
+    const doctor = async (env: NodeJS.ProcessEnv = {}) =>
+      (
+        JSON.parse((await h.run(['doctor', '--json'], { env })).out) as {
+          check: string;
+          status: string;
+          detail: string;
+        }[]
+      ).find((c) => c.check === 'administrators');
+    expect(await doctor()).toMatchObject({
+      status: 'ok',
+      detail: '1, two-step sign-in on for 1',
+    });
+
+    // New recovery codes replace the old ones; also interactive only.
+    expect((await h.run(['admin', 'new-recovery-codes', '--username', 'alice'])).code).toBe(1);
+    const renewed = await h.run(['admin', 'new-recovery-codes', '--username', 'alice'], {
+      interactive: true,
+    });
+    expect(renewed.code).toBe(0);
+    const fresh: string[] = renewed.err.match(/^ {2}[A-Z2-7]{4}(-[A-Z2-7]{4}){3}$/gm) ?? [];
+    expect(fresh).toHaveLength(10);
+    expect(fresh.filter((code) => codes.includes(code))).toEqual([]);
+
+    // Removing it is a confirmed, audited host action.
+    const unconfirmed = await h.run(['admin', 'reset-mfa', '--username', 'alice']);
+    expect(unconfirmed.code).toBe(1);
+    expect(unconfirmed.err).toContain('needs confirmation');
+    const reset = await h.json<{ wasActive: boolean }>([
+      'admin',
+      'reset-mfa',
+      '--username',
+      'alice',
+      '--yes',
+    ]);
+    expect(reset.wasActive).toBe(true);
+    expect((await h.json<{ mfa: string }[]>(['admin', 'list']))[0]?.mfa).toBe('off');
+    expect(await doctor()).toMatchObject({ status: 'ok', detail: '1, two-step sign-in on for 0' });
+    const required = await doctor({
+      UNIFI_MCP_ADMIN_ENABLED: 'true',
+      UNIFI_MCP_ADMIN_REQUIRE_MFA: 'true',
+    });
+    expect(required?.status).toBe('warn');
+    expect(required?.detail).toContain('cannot sign in');
+    const audit = await h.json<{ action: string; actorType: string }[]>(['audit', 'list']);
+    for (const action of ['admin.mfa_enable', 'admin.mfa_recovery_codes', 'admin.mfa_reset']) {
+      expect(audit.find((e) => e.action === action)?.actorType, action).toBe('cli');
+    }
+    expect(JSON.stringify(audit)).not.toContain(secret);
+    expect((await h.run(['admin', 'reset-mfa', '--username', 'bob', '--yes'])).code).toBe(1);
   });
 });
 

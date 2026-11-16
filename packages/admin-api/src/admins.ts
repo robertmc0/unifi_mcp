@@ -19,7 +19,14 @@ import type { AuditLog } from '@unifi-local-mcp/telemetry';
 import { hashPassword, passwordProblem, verifyPassword } from './passwords.ts';
 
 export type AdminErrorCode =
-  'admin_invalid' | 'admin_exists' | 'admin_not_found' | 'admin_actor_forbidden';
+  | 'admin_invalid'
+  | 'admin_exists'
+  | 'admin_not_found'
+  | 'admin_actor_forbidden'
+  | 'admin_mfa_active'
+  | 'admin_mfa_not_active'
+  | 'admin_mfa_not_pending'
+  | 'admin_mfa_code_invalid';
 
 export class AdminError extends Error {
   override readonly name = 'AdminError';

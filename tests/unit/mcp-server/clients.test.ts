@@ -302,7 +302,15 @@ describe('admin listener configuration', () => {
       allowedHosts: ['localhost', '127.0.0.1', '[::1]'],
       sessionIdleMinutes: 30,
       sessionMaxHours: 12,
+      requireMfa: false,
     });
+    expect(
+      loadServiceConfig({ UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_ADMIN_REQUIRE_MFA: 'true' })
+        .admin?.requireMfa,
+    ).toBe(true);
+    expect(() =>
+      loadServiceConfig({ UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_ADMIN_REQUIRE_MFA: 'yes!' }),
+    ).toThrow(/UNIFI_MCP_ADMIN_REQUIRE_MFA/);
   });
 
   it.each([

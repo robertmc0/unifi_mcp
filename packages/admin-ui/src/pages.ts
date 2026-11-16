@@ -106,7 +106,7 @@ function layout(frame: Frame, body: SafeHtml): string {
             signedIn
               ? html`<nav>
                     <a href="/">Dashboard</a><a href="/approvals">Approvals</a
-                    ><a href="/audit">Audit</a>
+                    ><a href="/audit">Audit</a><a href="/account">Account</a>
                   </nav>
                   <form method="post" action="/logout">
                     <input type="hidden" name="csrf" value="${frame.csrfToken ?? ''}" /><span
@@ -126,7 +126,73 @@ function layout(frame: Frame, body: SafeHtml): string {
     </html> `.value;
 }
 
-export function loginPage(frame: Frame): string {
+export interface AccountView {
+  username: string;
+  lastLoginAt: string | null;
+  sessionExpiresAt: string;
+  mfaState: 'off' | 'pending' | 'active';
+  mfaConfirmedAt: string | null;
+  recoveryCodesLeft: number;
+  requireMfa: boolean;
+}
+
+/** The signed-in account: its second step and how to change it (ADR 0026). */
+export function accountPage(frame: Frame, a: AccountView): string {
+  return layout(
+    frame,
+    html`<h1>Account</h1>
+      <div class="card">
+        <table>
+          <tr>
+            <th>Username</th>
+            <td>${a.username}</td>
+          </tr>
+          <tr>
+            <th>Last sign-in</th>
+            <td>${a.lastLoginAt ?? '-'}</td>
+          </tr>
+          <tr>
+            <th>This session ends</th>
+            <td>${a.sessionExpiresAt}</td>
+          </tr>
+          <tr>
+            <th>Two-step sign-in</th>
+            <td>
+              ${
+                a.mfaState === 'active'
+                  ? html`<span class="status-ok">on</span> since ${a.mfaConfirmedAt ?? '-'}`
+                  : html`<span class="status-warn">off</span>`
+              }
+            </td>
+          </tr>
+          ${
+            a.mfaState === 'active'
+              ? html`<tr>
+                  <th>Recovery codes left</th>
+                  <td>
+                    <span class="${a.recoveryCodesLeft > 2 ? 'status-ok' : 'status-bad'}"
+                      >${String(a.recoveryCodesLeft)}</span
+                    >
+                  </td>
+                </tr>`
+              : ''
+          }
+          <tr>
+            <th>Required by this service</th>
+            <td>${a.requireMfa ? 'yes' : 'no'}</td>
+          </tr>
+        </table>
+      </div>
+      <p class="muted">
+        Two-step sign-in is set up, removed and recovered on the host, never here:
+        <code>unifi-mcp admin enable-mfa</code>, <code>unifi-mcp admin new-recovery-codes</code> and
+        <code>unifi-mcp admin reset-mfa</code>. The password is changed with
+        <code>unifi-mcp admin reset-password</code>.
+      </p>`,
+  );
+}
+
+export function loginPage(frame: Frame, requireMfa = false): string {
   return layout(
     frame,
     html`<h1>Sign in</h1>
@@ -148,6 +214,18 @@ export function loginPage(frame: Frame): string {
           autocomplete="current-password"
           required
           maxlength="1024"
+        />
+        <label for="code"
+          >Code from your authenticator app
+          (${requireMfa ? 'required' : 'only if two-step sign-in is on'})</label
+        >
+        <input
+          id="code"
+          name="code"
+          autocomplete="one-time-code"
+          inputmode="numeric"
+          maxlength="64"
+          ${requireMfa ? 'required' : ''}
         />
         <button type="submit">Sign in</button>
       </form>
@@ -314,7 +392,7 @@ export function approvalsPage(frame: Frame, pending: ApprovalRow[], recent: Appr
   );
 }
 
-export function approvalPage(frame: Frame, a: ApprovalDetail): string {
+export function approvalPage(frame: Frame, a: ApprovalDetail, mfaActive = false): string {
   const pending = a.status === 'pending';
   return layout(
     frame,
@@ -404,6 +482,19 @@ export function approvalPage(frame: Frame, a: ApprovalDetail): string {
                   required
                   maxlength="1024"
                 />
+                ${
+                  mfaActive
+                    ? html`<label for="code">A new code from your authenticator app</label>
+                        <input
+                          id="code"
+                          name="code"
+                          autocomplete="one-time-code"
+                          inputmode="numeric"
+                          required
+                          maxlength="64"
+                        />`
+                    : ''
+                }
                 <label for="approve-note">Note (optional)</label>
                 <input id="approve-note" name="note" maxlength="500" />
                 <button class="danger" type="submit">Approve</button>

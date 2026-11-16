@@ -783,9 +783,20 @@ backups, `client-codex.md`, `development.md` and `release.md`.
    **Open:** a run against a real Prometheus server. The scrape configuration and the
    example queries are unverified; a Prometheus container could not be started from this
    session.
-2. **Admin MFA** (spec §7.2): optional TOTP with encrypted secrets, hashed one-time
-   recovery codes, `admin reset-mfa`, an operator setting to require MFA, and recent
-   re-authentication for approvals and security changes.
+2. ✅ **Admin MFA** (2026-11-16, [ADR 0026](adr/0026-admin-two-step-sign-in.md);
+   spec §7.2): TOTP on `node:crypto` checked against the RFC 4226 and RFC 6238 vectors
+   (`packages/admin-api/src/totp.ts`); the key encrypted as a secret record, ten hashed
+   one-time recovery codes, codes that work once (`mfa.ts`, storage migration 11); the
+   code in the sign-in form and on every approval; `UNIFI_MCP_ADMIN_REQUIRE_MFA`; an
+   Account page; `admin enable-mfa`, `admin new-recovery-codes`, `admin reset-mfa`;
+   `admin list` and `doctor`. Setting it up or removing it is a host action and ends the
+   account's sessions. Tests: `tests/unit/admin-api/totp.test.ts`, `mfa.test.ts`,
+   `tests/integration-mock/admin-http.test.ts` (two-step sign-in), `tests/unit/cli/`;
+   5 mutation checks. Docs: [administration.md](administration.md#two-step-sign-in),
+   configuration, security, troubleshooting.
+   Not done, by decision in the ADR: a QR code at setup (the key is typed in), and setup
+   from the web interface. **Not verified:** a sign-in with a real authenticator app;
+   the codes are checked against the RFC vectors only.
 3. **Admin interface pages** (spec §13.1 items 2, 3, 4, 6, 7): consoles, clients, policy
    with a permission preview, audit search and export, settings and maintenance.
 4. **Networking** (spec §9, §7.3): `deploy/compose.dual.yml`, `deploy/compose.tls.yml`,

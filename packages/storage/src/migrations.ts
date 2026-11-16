@@ -285,6 +285,32 @@ ALTER TABLE console_modules ADD COLUMN declared_by TEXT
   CHECK (declared_by IS NULL OR length(declared_by) <= 200);
 `,
   },
+  {
+    // Optional TOTP for administrators (spec §7.2; ADR 0026). The TOTP secret is a
+    // secret_records entry (kind admin.totp_secret), encrypted with the master key; only
+    // its id is here. Recovery codes are stored as SHA-256 digests and used once.
+    // `last_step` is the last accepted TOTP time step, so a code cannot be used twice.
+    // Queries live in @unifi-local-mcp/admin-api.
+    version: 11,
+    name: 'admin_mfa',
+    sql: `
+CREATE TABLE admin_mfa (
+  admin_id TEXT PRIMARY KEY REFERENCES admins(id) ON DELETE CASCADE,
+  secret_id TEXT NOT NULL CHECK (length(secret_id) = 36),
+  status TEXT NOT NULL CHECK (status IN ('pending', 'active')),
+  created_at TEXT NOT NULL,
+  confirmed_at TEXT,
+  last_step INTEGER NOT NULL DEFAULT 0 CHECK (last_step >= 0)
+) STRICT;
+CREATE TABLE admin_mfa_recovery (
+  code_sha256 TEXT PRIMARY KEY CHECK (length(code_sha256) = 64),
+  admin_id TEXT NOT NULL REFERENCES admins(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL,
+  used_at TEXT
+) STRICT;
+CREATE INDEX admin_mfa_recovery_admin ON admin_mfa_recovery (admin_id);
+`,
+  },
 ];
 
 const HISTORY_TABLE_SQL = `
