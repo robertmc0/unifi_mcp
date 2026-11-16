@@ -1,0 +1,30 @@
+name: API operation or application request
+description: Ask for a UniFi operation or application that is not offered
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project implements only operations of **official, locally callable** UniFi
+        APIs that Ubiquiti documents (docs/applications-other.md). Requests based on
+        private, reverse-engineered or cloud endpoints cannot be accepted, whatever
+        another project does.
+  - type: input
+    id: source
+    attributes:
+      label: Link to the official documentation of the operation or API
+      placeholder: 'https://developer.ui.com/…'
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Application and version it is documented for
+    validations:
+      required: true
+  - type: textarea
+    id: use
+    attributes:
+      label: What you want to do with it
+    validations:
+      required: true

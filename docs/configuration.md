@@ -110,7 +110,7 @@ interface show the limits in force, and the metrics show how often they bite
 | `UNIFI_MCP_EGRESS_ALLOW_CIDRS` | `10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,fc00::/7` | Comma-separated networks the service may connect to. When set, it replaces the default. A malformed entry stops the service at startup. |
 
 Narrow it to the networks your consoles are actually on, for example
-`192.168.1.0/24,10.8.0.0/24`. Loopback and link-local addresses are not allowed by default.
+`192.0.2.0/24,198.51.100.0/24`. Loopback and link-local addresses are not allowed by default.
 Cloud metadata (`169.254.169.254`), multicast and unspecified addresses are refused even if
 listed. See [security.md](security.md#connections-to-consoles).
 

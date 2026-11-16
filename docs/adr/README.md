@@ -34,6 +34,7 @@ is defined in [ADR 0001](0001-record-architecture-decisions.md).
 | [0026](0026-admin-two-step-sign-in.md)                      | Two-step sign-in for administrators (TOTP)                                       | Accepted                                 |
 | [0027](0027-admin-pages-for-consoles-clients-policy.md)     | Admin pages for consoles, clients, policy, audit export and settings             | Accepted                                 |
 | [0028](0028-compose-examples-and-container-tests.md)        | Two-network and TLS Compose examples, and container tests                        | Accepted                                 |
+| [0029](0029-supply-chain-and-release.md)                    | Supply chain checks and the release workflow                                     | Accepted                                 |
 
 ## Template
 

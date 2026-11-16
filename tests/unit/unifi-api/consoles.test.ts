@@ -277,19 +277,21 @@ describe('egress policy', () => {
     const guard = new EgressGuard(parseEgressPolicy({}));
     expect(parseEgressPolicy({}).allow).toEqual(DEFAULT_EGRESS_ALLOW);
     for (const allowed of [
-      '10.1.2.3',
-      '172.20.0.1',
-      '192.168.1.1',
-      '100.100.1.1',
+      // Members of each private range, chosen to be nobody's likely address
+      // (scripts/lib/secret-scan.ts knows these as test vectors).
+      '10.255.255.254',
+      '172.31.255.254',
+      '192.168.255.254',
+      '100.127.255.254',
       'fd12::1',
-      '::ffff:192.168.1.1',
+      '::ffff:192.168.255.254',
     ]) {
       expect(guard.isAllowed(allowed), allowed).toBe(true);
     }
     for (const denied of [
       '127.0.0.1',
       '::1',
-      '8.8.8.8',
+      '198.51.100.8',
       '169.254.169.254',
       '169.254.1.1',
       'fe80::1',
@@ -312,9 +314,9 @@ describe('egress policy', () => {
 
   it('parses the deployment allowlist strictly', () => {
     expect(
-      parseEgressPolicy({ UNIFI_MCP_EGRESS_ALLOW_CIDRS: '192.168.10.0/24, 10.8.0.0/16' }).allow,
-    ).toEqual(['192.168.10.0/24', '10.8.0.0/16']);
-    expect(() => parseEgressPolicy({ UNIFI_MCP_EGRESS_ALLOW_CIDRS: '192.168.10.0/33' })).toThrow(
+      parseEgressPolicy({ UNIFI_MCP_EGRESS_ALLOW_CIDRS: '192.0.2.0/24, 198.51.100.0/25' }).allow,
+    ).toEqual(['192.0.2.0/24', '198.51.100.0/25']);
+    expect(() => parseEgressPolicy({ UNIFI_MCP_EGRESS_ALLOW_CIDRS: '192.0.2.0/33' })).toThrow(
       /CIDRs/,
     );
     expect(() => parseEgressPolicy({ UNIFI_MCP_EGRESS_ALLOW_CIDRS: 'console.local' })).toThrow(

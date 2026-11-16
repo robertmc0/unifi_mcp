@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work as the manual says
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste secrets or real identifiers:** no client tokens, UniFi API keys,
+        passwords, master key, console addresses, certificate pins, device names or MAC
+        addresses. Replace them with placeholders. For a security problem, do not use
+        this form; see SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Release or commit
+      placeholder: 'for example 1.2.3, or a commit id'
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: How it runs
+      options:
+        - Docker Compose, single host (compose.single.yml)
+        - Docker Compose, built-in TLS (compose.tls.yml)
+        - Docker Compose, two networks (compose.dual.yml)
+        - From source
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: application
+    attributes:
+      label: UniFi application and version, if one is involved
+      placeholder: 'for example Network 11.0.99'
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `unifi-mcp doctor`
+      description: It contains no secrets. Remove console aliases if you prefer.
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      description: Logs are redacted by the service, but check them before pasting.
+      render: json

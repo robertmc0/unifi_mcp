@@ -49,7 +49,8 @@
 | [events.md](events.md) (Protect events: subscriptions, reads, guarantees, reconnects, limits, troubleshooting)      | 3               |
 | [applications-access.md](applications-access.md) (versions, setup, reads, sensitive data, credentials, limitations) | 4 (started)     |
 | [applications-other.md](applications-other.md) (Talk, Connect, Drive, InnerSpace: unavailable, and why)             | 4               |
-| release.md, development.md                                                                                          | 5               |
+| [release.md](release.md) (pre-release checks, secret scan, SBOM, tagging, publishing switch, what is not done)      | 5               |
+| development.md                                                                                                      | 5               |
 
 ## Contributing
 

@@ -861,9 +861,18 @@ backups, `client-codex.md`, `development.md` and `release.md`.
    [configuration.md](configuration.md#limits)). One observation of throughput on the
    development machine is in the ADR (about 500 audited reads per second); it is not a
    benchmark, and nothing was measured against a real console.
-8. **Supply chain and CI** (spec §14): secret scan, dependency audit, container scan,
-   SBOM, multi-architecture build, a release workflow that publishes nothing until it is
-   configured, dependency update configuration, issue templates.
+8. ✅ **Supply chain and CI** (2026-11-16, [ADR 0029](adr/0029-supply-chain-and-release.md);
+   spec §14): a secret, pin and address scanner (`scripts/lib/secret-scan.ts`) over the
+   tracked files in `npm run check` and over the whole history in `npm run scan:secrets`
+   (395 files, 87 commits, clean); static release checks (`npm run release:verify`);
+   SBOM in CycloneDX and SPDX (`npm run sbom`, 17 production components); `npm audit`
+   (0 vulnerabilities) and `npm audit signatures`; CI jobs for all of these, and the
+   container tests and image smoke test on amd64 and arm64 runners; `release.yml`, which
+   publishes to GHCR only with the repository variable `PUBLISH_IMAGE=true`; Dependabot;
+   issue templates. No third-party action added. Docs: [release.md](release.md).
+   **Not done, recorded in the ADR:** container vulnerability scanning and image signing
+   (they need a scanner or signer the owner chooses), and a general-purpose secret
+   scanner before publication. **Not verified:** no workflow has run on GitHub.
 9. **Manual completeness** (spec §18): `development.md` (contributor workflow and the
    adapter guide), `release.md`, `client-codex.md` (needs the owner's trial of Codex), and
    every page checked against the commands and the interface.

@@ -19,6 +19,9 @@ api-specs/**/vendor/
 secrets/
 master.key
 
+# Release artefacts generated locally (SBOM)
+/release/
+
 # Runtime data: SQLite databases, backups, logs
 /data/
 .data/

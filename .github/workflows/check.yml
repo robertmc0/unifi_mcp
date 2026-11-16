@@ -1,6 +1,7 @@
-# Basic checks for every push and pull request (Phase 1; Phase 5 adds security and
-# supply-chain jobs). Actions are pinned by commit SHA. No live UniFi access, no secrets,
-# and nothing is published.
+# Checks for every push and pull request (ADR 0017, ADR 0028, ADR 0029): the test suite,
+# the secret scan of the whole history, the dependency audit and SBOM, and the container
+# tests and image smoke test on amd64 and arm64. Actions are pinned by commit SHA. No live
+# UniFi access, no secrets, and nothing is published.
 name: check
 
 on:
@@ -31,11 +32,54 @@ jobs:
       - run: npm run check
       - run: npm run api:reconcile
 
-  containers:
-    # The shipped Compose files on real containers (ADR 0028): single host, built-in TLS
-    # and two networks. Uses only the image built here; nothing is pulled but the base.
+  secrets:
+    # Every line any commit ever added (ADR 0029). Needs the full history.
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - run: node scripts/scan-secrets.ts --history
+
+  supply-chain:
+    # Known vulnerabilities and registry signatures of every dependency, the static
+    # release checks, and the bill of materials of what the image installs (ADR 0029).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - run: npm ci
+      - run: npm audit --audit-level=low
+      - run: npm audit signatures
+      - run: npm run release:verify
+      - run: npm run sbom
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom
+          path: release/
+          retention-days: 30
+
+  containers:
+    # The shipped Compose files on real containers (ADR 0028): single host, built-in TLS,
+    # two networks and the maintenance drill, on both architectures. Uses only the image
+    # built here; nothing is pulled but the base.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,13 +91,17 @@ jobs:
       - run: npm run test:containers
 
   image:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Build the service image (linux/amd64)
+      - name: Build the service image for this runner's architecture
         run: docker build --tag unifi-local-mcp:ci .
       - name: Start it read-only and wait until healthy
         run: |

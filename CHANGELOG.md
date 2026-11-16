@@ -101,6 +101,15 @@ All notable changes to this project are documented here. The format follows
   deadlines, rate limits, exactly-once writes, unknown outcomes and cancellation under
   hundreds of simultaneous requests, and a burst through the whole service.
 
+- Supply chain and release (ADR 0029): a secret, pin and address scanner over every
+  tracked file (in `npm run check`) and the whole history (`npm run scan:secrets`);
+  static release checks (`npm run release:verify`); a CycloneDX and SPDX bill of
+  materials (`npm run sbom`); CI jobs for the history scan, `npm audit` with signatures,
+  and the container tests and image smoke test on amd64 and arm64 runners; a release
+  workflow that publishes to GHCR only when the repository variable `PUBLISH_IMAGE` is
+  `true`; Dependabot; issue templates. No third-party action was added. Example
+  addresses in documentation and tests now come from the documentation ranges.
+
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 
 The gate is open: Access has not run on a real console, and no version-labelled Access

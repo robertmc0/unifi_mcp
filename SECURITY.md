@@ -2,8 +2,8 @@
 
 ## Supported versions
 
-No release has been published yet. The project is pre-1.0 (Phase 0 complete). Security
-fixes will target the latest release once releases exist.
+No release has been published yet. The project is pre-1.0. Security fixes will target the
+latest release once releases exist.
 
 ## Reporting a vulnerability
 
@@ -28,3 +28,12 @@ Out of scope: vulnerabilities in UniFi firmware or applications (report those to
 Ubiquiti), and attacks that require host-administrator privileges (spec §3.1).
 
 See [docs/threat-model.md](docs/threat-model.md) for the threat model.
+
+## How the repository is checked
+
+Every change is scanned for secrets, private keys, certificate pins and real addresses,
+its dependencies are audited against known vulnerabilities and registry signatures, and
+every workflow action is pinned by commit ([docs/release.md](docs/release.md),
+[ADR 0029](docs/adr/0029-supply-chain-and-release.md)). The image is not signed and is
+not scanned for operating-system vulnerabilities by this project; scan it with a scanner
+you trust.

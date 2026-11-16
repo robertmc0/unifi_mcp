@@ -25,7 +25,10 @@
     "unifi-mcp": "node packages/cli/src/main.ts",
     "api:fetch-specs": "node scripts/fetch-api-specs.ts",
     "api:reconcile": "node scripts/reconcile-api-coverage.ts",
-    "api:coverage-report": "node scripts/generate-coverage-report.ts"
+    "api:coverage-report": "node scripts/generate-coverage-report.ts",
+    "scan:secrets": "node scripts/scan-secrets.ts --history",
+    "sbom": "node scripts/generate-sbom.ts",
+    "release:verify": "node scripts/verify-release.ts"
   },
   "overrides": {
     "minimatch": "11.0.5"

@@ -71,7 +71,7 @@ export function parseCidr(cidr: string): ParsedCidr | undefined {
   return { network, prefix, family: version === 4 ? 'ipv4' : 'ipv6' };
 }
 
-/** `::ffff:10.0.0.1` is checked as `10.0.0.1`. */
+/** `::ffff:192.0.2.1` is checked as `192.0.2.1`. */
 function normalise(address: string): { address: string; family: 'ipv4' | 'ipv6' } | undefined {
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
   const candidate = mapped?.[1] ?? address;
@@ -105,7 +105,7 @@ export function parseEgressPolicy(env: NodeJS.ProcessEnv): EgressPolicy {
   const invalid = allow.filter((entry) => parseCidr(entry) === undefined);
   if (invalid.length > 0 || allow.length === 0) {
     throw new Error(
-      `${EGRESS_ALLOW_ENV} must be comma-separated CIDRs such as 192.168.1.0/24 ` +
+      `${EGRESS_ALLOW_ENV} must be comma-separated CIDRs such as 192.0.2.0/24 ` +
         `(${String(invalid.length)} invalid entr${invalid.length === 1 ? 'y' : 'ies'}).`,
     );
   }
