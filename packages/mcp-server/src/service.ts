@@ -19,6 +19,7 @@ import type { AddressInfo } from 'node:net';
 import {
   AdminHttpService,
   AdminMfa,
+  type AdminViews,
   AdminSessionStore,
   AdminStore,
 } from '@unifi-local-mcp/admin-api';
@@ -71,6 +72,7 @@ import {
   type Lookup,
   type VersionProbeSpec,
 } from '@unifi-local-mcp/unifi-api';
+import { buildAdminViews } from './admin-views.ts';
 import { ClientStore } from './clients.ts';
 import type { AdminListenerConfig, ServiceConfig } from './config.ts';
 import { eventUri, type EventServices } from './events.ts';
@@ -391,6 +393,20 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
           audit,
           logger,
           now,
+          views: buildAdminViews({
+            config,
+            serviceVersion: SERVICE_VERSION,
+            schemaVersion: storage.schemaVersion,
+            masterKeyId: storage.keyId,
+            consoles,
+            clients,
+            policyStore,
+            registry,
+            eventStreams: () => streams.list(),
+            eventFeeds: () => hub.status(),
+            security,
+            now,
+          }),
           status: async (adminUrl) => {
             const policy = policyStore.current();
             const report = await health.readiness();
@@ -632,6 +648,7 @@ async function startAdmin(
     audit: AuditLog;
     logger: Logger;
     now: () => Date;
+    views: AdminViews;
     status: (adminUrl: string) => Promise<DashboardView>;
   },
 ): Promise<{ server: Server; url: string; sessions: AdminSessionStore }> {
@@ -654,6 +671,7 @@ async function startAdmin(
     audit: deps.audit,
     logger: deps.logger,
     status: () => deps.status(url),
+    views: deps.views,
     allowedHosts: config.allowedHosts,
     tls: config.tls !== undefined,
     now: deps.now,

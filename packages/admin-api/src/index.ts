@@ -41,7 +41,12 @@ export {
   passwordProblem,
   verifyPassword,
 } from './passwords.ts';
-export { AdminHttpService, SESSION_COOKIE, type AdminHttpOptions } from './http.ts';
+export {
+  AdminHttpService,
+  SESSION_COOKIE,
+  type AdminHttpOptions,
+  type AdminViews,
+} from './http.ts';
 export {
   AdminSessionStore,
   DEFAULT_SESSION_LIMITS,

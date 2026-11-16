@@ -797,8 +797,17 @@ backups, `client-codex.md`, `development.md` and `release.md`.
    Not done, by decision in the ADR: a QR code at setup (the key is typed in), and setup
    from the web interface. **Not verified:** a sign-in with a real authenticator app;
    the codes are checked against the RFC vectors only.
-3. **Admin interface pages** (spec §13.1 items 2, 3, 4, 6, 7): consoles, clients, policy
-   with a permission preview, audit search and export, settings and maintenance.
+3. **Admin interface pages** (spec §13.1 items 2, 3, 4, 6, 7;
+   [ADR 0027](adr/0027-admin-pages-for-consoles-clients-policy.md)).
+   - ✅ **Read-only pages, audit search and export** (2026-11-16): consoles, clients with
+     their effective permissions (the client's own tool list), policy, settings and
+     maintenance; audit filters by actor id and time; CSV (formula-safe) and JSON export,
+     audited. View models without any field for a secret
+     (`packages/mcp-server/src/admin-views.ts`, `packages/admin-ui/src/pages-manage.ts`).
+     Tests in `tests/integration-mock/admin-http.test.ts`.
+   - **Changes from the web interface** (next): add, edit and remove consoles, issue,
+     rotate and revoke client tokens, edit policy with a preview. Off unless the
+     deployment enables it, with re-authentication for every change.
 4. **Networking** (spec §9, §7.3): `deploy/compose.dual.yml`, `deploy/compose.tls.yml`,
    a reverse-proxy example, container tests that prove interface binding and no
    forwarding, and the verification commands in `networking.md`.

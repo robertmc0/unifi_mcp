@@ -205,8 +205,9 @@ also ends all of the account's web sessions. `admin reset-mfa` arrives with MFA
 
 ## Admin web interface
 
-An optional browser interface for the dashboard, approvals and the audit trail. It is
-off by default and never needed: the CLI does everything it does.
+An optional browser interface for the dashboard, approvals, the audit trail and a view
+of consoles, clients, policy and settings. It is off by default and never needed: the CLI
+does everything it does.
 
 1. Create an administrator on the host: `unifi-mcp admin bootstrap --username alice`.
 2. Set `UNIFI_MCP_ADMIN_ENABLED=true` and restart the service. It listens on
@@ -214,12 +215,16 @@ off by default and never needed: the CLI does everything it does.
    Docker and remote access.
 3. Open `http://localhost:3001` (or your `https://` address) and sign in.
 
-| Page      | What it shows                                                                                                                                               |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Dashboard | Hard lock, runtime mode, policy version, readiness and every health check, listeners, consoles and their modules, counts.                                   |
-| Approvals | Pending and recent requests. A request's page shows the client, operation, risk, target, times and the redacted arguments, with **Approve** and **Reject**. |
-| Audit     | The audit trail, newest first, filtered by actor, outcome and event type, with paging.                                                                      |
-| Account   | Your username, last sign-in, when the session ends, whether two-step sign-in is on and how many recovery codes are left.                                    |
+| Page      | What it shows                                                                                                                                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dashboard | Hard lock, runtime mode, policy version, readiness and every health check, listeners, consoles and their modules, counts.                                                                                                           |
+| Approvals | Pending and recent requests. A request's page shows the client, operation, risk, target, times and the redacted arguments, with **Approve** and **Reject**.                                                                         |
+| Consoles  | Every console with its host, state and TLS trust. A console's page adds each module's mode, port, application version and whether a credential is stored, and the console policy.                                                   |
+| Clients   | Every MCP client with its status, expiry and last use. A client's page adds its token ids and dates, its policy, and **what it can use now**: the same list of operations the client itself is shown.                               |
+| Policy    | The hard lock, the runtime mode, the global policy, and the operations that are off unless enabled.                                                                                                                                 |
+| Audit     | The audit trail, newest first, filtered by actor, actor id, outcome, event type and time, with paging, and a download of what the filters match as CSV or JSON (at most 5000 entries; the download is recorded in the audit trail). |
+| Settings  | Versions, the master key id, the effective deployment settings, the applications and their contract revisions, event connections, and the host commands for maintenance.                                                            |
+| Account   | Your username, last sign-in, when the session ends, whether two-step sign-in is on and how many recovery codes are left.                                                                                                            |
 
 - **Approving needs your password every time**, on the approval form, and a new code
   from your authenticator app when two-step sign-in is on. Approving does not run
@@ -234,6 +239,12 @@ off by default and never needed: the CLI does everything it does.
   decisions too (`approval`).
 - Text from MCP clients and UniFi is shown escaped. Control and bidirectional-text
   characters appear as `\uXXXX`, so a request cannot hide or reorder what you read.
+- The consoles, clients, policy and settings pages only show. Changes are made with the
+  CLI on the host ([ADR 0027](adr/0027-admin-pages-for-consoles-clients-policy.md)).
+- No page shows a credential: not a console key, a client token, the master key or a
+  password. Token ids and the master key id are identifiers, not secrets.
+- A CSV download is safe to open in a spreadsheet: values that would run as a formula
+  are prefixed with an apostrophe.
 
 ### Two-step sign-in
 

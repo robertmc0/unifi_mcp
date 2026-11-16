@@ -84,11 +84,15 @@ export interface AuditRow {
 
 export interface AuditFilters {
   actorType?: string;
+  actorId?: string;
   outcome?: string;
   eventType?: string;
+  /** `YYYY-MM-DD` or an ISO date-time, as typed. */
+  since?: string;
+  until?: string;
 }
 
-function layout(frame: Frame, body: SafeHtml): string {
+export function layout(frame: Frame, body: SafeHtml): string {
   const signedIn = frame.username !== undefined;
   return html`<!doctype html>
     <html lang="en">
@@ -106,7 +110,9 @@ function layout(frame: Frame, body: SafeHtml): string {
             signedIn
               ? html`<nav>
                     <a href="/">Dashboard</a><a href="/approvals">Approvals</a
-                    ><a href="/audit">Audit</a><a href="/account">Account</a>
+                    ><a href="/consoles">Consoles</a><a href="/clients">Clients</a
+                    ><a href="/policy">Policy</a><a href="/audit">Audit</a
+                    ><a href="/settings">Settings</a><a href="/account">Account</a>
                   </nav>
                   <form method="post" action="/logout">
                     <input type="hidden" name="csrf" value="${frame.csrfToken ?? ''}" /><span
@@ -236,7 +242,7 @@ export function loginPage(frame: Frame, requireMfa = false): string {
   );
 }
 
-function statusClass(status: string): string {
+export function statusClass(status: string): string {
   return status === 'ok' || status === 'success'
     ? 'status-ok'
     : status === 'degraded' || status === 'pending'
@@ -340,8 +346,9 @@ export function dashboardPage(frame: Frame, view: DashboardView): string {
             </div>`
       }
       <p class="muted">
-        Consoles, clients and policy are managed with the <code>unifi-mcp</code> CLI on the host
-        (docs/administration.md).
+        Details are under <a href="/consoles">Consoles</a>, <a href="/clients">Clients</a> and
+        <a href="/policy">Policy</a>. Changes are made with the <code>unifi-mcp</code> CLI on the
+        host (docs/administration.md).
       </p>`,
   );
 }
@@ -521,6 +528,7 @@ export function auditPage(
   filters: AuditFilters,
   olderHref: string | undefined,
 ): string {
+  const exportQuery = new URLSearchParams({ ...filters }).toString();
   const option = (value: string, current: string | undefined): SafeHtml =>
     html`<option value="${value}" ${value === (current ?? '') ? html` selected` : ''}>
       ${value === '' ? 'any' : value}
@@ -550,8 +558,38 @@ export function auditPage(
             maxlength="64"
           />
         </div>
+        <div>
+          <label for="actorId">Actor id</label
+          ><input id="actorId" name="actorId" value="${filters.actorId ?? ''}" maxlength="128" />
+        </div>
+        <div>
+          <label for="since">From (UTC)</label
+          ><input
+            id="since"
+            name="since"
+            value="${filters.since ?? ''}"
+            maxlength="30"
+            placeholder="2026-11-01"
+          />
+        </div>
+        <div>
+          <label for="until">Before (UTC)</label
+          ><input
+            id="until"
+            name="until"
+            value="${filters.until ?? ''}"
+            maxlength="30"
+            placeholder="2026-11-02"
+          />
+        </div>
         <div><button type="submit">Filter</button></div>
       </form>
+      <p class="muted">
+        Export what these filters match, newest first, at most 5000 entries:
+        <a href="/audit/export?${exportQuery}&amp;format=csv">CSV</a> or
+        <a href="/audit/export?${exportQuery}&amp;format=json">JSON</a>. An export is itself
+        recorded in the audit trail.
+      </p>
       <div class="card scroll">
         <table>
           <thead>

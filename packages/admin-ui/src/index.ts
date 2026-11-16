@@ -23,4 +23,20 @@ export {
   type DashboardView,
   type Frame,
 } from './pages.ts';
+export {
+  clientPage,
+  clientsPage,
+  consolePage,
+  consolesPage,
+  policyPage,
+  settingsPage,
+  type ClientDetail,
+  type ClientRow,
+  type ConsoleDetail,
+  type ConsoleModuleDetail,
+  type ConsoleRow,
+  type EffectiveOperation,
+  type PolicyView,
+  type SettingsView,
+} from './pages-manage.ts';
 export { ADMIN_CSS } from './style.ts';

@@ -15,6 +15,7 @@ import {
   CLI,
   connect,
   INITIALIZE,
+  NETWORK_KEY,
   rawRequest,
   startTestService,
   structured,
@@ -342,6 +343,259 @@ describe('admin audit page', () => {
     const older = /href="(\/audit\?[^"]*before=\d+[^"]*)"/.exec(first.body)?.[1];
     expect(older).toBeDefined();
     expect((await b.get((older ?? '').replaceAll('&amp;', '&'))).status).toBe(200);
+  });
+});
+
+describe('audit search and export (ADR 0027)', () => {
+  it('filters by actor id and by time', async () => {
+    const { t, b } = await setup();
+    await signIn(b);
+    t.token('reader', ['network.*.read']);
+    const byActor = await b.get('/audit?actorId=alice');
+    expect(byActor.body).toContain('admin.login');
+    expect(byActor.body).not.toContain('client.create');
+    expect(byActor.body).toContain('name="actorId" value="alice"');
+    const future = await b.get('/audit?since=2999-01-01');
+    expect(future.body).not.toContain('admin.login');
+    expect(future.body).toContain('value="2999-01-01"');
+    const past = await b.get('/audit?until=2000-01-01T00:00:00Z');
+    expect(past.body).not.toContain('admin.login');
+    // A malformed filter is ignored and not echoed back.
+    const hostile = await b.get(
+      `/audit?since=${encodeURIComponent('"><script>alert(1)</script>')}&actorId=${encodeURIComponent('<b>')}`,
+    );
+    expect(hostile.status).toBe(200);
+    expect(hostile.body).toContain('admin.login');
+    expect(hostile.body).not.toContain('<script>');
+    expect(hostile.body).not.toContain('<b>');
+  });
+
+  it('exports what the filters match as CSV or JSON, and records the export', async () => {
+    const { t, b } = await setup();
+    await signIn(b);
+    // Text a spreadsheet would run as a formula, in columns that take free text.
+    t.service.audit.record({
+      eventType: 'mcp.operation',
+      action: 'operation.execute',
+      outcome: 'denied',
+      actor: { type: 'mcp_client', id: '=cmd' },
+      operationId: '+SUM(1,2)',
+      errorCode: '@risk',
+      correlationId: '-2+3',
+      details: { note: 'has "quotes", commas\nand a new line' },
+    });
+    const csv = await b.get('/audit/export?format=csv');
+    expect(csv.status).toBe(200);
+    expect(csv.headers['content-type']).toBe('text/csv; charset=utf-8');
+    expect(csv.headers['content-disposition']).toMatch(
+      /^attachment; filename="unifi-mcp-audit-\d{8}T\d{6}Z\.csv"$/,
+    );
+    expect(csv.headers['cache-control']).toBe('no-store');
+    const lines = csv.body.split('\r\n');
+    expect(lines[0]).toBe(
+      'seq,occurredAt,eventType,action,outcome,actorType,actorId,correlationId,consoleId,application,operationId,errorCode,durationMs,details',
+    );
+    const hostile = lines.find((line) => line.includes('operation.execute')) ?? '';
+    expect(hostile).toContain(`"'=cmd"`);
+    expect(hostile).toContain(`"'+SUM(1,2)"`);
+    expect(hostile).toContain(`"'@risk"`);
+    expect(hostile).toContain(`"'-2+3"`);
+    expect(csv.body).toContain('has \\""quotes\\"", commas\\nand a new line');
+    // No cell starts a formula: every field is quoted, and none begins with = + - @.
+    expect(csv.body).not.toMatch(/(^|,)"[=+\-@]/m);
+
+    const json = await b.get('/audit/export?format=json&actorType=admin');
+    expect(json.headers['content-type']).toBe('application/json; charset=utf-8');
+    const entries = JSON.parse(json.body) as { actorType: string; action: string; seq: number }[];
+    expect(entries.length).toBeGreaterThan(0);
+    expect(entries.every((entry) => entry.actorType === 'admin')).toBe(true);
+    expect(entries.map((e) => e.seq)).toEqual([...entries.map((e) => e.seq)].sort((a, c) => c - a));
+    // The first export is in the second one; both are in the audit trail.
+    expect(entries.some((entry) => entry.action === 'audit.export')).toBe(true);
+    const recorded = t.service.audit.list({ eventType: 'admin.audit', limit: 5 });
+    expect(recorded).toHaveLength(2);
+    expect(recorded[0]).toMatchObject({
+      action: 'audit.export',
+      actorId: 'alice',
+      details: { format: 'json', filters: { actorType: 'admin' } },
+    });
+    // Not without a session, and not by POST.
+    const anonymous = browser(t.service.adminUrl ?? '');
+    const refused = await anonymous.get('/audit/export?format=json');
+    expect(refused.status).toBe(303);
+    expect(refused.body).toBe('');
+  });
+
+  it('exports more than one page of entries, up to its limit', async () => {
+    const { t, b } = await setup();
+    await signIn(b);
+    for (let i = 0; i < 620; i++) {
+      t.service.audit.record({
+        eventType: 'test.fill',
+        action: 'fill.entry',
+        outcome: 'success',
+        actor: { type: 'system' },
+      });
+    }
+    const json = await b.get('/audit/export?format=json&eventType=test.fill');
+    const entries = JSON.parse(json.body) as { seq: number }[];
+    expect(entries).toHaveLength(620);
+    expect(new Set(entries.map((e) => e.seq)).size).toBe(620);
+  });
+});
+
+describe('consoles, clients, policy and settings pages (ADR 0027)', () => {
+  it('need a session, like every page', async () => {
+    const { b } = await setup();
+    for (const path of ['/consoles', '/clients', '/clients/reader', '/policy', '/settings']) {
+      const response = await b.get(path);
+      expect(response.status, path).toBe(303);
+      expect(response.headers['location']).toBe('/login');
+    }
+  });
+
+  it('show consoles and their modules, never a credential', async () => {
+    const { t, b } = await setup();
+    await signIn(b);
+    const list = await b.get('/consoles');
+    expect(list.status).toBe(200);
+    expect(list.body).toContain(`href="/consoles/${t.consoleId}"`);
+    expect(list.body).toContain('network: read_write');
+    const detail = await b.get(`/consoles/${t.consoleId}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body).toContain('Console lab');
+    expect(detail.body).toContain('127.0.0.1');
+    expect(detail.body).toMatch(/<td class="status-ok">\s*stored\s*<\/td>/);
+    expect(detail.body).toContain('1.0.5 (observed');
+    expect(detail.body).toContain('&quot;state&quot;: &quot;read_write&quot;');
+    expect(detail.body).toContain('verify, own CA');
+    expect((await b.get('/consoles/00000000-0000-4000-8000-000000000000')).status).toBe(404);
+    expect((await b.get('/consoles/lab')).status).toBe(404);
+    // A console whose certificate is not checked says so in words.
+    t.service.consoles.setTls(t.consoleId, { mode: 'insecure' }, CLI);
+    expect((await b.get(`/consoles/${t.consoleId}`)).body).toContain(
+      'certificate verification is DISABLED',
+    );
+    for (const page of [list.body, detail.body]) expect(page).not.toContain(NETWORK_KEY);
+  });
+
+  it("show a client's effective permissions exactly as the client sees them", async () => {
+    const { t, b } = await setup();
+    await signIn(b);
+    const readerToken = t.token('reader', ['network.*.read']);
+    const writerToken = t.token('writer', ['network.*.*']);
+    const list = await b.get('/clients');
+    expect(list.body).toContain('href="/clients/reader"');
+    expect(list.body).toContain('href="/clients/writer"');
+
+    const operationsOf = async (token: string): Promise<string[]> => {
+      const client = await connect(t.mcpUrl, token);
+      const result = structured(
+        await client.callTool({ name: 'unifi_list_operations', arguments: { limit: 50 } }),
+      );
+      return (result['operations'] as { operationId: string }[]).map((o) => o.operationId).sort();
+    };
+    const onPage = (body: string): string[] =>
+      [...body.matchAll(/<td>(network\.[a-z_.]+)<\/td>/g)].map((m) => m[1] ?? '').sort();
+
+    const reader = await b.get('/clients/reader');
+    expect(reader.status).toBe(200);
+    expect(onPage(reader.body)).toEqual(await operationsOf(readerToken));
+    expect(onPage(reader.body).length).toBeGreaterThan(0);
+    expect(reader.body.replace(/\s+/g, ' ')).toMatch(/\d+ reads?, 0 writes\./);
+    const writer = await b.get('/clients/writer');
+    expect(onPage(writer.body)).toEqual(await operationsOf(writerToken));
+    expect(onPage(writer.body).length).toBeGreaterThan(onPage(reader.body).length);
+    expect(writer.body).toContain('only after a human approves');
+    expect(writer.body).toMatch(/<td>required<\/td>/);
+    expect(writer.body).toMatch(/<td>\s*lab\s*<\/td>|<td>lab<\/td>/);
+
+    // Token ids are shown; tokens never are.
+    const tokenId = t.service.clients.get('reader')?.tokens[0]?.tokenId ?? 'missing';
+    expect(reader.body).toContain(tokenId);
+    for (const page of [list.body, reader.body, writer.body]) {
+      expect(page).not.toContain(readerToken);
+      expect(page).not.toContain(writerToken);
+      expect(page).not.toContain(NETWORK_KEY);
+    }
+    // The page follows the policy: read-only mode removes the writes, revocation everything.
+    t.service.policyStore.setRuntimeMode('read_only', CLI);
+    const afterReadOnly = await b.get('/clients/writer');
+    expect(onPage(afterReadOnly.body)).toEqual(onPage(reader.body));
+    t.service.clients.revoke('reader', CLI);
+    const revoked = await b.get('/clients/reader');
+    expect(onPage(revoked.body)).toEqual([]);
+    expect(revoked.body).toContain('revoked');
+    expect((await b.get('/clients/nobody')).status).toBe(404);
+    expect((await b.get('/clients/UPPER')).status).toBe(404);
+  });
+
+  it('show hostile descriptions escaped', async () => {
+    const { t, b } = await setup();
+    await signIn(b);
+    t.service.clients.create(
+      {
+        clientId: 'hostile',
+        description: '<img src=x onerror=alert(1)>\u202eevil',
+        policy: { allow: [], consoles: {} },
+      },
+      CLI,
+    );
+    for (const path of ['/clients', '/clients/hostile']) {
+      const page = await b.get(path);
+      expect(page.body).toContain('&lt;img src=x onerror=alert(1)&gt;\\u202eevil');
+      expect(page.body).not.toContain('<img');
+    }
+  });
+
+  it('show the policy, the hard lock and the settings without any secret', async () => {
+    const { t, b } = await setup();
+    await signIn(b);
+    const policy = await b.get('/policy');
+    expect(policy.status).toBe(200);
+    expect(policy.body).toMatch(/Runtime mode<\/div>\s*<div class="status-warn">\s*read_write/);
+    expect(policy.body).toMatch(/Deployment hard lock<\/div>\s*<div class="status-warn">\s*off/);
+    expect(policy.body).toContain('&quot;runtimeMode&quot;: &quot;read_write&quot;');
+    t.service.policyStore.setRuntimeMode('read_only', CLI);
+    expect((await b.get('/policy')).body).toMatch(/<div class="status-ok">\s*read_only/);
+
+    const settings = await b.get('/settings');
+    expect(settings.status).toBe(200);
+    expect(settings.body).toContain('No update check');
+    expect(settings.body).toContain('Hard lock (UNIFI_MCP_FORCE_READ_ONLY)');
+    expect(settings.body).toContain('Two-step sign-in required');
+    expect(settings.body).toMatch(/<td>network<\/td>\s*<td class="status-ok">supported<\/td>/);
+    expect(settings.body).toContain('unavailable: official_local_api_not_documented');
+    expect(settings.body).toContain(t.service.storage.keyId);
+    expect(settings.body).toContain('unifi-mcp db backup');
+    for (const page of [policy.body, settings.body]) {
+      expect(page).not.toContain(NETWORK_KEY);
+      expect(page).not.toContain(PASSWORD);
+    }
+  });
+
+  it('are read-only: nothing on them accepts a change', async () => {
+    const { t, b } = await setup();
+    await signIn(b);
+    t.token('reader', ['network.*.read']);
+    const csrf = await b.csrf('/');
+    for (const path of [
+      '/consoles',
+      `/consoles/${t.consoleId}`,
+      '/clients',
+      '/clients/reader',
+      '/policy',
+      '/settings',
+      '/audit/export',
+    ]) {
+      const page = await b.get(path);
+      // The only form on these pages is the sign-out button in the header.
+      expect(page.body.match(/<form /g) ?? [], path).toHaveLength(path === '/audit/export' ? 0 : 1);
+      const posted = await b.post(path, { csrf, state: 'disabled' });
+      expect(posted.status, path).toBe(404);
+    }
+    expect(t.service.consoles.get('lab')?.policy?.state).toBe('enabled');
+    expect(t.service.clients.get('reader')?.policy?.status).toBe('active');
   });
 });
 

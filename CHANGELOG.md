@@ -56,6 +56,12 @@ All notable changes to this project are documented here. The format follows
   `admin reset-mfa`. `UNIFI_MCP_ADMIN_REQUIRE_MFA=true` refuses accounts without it. New
   Account page; `admin list` and `doctor` show the state. Storage migration 11.
 
+- Admin web interface (ADR 0027): read-only pages for consoles, MCP clients, the policy
+  and settings. A client's page shows what the client can use now, computed by the same
+  function as its tool list. The audit page also filters by actor id and time, and
+  downloads what the filters match as CSV (formula-safe) or JSON; a download is audited.
+  No page receives a credential.
+
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 
 The gate is open: Access has not run on a real console, and no version-labelled Access

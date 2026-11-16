@@ -22,17 +22,30 @@ import {
   approvalPage,
   approvalsPage,
   auditPage,
+  clientPage,
+  clientsPage,
+  consolePage,
+  consolesPage,
   dashboardPage,
   errorPage,
   loginPage,
+  policyPage,
+  settingsPage,
   type ApprovalRow,
   type AuditFilters,
+  type ClientDetail,
+  type ClientRow,
+  type ConsoleDetail,
+  type ConsoleRow,
   type DashboardView,
   type Frame,
+  type PolicyView,
+  type SettingsView,
 } from '@unifi-local-mcp/admin-ui';
 import { ApprovalError, type ApprovalService, type ApprovalView } from '@unifi-local-mcp/approvals';
 import type {
   AuditActorType,
+  AuditEntry,
   AuditLog,
   AuditOutcome,
   AuditQuery,
@@ -45,12 +58,27 @@ import { safeEqual, type AdminSession, type AdminSessionStore } from './sessions
 export const SESSION_COOKIE = '__Host-umcp_admin';
 const MAX_BODY_BYTES = 16 * 1024;
 const AUDIT_PAGE_SIZE = 50;
+const AUDIT_EXPORT_MAX = 5000;
+const AUDIT_EXPORT_BATCH = 500;
 const FAILURE_WINDOW_MS = 15 * 60_000;
 const MAX_FAILURES_PER_USERNAME = 5;
 const MAX_FAILURES_PER_ADDRESS = 20;
 
 const CSP =
   "default-src 'none'; style-src 'self'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
+
+/**
+ * Read-only views of consoles, clients, the policy and the settings (spec §13.1; ADR
+ * 0027), assembled by the service from its stores. None of them carries a credential.
+ */
+export interface AdminViews {
+  consoles(): ConsoleRow[];
+  console(id: string): ConsoleDetail | undefined;
+  clients(): ClientRow[];
+  client(id: string): ClientDetail | undefined;
+  policy(): PolicyView;
+  settings(): SettingsView;
+}
 
 export interface AdminHttpOptions {
   admins: AdminStore;
@@ -64,6 +92,7 @@ export interface AdminHttpOptions {
   logger: Logger;
   /** Dashboard data, assembled by the service from its stores. */
   status: () => Promise<DashboardView>;
+  views: AdminViews;
   /** Host header names accepted (DNS-rebinding protection). */
   allowedHosts: string[];
   /** True when this listener terminates TLS itself (adds HSTS). */
@@ -334,6 +363,11 @@ export class AdminHttpService {
       this.#auditPage(res, frame, url.searchParams);
       return;
     }
+    if (path === '/audit/export' && form === undefined) {
+      this.#auditExport(req, res, session, url.searchParams);
+      return;
+    }
+    if (form === undefined && this.#managePage(res, frame, path)) return;
     this.#send(res, 404, errorPage(frame, 'Not found', 'There is no such page.'));
   }
 
@@ -565,9 +599,50 @@ export class AdminHttpService {
     }
   }
 
-  #auditPage(res: ServerResponse, frame: Frame, params: URLSearchParams): void {
+  /** Consoles, clients, policy and settings: read-only pages. True when one was sent. */
+  #managePage(res: ServerResponse, frame: Frame, path: string): boolean {
+    const views = this.#o.views;
+    const notFound = (what: string): true => {
+      this.#send(res, 404, errorPage(frame, 'Not found', `There is no such ${what}.`));
+      return true;
+    };
+    if (path === '/consoles') {
+      this.#send(res, 200, consolesPage({ ...frame, title: 'Consoles' }, views.consoles()));
+      return true;
+    }
+    const consoleMatch = /^\/consoles\/([0-9a-f-]{36})$/.exec(path);
+    if (consoleMatch !== null) {
+      const view = views.console(consoleMatch[1] ?? '');
+      if (view === undefined) return notFound('console');
+      this.#send(res, 200, consolePage({ ...frame, title: `Console ${view.alias}` }, view));
+      return true;
+    }
+    if (path === '/clients') {
+      this.#send(res, 200, clientsPage({ ...frame, title: 'MCP clients' }, views.clients()));
+      return true;
+    }
+    const clientMatch = /^\/clients\/([a-z0-9._-]{1,64})$/.exec(path);
+    if (clientMatch !== null) {
+      const view = views.client(clientMatch[1] ?? '');
+      if (view === undefined) return notFound('client');
+      this.#send(res, 200, clientPage({ ...frame, title: `Client ${view.clientId}` }, view));
+      return true;
+    }
+    if (path === '/policy') {
+      this.#send(res, 200, policyPage({ ...frame, title: 'Policy' }, views.policy()));
+      return true;
+    }
+    if (path === '/settings') {
+      this.#send(res, 200, settingsPage({ ...frame, title: 'Settings' }, views.settings()));
+      return true;
+    }
+    return false;
+  }
+
+  /** The audit filters of a query string: what to echo in the form, and what to query. */
+  #auditFilters(params: URLSearchParams): { filters: AuditFilters; query: AuditQuery } {
     const filters: AuditFilters = {};
-    const query: AuditQuery = { limit: AUDIT_PAGE_SIZE };
+    const query: AuditQuery = {};
     const actorType = params.get('actorType') ?? '';
     if (ACTOR_TYPES.has(actorType)) {
       filters.actorType = actorType;
@@ -583,6 +658,26 @@ export class AdminHttpService {
       filters.eventType = eventType;
       query.eventType = eventType;
     }
+    const actorId = params.get('actorId') ?? '';
+    if (/^[A-Za-z0-9._:@-]{1,128}$/.test(actorId)) {
+      filters.actorId = actorId;
+      query.actorId = actorId;
+    }
+    for (const bound of ['since', 'until'] as const) {
+      const text = (params.get(bound) ?? '').trim();
+      if (!/^\d{4}-\d{2}-\d{2}([T ][0-9:.]{5,12}(Z|[+-]\d{2}:\d{2})?)?$/.test(text)) continue;
+      // A date without a time or zone is the start of that day in UTC.
+      const date = new Date(/[T ]/.test(text) ? text.replace(' ', 'T') : `${text}T00:00:00Z`);
+      if (Number.isNaN(date.getTime())) continue;
+      filters[bound] = text;
+      query[bound] = date;
+    }
+    return { filters, query };
+  }
+
+  #auditPage(res: ServerResponse, frame: Frame, params: URLSearchParams): void {
+    const { filters, query } = this.#auditFilters(params);
+    query.limit = AUDIT_PAGE_SIZE;
     const before = Number(params.get('before') ?? '');
     if (Number.isSafeInteger(before) && before > 0) query.beforeSeq = before;
     const rows = this.#o.audit.list(query);
@@ -593,4 +688,89 @@ export class AdminHttpService {
         : undefined;
     this.#send(res, 200, auditPage({ ...frame, title: 'Audit' }, rows, filters, older));
   }
+
+  /**
+   * Downloads the entries the filters match, newest first, as CSV or JSON. Entries were
+   * redacted when they were written. The export is recorded before anything is sent.
+   */
+  #auditExport(
+    req: IncomingMessage,
+    res: ServerResponse,
+    session: AdminSession,
+    params: URLSearchParams,
+  ): void {
+    const format = params.get('format') === 'json' ? 'json' : 'csv';
+    const { filters, query } = this.#auditFilters(params);
+    const entries: AuditEntry[] = [];
+    let beforeSeq: number | undefined;
+    while (entries.length < AUDIT_EXPORT_MAX) {
+      const batch = this.#o.audit.list({
+        ...query,
+        limit: Math.min(AUDIT_EXPORT_BATCH, AUDIT_EXPORT_MAX - entries.length),
+        ...(beforeSeq === undefined ? {} : { beforeSeq }),
+      });
+      entries.push(...batch);
+      const last = batch.at(-1);
+      if (batch.length < AUDIT_EXPORT_BATCH || last === undefined) break;
+      beforeSeq = last.seq;
+    }
+    this.#o.audit.record({
+      eventType: 'admin.audit',
+      action: 'audit.export',
+      outcome: 'success',
+      actor: { type: 'admin', id: session.admin.username },
+      details: { remoteAddress: this.#remote(req), format, entries: entries.length, filters },
+    });
+    const stamp = this.#now().toISOString().slice(0, 19).replace(/[-:]/g, '');
+    this.#headers(res);
+    res.writeHead(200, {
+      'content-type':
+        format === 'json' ? 'application/json; charset=utf-8' : 'text/csv; charset=utf-8',
+      'content-disposition': `attachment; filename="unifi-mcp-audit-${stamp}Z.${format}"`,
+    });
+    res.end(format === 'json' ? `${JSON.stringify(entries, null, 2)}\n` : auditCsv(entries));
+  }
+}
+
+const CSV_COLUMNS = [
+  'seq',
+  'occurredAt',
+  'eventType',
+  'action',
+  'outcome',
+  'actorType',
+  'actorId',
+  'correlationId',
+  'consoleId',
+  'application',
+  'operationId',
+  'errorCode',
+  'durationMs',
+  'details',
+] as const;
+
+/**
+ * One CSV cell: always quoted. A value a spreadsheet would run as a formula (it starts
+ * with `=`, `+`, `-`, `@`, a tab or a carriage return) gets a leading apostrophe, because
+ * audit details can hold text that came from a client or a console.
+ */
+function csvCell(value: unknown): string {
+  const text =
+    value === null || value === undefined
+      ? ''
+      : typeof value === 'string'
+        ? value
+        : typeof value === 'number'
+          ? String(value)
+          : JSON.stringify(value);
+  const guarded = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+  return `"${guarded.replace(/"/g, '""')}"`;
+}
+
+function auditCsv(entries: AuditEntry[]): string {
+  const lines = [CSV_COLUMNS.join(',')];
+  for (const entry of entries) {
+    lines.push(CSV_COLUMNS.map((column) => csvCell(entry[column])).join(','));
+  }
+  return `${lines.join('\r\n')}\r\n`;
 }
