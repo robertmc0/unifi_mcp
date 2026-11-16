@@ -64,7 +64,10 @@ These rules apply to Codex, Claude Code and human contributors alike.
 - Node.js 26 LTS (see `.node-version`), npm workspaces, ESM, TypeScript 6 strict
   (`tsconfig.base.json`). Relative imports use `.ts` extensions.
 - Before finishing any change, run `npm run check` (format, lint, typecheck, tests). If
-  you touched `api-specs/` or the coverage tooling, also run `npm run api:reconcile`.
+  you touched `api-specs/` or the coverage tooling, also run `npm run api:reconcile`. If
+  you touched `deploy/`, the `Dockerfile` or a listener, also run
+  `npm run test:containers` (needs Docker; it builds the image and runs the Compose
+  examples, ADR 0028).
 - Report honestly: never claim a test, integration or endpoint works without running it.
 - Keep `docs/` accurate as part of each change (spec §18). The manual is a deliverable.
 - Small, reviewable commits; no generated credentials, real hostnames or addresses in the

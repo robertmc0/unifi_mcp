@@ -1,0 +1,121 @@
+# Two-network deployment of unifi-local-mcp (spec §9.2; ADR 0028; docs/networking.md).
+#
+# The container is attached to two LANs, each through its own host interface:
+#
+#   mcp_client_net        MCP clients connect here, to the MCP listener only (HTTPS).
+#   unifi_management_net  The service reaches the UniFi consoles here. The optional admin
+#                         interface and metrics also listen here, and only here.
+#
+# It never forwards between them: it has no capability to change routing, forwarding is
+# switched off in its network namespace, and each listener is bound to one address.
+# Two interfaces alone are not isolation. Keep host firewall rules between the two LANs.
+#
+# Before the first start (in the directory that holds this file):
+#   mkdir -m 0700 data secrets
+#   (umask 077 && openssl rand -base64 32 > secrets/unifi_mcp_master_key)
+#   place the MCP listener's certificate and key (PEM) in
+#     secrets/unifi_mcp_tls_cert.pem and secrets/unifi_mcp_tls_key.pem
+#   copy dual.env.example to .env and set every value in it
+#
+# ipvlan needs Linux and one host interface per network. The host itself cannot reach the
+# container through the same interface (an ipvlan property): run `unifi-mcp` commands with
+# `docker compose exec`, and test from another machine on each LAN.
+name: unifi-local-mcp
+
+services:
+  unifi-mcp:
+    image: ${UNIFI_MCP_IMAGE:-unifi-local-mcp:local}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    user: '${UNIFI_MCP_UID:-1000}:${UNIFI_MCP_GID:-1000}'
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 512m
+    sysctls:
+      # A container on two networks must not route between them. Docker's default is 1.
+      net.ipv4.ip_forward: '0'
+      # Add this line if the networks carry IPv6 (it fails where IPv6 is off):
+      # net.ipv6.conf.all.forwarding: '0'
+    environment:
+      # Immutable deployment lock: no write can run while this is true (the default).
+      UNIFI_MCP_FORCE_READ_ONLY: 'true'
+      UNIFI_MCP_MASTER_KEY_FILE: /run/secrets/unifi_mcp_master_key
+      # MCP: HTTPS, on the client-side address only.
+      UNIFI_MCP_HTTP_BIND: ${UNIFI_MCP_CLIENT_IP:?set UNIFI_MCP_CLIENT_IP, the container address on the client LAN}
+      UNIFI_MCP_HTTP_TLS_CERT_FILE: /run/secrets/unifi_mcp_tls_cert
+      UNIFI_MCP_HTTP_TLS_KEY_FILE: /run/secrets/unifi_mcp_tls_key
+      # The name clients use for the service (the name in the certificate).
+      UNIFI_MCP_HTTP_ALLOWED_HOSTS: ${UNIFI_MCP_PUBLIC_NAME:?set UNIFI_MCP_PUBLIC_NAME, the host name clients connect to}
+      # Only these addresses can ever be contacted as consoles: list your consoles, not
+      # the whole LAN, and nothing on the client side.
+      UNIFI_MCP_EGRESS_ALLOW_CIDRS: ${UNIFI_MCP_CONSOLE_CIDRS:?set UNIFI_MCP_CONSOLE_CIDRS, for example 192.0.2.1/32}
+      UNIFI_MCP_LOG_LEVEL: info
+      # Optional admin web interface and metrics: on the management-side address only.
+      # They need TLS (UNIFI_MCP_ADMIN_TLS_*, UNIFI_MCP_METRICS_TLS_*) because that address
+      # is on a LAN (docs/networking.md).
+      UNIFI_MCP_ADMIN_ENABLED: 'false'
+      UNIFI_MCP_ADMIN_BIND: ${UNIFI_MCP_MANAGEMENT_IP:?set UNIFI_MCP_MANAGEMENT_IP, the container address on the management LAN}
+      UNIFI_MCP_METRICS_ENABLED: 'false'
+      UNIFI_MCP_METRICS_BIND: ${UNIFI_MCP_MANAGEMENT_IP:?set UNIFI_MCP_MANAGEMENT_IP, the container address on the management LAN}
+      UNIFI_MCP_METRICS_TOKEN_FILE: /run/secrets/unifi_mcp_metrics_token
+    # No "ports:". Nothing is published through the host: each listener is reachable only
+    # on the address it is bound to, on its own LAN.
+    networks:
+      mcp_client_net:
+        ipv4_address: ${UNIFI_MCP_CLIENT_IP:?set UNIFI_MCP_CLIENT_IP}
+      unifi_management_net:
+        ipv4_address: ${UNIFI_MCP_MANAGEMENT_IP:?set UNIFI_MCP_MANAGEMENT_IP}
+        # The default route, if any, is on the management side: consoles behind a router
+        # or a VPN are reached through the management gateway, never through the client LAN.
+        gw_priority: 1
+    volumes:
+      - ./data:/data
+    secrets:
+      - unifi_mcp_master_key
+      - unifi_mcp_tls_cert
+      - unifi_mcp_tls_key
+      # - unifi_mcp_metrics_token
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+networks:
+  mcp_client_net:
+    driver: ipvlan
+    driver_opts:
+      parent: ${UNIFI_MCP_CLIENT_NIC:?set UNIFI_MCP_CLIENT_NIC, the host interface on the client LAN}
+      ipvlan_mode: l2
+    ipam:
+      config:
+        # No gateway on purpose: nothing is routed through the client LAN.
+        - subnet: ${UNIFI_MCP_CLIENT_SUBNET:?set UNIFI_MCP_CLIENT_SUBNET, for example 198.51.100.0/24}
+  unifi_management_net:
+    driver: ipvlan
+    driver_opts:
+      parent: ${UNIFI_MCP_MANAGEMENT_NIC:?set UNIFI_MCP_MANAGEMENT_NIC, the host interface on the management LAN}
+      ipvlan_mode: l2
+    ipam:
+      config:
+        - subnet: ${UNIFI_MCP_MANAGEMENT_SUBNET:?set UNIFI_MCP_MANAGEMENT_SUBNET, for example 192.0.2.0/24}
+          gateway: ${UNIFI_MCP_MANAGEMENT_GATEWAY:?set UNIFI_MCP_MANAGEMENT_GATEWAY, the router on the management LAN}
+
+secrets:
+  unifi_mcp_master_key:
+    file: ./secrets/unifi_mcp_master_key
+  unifi_mcp_tls_cert:
+    file: ./secrets/unifi_mcp_tls_cert.pem
+  unifi_mcp_tls_key:
+    file: ./secrets/unifi_mcp_tls_key.pem
+  # unifi_mcp_metrics_token:
+  #   file: ./secrets/unifi_mcp_metrics_token

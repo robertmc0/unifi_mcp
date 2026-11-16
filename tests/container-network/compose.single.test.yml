@@ -1,0 +1,13 @@
+# Test overlay for deploy/compose.single.yml and deploy/compose.tls.yml: the image under
+# test, and files from a temporary directory. Everything else is the shipped file.
+services:
+  unifi-mcp:
+    image: ${NETTEST_IMAGE}
+    build: !reset null
+    restart: 'no'
+    volumes: !override
+      - ${NETTEST_DIR}/data:/data
+
+secrets:
+  unifi_mcp_master_key:
+    file: ${NETTEST_DIR}/secrets/master.key

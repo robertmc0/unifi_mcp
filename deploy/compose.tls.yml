@@ -1,0 +1,71 @@
+# Single-host deployment with built-in HTTPS on a routable address (spec §9, §7.3;
+# ADR 0028; docs/networking.md). Use it when MCP clients on other machines connect
+# directly, without a reverse proxy. For clients on this machine only, compose.single.yml
+# is simpler.
+#
+# Before the first start (in the directory that holds this file):
+#   mkdir -m 0700 data secrets
+#   (umask 077 && openssl rand -base64 32 > secrets/unifi_mcp_master_key)
+#   place the certificate and key (PEM) in
+#     secrets/unifi_mcp_tls_cert.pem and secrets/unifi_mcp_tls_key.pem
+#   set UNIFI_MCP_PUBLISH_IP (the host address clients connect to) and
+#   UNIFI_MCP_PUBLIC_NAME (the name in the certificate), for example in ".env"
+name: unifi-local-mcp
+
+services:
+  unifi-mcp:
+    image: ${UNIFI_MCP_IMAGE:-unifi-local-mcp:local}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    init: true
+    restart: unless-stopped
+    user: '${UNIFI_MCP_UID:-1000}:${UNIFI_MCP_GID:-1000}'
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 512m
+    environment:
+      # Immutable deployment lock: no write can run while this is true (the default).
+      UNIFI_MCP_FORCE_READ_ONLY: 'true'
+      UNIFI_MCP_MASTER_KEY_FILE: /run/secrets/unifi_mcp_master_key
+      # HTTPS inside the container; no plaintext listener exists.
+      UNIFI_MCP_HTTP_BIND: 0.0.0.0
+      UNIFI_MCP_HTTP_TLS_CERT_FILE: /run/secrets/unifi_mcp_tls_cert
+      UNIFI_MCP_HTTP_TLS_KEY_FILE: /run/secrets/unifi_mcp_tls_key
+      UNIFI_MCP_HTTP_ALLOWED_HOSTS: ${UNIFI_MCP_PUBLIC_NAME:?set UNIFI_MCP_PUBLIC_NAME, the host name clients connect to}
+      # Consoles the service may reach (default: private ranges, CGNAT and IPv6 ULA).
+      # UNIFI_MCP_EGRESS_ALLOW_CIDRS: 192.0.2.0/24
+      UNIFI_MCP_LOG_LEVEL: info
+      # The admin interface stays on the host's loopback (see the port below).
+      UNIFI_MCP_ADMIN_ENABLED: 'false'
+      UNIFI_MCP_ADMIN_BIND: 0.0.0.0
+      UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT: 'true'
+    ports:
+      # One host address, not every interface: never write this as "3000:3000".
+      - '${UNIFI_MCP_PUBLISH_IP:?set UNIFI_MCP_PUBLISH_IP, the host address clients connect to}:${UNIFI_MCP_HTTP_HOST_PORT:-3000}:3000'
+      # - '127.0.0.1:${UNIFI_MCP_ADMIN_HOST_PORT:-3001}:3001'
+    volumes:
+      - ./data:/data
+    secrets:
+      - unifi_mcp_master_key
+      - unifi_mcp_tls_cert
+      - unifi_mcp_tls_key
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+
+secrets:
+  unifi_mcp_master_key:
+    file: ./secrets/unifi_mcp_master_key
+  unifi_mcp_tls_cert:
+    file: ./secrets/unifi_mcp_tls_cert.pem
+  unifi_mcp_tls_key:
+    file: ./secrets/unifi_mcp_tls_key.pem

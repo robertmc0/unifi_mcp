@@ -1,0 +1,69 @@
+# Test overlay for deploy/compose.dual.yml (tests/container-network/dual-network.test.ts).
+# The service definition is the shipped one. Only what a test host cannot provide is
+# replaced: the two LANs become isolated Docker bridges, and files come from a temporary
+# directory. A client container sits on the client network only, and a synthetic console
+# on the management network only.
+services:
+  unifi-mcp:
+    image: ${NETTEST_IMAGE}
+    build: !reset null
+    restart: 'no'
+    environment:
+      # Enabled so the tests can show where the admin interface is, and is not, reachable.
+      UNIFI_MCP_ADMIN_ENABLED: 'true'
+      UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT: 'true'
+    volumes: !override
+      - ${NETTEST_DIR}/data:/data
+      - ${NETTEST_DIR}/pki:/pki:ro
+
+  client:
+    image: ${NETTEST_IMAGE}
+    entrypoint: ['sleep', 'infinity']
+    healthcheck:
+      disable: true
+    user: '${UNIFI_MCP_UID}:${UNIFI_MCP_GID}'
+    read_only: true
+    cap_drop:
+      - ALL
+    extra_hosts:
+      - 'mcp.test.invalid:172.31.210.2'
+    networks:
+      mcp_client_net:
+        ipv4_address: 172.31.210.20
+    volumes:
+      - ${NETTEST_PROBES}:/probe:ro
+      - ${NETTEST_DIR}/pki:/pki:ro
+
+  console:
+    image: ${NETTEST_IMAGE}
+    entrypoint: ['node', '/probe/console.ts']
+    healthcheck:
+      disable: true
+    user: '${UNIFI_MCP_UID}:${UNIFI_MCP_GID}'
+    read_only: true
+    cap_drop:
+      - ALL
+    networks:
+      unifi_management_net:
+        ipv4_address: 172.31.220.3
+    volumes:
+      - ${NETTEST_PROBES}:/probe:ro
+      - ${NETTEST_DIR}/pki:/pki:ro
+
+networks:
+  mcp_client_net:
+    driver: bridge
+    internal: true
+    driver_opts: !reset null
+  unifi_management_net:
+    driver: bridge
+    internal: true
+    driver_opts: !reset null
+
+secrets:
+  unifi_mcp_master_key:
+    file: ${NETTEST_DIR}/secrets/master.key
+  unifi_mcp_tls_cert:
+    file: ${NETTEST_DIR}/pki/mcp.pem
+  unifi_mcp_tls_key:
+    file: ${NETTEST_DIR}/pki/mcp.key

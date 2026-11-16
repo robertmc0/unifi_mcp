@@ -68,6 +68,15 @@ All notable changes to this project are documented here. The format follows
   would gain and lose. Each change calls the same code as the CLI, is audited under the
   administrator's name, and needs a password check no older than five minutes.
 
+- Compose examples and container tests (ADR 0028): `deploy/compose.dual.yml` attaches
+  the service to a client LAN and a management LAN (ipvlan), binds MCP to the client
+  side and the admin interface and metrics to the management side, switches forwarding
+  off and requires the console addresses; `deploy/compose.tls.yml` serves HTTPS on one
+  named host address; `deploy/example-reverse-proxy.md` (not tested). New
+  `npm run test:containers` runs the three Compose files on a local Docker engine: 12
+  tests of binding, isolation, no forwarding, no proxying and egress. The image also
+  declares the metrics port.
+
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 
 The gate is open: Access has not run on a real console, and no version-labelled Access

@@ -47,7 +47,7 @@ ENV NODE_ENV=production \
 
 USER 10001:10001
 VOLUME ["/data"]
-EXPOSE 3000 3001
+EXPOSE 3000 3001 9464
 STOPSIGNAL SIGTERM
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --start-interval=2s --retries=3 \
   CMD ["node", "/app/packages/mcp-server/src/healthcheck.ts"]

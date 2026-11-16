@@ -1,0 +1,6 @@
+# Additional overlay for deploy/compose.tls.yml: the test certificate.
+secrets:
+  unifi_mcp_tls_cert:
+    file: ${NETTEST_DIR}/pki/mcp.pem
+  unifi_mcp_tls_key:
+    file: ${NETTEST_DIR}/pki/mcp.key

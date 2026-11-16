@@ -18,6 +18,11 @@
 
 ## With Docker Compose
 
+These steps use `deploy/compose.single.yml`: one host, with the MCP port on the host's
+loopback. For clients on other machines or consoles on a separate network, see
+[which example to use](networking.md#which-example); the steps are the same with
+another file.
+
 1. Get the repository and build the image:
 
    ```sh

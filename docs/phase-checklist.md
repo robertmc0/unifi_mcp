@@ -817,9 +817,18 @@ backups, `client-codex.md`, `development.md` and `release.md`.
      mutation checks. Docs: [administration.md](administration.md#changes-from-the-web-interface).
      **Not verified:** the pages in a real browser. They are tested as HTTP requests and
      HTML text; nobody has clicked through them yet.
-4. **Networking** (spec §9, §7.3): `deploy/compose.dual.yml`, `deploy/compose.tls.yml`,
-   a reverse-proxy example, container tests that prove interface binding and no
-   forwarding, and the verification commands in `networking.md`.
+4. ✅ **Networking** (2026-11-16, [ADR 0028](adr/0028-compose-examples-and-container-tests.md);
+   spec §9, §7.3): `deploy/compose.dual.yml` (ipvlan on two host interfaces, MCP bound to
+   the client side, admin and metrics to the management side, forwarding off, console
+   addresses required, no published ports), `deploy/dual.env.example`,
+   `deploy/compose.tls.yml`, `deploy/example-reverse-proxy.md`. Container tests
+   (`npm run test:containers`, `tests/container-network/`, 12 tests, 4 mutation checks)
+   run the three shipped Compose files with the image built from the tree; static checks
+   of all three in `tests/contract/packaging.test.ts`; a CI job. Docs:
+   [networking.md](networking.md#two-networks) with a diagram and the verification
+   commands.
+   **Not verified:** ipvlan on two physical interfaces, IPv6, the host's own forwarding
+   and firewall, the nginx illustration.
 5. **TLS trust review** (spec §4.4, §17): pins and CA by default, the insecure override
    explicit per console, warned about and audited everywhere it is used.
 6. **Backup and restore drills** (spec §8, §17): restart, migration, key rotation,
