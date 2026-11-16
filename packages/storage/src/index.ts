@@ -6,9 +6,15 @@
  * No other package imports `node:sqlite` directly.
  */
 export {
+  AUTOMATIC_BACKUP_KINDS,
   backupDatabase,
+  backupsToPrune,
+  deleteBackup,
+  listBackups,
   restoreDatabase,
   verifyBackup,
+  type BackupFile,
+  type BackupKind,
   type BackupResult,
   type BackupVerification,
   type RestoreResult,

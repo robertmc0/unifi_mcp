@@ -163,15 +163,17 @@ happens next.
 
 ### Master key (`crypto`) and database (`db`)
 
-| Command                                        | What it does                                                                                                                    |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `crypto generate-key --out <f>`                | Writes a new random key file (mode 0400). Never overwrites.                                                                     |
-| `crypto key-id --file <f>`                     | Shows a key file's identifier, to match key files to databases and backups.                                                     |
-| `crypto generate-token --out <f>`              | Writes a new random token file (mode 0400) for the metrics endpoint ([monitoring.md](monitoring.md#metrics)). Never overwrites. |
-| `crypto rotate-key --new-key-file <f> [--yes]` | Re-encrypts all credentials with a new key. **Service stopped.**                                                                |
-| `db backup [--out <f>]`                        | Writes a verified online backup. Safe while the service runs.                                                                   |
-| `db check [--backup <f>]`                      | Checks the live database read-only (integrity, key, every credential, audit chain), or a backup file. Exits 1 on any problem.   |
-| `db restore <f> [--yes]`                       | Replaces the database with a validated backup. **Service stopped.**                                                             |
+| Command                                           | What it does                                                                                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `crypto generate-key --out <f>`                   | Writes a new random key file (mode 0400). Never overwrites.                                                                              |
+| `crypto key-id --file <f>`                        | Shows a key file's identifier, to match key files to databases and backups.                                                              |
+| `crypto generate-token --out <f>`                 | Writes a new random token file (mode 0400) for the metrics endpoint ([monitoring.md](monitoring.md#metrics)). Never overwrites.          |
+| `crypto rotate-key --new-key-file <f> [--yes]`    | Re-encrypts all credentials with a new key. **Service stopped.**                                                                         |
+| `db backup [--out <f>]`                           | Writes a verified online backup. Safe while the service runs.                                                                            |
+| `db check [--backup <f>]`                         | Checks the live database read-only (integrity, key, every credential, audit chain), or a backup file. Exits 1 on any problem.            |
+| `db restore <f> [--yes]`                          | Replaces the database with a validated backup. **Service stopped.**                                                                      |
+| `db backups`                                      | Lists the backup files in the data directory, newest first, with their kind: `manual`, `pre-migration`, `pre-rotation` or `pre-restore`. |
+| `db prune-backups --keep <n> [--dry-run] [--yes]` | Deletes all but the newest `n` automatic backups of each kind. Manual backups are never deleted. Asks you to type "prune".               |
 
 Procedures are in [backup-restore.md](backup-restore.md).
 

@@ -13,9 +13,20 @@
  */
 import { createHash, randomUUID } from 'node:crypto';
 import { constants, createReadStream } from 'node:fs';
-import { chmod, copyFile, mkdir, mkdtemp, open, rename, rm, stat, unlink } from 'node:fs/promises';
+import {
+  chmod,
+  copyFile,
+  mkdir,
+  mkdtemp,
+  open,
+  readdir,
+  rename,
+  rm,
+  stat,
+  unlink,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { isStorageError, StorageError } from './errors.ts';
 import { readActiveKeyId } from './keys.ts';
 import type { MasterKey } from './master-key.ts';
@@ -299,7 +310,12 @@ export async function restoreDatabase(options: {
         // A corrupt database (often the reason for restoring) is moved aside regardless.
         if (!isStorageError(error, 'DATABASE_CORRUPT')) throw error;
       }
-      previousDatabasePath = `${databasePath}.pre-restore-${fileTimestamp(now())}`;
+      // Never replace an earlier set-aside database: two restores can share a second.
+      const base = `${databasePath}.pre-restore-${fileTimestamp(now())}`;
+      previousDatabasePath = base;
+      for (let n = 2; await exists(previousDatabasePath); n++) {
+        previousDatabasePath = `${base}-${String(n)}`;
+      }
       await rename(databasePath, previousDatabasePath);
       for (const suffix of SIDECAR_SUFFIXES) {
         // A stale WAL must never be replayed onto the restored file.
@@ -315,5 +331,99 @@ export async function restoreDatabase(options: {
     return { ...verification, databasePath, previousDatabasePath };
   } finally {
     if (!installed) await unlink(staging).catch(() => undefined);
+  }
+}
+
+/**
+ * How a backup file came to be. Automatic kinds are written by the service or a command
+ * as a side effect; `manual` ones were asked for and are never pruned.
+ */
+export type BackupKind = 'manual' | 'pre-migration' | 'pre-rotation' | 'pre-restore' | 'other';
+export const AUTOMATIC_BACKUP_KINDS = ['pre-migration', 'pre-rotation', 'pre-restore'] as const;
+
+export interface BackupFile {
+  path: string;
+  name: string;
+  kind: BackupKind;
+  bytes: number;
+  modifiedAt: string;
+}
+
+function backupKind(name: string): BackupKind {
+  if (/\.pre-restore-\d{8}T\d{6}Z(-\d+)?$/.test(name)) return 'pre-restore';
+  if (!name.endsWith('.db')) return 'other';
+  if (name.startsWith('manual-')) return 'manual';
+  if (name.startsWith('pre-migration-')) return 'pre-migration';
+  if (name.startsWith('pre-rotation-')) return 'pre-rotation';
+  return 'other';
+}
+
+/**
+ * The backup files of a data directory, newest first: everything in `backups/`, and the
+ * databases a restore set aside beside the live one (`<database>.pre-restore-…`). Only
+ * regular files are listed; the live database and its sidecar files never are.
+ */
+export async function listBackups(
+  databasePath: string,
+  backupDirectory: string,
+): Promise<BackupFile[]> {
+  const live = basename(databasePath);
+  const candidates: string[] = [];
+  for (const [directory, accept] of [
+    [backupDirectory, (name: string) => name.endsWith('.db')],
+    [
+      dirname(databasePath),
+      (name: string) =>
+        name.startsWith(`${live}.pre-restore-`) &&
+        !SIDECAR_SUFFIXES.some((suffix) => name.endsWith(suffix)),
+    ],
+  ] as const) {
+    let names: string[];
+    try {
+      names = await readdir(directory);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') continue;
+      throw error;
+    }
+    candidates.push(...names.filter(accept).map((name) => join(directory, name)));
+  }
+  const files: BackupFile[] = [];
+  for (const path of candidates) {
+    const info = await stat(path);
+    if (!info.isFile()) continue;
+    const name = basename(path);
+    files.push({
+      path,
+      name,
+      kind: backupKind(name),
+      bytes: info.size,
+      modifiedAt: info.mtime.toISOString(),
+    });
+  }
+  return files.sort(
+    (a, b) => b.modifiedAt.localeCompare(a.modifiedAt) || b.name.localeCompare(a.name),
+  );
+}
+
+/**
+ * Which automatic backups a retention of `keep` per kind would delete: all but the newest
+ * `keep` of each automatic kind. Manual backups and unrecognised files are never chosen.
+ */
+export function backupsToPrune(files: readonly BackupFile[], keep: number): BackupFile[] {
+  if (!Number.isInteger(keep) || keep < 1) {
+    throw new TypeError('The number of backups to keep must be an integer of at least 1.');
+  }
+  return AUTOMATIC_BACKUP_KINDS.flatMap((kind) =>
+    files.filter((file) => file.kind === kind).slice(keep),
+  );
+}
+
+/** Deletes one backup file, with any SQLite sidecar files that were set aside with it. */
+export async function deleteBackup(file: BackupFile): Promise<void> {
+  await unlink(file.path);
+  for (const suffix of SIDECAR_SUFFIXES) {
+    await unlink(file.path + suffix).catch((error: unknown) => {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    });
   }
 }

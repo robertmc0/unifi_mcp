@@ -1,8 +1,10 @@
 # Backup, restore and key rotation
 
-> **Status: Phase 1 complete.** The storage behaviour and the operator commands
-> (`unifi-mcp db …`, `unifi-mcp crypto …`) described here are implemented and tested
-> (`packages/storage`, ADR 0007; `packages/cli`, ADR 0015). With Docker, run the commands
+> **Status:** the storage behaviour and the operator commands (`unifi-mcp db …`,
+> `unifi-mcp crypto …`) described here are implemented and tested (`packages/storage`,
+> ADR 0007; `packages/cli`, ADR 0015). The procedures on this page are also run as a
+> drill, through the CLI and against the container image: backup, restore, a hard kill, a
+> corrupted database and a key rotation ([Drills](#drills)). With Docker, run the commands
 > as shown in [installation.md](installation.md#maintenance-with-the-service-stopped):
 > `docker compose exec unifi-mcp unifi-mcp …` while the service runs, and
 > `docker compose run --rm --no-deps --entrypoint unifi-mcp unifi-mcp …` once it is
@@ -39,8 +41,27 @@ existing file.
 - **Automatic pre-migration backup:** when a new release needs to upgrade the database
   schema, the service first writes
   `$UNIFI_MCP_DATA_DIR/backups/pre-migration-v<from>-to-v<to>-<UTC timestamp>.db`. If that
-  backup fails, the upgrade does not run and the service does not start. These files are
-  not pruned automatically yet; delete old ones when you no longer need them.
+  backup fails, the upgrade does not run and the service does not start.
+
+### Listing and pruning
+
+`unifi-mcp db backups` lists every backup file with its kind, time and size. `doctor`
+shows how many there are.
+
+The service never deletes a backup by itself. Automatic backups (`pre-migration`,
+`pre-rotation`, and the `pre-restore` databases described below) accumulate until you
+prune them:
+
+```sh
+unifi-mcp db prune-backups --keep 5 --dry-run   # shows what would be deleted
+unifi-mcp db prune-backups --keep 5             # asks you to type "prune"
+```
+
+This keeps the newest 5 of each automatic kind and deletes the older ones. It never
+deletes a `manual` backup or a file it does not recognise, and it is recorded in the
+audit trail. Before pruning `pre-rotation` backups, remember that each needs the key that
+was active before that rotation. `doctor` warns when more than 20 automatic backups have
+accumulated.
 
 ## Verifying a backup
 
@@ -78,7 +99,9 @@ still has the database open, it stops with `DATABASE_IN_USE`. In both cases noth
 changes. The restore is recorded in the restored database's audit trail.
 
 The database that was replaced is kept as `unifi-mcp.db.pre-restore-<UTC timestamp>` in
-the data directory. Delete it once you have confirmed the restore.
+the data directory (with `-2`, `-3` and so on if that name is taken, so an earlier one is
+never replaced). Delete it once you have confirmed the restore, or let
+`db prune-backups` do it.
 
 ## Master key rotation
 
@@ -99,6 +122,27 @@ record count) before committing. If anything fails, nothing changes and the curr
 stays valid. A key that was used before cannot be reactivated. The rotation and its audit
 entry are committed together. While the service runs, rotation is refused with
 `DATA_DIRECTORY_IN_USE`.
+
+## Drills
+
+A backup you have never restored is a hope, not a backup. The project runs these
+procedures as tests, and you can run them too, on a copy:
+
+| Drill                                                                                             | Where                                                 |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Back up; lose a console, a client and an administrator's second step; restore; every secret works | `tests/integration-mock/backup-restore-drill.test.ts` |
+| A damaged backup, and a backup under another key, are refused and change nothing                  | the same                                              |
+| Rotate the key; the new key opens everything; old backups need the retired key                    | the same                                              |
+| In the container image: backup while running; offline operations refused until the service stops  | `tests/container-network/drill.test.ts`               |
+| In the image: restore with a one-off container; the same client token works afterwards            | the same                                              |
+| In the image: the container is killed; the next start is healthy and the audit chain is intact    | the same                                              |
+| In the image: a corrupted database stops the start (`DATABASE_CORRUPT`); a restore repairs it     | the same                                              |
+| In the image: after a rotation, the old key does not start the service (`MASTER_KEY_MISMATCH`)    | the same                                              |
+
+To try a restore yourself without touching the live service, copy a backup and the
+matching key file to another machine or directory, point `UNIFI_MCP_DATA_DIR` and
+`UNIFI_MCP_MASTER_KEY_FILE` at the copies, and run `unifi-mcp db check --backup <file>`,
+then `unifi-mcp db restore <file>` and `unifi-mcp doctor`.
 
 ## Disaster recovery
 

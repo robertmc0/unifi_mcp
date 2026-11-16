@@ -123,8 +123,13 @@ export interface ExecResult {
 
 export interface Project {
   up(): void;
+  /** Like `up`, but returns the result instead of throwing (for starts that must fail). */
+  tryUp(): ExecResult;
+  stop(): void;
   down(): void;
   exec(service: string, argv: string[]): ExecResult;
+  /** A one-off container of the service with another entrypoint, the service being stopped. */
+  run(service: string, entrypoint: string, argv: string[]): ExecResult;
   logs(service: string): string;
 }
 
@@ -159,15 +164,23 @@ export function project(
     const result = spawnSync('docker', [...base, ...args], { env, encoding: 'utf8', timeout });
     return { code: result.status ?? 1, stdout: result.stdout, stderr: result.stderr };
   };
+  const up = (): ExecResult =>
+    run(['up', '--detach', '--force-recreate', '--wait', '--wait-timeout', '90'], 150_000);
   return {
     up: () => {
-      const result = run(['up', '--detach', '--wait', '--wait-timeout', '90'], 150_000);
+      const result = up();
       if (result.code !== 0) {
         throw new Error(
           `docker compose up failed:\n${result.stderr}\n${run(['logs', '--no-color']).stdout}`,
         );
       }
     },
+    tryUp: up,
+    stop: () => {
+      run(['stop', '--timeout', '15']);
+    },
+    run: (service, entrypoint, argv) =>
+      run(['run', '--rm', '--no-deps', '-T', '--entrypoint', entrypoint, service, ...argv]),
     down: () => {
       run(['down', '--volumes', '--remove-orphans', '--timeout', '5']);
     },

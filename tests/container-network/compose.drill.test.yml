@@ -1,0 +1,7 @@
+# Additional overlay for the maintenance drill: a directory where a new master key can be
+# written by a one-off container, and from which the console key is read.
+services:
+  unifi-mcp:
+    volumes:
+      - ${NETTEST_DIR}/data:/data
+      - ${NETTEST_DIR}/secrets:/keys

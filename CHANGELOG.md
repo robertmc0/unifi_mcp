@@ -8,6 +8,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- A restore no longer replaces the database set aside by an earlier restore in the same
+  second: the `…pre-restore-<timestamp>` name gets `-2`, `-3`, … when it is taken.
 - Response unions no longer turn a documented variant that misses one of its own fields
   into the base object. A `GATEWAY` network without a required field (or with
   `zoneId: null`) used to come back as `ok` without its IPv4 configuration, isolation or
@@ -83,6 +85,12 @@ All notable changes to this project are documented here. The format follows
   `config import` and `config apply` warn about it. Node.js's process-wide
   `NODE_TLS_REJECT_UNAUTHORIZED=0` has no effect on console connections (tested, and
   logged as ignored), and the stdio bridge refuses to start with it over `https://`.
+
+- Backup retention and drills (ADR 0007, additions of 2026-11-16): `unifi-mcp db backups`
+  lists backup files by kind; `unifi-mcp db prune-backups --keep <n>` deletes older
+  automatic backups after confirmation, never manual ones; `doctor` shows a `backups`
+  line. The backup, restore and key-rotation procedures now run as drills through the CLI
+  and against the container image (restore, hard kill, corrupted database, rotation).
 
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 

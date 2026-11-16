@@ -2,11 +2,13 @@
  * Online backup, backup verification, validated restore and automatic pre-migration
  * backups (spec §8.2, §17 "backup/restore are tested").
  */
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   backupDatabase,
+  backupsToPrune,
   databasePathFor,
+  listBackups,
   MIGRATIONS,
   openStorage,
   restoreDatabase,
@@ -158,6 +160,25 @@ describe('restoreDatabase', () => {
     });
     expect(previous.secrets.read(secretId, KIND).reveal()).toBe('value-after-backup');
     previous.close();
+  });
+
+  it('never replaces an earlier set-aside database, even within the same second', async () => {
+    const { databasePath, storage, backupPath } = await scenario();
+    storage.close();
+    const options = { backupPath, databasePath, masterKey: keyA, now: fixedNow };
+    const first = await restoreDatabase(options);
+    const firstDigest = await sha256File(first.previousDatabasePath ?? '');
+    const second = await restoreDatabase(options);
+    const third = await restoreDatabase(options);
+    expect([first, second, third].map((r) => r.previousDatabasePath)).toEqual([
+      `${databasePath}.pre-restore-20261110T031500Z`,
+      `${databasePath}.pre-restore-20261110T031500Z-2`,
+      `${databasePath}.pre-restore-20261110T031500Z-3`,
+    ]);
+    // The first one is still the database that the first restore replaced.
+    expect(await sha256File(first.previousDatabasePath ?? '')).toBe(firstDigest);
+    const listed = await listBackups(databasePath, join(databasePath, '..', 'backups'));
+    expect(listed.filter((f) => f.kind === 'pre-restore')).toHaveLength(3);
   });
 
   it('refuses while the database is in use and changes nothing', async () => {
@@ -318,5 +339,85 @@ describe('SqliteDatabase journal mode switch', () => {
       'DATABASE_IN_USE',
     );
     storage.close();
+  });
+});
+
+describe('backup files and retention', () => {
+  async function populated() {
+    const dir = await tempDir();
+    const databasePath = join(dir, 'unifi-mcp.db');
+    const backups = join(dir, 'backups');
+    await mkdir(backups);
+    // name → age in days; the modification time is what orders them.
+    const files: [string, number][] = [
+      [join(backups, 'manual-20261101T000000Z.db'), 15],
+      [join(backups, 'manual-20261110T000000Z.db'), 6],
+      [join(backups, 'pre-migration-v9-to-v10-20261102T000000Z.db'), 14],
+      [join(backups, 'pre-migration-v10-to-v11-20261112T000000Z.db'), 4],
+      [join(backups, 'pre-rotation-20261103T000000Z.db'), 13],
+      [join(backups, 'pre-rotation-20261104T000000Z.db'), 12],
+      [join(backups, 'pre-rotation-20261105T000000Z.db'), 11],
+      [join(backups, 'notes.txt'), 1],
+      [join(backups, 'something-else.db'), 2],
+      [join(dir, 'unifi-mcp.db'), 0],
+      [join(dir, 'unifi-mcp.db-wal'), 0],
+      [join(dir, 'unifi-mcp.db.pre-restore-20261106T000000Z'), 10],
+      [join(dir, 'unifi-mcp.db.pre-restore-20261107T000000Z'), 9],
+    ];
+    const now = Date.parse('2026-11-16T00:00:00Z');
+    for (const [path, ageDays] of files) {
+      await writeFile(path, 'x'.repeat(10));
+      const time = new Date(now - ageDays * 86_400_000);
+      await utimes(path, time, time);
+    }
+    await mkdir(join(backups, 'directory.db'));
+    return { dir, databasePath, backups };
+  }
+
+  it('lists backups newest first with their kind, and never the live database', async () => {
+    const { databasePath, backups } = await populated();
+    const files = await listBackups(databasePath, backups);
+    expect(files.map((f) => [f.kind, f.name])).toEqual([
+      ['other', 'something-else.db'],
+      ['pre-migration', 'pre-migration-v10-to-v11-20261112T000000Z.db'],
+      ['manual', 'manual-20261110T000000Z.db'],
+      ['pre-restore', 'unifi-mcp.db.pre-restore-20261107T000000Z'],
+      ['pre-restore', 'unifi-mcp.db.pre-restore-20261106T000000Z'],
+      ['pre-rotation', 'pre-rotation-20261105T000000Z.db'],
+      ['pre-rotation', 'pre-rotation-20261104T000000Z.db'],
+      ['pre-rotation', 'pre-rotation-20261103T000000Z.db'],
+      ['pre-migration', 'pre-migration-v9-to-v10-20261102T000000Z.db'],
+      ['manual', 'manual-20261101T000000Z.db'],
+    ]);
+    expect(files.every((f) => f.bytes === 10)).toBe(true);
+    // A data directory without a backups directory has no backups; that is not an error.
+    expect(
+      await listBackups(join(await tempDir(), 'unifi-mcp.db'), '/nonexistent/backups'),
+    ).toEqual([]);
+  });
+
+  it('chooses only the older automatic backups of each kind, never a manual one', async () => {
+    const { databasePath, backups } = await populated();
+    const files = await listBackups(databasePath, backups);
+    expect(
+      backupsToPrune(files, 1)
+        .map((f) => f.name)
+        .sort(),
+    ).toEqual([
+      'pre-migration-v9-to-v10-20261102T000000Z.db',
+      'pre-rotation-20261103T000000Z.db',
+      'pre-rotation-20261104T000000Z.db',
+      'unifi-mcp.db.pre-restore-20261106T000000Z',
+    ]);
+    expect(backupsToPrune(files, 2).map((f) => f.name)).toEqual([
+      'pre-rotation-20261103T000000Z.db',
+    ]);
+    expect(backupsToPrune(files, 3)).toEqual([]);
+    for (const keep of [0, -1, 1.5, Number.NaN]) {
+      expect(() => backupsToPrune(files, keep)).toThrow(/at least 1/);
+    }
+    for (const chosen of backupsToPrune(files, 1)) {
+      expect(['pre-migration', 'pre-rotation', 'pre-restore']).toContain(chosen.kind);
+    }
   });
 });

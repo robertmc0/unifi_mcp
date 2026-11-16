@@ -11,6 +11,11 @@ import {
   ADAPTERS,
   implementsRevision,
 } from '@unifi-local-mcp/mcp-server';
+import {
+  AUTOMATIC_BACKUP_KINDS,
+  BACKUP_DIRECTORY_NAME,
+  listBackups,
+} from '@unifi-local-mcp/storage';
 import { MODULE_SLOTS, type ConsoleModuleView } from '@unifi-local-mcp/unifi-api';
 import { requireString, string, type Command, type RunContext } from '../cli.ts';
 import {
@@ -304,6 +309,25 @@ export const doctorCommand: Command = {
           : `${String(admins.length)}, two-step sign-in on for ${String(twoStep)}${
               lockedOut
                 ? '; UNIFI_MCP_ADMIN_REQUIRE_MFA is on, so the others cannot sign in (unifi-mcp admin enable-mfa)'
+                : ''
+            }`,
+      );
+      const backups = await listBackups(
+        config.databasePath,
+        join(config.dataDir, BACKUP_DIRECTORY_NAME),
+      );
+      const automatic = backups.filter((f) =>
+        (AUTOMATIC_BACKUP_KINDS as readonly string[]).includes(f.kind),
+      );
+      const backupMiB = Math.ceil(backups.reduce((sum, f) => sum + f.bytes, 0) / (1024 * 1024));
+      add(
+        'backups',
+        automatic.length > 20 ? 'warn' : 'ok',
+        backups.length === 0
+          ? 'none yet: unifi-mcp db backup'
+          : `${String(backups.length)} file(s), ${String(backupMiB)} MiB, newest ${backups[0]?.modifiedAt.slice(0, 10) ?? '-'}${
+              automatic.length > 20
+                ? `; ${String(automatic.length)} automatic ones: unifi-mcp db prune-backups --keep 5`
                 : ''
             }`,
       );

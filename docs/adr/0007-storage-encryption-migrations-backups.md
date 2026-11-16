@@ -107,6 +107,25 @@ data directory must be on a local filesystem (WAL does not work on network files
   staging copy into place. Older schemas are allowed; they are migrated (with a
   pre-migration backup) on next start.
 
+**Additions, 2026-11-16 (Phase 5 step 6).**
+
+- _Retention of automatic backups_ (open since Phase 1). The service never deletes a
+  backup by itself: a backup is recovery material, and which ones are still needed
+  depends on keys and releases the service cannot judge. Instead `unifi-mcp db backups`
+  lists them by kind, `unifi-mcp db prune-backups --keep <n>` deletes all but the newest
+  `n` of each automatic kind (`pre-migration`, `pre-rotation`, `pre-restore`) after a
+  typed confirmation, never a `manual` one or an unrecognised file, and audits it;
+  `doctor` warns above 20 automatic backups.
+- _A restore never replaces an earlier set-aside database._ Found by the drill: two
+  restores in the same second gave the replaced database the same
+  `…pre-restore-<timestamp>` name, and the second rename replaced the first file. The
+  name now gets `-2`, `-3`, … when taken.
+- _Drills._ The backup, restore and rotation procedures run end to end through the CLI
+  (`tests/integration-mock/backup-restore-drill.test.ts`, including an administrator's
+  TOTP key across restore and rotation) and against the container image
+  (`tests/container-network/drill.test.ts`: backup while running, restore by a one-off
+  container, `SIGKILL`, a corrupted database, key rotation with the old key refused).
+
 ### Redaction
 
 Decrypted values are returned as `SecretValue`, which renders as `[REDACTED]` in `String()`,

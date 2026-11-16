@@ -837,8 +837,19 @@ backups, `client-codex.md`, `development.md` and `release.md`.
    reach console connections; the stdio bridge refuses to start with it over HTTPS.
    Tests: `tests/integration-mock/tls-override.test.ts`, `tests/unit/unifi-api/`,
    `tests/unit/stdio-bridge/config.test.ts`. Docs: security, monitoring, troubleshooting.
-6. **Backup and restore drills** (spec §8, §17): restart, migration, key rotation,
-   backup and restore run against the image; retention of automatic backups.
+6. ✅ **Backup and restore drills** (2026-11-16, [ADR 0007](adr/0007-storage-encryption-migrations-backups.md),
+   additions; spec §8, §17): the procedures of [backup-restore.md](backup-restore.md) run
+   as drills. Through the CLI (`tests/integration-mock/backup-restore-drill.test.ts`): a
+   console credential, a client token and an administrator's TOTP key survive backup,
+   loss and restore, and a key rotation; damaged and foreign backups are refused. On the
+   image (`tests/container-network/drill.test.ts`): backup while running, offline
+   operations refused until stopped, restore by a one-off container, `SIGKILL`, a
+   corrupted database (`DATABASE_CORRUPT`, then repaired by restore), rotation with the
+   old key refused (`MASTER_KEY_MISMATCH`). Retention of automatic backups, open since
+   Phase 1: `db backups`, `db prune-backups --keep <n>`, a `doctor` line. Found and
+   fixed: a second restore within one second replaced the first set-aside database.
+   Not drilled on the image: an upgrade across a schema migration (covered by unit tests
+   with synthetic migrations; there is no older released image to upgrade from).
 7. **Performance and queue tests** (spec §10, §17): concurrency and rate limits, queue
    caps, retries and unknown write outcomes under load.
 8. **Supply chain and CI** (spec §14): secret scan, dependency audit, container scan,
