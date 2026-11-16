@@ -116,8 +116,8 @@ artefacts are still served at their recorded sizes.
 - `unifi_list_modules` results gain a `status` field and four entries. Clients that read
   only `moduleId` and the counts are unaffected.
 - InnerSpace is eligible under spec §4.1 (an official local API with a contract), and
-  remains unimplemented by the Phase 0 decision in ADR 0005. Implementing it is the
-  owner's choice. It would be a read-only module of six operations.
+  remains unimplemented by the Phase 0 decision in ADR 0005. It would be a read-only
+  module of six operations. **The owner decided on 2026-11-16 to leave it unavailable.**
 
 ## Re-evaluation triggers
 
@@ -132,4 +132,5 @@ artefacts are still served at their recorded sizes.
   the module in `MODULE_IDS` and `MODULE_ENDPOINTS` from its provenance, reviewed security
   metadata in its own package, mock and negative tests, coverage, and the operator guide.
   Then remove the slot.
-- The owner decides to implement InnerSpace, or to drop it from the list.
+- The owner reverses the decision of 2026-11-16 and asks for an InnerSpace adapter, or
+  drops InnerSpace from the list.

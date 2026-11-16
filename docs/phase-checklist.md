@@ -726,16 +726,16 @@ assumptions."
 Until then Access stays as it is: implemented, tested against a synthetic API only, and
 labelled so in every guide. Nothing else in Phase 4 is waiting.
 
-**Open, owner's choices:**
+**Owner's decisions (2026-11-16):**
 
-- How to get evidence A or C (install Access on the test console, or use another
-  console), or to accept the phase as "complete on synthetic evidence" with the gate
-  item recorded as not met. The second is a deviation from the milestone rule and would
-  need an ADR.
-- Whether Phase 5 work may start while this gate is open. Most Phase 5 tasks do not
-  depend on Access.
-- InnerSpace: eligible under spec §4.1 (six documented reads with a local server), not
-  planned since Phase 0 (ADR 0005). Implement it, or leave it unavailable.
+- Phase 5 starts while this gate is open. The Access evidence item below stays open and
+  is carried into the Phase 5 gate review; it is not waived.
+- InnerSpace stays unavailable (`unavailable: adapter_not_implemented`, ADR 0024).
+
+**Open, owner's choice:** how to get evidence A or C (install Access on the test
+console, or use another console), or to accept the phase as "complete on synthetic
+evidence" with the gate item recorded as not met. The second is a deviation from the
+milestone rule and would need an ADR.
 
 **Found during the review, and closed:** the developer portal now labels the Protect API
 **v7.4.99** (2026-11-15). Its `openapi.json` is byte-identical to the 7.4.96 one recorded
@@ -754,7 +754,49 @@ ADR 0019 §7.
       Disabled slots for Talk, Connect and Drive; InnerSpace as
       `unavailable: adapter_not_implemented` (ADR 0024).
 
-## Phase 5 — Production and release hardening
+## Phase 5 — Production and release hardening (in progress)
+
+Started 2026-11-16 by the owner's decision, with the Phase 4 gate open on one item
+(verified Access contract evidence, which needs an installed Access).
+
+Spec §16 tasks: dual-network Docker tests, TLS pinning/CA and override warnings, admin
+MFA, Prometheus metrics, backup/restore drills, docs completeness, CI/security checks,
+AMD64/ARM64 builds, performance/queue tests, SBOM and optional GHCR workflow. Also
+carried here from earlier phases: the remaining §13.1 admin pages, `admin reset-mfa`,
+dual-network and TLS Compose examples, a native arm64 run, retention of automatic
+backups, `client-codex.md`, `development.md` and `release.md`.
+
+### Implementation order (plan)
+
+1. **Prometheus metrics** (spec §12, §7.3): an optional, authenticated endpoint that is
+   off by default; request counts and latencies, queue depth, error rates, console
+   connectivity, event subscriptions, active clients, database health; bounded labels,
+   no names, addresses or identifiers. Example scrape configuration and queries in
+   `monitoring.md`.
+2. **Admin MFA** (spec §7.2): optional TOTP with encrypted secrets, hashed one-time
+   recovery codes, `admin reset-mfa`, an operator setting to require MFA, and recent
+   re-authentication for approvals and security changes.
+3. **Admin interface pages** (spec §13.1 items 2, 3, 4, 6, 7): consoles, clients, policy
+   with a permission preview, audit search and export, settings and maintenance.
+4. **Networking** (spec §9, §7.3): `deploy/compose.dual.yml`, `deploy/compose.tls.yml`,
+   a reverse-proxy example, container tests that prove interface binding and no
+   forwarding, and the verification commands in `networking.md`.
+5. **TLS trust review** (spec §4.4, §17): pins and CA by default, the insecure override
+   explicit per console, warned about and audited everywhere it is used.
+6. **Backup and restore drills** (spec §8, §17): restart, migration, key rotation,
+   backup and restore run against the image; retention of automatic backups.
+7. **Performance and queue tests** (spec §10, §17): concurrency and rate limits, queue
+   caps, retries and unknown write outcomes under load.
+8. **Supply chain and CI** (spec §14): secret scan, dependency audit, container scan,
+   SBOM, multi-architecture build, a release workflow that publishes nothing until it is
+   configured, dependency update configuration, issue templates.
+9. **Manual completeness** (spec §18): `development.md` (contributor workflow and the
+   adapter guide), `release.md`, `client-codex.md` (needs the owner's trial of Codex), and
+   every page checked against the commands and the interface.
+10. **ARM64 on hardware or a native runner** (spec §14, §17).
+11. **Gate review**: every §17 item mapped to its evidence.
+
+### Gate (spec §16)
 
 - [ ] All §17 invariants pass; public-repo secret scan clean
 - [ ] AMD64 and ARM64 images build and boot; single- and dual-network modes tested

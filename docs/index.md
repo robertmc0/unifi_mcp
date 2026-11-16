@@ -1,7 +1,8 @@
 # unifi-local-mcp documentation
 
 > **Project status: Phase 1 (secure platform core), Phase 2 (UniFi Network) and Phase 3
-> (UniFi Protect) complete; Phase 4 (UniFi Access) in progress. The service serves MCP over HTTP and stdio, is
+> (UniFi Protect) complete; Phase 4 (UniFi Access) implemented with its gate open; Phase 5
+> (release hardening) in progress. The service serves MCP over HTTP and stdio, is
 > administered with the host-only `unifi-mcp` CLI, and implements all 73 documented UniFi
 > Network operations, 73 of the 74 Protect 7.3.74 operations, including both event
 > subscriptions, and 98 of the 107 Access operations ([applications-access.md](applications-access.md)),
