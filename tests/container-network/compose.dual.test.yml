@@ -19,8 +19,13 @@ services:
   client:
     image: ${NETTEST_IMAGE}
     entrypoint: ['sleep', 'infinity']
+    # A check of its own, not `disable: true`: some Compose releases refuse `up --wait`
+    # for a container whose check is disabled ("has no healthcheck configured").
     healthcheck:
-      disable: true
+      test: ['CMD', 'node', '-e', '']
+      interval: 2s
+      timeout: 5s
+      retries: 15
     user: '${UNIFI_MCP_UID}:${UNIFI_MCP_GID}'
     read_only: true
     cap_drop:
@@ -37,8 +42,16 @@ services:
   console:
     image: ${NETTEST_IMAGE}
     entrypoint: ['node', '/probe/console.ts']
+    # Healthy once it accepts connections, so `up --wait` waits for it (see the client).
     healthcheck:
-      disable: true
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('node:net').connect(8443, '127.0.0.1').once('connect', () => process.exit(0)).once('error', () => process.exit(1))"
+      interval: 2s
+      timeout: 5s
+      retries: 15
     user: '${UNIFI_MCP_UID}:${UNIFI_MCP_GID}'
     read_only: true
     cap_drop:
