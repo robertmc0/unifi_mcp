@@ -38,17 +38,18 @@ See [networking.md](networking.md) for when to use which.
 The optional admin web interface (ADR 0016). It is off by default and never needed for
 normal operation.
 
-| Variable                                                        | Default     | Meaning                                                                                                              |
-| --------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
-| `UNIFI_MCP_ADMIN_ENABLED`                                       | `false`     | Start the admin listener.                                                                                            |
-| `UNIFI_MCP_ADMIN_BIND`                                          | `127.0.0.1` | Listener address (an IP address or `localhost`).                                                                     |
-| `UNIFI_MCP_ADMIN_PORT`                                          | `3001`      | Listener port. Must differ from `UNIFI_MCP_HTTP_PORT`.                                                               |
-| `UNIFI_MCP_ADMIN_TLS_CERT_FILE`, `UNIFI_MCP_ADMIN_TLS_KEY_FILE` | unset       | Serve HTTPS with this certificate and key (PEM), separate from the MCP certificate.                                  |
-| `UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT`                               | `false`     | Allow plaintext HTTP on a non-loopback bind (Docker with host-loopback publishing, or a TLS proxy).                  |
-| `UNIFI_MCP_ADMIN_ALLOWED_HOSTS`                                 | unset       | Extra host names accepted in the `Host` header (local names are always accepted).                                    |
-| `UNIFI_MCP_ADMIN_SESSION_IDLE_MINUTES`                          | `30`        | A session unused for this long ends (5–480).                                                                         |
-| `UNIFI_MCP_ADMIN_SESSION_MAX_HOURS`                             | `12`        | A session ends this long after sign-in (1–72).                                                                       |
-| `UNIFI_MCP_ADMIN_REQUIRE_MFA`                                   | `false`     | Refuse sign-in to administrators without two-step sign-in ([administration.md](administration.md#two-step-sign-in)). |
+| Variable                                                        | Default     | Meaning                                                                                                                                                                                      |
+| --------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UNIFI_MCP_ADMIN_ENABLED`                                       | `false`     | Start the admin listener.                                                                                                                                                                    |
+| `UNIFI_MCP_ADMIN_BIND`                                          | `127.0.0.1` | Listener address (an IP address or `localhost`).                                                                                                                                             |
+| `UNIFI_MCP_ADMIN_PORT`                                          | `3001`      | Listener port. Must differ from `UNIFI_MCP_HTTP_PORT`.                                                                                                                                       |
+| `UNIFI_MCP_ADMIN_TLS_CERT_FILE`, `UNIFI_MCP_ADMIN_TLS_KEY_FILE` | unset       | Serve HTTPS with this certificate and key (PEM), separate from the MCP certificate.                                                                                                          |
+| `UNIFI_MCP_ADMIN_ALLOW_PLAINTEXT`                               | `false`     | Allow plaintext HTTP on a non-loopback bind (Docker with host-loopback publishing, or a TLS proxy).                                                                                          |
+| `UNIFI_MCP_ADMIN_ALLOWED_HOSTS`                                 | unset       | Extra host names accepted in the `Host` header (local names are always accepted).                                                                                                            |
+| `UNIFI_MCP_ADMIN_SESSION_IDLE_MINUTES`                          | `30`        | A session unused for this long ends (5–480).                                                                                                                                                 |
+| `UNIFI_MCP_ADMIN_SESSION_MAX_HOURS`                             | `12`        | A session ends this long after sign-in (1–72).                                                                                                                                               |
+| `UNIFI_MCP_ADMIN_REQUIRE_MFA`                                   | `false`     | Refuse sign-in to administrators without two-step sign-in ([administration.md](administration.md#two-step-sign-in)).                                                                         |
+| `UNIFI_MCP_ADMIN_MANAGEMENT`                                    | `false`     | Allow consoles, clients and policy to be changed from the web interface ([administration.md](administration.md#changes-from-the-web-interface)). Off, the interface only shows and approves. |
 
 ## Metrics listener
 

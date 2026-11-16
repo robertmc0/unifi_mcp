@@ -30,6 +30,9 @@ import {
   errorPage,
   loginPage,
   policyPage,
+  previewPage,
+  reportPage,
+  revealPage,
   settingsPage,
   type ApprovalRow,
   type AuditFilters,
@@ -56,7 +59,10 @@ import type { AdminMfa } from './mfa.ts';
 import { safeEqual, type AdminSession, type AdminSessionStore } from './sessions.ts';
 
 export const SESSION_COOKIE = '__Host-umcp_admin';
-const MAX_BODY_BYTES = 16 * 1024;
+const MAX_BODY_BYTES = 64 * 1024;
+/** How long after a password check changes need no new one (approvals always need one). */
+const REAUTH_WINDOW_MS = 5 * 60_000;
+const MAX_FLASHES = 1000;
 const AUDIT_PAGE_SIZE = 50;
 const AUDIT_EXPORT_MAX = 5000;
 const AUDIT_EXPORT_BATCH = 500;
@@ -80,6 +86,37 @@ export interface AdminViews {
   settings(): SettingsView;
 }
 
+/** What a change came to (ADR 0027 §3). */
+export interface ChangeOutcome {
+  /** Where the administrator continues. */
+  redirect: string;
+  notice: string;
+  /** A secret shown once, in the page that answers this request (a new client token). */
+  reveal?: { label: string; value: string };
+  /** A result to read, as name and value rows (a connection check). */
+  report?: [string, string][];
+}
+
+/** What a policy change would do to each client's usable operations. */
+export interface PolicyPreview {
+  title: string;
+  clients: { clientId: string; before: number; after: number; gained: string[]; lost: string[] }[];
+}
+
+/**
+ * Changes from the web interface (ADR 0027 §3), provided by the service only when the
+ * deployment enables them. Refusals are errors with a `code` and a message.
+ */
+export interface AdminActions {
+  names(): string[];
+  run(
+    change: string,
+    form: URLSearchParams,
+    actor: { type: 'admin'; id: string },
+  ): Promise<ChangeOutcome>;
+  preview(kind: 'global' | 'console' | 'client', form: URLSearchParams): PolicyPreview;
+}
+
 export interface AdminHttpOptions {
   admins: AdminStore;
   sessions: AdminSessionStore;
@@ -93,6 +130,8 @@ export interface AdminHttpOptions {
   /** Dashboard data, assembled by the service from its stores. */
   status: () => Promise<DashboardView>;
   views: AdminViews;
+  /** Undefined unless the deployment allows changes from the web interface. */
+  actions?: AdminActions | undefined;
   /** Host header names accepted (DNS-rebinding protection). */
   allowedHosts: string[];
   /** True when this listener terminates TLS itself (adds HSTS). */
@@ -176,6 +215,8 @@ export class AdminHttpService {
   readonly #o: AdminHttpOptions;
   readonly #now: () => Date;
   readonly #failures = new Map<string, Failures>();
+  /** One notice per session, shown on its next page: the result of a change. */
+  readonly #flash = new Map<string, string>();
 
   constructor(options: AdminHttpOptions) {
     this.#o = options;
@@ -269,10 +310,21 @@ export class AdminHttpService {
       this.#redirect(res, '/login');
       return;
     }
+    const flash = method === 'GET' ? this.#flash.get(session.id) : undefined;
+    if (flash !== undefined) this.#flash.delete(session.id);
     const frame: Frame = {
       title: '',
       username: session.admin.username,
       csrfToken: session.csrfToken,
+      ...(flash === undefined ? {} : { notice: { kind: 'ok' as const, text: flash } }),
+      ...(this.#o.actions === undefined
+        ? {}
+        : {
+            manage: {
+              passwordNeeded: !this.#recentlyAuthenticated(session),
+              codeNeeded: this.#o.mfa.status(session.admin.id).state === 'active',
+            },
+          }),
     };
     let form: URLSearchParams | undefined;
     if (method === 'POST') {
@@ -368,6 +420,13 @@ export class AdminHttpService {
       return;
     }
     if (form === undefined && this.#managePage(res, frame, path)) return;
+    const manage = /^\/manage\/(preview\/(global|console|client)|[a-z]+\.[a-z]+)$/.exec(path);
+    if (manage !== null && form !== undefined && this.#o.actions !== undefined) {
+      const kind = manage[2] as 'global' | 'console' | 'client' | undefined;
+      if (kind !== undefined) this.#preview(res, frame, this.#o.actions, kind, form);
+      else await this.#change(req, res, frame, session, this.#o.actions, manage[1] ?? '', form);
+      return;
+    }
     this.#send(res, 404, errorPage(frame, 'Not found', 'There is no such page.'));
   }
 
@@ -597,6 +656,120 @@ export class AdminHttpService {
         session.admin.id,
       );
     }
+  }
+
+  #recentlyAuthenticated(session: AdminSession): boolean {
+    return this.#now().getTime() - session.authenticatedAt.getTime() <= REAUTH_WINDOW_MS;
+  }
+
+  /**
+   * Recent re-authentication for a change (spec §7.2): the password was checked within the
+   * last five minutes, or the form carries it (and a code, with a second step) now.
+   */
+  #reauthenticate(req: IncomingMessage, session: AdminSession, form: URLSearchParams): boolean {
+    if (this.#recentlyAuthenticated(session)) return true;
+    const username = session.admin.username;
+    const keys = [`user:${username}`, `addr:${this.#remote(req)}`];
+    const mfaActive = this.#o.mfa.status(session.admin.id).state === 'active';
+    const verified =
+      !this.#blocked(keys) &&
+      this.#o.admins.verify(username, field(form, 'password', 1024)) !== undefined &&
+      (!mfaActive || this.#o.mfa.verify(session.admin.id, field(form, 'code', 64)) !== undefined);
+    if (!verified) {
+      this.#failed(keys);
+      return false;
+    }
+    this.#o.sessions.reauthenticated(session.id);
+    return true;
+  }
+
+  /** One change from the web interface: re-authenticate, run it, show what it came to. */
+  async #change(
+    req: IncomingMessage,
+    res: ServerResponse,
+    frame: Frame,
+    session: AdminSession,
+    actions: AdminActions,
+    change: string,
+    form: URLSearchParams,
+  ): Promise<void> {
+    const username = session.admin.username;
+    if (!this.#reauthenticate(req, session, form)) {
+      this.#audit('admin.reauthenticate', 'denied', username, req, { change });
+      this.#send(
+        res,
+        401,
+        errorPage(
+          frame,
+          'Not changed',
+          'The password or code is wrong, or missing; nothing was changed. Go back and try again.',
+        ),
+      );
+      return;
+    }
+    let outcome: ChangeOutcome;
+    try {
+      outcome = await actions.run(change, form, { type: 'admin', id: username });
+    } catch (error) {
+      const code = (error as { code?: unknown }).code;
+      if (!(error instanceof Error) || typeof code !== 'string') throw error;
+      this.#send(res, 400, errorPage(frame, 'Not changed', `${error.message} (${code})`));
+      return;
+    }
+    if (outcome.reveal !== undefined) {
+      this.#send(
+        res,
+        200,
+        revealPage(
+          { ...frame, title: 'Shown once' },
+          outcome.notice,
+          outcome.reveal,
+          outcome.redirect,
+        ),
+      );
+      return;
+    }
+    if (outcome.report !== undefined) {
+      this.#send(
+        res,
+        200,
+        reportPage({ ...frame, title: 'Result' }, outcome.notice, outcome.report, outcome.redirect),
+      );
+      return;
+    }
+    if (this.#flash.size >= MAX_FLASHES) this.#flash.clear();
+    this.#flash.set(session.id, outcome.notice);
+    this.#redirect(res, outcome.redirect);
+  }
+
+  /** Shows what a policy change would do. Changes nothing, so it needs no password. */
+  #preview(
+    res: ServerResponse,
+    frame: Frame,
+    actions: AdminActions,
+    kind: 'global' | 'console' | 'client',
+    form: URLSearchParams,
+  ): void {
+    let preview: PolicyPreview;
+    try {
+      preview = actions.preview(kind, form);
+    } catch (error) {
+      const code = (error as { code?: unknown }).code;
+      if (!(error instanceof Error) || typeof code !== 'string') throw error;
+      this.#send(res, 400, errorPage(frame, 'Not a usable policy', `${error.message} (${code})`));
+      return;
+    }
+    this.#send(
+      res,
+      200,
+      previewPage({ ...frame, title: 'Preview' }, preview, {
+        kind,
+        policy: field(form, 'policy', MAX_BODY_BYTES),
+        consoleId: field(form, 'consoleId', 64),
+        clientId: field(form, 'clientId', 64),
+        version: field(form, 'version', 16),
+      }),
+    );
   }
 
   /** Consoles, clients, policy and settings: read-only pages. True when one was sent. */

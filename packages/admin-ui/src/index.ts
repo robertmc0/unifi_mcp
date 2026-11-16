@@ -29,6 +29,9 @@ export {
   consolePage,
   consolesPage,
   policyPage,
+  previewPage,
+  reportPage,
+  revealPage,
   settingsPage,
   type ClientDetail,
   type ClientRow,
@@ -37,6 +40,7 @@ export {
   type ConsoleRow,
   type EffectiveOperation,
   type PolicyView,
+  type PreviewView,
   type SettingsView,
 } from './pages-manage.ts';
 export { ADMIN_CSS } from './style.ts';

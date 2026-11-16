@@ -114,6 +114,210 @@ const HOST_NOTE = html`<p class="muted">
   Changes are made on the host with the <code>unifi-mcp</code> CLI (docs/administration.md).
 </p>`;
 
+/** The note under a page: where changes are made. */
+function changeNote(frame: Frame): SafeHtml {
+  return frame.manage === undefined
+    ? HOST_NOTE
+    : html`<p class="muted">
+        Changes made here are recorded in the audit trail under your name. A change asks for your
+        password again when the last check is more than five minutes old.
+      </p>`;
+}
+
+/** The hidden CSRF field and, when the last password check is old, the password fields. */
+function authFields(frame: Frame, id: string): SafeHtml {
+  const manage = frame.manage;
+  return html`<input type="hidden" name="csrf" value="${frame.csrfToken ?? ''}" />${
+      manage?.passwordNeeded === true
+        ? html`<label for="${id}-password">Your password</label>
+            <input
+              id="${id}-password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              maxlength="1024"
+            />${
+              manage.codeNeeded
+                ? html`<label for="${id}-code">A new code from your authenticator app</label>
+                    <input
+                      id="${id}-code"
+                      name="code"
+                      autocomplete="one-time-code"
+                      inputmode="numeric"
+                      required
+                      maxlength="64"
+                    />`
+                : ''
+            }`
+        : ''
+    }`;
+}
+
+function tlsFields(id: string, mode: string): SafeHtml {
+  const option = (value: string, label: string): SafeHtml =>
+    html`<option value="${value}" ${value === mode ? html` selected` : ''}>${label}</option>`;
+  return html`<label for="${id}-tls">TLS trust</label>
+    <select id="${id}-tls" name="tlsMode">
+      ${option('verify', 'verify: public CAs, or the CA below')}
+      ${option('pinned', 'pinned: only the certificates pinned below')}
+      ${option('insecure', 'insecure: do not check the certificate')}
+    </select>
+    <label for="${id}-ca">CA certificate (PEM), for verify with your own CA</label>
+    <textarea id="${id}-ca" name="caPem" rows="4" maxlength="32768"></textarea>
+    <label for="${id}-pins">Pins (sha256/…), one per line, for pinned</label>
+    <textarea id="${id}-pins" name="pins" rows="2" maxlength="2048"></textarea>
+    <label for="${id}-insecure">Type "insecure" to disable certificate checks</label>
+    <input id="${id}-insecure" name="insecureConfirm" maxlength="16" autocomplete="off" />`;
+}
+
+function policyEditor(
+  frame: Frame,
+  kind: 'global' | 'console' | 'client',
+  policy: unknown,
+  hidden: Record<string, string>,
+): SafeHtml {
+  return html`<form
+    class="card"
+    method="post"
+    action="/manage/${kind === 'global' ? 'policy.document' : `${kind}.policy`}"
+  >
+    ${authFields(frame, `${kind}-policy`)}
+    ${Object.entries(hidden).map(
+      ([name, value]) => html`<input type="hidden" name="${name}" value="${value}" />`,
+    )}
+    <label for="${kind}-policy-json">Policy (JSON)</label>
+    <textarea id="${kind}-policy-json" name="policy" rows="16" maxlength="60000" spellcheck="false">
+${JSON.stringify(policy ?? {}, null, 2)}</textarea>
+    <button class="secondary" type="submit" formaction="/manage/preview/${kind}">
+      Preview the effect
+    </button>
+    <button class="danger" type="submit">Save</button>
+  </form>`;
+}
+
+export interface PreviewView {
+  title: string;
+  clients: { clientId: string; before: number; after: number; gained: string[]; lost: string[] }[];
+}
+
+/** What a policy change would do to each client, with the form that makes it. */
+export function previewPage(
+  frame: Frame,
+  preview: PreviewView,
+  form: { kind: string; policy: string; consoleId: string; clientId: string; version: string },
+): string {
+  const changed = preview.clients.filter((c) => c.gained.length + c.lost.length > 0);
+  return layout(
+    frame,
+    html`<h1>Preview</h1>
+      <p>
+        If you save this change to ${preview.title},
+        ${
+          changed.length === 0
+            ? 'no client gains or loses an operation.'
+            : `${String(changed.length)} of ${String(preview.clients.length)} client${preview.clients.length === 1 ? '' : 's'} can use different operations.`
+        }
+      </p>
+      <div class="card scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Now</th>
+              <th>After</th>
+              <th>Gains</th>
+              <th>Loses</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${preview.clients.map(
+              (c) =>
+                html`<tr>
+                  <td>${c.clientId}</td>
+                  <td>${c.before}</td>
+                  <td>${c.after}</td>
+                  <td class="${c.gained.length > 0 ? 'status-warn' : ''}">
+                    ${c.gained.length === 0 ? '-' : c.gained.join(', ')}
+                  </td>
+                  <td>${c.lost.length === 0 ? '-' : c.lost.join(', ')}</td>
+                </tr>`,
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        Nothing was changed. The preview uses the consoles, versions and grants as they are now; it
+        is worked out again when you save.
+      </p>
+      <form
+        class="card"
+        method="post"
+        action="/manage/${form.kind === 'global' ? 'policy.document' : `${form.kind}.policy`}"
+      >
+        ${authFields(frame, 'preview')}
+        <input type="hidden" name="consoleId" value="${form.consoleId}" />
+        <input type="hidden" name="clientId" value="${form.clientId}" />
+        <input type="hidden" name="version" value="${form.version}" />
+        <label for="preview-policy">Policy (JSON)</label>
+        <textarea id="preview-policy" name="policy" rows="12" maxlength="60000" spellcheck="false">
+${form.policy}</textarea>
+        <button class="secondary" type="submit" formaction="/manage/preview/${form.kind}">
+          Preview again
+        </button>
+        <button class="danger" type="submit">Save</button>
+      </form>`,
+  );
+}
+
+/** A secret shown once: it is in this page only, and the page is never cached. */
+export function revealPage(
+  frame: Frame,
+  notice: string,
+  reveal: { label: string; value: string },
+  continueHref: string,
+): string {
+  return layout(
+    { ...frame, notice: { kind: 'ok', text: notice } },
+    html`<h1>${reveal.label}</h1>
+      <div class="card">
+        <pre>${reveal.value}</pre>
+        <p>
+          <strong>Copy it now.</strong> It is not stored and cannot be shown again. If it is lost,
+          issue a new one.
+        </p>
+      </div>
+      <p><a href="${continueHref}">Continue</a></p>`,
+  );
+}
+
+export function reportPage(
+  frame: Frame,
+  notice: string,
+  rows: [string, string][],
+  continueHref: string,
+): string {
+  return layout(
+    frame,
+    html`<h1>${notice}</h1>
+      <div class="card scroll">
+        <table>
+          ${rows.map(
+            ([name, value]) =>
+              html`<tr>
+                <th>${name}</th>
+                <td>${value}</td>
+              </tr>`,
+          )}
+        </table>
+      </div>
+      <p class="muted">
+        Nothing was sent to the console but a TLS handshake: no request, no credential.
+      </p>
+      <p><a href="${continueHref}">Back</a></p>`,
+  );
+}
+
 export function consolesPage(frame: Frame, rows: ConsoleRow[]): string {
   return layout(
     frame,
@@ -151,7 +355,23 @@ export function consolesPage(frame: Frame, rows: ConsoleRow[]): string {
               </table>
             </div>`
       }
-      ${HOST_NOTE}`,
+      ${
+        frame.manage === undefined
+          ? ''
+          : html`<h2>Add a console</h2>
+              <form class="card" method="post" action="/manage/console.add">
+                ${authFields(frame, 'add')}
+                <label for="add-alias">Alias</label>
+                <input id="add-alias" name="alias" required maxlength="63" />
+                <label for="add-host">Host name or address</label>
+                <input id="add-host" name="host" required maxlength="253" />
+                <label for="add-description">Description (optional)</label>
+                <input id="add-description" name="description" maxlength="500" />
+                ${tlsFields('add', 'verify')}
+                <button type="submit">Add console</button>
+              </form>`
+      }
+      ${changeNote(frame)}`,
   );
 }
 
@@ -240,9 +460,100 @@ export function consolePage(frame: Frame, c: ConsoleDetail): string {
           ? html`<p class="status-bad">
               The stored policy is unusable, so nothing can use this console.
             </p>`
-          : html`<div class="card scroll">${json(c.policy)}</div>`
+          : frame.manage === undefined
+            ? html`<div class="card scroll">${json(c.policy)}</div>`
+            : ''
       }
-      ${HOST_NOTE}`,
+      ${
+        frame.manage === undefined
+          ? ''
+          : html`${policyEditor(frame, 'console', c.policy, { consoleId: c.id })}
+              <p class="muted">
+                A module is enabled by its entry under "modules", for example {"modules":
+                {"network": {"state": "read_only"}}}.
+              </p>
+              <h2>Change this console</h2>
+              <div class="grid">
+                <form class="card" method="post" action="/manage/console.details">
+                  ${authFields(frame, 'details')}
+                  <input type="hidden" name="consoleId" value="${c.id}" />
+                  <label for="details-host">Host name or address</label>
+                  <input id="details-host" name="host" required maxlength="253" value="${c.host}" />
+                  <label for="details-description">Description</label>
+                  <input
+                    id="details-description"
+                    name="description"
+                    maxlength="500"
+                    value="${c.description ?? ''}"
+                  />
+                  <button type="submit">Save details</button>
+                </form>
+                <form class="card" method="post" action="/manage/console.tls">
+                  ${authFields(frame, 'tls')}
+                  <input type="hidden" name="consoleId" value="${c.id}" />
+                  ${tlsFields('tls', c.tlsMode)}
+                  <button type="submit">Save TLS trust</button>
+                </form>
+                <form class="card" method="post" action="/manage/console.credential">
+                  ${authFields(frame, 'credential')}
+                  <input type="hidden" name="consoleId" value="${c.id}" />
+                  <label for="credential-module">Module</label>
+                  <select id="credential-module" name="module">
+                    ${c.modules.map((m) => html`<option value="${m.moduleId}">${m.moduleId}</option>`)}
+                  </select>
+                  <label for="credential-value">API key or token (stored, never shown again)</label>
+                  <input
+                    id="credential-value"
+                    name="credential"
+                    type="password"
+                    autocomplete="off"
+                    required
+                    maxlength="4096"
+                  />
+                  <button type="submit">Store credential</button>
+                </form>
+                <form class="card" method="post" action="/manage/console.port">
+                  ${authFields(frame, 'port')}
+                  <input type="hidden" name="consoleId" value="${c.id}" />
+                  <label for="port-module">Module</label>
+                  <select id="port-module" name="module">
+                    ${c.modules.map((m) => html`<option value="${m.moduleId}">${m.moduleId}</option>`)}
+                  </select>
+                  <label for="port-value">Port (empty for the default)</label>
+                  <input id="port-value" name="port" inputmode="numeric" maxlength="5" />
+                  <button type="submit">Save port</button>
+                </form>
+                <form class="card" method="post" action="/manage/console.check">
+                  ${authFields(frame, 'check')}
+                  <input type="hidden" name="consoleId" value="${c.id}" />
+                  <label for="check-module">Module</label>
+                  <select id="check-module" name="module">
+                    ${c.modules.map((m) => html`<option value="${m.moduleId}">${m.moduleId}</option>`)}
+                  </select>
+                  <button class="secondary" type="submit">Check the connection</button>
+                </form>
+                <form class="card" method="post" action="/manage/console.remove">
+                  ${authFields(frame, 'remove')}
+                  <input type="hidden" name="consoleId" value="${c.id}" />
+                  <label for="remove-confirm"
+                    >Type the alias "${c.alias}" to remove this console</label
+                  >
+                  <input
+                    id="remove-confirm"
+                    name="confirm"
+                    maxlength="63"
+                    autocomplete="off"
+                    required
+                  />
+                  <button class="danger" type="submit">Remove console</button>
+                </form>
+              </div>
+              <p class="muted">
+                An application version that the console cannot report (UniFi Access) is declared on
+                the host only: <code>unifi-mcp console declare-version</code>.
+              </p>`
+      }
+      ${changeNote(frame)}`,
   );
 }
 
@@ -289,7 +600,29 @@ export function clientsPage(frame: Frame, rows: ClientRow[]): string {
               </table>
             </div>`
       }
-      ${HOST_NOTE}`,
+      ${
+        frame.manage === undefined
+          ? ''
+          : html`<h2>Create a client</h2>
+              <form class="card" method="post" action="/manage/client.create">
+                ${authFields(frame, 'create')}
+                <label for="create-id">Client id (lowercase letters, digits, ".", "_", "-")</label>
+                <input id="create-id" name="clientId" required maxlength="64" />
+                <label for="create-description">Description (optional)</label>
+                <input id="create-description" name="description" maxlength="500" />
+                <label for="create-policy">Policy (JSON; empty grants nothing)</label>
+                <textarea
+                  id="create-policy"
+                  name="policy"
+                  rows="8"
+                  maxlength="60000"
+                  spellcheck="false"
+                  placeholder='{"consoles": {"home": {}}, "allow": ["network.*.read"]}'
+                ></textarea>
+                <button type="submit">Create client and show its token once</button>
+              </form>`
+      }
+      ${changeNote(frame)}`,
   );
 }
 
@@ -404,9 +737,46 @@ export function clientPage(frame: Frame, c: ClientDetail): string {
           ? html`<p class="status-bad">
               The stored policy is unusable, so the client can do nothing.
             </p>`
-          : html`<div class="card scroll">${json(c.policy)}</div>`
+          : frame.manage === undefined
+            ? html`<div class="card scroll">${json(c.policy)}</div>`
+            : ''
       }
-      ${HOST_NOTE}`,
+      ${
+        frame.manage === undefined
+          ? ''
+          : html`${policyEditor(frame, 'client', c.policy, { clientId: c.clientId })}
+              <h2>Change this client</h2>
+              <div class="grid">
+                <form class="card" method="post" action="/manage/client.rotate">
+                  ${authFields(frame, 'rotate')}
+                  <input type="hidden" name="clientId" value="${c.clientId}" />
+                  <p>Issue a new token. The earlier tokens stop working at once.</p>
+                  <button type="submit">Rotate the token</button>
+                </form>
+                <form class="card" method="post" action="/manage/client.revoke">
+                  ${authFields(frame, 'revoke')}
+                  <input type="hidden" name="clientId" value="${c.clientId}" />
+                  <p>Revoke the client. Open connections are closed; it cannot be undone here.</p>
+                  <button class="danger" type="submit">Revoke</button>
+                </form>
+                <form class="card" method="post" action="/manage/client.remove">
+                  ${authFields(frame, 'remove')}
+                  <input type="hidden" name="clientId" value="${c.clientId}" />
+                  <label for="remove-confirm"
+                    >Type the id "${c.clientId}" to remove this client</label
+                  >
+                  <input
+                    id="remove-confirm"
+                    name="confirm"
+                    maxlength="64"
+                    autocomplete="off"
+                    required
+                  />
+                  <button class="danger" type="submit">Remove client</button>
+                </form>
+              </div>`
+      }
+      ${changeNote(frame)}`,
   );
 }
 
@@ -438,8 +808,26 @@ export function policyPage(frame: Frame, p: PolicyView): string {
           </div>
         </div>
       </div>
+      ${
+        frame.manage === undefined
+          ? ''
+          : html`<form class="card" method="post" action="/manage/policy.mode">
+              ${authFields(frame, 'mode')}
+              <p>
+                Runtime mode. <strong>read_only</strong> stops every write at once, for all clients.
+              </p>
+              <button type="submit" name="mode" value="read_only">Switch to read_only</button>
+              <button class="danger" type="submit" name="mode" value="read_write">
+                Switch to read_write
+              </button>
+            </form>`
+      }
       <h2>Global policy</h2>
-      <div class="card scroll">${json(p.document)}</div>
+      ${
+        frame.manage === undefined
+          ? html`<div class="card scroll">${json(p.document)}</div>`
+          : policyEditor(frame, 'global', p.document, { version: String(p.version) })
+      }
       <h2>Operations that are off unless enabled here</h2>
       ${
         p.defaultDisabled.length === 0
@@ -470,7 +858,7 @@ export function policyPage(frame: Frame, p: PolicyView): string {
         A client's grants are on its own page, under Clients, with what they come to. Console
         policies are under Consoles.
       </p>
-      ${HOST_NOTE}`,
+      ${changeNote(frame)}`,
   );
 }
 

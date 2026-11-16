@@ -124,6 +124,7 @@ function configuration(config: ServiceConfig): SettingsView['configuration'] {
         `${String(config.admin.sessionIdleMinutes)} minutes idle, ${String(config.admin.sessionMaxHours)} hours at most`,
       ],
       ['Two-step sign-in required', yesNo(config.admin.requireMfa)],
+      ['Changes from this interface (UNIFI_MCP_ADMIN_MANAGEMENT)', yesNo(config.admin.management)],
     );
   }
   entries.push([

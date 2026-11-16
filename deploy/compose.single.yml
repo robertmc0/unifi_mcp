@@ -50,6 +50,9 @@ services:
       # Refuse sign-in to administrators without two-step sign-in (set it up first:
       # unifi-mcp admin enable-mfa; docs/administration.md#two-step-sign-in).
       # UNIFI_MCP_ADMIN_REQUIRE_MFA: 'true'
+      # Allow consoles, clients and policy to be changed from the web interface. Leave it
+      # off unless you need it (docs/administration.md#changes-from-the-web-interface).
+      # UNIFI_MCP_ADMIN_MANAGEMENT: 'true'
       # Optional Prometheus metrics (docs/monitoring.md#metrics). To enable them: create the
       # token file (see the secret below), set this to true, and uncomment the 9464 port
       # line, the secret under "secrets:" here and the secret at the end of this file.

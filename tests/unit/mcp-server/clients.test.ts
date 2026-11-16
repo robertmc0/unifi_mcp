@@ -303,7 +303,12 @@ describe('admin listener configuration', () => {
       sessionIdleMinutes: 30,
       sessionMaxHours: 12,
       requireMfa: false,
+      management: false,
     });
+    expect(
+      loadServiceConfig({ UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_ADMIN_MANAGEMENT: 'true' })
+        .admin?.management,
+    ).toBe(true);
     expect(
       loadServiceConfig({ UNIFI_MCP_ADMIN_ENABLED: 'true', UNIFI_MCP_ADMIN_REQUIRE_MFA: 'true' })
         .admin?.requireMfa,

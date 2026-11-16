@@ -429,14 +429,17 @@ describe('audit search and export (ADR 0027)', () => {
   it('exports more than one page of entries, up to its limit', async () => {
     const { t, b } = await setup();
     await signIn(b);
-    for (let i = 0; i < 620; i++) {
-      t.service.audit.record({
-        eventType: 'test.fill',
-        action: 'fill.entry',
-        outcome: 'success',
-        actor: { type: 'system' },
-      });
-    }
+    // One transaction: 620 separate commits are slow on a busy machine.
+    t.service.storage.db.transaction(() => {
+      for (let i = 0; i < 620; i++) {
+        t.service.audit.record({
+          eventType: 'test.fill',
+          action: 'fill.entry',
+          outcome: 'success',
+          actor: { type: 'system' },
+        });
+      }
+    });
     const json = await b.get('/audit/export?format=json&eventType=test.fill');
     const entries = JSON.parse(json.body) as { seq: number }[];
     expect(entries).toHaveLength(620);
@@ -596,6 +599,427 @@ describe('consoles, clients, policy and settings pages (ADR 0027)', () => {
     }
     expect(t.service.consoles.get('lab')?.policy?.state).toBe('enabled');
     expect(t.service.clients.get('reader')?.policy?.status).toBe('active');
+  });
+});
+
+describe('changes from the web interface (ADR 0027 §3)', () => {
+  const MINUTE = 60_000;
+
+  async function managed(options: { management?: boolean } = {}) {
+    const clock = { time: Date.parse('2026-11-16T10:00:15.000Z') };
+    const t = await startTestService({
+      dir: await tempDir(),
+      admin: true,
+      management: options.management ?? true,
+      now: () => new Date(clock.time),
+    });
+    t.service.admins.bootstrap('alice', PASSWORD, CLI);
+    const b = browser(t.service.adminUrl ?? '');
+    await signIn(b);
+    const csrf = await b.csrf('/');
+    const change = (name: string, fields: Record<string, string>) =>
+      b.post(`/manage/${name}`, { csrf, ...fields });
+    return { t, b, clock, csrf, change };
+  }
+  const lastAudit = (t: TestService, action: string) =>
+    t.service.audit.list({ limit: 200 }).find((entry) => entry.action === action);
+
+  it('are off unless the deployment enables them', async () => {
+    const { t, b, change } = await managed({ management: false });
+    expect((await b.get('/settings')).body.replace(/\s+/g, ' ')).toMatch(
+      /UNIFI_MCP_ADMIN_MANAGEMENT\)<\/th> <td>no<\/td>/,
+    );
+    expect((await b.get('/consoles')).body).not.toContain('/manage/');
+    for (const name of ['console.add', 'client.create', 'policy.mode', 'preview/global']) {
+      const refused = await change(name, { alias: 'x', host: '192.0.2.9', mode: 'read_only' });
+      expect(refused.status, name).toBe(404);
+    }
+    expect(t.service.consoles.list()).toHaveLength(1);
+    expect(t.service.policyStore.current().document.runtimeMode).toBe('read_write');
+  });
+
+  it('offer exactly the reviewed changes, and none of the host-only ones', async () => {
+    const { t, change } = await managed();
+    const forms = new Set<string>();
+    const b = browser(t.service.adminUrl ?? '');
+    await signIn(b);
+    t.token('reader', ['network.*.read']);
+    for (const path of [
+      '/consoles',
+      `/consoles/${t.consoleId}`,
+      '/clients',
+      '/clients/reader',
+      '/policy',
+    ]) {
+      for (const match of (await b.get(path)).body.matchAll(/action="\/manage\/([a-z.]+)"/g)) {
+        forms.add(match[1] ?? '');
+      }
+    }
+    expect([...forms].sort()).toEqual([
+      'client.create',
+      'client.policy',
+      'client.remove',
+      'client.revoke',
+      'client.rotate',
+      'console.add',
+      'console.check',
+      'console.credential',
+      'console.details',
+      'console.policy',
+      'console.port',
+      'console.remove',
+      'console.tls',
+      'policy.document',
+      'policy.mode',
+    ]);
+    // Declaring a version, administrators and their second step, and maintenance stay on
+    // the host: there is no such change, whatever the form says.
+    for (const name of [
+      'console.declare',
+      'admin.reset',
+      'admin.mfa',
+      'db.backup',
+      'crypto.rotate',
+    ]) {
+      const refused = await change(name, { consoleId: t.consoleId, version: '4.2.16' });
+      expect(refused.status, name).toBe(400);
+      expect(refused.body).toContain('There is no such change.');
+    }
+    expect((await change('NOT.valid', {})).status).toBe(404);
+  });
+
+  it('add, configure, check and remove a console, as the signed-in administrator', async () => {
+    const { t, b, change } = await managed();
+    const added = await change('console.add', {
+      alias: 'second',
+      host: '192.0.2.20',
+      description: 'spare',
+      tlsMode: 'verify',
+    });
+    expect(added.status).toBe(303);
+    const view = t.service.consoles.get('second');
+    expect(added.headers['location']).toBe(`/consoles/${view?.id ?? ''}`);
+    expect(lastAudit(t, 'console.add')).toMatchObject({ actorType: 'admin', actorId: 'alice' });
+    // The result is shown once, on the next page.
+    const page = await b.get(`/consoles/${view?.id ?? ''}`);
+    expect(page.body).toContain('Console &quot;second&quot; added.');
+    expect((await b.get(`/consoles/${view?.id ?? ''}`)).body).not.toContain('added.');
+    const id = view?.id ?? '';
+
+    const SECRET = 'web-typed-key-SENTINEL-55';
+    expect(
+      (await change('console.credential', { consoleId: id, module: 'network', credential: SECRET }))
+        .status,
+    ).toBe(303);
+    expect(t.service.consoles.connection(id, 'network')?.credential?.reveal()).toBe(SECRET);
+    expect(
+      (await change('console.port', { consoleId: id, module: 'network', port: '8443' })).status,
+    ).toBe(303);
+    expect(t.service.consoles.connection(id, 'network')?.port).toBe(8443);
+    expect(
+      (
+        await change('console.policy', {
+          consoleId: id,
+          policy: JSON.stringify({ modules: { network: { state: 'read_only' } } }),
+        })
+      ).status,
+    ).toBe(303);
+    expect(t.service.consoles.policy(id)?.modules['network']?.state).toBe('read_only');
+    expect(
+      (await change('console.details', { consoleId: id, host: '192.0.2.21', description: '' }))
+        .status,
+    ).toBe(303);
+    expect(t.service.consoles.get('second')).toMatchObject({
+      host: '192.0.2.21',
+      description: null,
+    });
+
+    // Turning certificate checks off needs the word typed; pins must be given for pinning.
+    const unconfirmed = await change('console.tls', { consoleId: id, tlsMode: 'insecure' });
+    expect(unconfirmed.status).toBe(400);
+    expect(unconfirmed.body).toContain('needs the word');
+    expect(
+      (await change('console.tls', { consoleId: id, tlsMode: 'pinned', pins: '' })).status,
+    ).toBe(400);
+    expect(t.service.consoles.get('second')?.tls.mode).toBe('verify');
+    expect(
+      (
+        await change('console.tls', {
+          consoleId: id,
+          tlsMode: 'insecure',
+          insecureConfirm: 'insecure',
+        })
+      ).status,
+    ).toBe(303);
+    expect(t.service.consoles.get('second')?.tls.mode).toBe('insecure');
+
+    // Refusals of the stores come back as "Not changed", with their code.
+    const duplicate = await change('console.add', {
+      alias: 'second',
+      host: '192.0.2.22',
+      tlsMode: 'verify',
+    });
+    expect(duplicate.status).toBe(400);
+    expect(duplicate.body).toContain('Not changed');
+    const badPolicy = await change('console.policy', {
+      consoleId: id,
+      policy: '{"modules": {"talk": {}}}',
+    });
+    expect(badPolicy.status).toBe(400);
+    expect(badPolicy.body).toContain('unavailable: official_local_api_not_documented');
+    expect((await change('console.policy', { consoleId: id, policy: '{not json' })).status).toBe(
+      400,
+    );
+    const hostile = await change('console.add', {
+      alias: '<script>alert(1)</script>',
+      host: '192.0.2.23',
+      tlsMode: 'verify',
+    });
+    expect(hostile.status).toBe(400);
+    expect(hostile.body).not.toContain('<script>alert');
+
+    // The check sends no request: the synthetic console sees a handshake only.
+    const requestsBefore = t.mock.requests.length;
+    const check = await change('console.check', { consoleId: t.consoleId, module: 'network' });
+    expect(check.status).toBe(200);
+    expect(check.body.replace(/\s+/g, ' ')).toMatch(/Reachable<\/th> <td>yes<\/td>/);
+    expect(check.body.replace(/\s+/g, ' ')).toMatch(/Certificate trusted<\/th> <td>yes<\/td>/);
+    expect(t.mock.requests.length).toBe(requestsBefore);
+
+    expect((await change('console.remove', { consoleId: id, confirm: 'lab' })).status).toBe(400);
+    expect(t.service.consoles.get('second')).toBeDefined();
+    expect((await change('console.remove', { consoleId: id, confirm: 'second' })).status).toBe(303);
+    expect(t.service.consoles.get('second')).toBeUndefined();
+    expect(lastAudit(t, 'console.remove')).toMatchObject({ actorType: 'admin', actorId: 'alice' });
+
+    // The typed credential is nowhere but in the encrypted store.
+    const everything = [
+      (await b.get('/consoles')).body,
+      (await b.get('/audit')).body,
+      t.logs.join('\n'),
+      JSON.stringify(t.service.audit.list({ limit: 500 })),
+    ].join('\n');
+    expect(everything).not.toContain(SECRET);
+    expect(everything).not.toContain('SENTINEL-55');
+  });
+
+  it('create a client whose token is shown once, rotate, preview, revoke and remove it', async () => {
+    const { t, b, change } = await managed();
+    const created = await change('client.create', {
+      clientId: 'webreader',
+      description: 'made in the browser',
+      policy: JSON.stringify({ consoles: { lab: {} }, allow: ['network.*.read'] }),
+    });
+    expect(created.status).toBe(200);
+    expect(created.headers['cache-control']).toBe('no-store');
+    const token = /<pre>([A-Za-z0-9._~+/=-]{20,})<\/pre>/.exec(created.body)?.[1] ?? '';
+    expect(token).not.toBe('');
+    expect(created.body).toContain('Copy it now.');
+    expect(lastAudit(t, 'client.create')).toMatchObject({ actorType: 'admin', actorId: 'alice' });
+    // The console alias in the policy became its id, and the token works.
+    expect(Object.keys(t.service.clients.get('webreader')?.policy?.consoles ?? {})).toEqual([
+      t.consoleId,
+    ]);
+    const client = await connect(t.mcpUrl, token);
+    const before = structured(
+      await client.callTool({ name: 'unifi_list_operations', arguments: { limit: 50 } }),
+    );
+    expect(before['total']).toBeGreaterThan(0);
+
+    // A preview changes nothing and says what would change.
+    const wider = JSON.stringify({ consoles: { lab: {} }, allow: ['network.*.*'] });
+    const preview = await b.post('/manage/preview/client', {
+      csrf: await b.csrf('/clients/webreader'),
+      clientId: 'webreader',
+      policy: wider,
+    });
+    expect(preview.status).toBe(200);
+    expect(preview.body).toContain('Nothing was changed.');
+    expect(preview.body).toContain('network.devices.restart');
+    expect(preview.body).toMatch(/1 of 1 client/);
+    expect(t.service.clients.get('webreader')?.policy?.allow).toEqual(['network.*.read']);
+    expect(preview.body).toContain('action="/manage/client.policy"');
+    const invalid = await b.post('/manage/preview/client', {
+      csrf: await b.csrf('/clients/webreader'),
+      clientId: 'webreader',
+      policy: '{"allow": ["everything"]}',
+    });
+    expect(invalid.status).toBe(400);
+    expect(invalid.body).toContain('Not a usable policy');
+    expect((await change('client.policy', { clientId: 'webreader', policy: wider })).status).toBe(
+      303,
+    );
+    expect(t.service.clients.get('webreader')?.policy?.allow).toEqual(['network.*.*']);
+
+    // Rotation shows a new token once; the first one stops working.
+    const rotated = await change('client.rotate', { clientId: 'webreader' });
+    expect(rotated.status).toBe(200);
+    const second = /<pre>([A-Za-z0-9._~+/=-]{20,})<\/pre>/.exec(rotated.body)?.[1] ?? '';
+    expect(second).not.toBe('');
+    expect(second).not.toBe(token);
+    const headers = {
+      'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
+    };
+    const withToken = (value: string) =>
+      rawRequest(t.mcpUrl, {
+        method: 'POST',
+        headers: { ...headers, authorization: `Bearer ${value}` },
+        body: INITIALIZE,
+      });
+    expect((await withToken(token)).status).toBe(401);
+    expect((await withToken(second)).status).toBe(200);
+
+    expect((await change('client.revoke', { clientId: 'webreader' })).status).toBe(303);
+    expect((await withToken(second)).status).toBe(401);
+    expect(t.service.clients.get('webreader')?.policy?.status).toBe('revoked');
+    expect(
+      (await change('client.remove', { clientId: 'webreader', confirm: 'wrong' })).status,
+    ).toBe(400);
+    expect(
+      (await change('client.remove', { clientId: 'webreader', confirm: 'webreader' })).status,
+    ).toBe(303);
+    expect(t.service.clients.get('webreader')).toBeUndefined();
+
+    // Neither token is in a later page, a log line or the audit trail.
+    const everything = [
+      (await b.get('/clients')).body,
+      (await b.get('/audit')).body,
+      t.logs.join('\n'),
+      JSON.stringify(t.service.audit.list({ limit: 500 })),
+    ].join('\n');
+    expect(everything).not.toContain(token);
+    expect(everything).not.toContain(second);
+  });
+
+  it('switch the runtime mode and edit the global policy, with a preview and a version check', async () => {
+    const { t, b, change } = await managed();
+    t.token('writer', ['network.*.*']);
+    expect((await change('policy.mode', { mode: 'read_only' })).status).toBe(303);
+    expect(t.service.policyStore.current().document.runtimeMode).toBe('read_only');
+    expect((await b.get('/policy')).body).toContain('Runtime mode is read_only: no write can run.');
+    expect((await change('policy.mode', { mode: 'sideways' })).status).toBe(400);
+    expect((await change('policy.mode', { mode: 'read_write' })).status).toBe(303);
+    expect(lastAudit(t, 'policy.runtime_mode_change')).toMatchObject({
+      actorType: 'admin',
+      actorId: 'alice',
+    });
+
+    const snapshot = t.service.policyStore.current();
+    const denied = JSON.stringify({ ...snapshot.document, deny: ['network.gateway.write'] });
+    const preview = await b.post('/manage/preview/global', {
+      csrf: await b.csrf('/policy'),
+      version: String(snapshot.version),
+      policy: denied,
+    });
+    expect(preview.status).toBe(200);
+    expect(preview.body.replace(/\s+/g, ' ')).toMatch(
+      /<td>writer<\/td> <td>\d+<\/td> <td>\d+<\/td> <td class=""> - <\/td> <td>network\.gateway\.reboot<\/td>/,
+    );
+    expect(t.service.policyStore.current().version).toBe(snapshot.version);
+
+    // A form rendered before someone else changed the policy is refused.
+    t.service.policyStore.setRuntimeMode('read_only', CLI);
+    const stale = await change('policy.document', {
+      version: String(snapshot.version),
+      policy: denied,
+    });
+    expect(stale.status).toBe(400);
+    expect(t.service.policyStore.current().document.deny).toEqual([]);
+    const current = t.service.policyStore.current();
+    const saved = await change('policy.document', {
+      version: String(current.version),
+      policy: JSON.stringify({ ...current.document, deny: ['network.gateway.write'] }),
+    });
+    expect(saved.status).toBe(303);
+    expect(t.service.policyStore.current().document.deny).toEqual(['network.gateway.write']);
+    // The hard lock is not a setting: no field of any form reaches it.
+    const lock = await change('policy.document', {
+      version: String(t.service.policyStore.current().version),
+      policy: JSON.stringify({ ...current.document, forceReadOnly: false }),
+    });
+    expect(lock.status).toBe(400);
+  });
+
+  it('need the password again once the last check is five minutes old', async () => {
+    const { t, b, clock, change } = await managed();
+    // Just signed in: the forms ask for nothing more.
+    expect((await b.get('/policy')).body).not.toContain('name="password"');
+    expect((await change('policy.mode', { mode: 'read_only' })).status).toBe(303);
+    clock.time += 6 * MINUTE;
+    expect((await b.get('/policy')).body).toContain('name="password"');
+    const without = await change('policy.mode', { mode: 'read_write' });
+    const wrong = await change('policy.mode', {
+      mode: 'read_write',
+      password: 'not the password!',
+    });
+    for (const refused of [without, wrong]) {
+      expect(refused.status).toBe(401);
+      expect(refused.body).toContain('nothing was changed');
+    }
+    expect(t.service.policyStore.current().document.runtimeMode).toBe('read_only');
+    expect(lastAudit(t, 'admin.reauthenticate')).toMatchObject({
+      outcome: 'denied',
+      actorId: 'alice',
+      details: { change: 'policy.mode' },
+    });
+    expect((await change('policy.mode', { mode: 'read_write', password: PASSWORD })).status).toBe(
+      303,
+    );
+    expect(t.service.policyStore.current().document.runtimeMode).toBe('read_write');
+    // The check counts for the next five minutes, not longer.
+    expect((await change('policy.mode', { mode: 'read_only' })).status).toBe(303);
+    clock.time += 6 * MINUTE;
+    expect((await change('policy.mode', { mode: 'read_write' })).status).toBe(401);
+  });
+
+  it('need a code as well when the account has a second step', async () => {
+    const { t, b, clock, change } = await managed();
+    const secret = t.service.mfa.begin('alice', CLI).secret;
+    t.service.mfa.confirm('alice', totpCode(secret, new Date(clock.time)), CLI);
+    clock.time += 30_000;
+    const signedIn = await b.post('/login', {
+      username: 'alice',
+      password: PASSWORD,
+      code: totpCode(secret, new Date(clock.time)),
+    });
+    expect(signedIn.status).toBe(303);
+    const csrf = await b.csrf('/');
+    clock.time += 6 * MINUTE;
+    const page = await b.get('/policy');
+    expect(page.body).toContain('name="password"');
+    expect(page.body).toContain('name="code"');
+    const passwordOnly = await b.post('/manage/policy.mode', {
+      csrf,
+      mode: 'read_only',
+      password: PASSWORD,
+    });
+    expect(passwordOnly.status).toBe(401);
+    expect(t.service.policyStore.current().document.runtimeMode).toBe('read_write');
+    const both = await b.post('/manage/policy.mode', {
+      csrf,
+      mode: 'read_only',
+      password: PASSWORD,
+      code: totpCode(secret, new Date(clock.time)),
+    });
+    expect(both.status).toBe(303);
+    expect(t.service.policyStore.current().document.runtimeMode).toBe('read_only');
+    expect(change).toBeDefined();
+  });
+
+  it('refuse forged, cross-origin and signed-out requests like every other form', async () => {
+    const { t, b, csrf } = await managed();
+    const fields = { mode: 'read_only' };
+    expect((await b.post('/manage/policy.mode', { csrf: 'forged', ...fields })).status).toBe(403);
+    expect((await b.post('/manage/policy.mode', fields)).status).toBe(403);
+    expect(
+      (await b.post('/manage/policy.mode', { csrf, ...fields }, { origin: 'https://evil.example' }))
+        .status,
+    ).toBe(403);
+    const anonymous = browser(t.service.adminUrl ?? '');
+    expect((await anonymous.post('/manage/policy.mode', { csrf, ...fields })).status).toBe(403);
+    expect((await b.get('/manage/policy.mode')).status).toBe(404);
+    expect(t.service.policyStore.current().document.runtimeMode).toBe('read_write');
   });
 });
 

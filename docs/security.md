@@ -172,6 +172,12 @@ not open it, and its cookie does not open MCP.
   foreign form targets. Responses are never cached. All text is escaped, with control
   and bidirectional characters made visible.
 - Approving needs the password again, every time. Credentials are never shown on any page.
+- By default the interface shows and approves; it changes nothing else. Changes to
+  consoles, clients and policy from a browser are a deployment setting
+  (`UNIFI_MCP_ADMIN_MANAGEMENT`, off by default). When on, every change goes through the
+  same code as the CLI, needs a password check no older than five minutes, and is audited
+  under the administrator's name. The hard lock, administrators and maintenance can never
+  be changed from a browser ([ADR 0027](adr/0027-admin-pages-for-consoles-clients-policy.md)).
 - **Two-step sign-in** (optional, [ADR 0026](adr/0026-admin-two-step-sign-in.md)): a
   time-based code from an authenticator app at sign-in and at every approval. A code works
   once. The key is stored encrypted with the master key; recovery codes are stored as

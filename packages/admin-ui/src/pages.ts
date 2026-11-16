@@ -10,6 +10,11 @@ export interface Frame {
   username?: string;
   csrfToken?: string;
   notice?: { kind: 'ok' | 'error'; text: string };
+  /**
+   * Present when changes from the web interface are enabled (ADR 0027 §3): whether a
+   * change form must ask for the password now, and for a code from the authenticator app.
+   */
+  manage?: { passwordNeeded: boolean; codeNeeded: boolean };
 }
 
 export interface CheckView {

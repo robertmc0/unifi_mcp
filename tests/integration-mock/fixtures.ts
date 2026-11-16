@@ -83,6 +83,8 @@ export async function startTestService(options: {
   admin?: boolean;
   /** With `admin`: refuse sign-in to accounts without two-step sign-in. */
   requireMfa?: boolean;
+  /** With `admin`: allow changes from the web interface (ADR 0027 §3). */
+  management?: boolean;
   /** A clock for the service (TOTP tests move it). */
   now?: () => Date;
   /** Enable the metrics listener on an ephemeral loopback port, with this token file. */
@@ -110,6 +112,7 @@ export async function startTestService(options: {
             sessionIdleMinutes: 30,
             sessionMaxHours: 12,
             requireMfa: options.requireMfa ?? false,
+            management: options.management ?? false,
           }
         : undefined,
     metrics:

@@ -19,6 +19,7 @@ import type { AddressInfo } from 'node:net';
 import {
   AdminHttpService,
   AdminMfa,
+  type AdminActions,
   type AdminViews,
   AdminSessionStore,
   AdminStore,
@@ -72,6 +73,7 @@ import {
   type Lookup,
   type VersionProbeSpec,
 } from '@unifi-local-mcp/unifi-api';
+import { buildAdminActions } from './admin-actions.ts';
 import { buildAdminViews } from './admin-views.ts';
 import { ClientStore } from './clients.ts';
 import type { AdminListenerConfig, ServiceConfig } from './config.ts';
@@ -393,6 +395,18 @@ export async function startService(options: ServiceOptions): Promise<RunningServ
           audit,
           logger,
           now,
+          actions: config.admin.management
+            ? buildAdminActions({
+                config,
+                consoles,
+                clients,
+                policyStore,
+                registry,
+                security,
+                egress,
+                now,
+              })
+            : undefined,
           views: buildAdminViews({
             config,
             serviceVersion: SERVICE_VERSION,
@@ -649,6 +663,7 @@ async function startAdmin(
     logger: Logger;
     now: () => Date;
     views: AdminViews;
+    actions: AdminActions | undefined;
     status: (adminUrl: string) => Promise<DashboardView>;
   },
 ): Promise<{ server: Server; url: string; sessions: AdminSessionStore }> {
@@ -672,12 +687,18 @@ async function startAdmin(
     logger: deps.logger,
     status: () => deps.status(url),
     views: deps.views,
+    actions: deps.actions,
     allowedHosts: config.allowedHosts,
     tls: config.tls !== undefined,
     now: deps.now,
   });
   const server = createListener(config.tls, http.listener);
   url = await listen(server, config.port, config.bind, config.tls !== undefined);
+  if (config.management) {
+    deps.logger.warn(
+      'changes from the admin web interface are ENABLED (UNIFI_MCP_ADMIN_MANAGEMENT): consoles, clients and policy can be changed from a browser session',
+    );
+  }
   if (!config.requireMfa) {
     deps.logger.info(
       'admin interface does not require two-step sign-in (UNIFI_MCP_ADMIN_REQUIRE_MFA is off)',

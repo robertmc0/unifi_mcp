@@ -805,9 +805,18 @@ backups, `client-codex.md`, `development.md` and `release.md`.
      audited. View models without any field for a secret
      (`packages/mcp-server/src/admin-views.ts`, `packages/admin-ui/src/pages-manage.ts`).
      Tests in `tests/integration-mock/admin-http.test.ts`.
-   - **Changes from the web interface** (next): add, edit and remove consoles, issue,
-     rotate and revoke client tokens, edit policy with a preview. Off unless the
-     deployment enables it, with re-authentication for every change.
+   - ✅ **Changes from the web interface** (2026-11-16, ADR 0027 §3): off unless
+     `UNIFI_MCP_ADMIN_MANAGEMENT=true`. Consoles (add, details, TLS trust, credential,
+     port, policy, connection check, removal), clients (create with the token shown once,
+     policy, rotate, revoke, remove), runtime mode and global policy; policies edited as
+     JSON with a preview of each client's gained and lost operations. Every change calls
+     the CLI's store method as `admin:<username>`
+     (`packages/mcp-server/src/admin-actions.ts`) and needs a password check no older
+     than five minutes. Version declarations, administrators, maintenance and the hard
+     lock stay on the host. Tests in `tests/integration-mock/admin-http.test.ts`; 4
+     mutation checks. Docs: [administration.md](administration.md#changes-from-the-web-interface).
+     **Not verified:** the pages in a real browser. They are tested as HTTP requests and
+     HTML text; nobody has clicked through them yet.
 4. **Networking** (spec §9, §7.3): `deploy/compose.dual.yml`, `deploy/compose.tls.yml`,
    a reverse-proxy example, container tests that prove interface binding and no
    forwarding, and the verification commands in `networking.md`.

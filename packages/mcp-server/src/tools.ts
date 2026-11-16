@@ -71,10 +71,9 @@ interface Discoverable {
 
 /** Operations the client may discover, with the consoles where each is available. */
 export function discoverOperations(
-  ctx: Pick<
-    ToolContext,
-    'principal' | 'security' | 'policyStore' | 'registry' | 'deployment' | 'now'
-  >,
+  ctx: Pick<ToolContext, 'principal' | 'security' | 'registry' | 'deployment' | 'now'> & {
+    policyStore: Pick<PolicyStore, 'current'>;
+  },
 ): Discoverable[] {
   const client = ctx.security.clientPolicy(ctx.principal.clientId);
   if (client?.clientId !== ctx.principal.clientId) return [];

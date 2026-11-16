@@ -44,6 +44,8 @@ export interface AdminListenerConfig {
   sessionMaxHours: number;
   /** Refuse sign-in to administrators without two-step sign-in (ADR 0026). */
   requireMfa: boolean;
+  /** Allow console, client and policy changes from the web interface (ADR 0027 §3). */
+  management: boolean;
 }
 
 /**
@@ -174,6 +176,7 @@ function loadAdminConfig(
     sessionIdleMinutes: integer(env, 'UNIFI_MCP_ADMIN_SESSION_IDLE_MINUTES', 30, 5, 480),
     sessionMaxHours: integer(env, 'UNIFI_MCP_ADMIN_SESSION_MAX_HOURS', 12, 1, 72),
     requireMfa: flag(env, 'UNIFI_MCP_ADMIN_REQUIRE_MFA'),
+    management: flag(env, 'UNIFI_MCP_ADMIN_MANAGEMENT'),
   };
 }
 

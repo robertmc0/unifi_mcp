@@ -44,8 +44,11 @@ export {
 export {
   AdminHttpService,
   SESSION_COOKIE,
+  type AdminActions,
   type AdminHttpOptions,
   type AdminViews,
+  type ChangeOutcome,
+  type PolicyPreview,
 } from './http.ts';
 export {
   AdminSessionStore,

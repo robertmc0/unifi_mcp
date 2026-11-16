@@ -61,6 +61,12 @@ All notable changes to this project are documented here. The format follows
   function as its tool list. The audit page also filters by actor id and time, and
   downloads what the filters match as CSV (formula-safe) or JSON; a download is audited.
   No page receives a credential.
+- Changes from the admin web interface (ADR 0027 §3), off unless
+  `UNIFI_MCP_ADMIN_MANAGEMENT=true`: add, configure, check and remove consoles; create,
+  rotate, revoke and remove clients, with the token shown once; switch the runtime mode;
+  edit console, client and global policy as JSON with a preview of what each client
+  would gain and lose. Each change calls the same code as the CLI, is audited under the
+  administrator's name, and needs a password check no older than five minutes.
 
 ### Added — Phase 4: UniFi Access and other applications (gate open)
 

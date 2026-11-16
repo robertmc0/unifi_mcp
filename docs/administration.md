@@ -239,12 +239,46 @@ does everything it does.
   decisions too (`approval`).
 - Text from MCP clients and UniFi is shown escaped. Control and bidirectional-text
   characters appear as `\uXXXX`, so a request cannot hide or reorder what you read.
-- The consoles, clients, policy and settings pages only show. Changes are made with the
-  CLI on the host ([ADR 0027](adr/0027-admin-pages-for-consoles-clients-policy.md)).
+- The consoles, clients, policy and settings pages only show, unless you enable
+  [changes from the web interface](#changes-from-the-web-interface).
 - No page shows a credential: not a console key, a client token, the master key or a
   password. Token ids and the master key id are identifiers, not secrets.
 - A CSV download is safe to open in a spreadsheet: values that would run as a formula
   are prefixed with an apostrophe.
+
+### Changes from the web interface
+
+By default the web interface shows and approves, and every change is made with the CLI.
+With `UNIFI_MCP_ADMIN_MANAGEMENT=true` (and a restart) the Consoles, Clients and Policy
+pages also have forms ([ADR 0027](adr/0027-admin-pages-for-consoles-clients-policy.md)).
+
+**Before you turn it on:** a browser session can then do what the CLI does for consoles,
+clients and policy, including creating a client with any grant. Serve the interface over
+TLS or loopback only, and require two-step sign-in (`UNIFI_MCP_ADMIN_REQUIRE_MFA=true`).
+
+| Page     | What you can change                                                                                                                                                       |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consoles | Add a console. On its page: host and description, TLS trust, a module's credential and port, the console policy (which enables modules), a connection check, and removal. |
+| Clients  | Create a client; its token is shown once, on the next page. On its page: its policy, a new token (the earlier ones stop working at once), revoking it, and removal.       |
+| Policy   | The runtime mode (`read_only` stops every write at once) and the global policy.                                                                                           |
+
+- **Each change is the CLI's change.** It is validated and audited the same way, under
+  your name (`admin:<username>`).
+- **Your password again after five minutes.** A change form asks for your password (and
+  a new code, with two-step sign-in) when the last check is more than five minutes old.
+  Approvals still ask every time.
+- **Policies are JSON.** Edit the text and choose **Preview the effect** to see, for
+  every client, which operations it would gain and lose. A preview changes nothing.
+  **Save** applies it. In a client policy you may name consoles by alias. If someone
+  else changed the global policy since you opened the page, saving is refused; reload
+  and try again.
+- **Credentials are write-only.** A console key is typed into a password field and never
+  shown again. A client token is shown once: copy it before you leave the page.
+- **Removing** a console or a client needs its alias or id typed. Disabling certificate
+  checks needs the word `insecure` typed. Prefer a pin: the connection check shows it.
+- **Not available here, by design:** declaring an application version
+  (`unifi-mcp console declare-version`), administrators, passwords and two-step sign-in
+  (`unifi-mcp admin …`), backup, restore and key rotation, and the hard lock.
 
 ### Two-step sign-in
 
